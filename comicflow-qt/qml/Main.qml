@@ -3593,8 +3593,7 @@ ApplicationWindow {
                             y: 24
                             width: {
                                 const rightLimit = heroBlock.width - 138
-                                const available = Math.max(0, rightLimit - x)
-                                return Math.min(860, available)
+                                return Math.max(0, rightLimit - x)
                             }
                             height: Math.max(0, heroBlock.height - y - 16)
                             z: 2
@@ -3644,7 +3643,7 @@ ApplicationWindow {
                                 x: 0
                                 y: heroSummaryLabel.y + heroSummaryLabel.implicitHeight + 14
                                 width: parent.width
-                                height: 120
+                                height: implicitHeight
                                 text: String(root.heroSeriesData.summary || "-")
                                 color: root.textPrimary
                                 font.family: root.uiFontFamily
@@ -3653,7 +3652,6 @@ ApplicationWindow {
                                 wrapMode: Text.WordWrap
                                 maximumLineCount: 7
                                 elide: Text.ElideRight
-                                clip: true
                                 lineHeightMode: Text.FixedHeight
                                 lineHeight: 17
                                 visible: heroSeriesController.heroFieldHasValue(root.heroSeriesData.summary)
@@ -3670,20 +3668,35 @@ ApplicationWindow {
                                 id: heroMetaGrid
                                 x: 0
                                 y: heroSummaryText.y + heroSummaryText.height + 24
-                                width: Math.min(parent.width, 446)
-                                height: 56
+                                width: parent.width
+                                height: heroMetaGrid.singleRowLayout ? 24 : 56
 
+                                property bool singleRowLayout: width >= heroMetaGrid.singleRowRequiredWidth
                                 property int labelWidth: 54
                                 property int valueWidth: 160
                                 property int columnGap: 6
                                 property int rowGap: 24
                                 property int col2LabelX: labelWidth + columnGap + valueWidth + columnGap
                                 property int col2ValueX: col2LabelX + labelWidth + columnGap
+                                property int pairBlockWidth: labelWidth + columnGap + valueWidth
+                                property int singleRowRequiredWidth: pairBlockWidth * 4 + columnGap * 3
+                                property int pairLabelWidth: labelWidth
+                                property int pairValueWidth: valueWidth
+                                property int pair1LabelX: 0
+                                property int pair1ValueX: pair1LabelX + labelWidth + columnGap
+                                property int pair2LabelX: col2LabelX
+                                property int pair2ValueX: pair2LabelX + pairLabelWidth + columnGap
+                                property int pair3LabelX: singleRowLayout ? (pairBlockWidth + columnGap) * 2 : 0
+                                property int pair3ValueX: pair3LabelX + pairLabelWidth + columnGap
+                                property int pair4LabelX: singleRowLayout ? (pairBlockWidth + columnGap) * 3 : col2LabelX
+                                property int pair4ValueX: pair4LabelX + pairLabelWidth + columnGap
+                                property int topRowY: 0
+                                property int bottomRowY: singleRowLayout ? 0 : 24
 
                                 Text {
-                                    x: 0
-                                    y: 0
-                                    width: heroMetaGrid.labelWidth
+                                    x: heroMetaGrid.pair1LabelX
+                                    y: heroMetaGrid.topRowY
+                                    width: heroMetaGrid.pairLabelWidth
                                     text: "Year:"
                                     color: root.textMuted
                                     font.family: root.uiFontFamily
@@ -3692,9 +3705,9 @@ ApplicationWindow {
 
                                 Text {
                                     id: heroYearValueText
-                                    x: heroMetaGrid.labelWidth + heroMetaGrid.columnGap
-                                    y: 0
-                                    width: heroMetaGrid.valueWidth
+                                    x: heroMetaGrid.pair1ValueX
+                                    y: heroMetaGrid.topRowY
+                                    width: heroMetaGrid.pairValueWidth
                                     text: String(root.heroSeriesData.year || "-")
                                     color: root.textPrimary
                                     font.family: root.uiFontFamily
@@ -3704,16 +3717,16 @@ ApplicationWindow {
                                 }
 
                                 HeroEditIconButton {
-                                    x: heroMetaGrid.labelWidth + heroMetaGrid.columnGap
-                                    y: 0
+                                    x: heroMetaGrid.pair1ValueX
+                                    y: heroMetaGrid.topRowY
                                     visible: heroBlock.editIconsVisible && !heroSeriesController.heroFieldHasValue(root.heroSeriesData.year)
                                     onClicked: root.openSeriesMetadataDialog(root.selectedSeriesKey, root.selectedSeriesTitle, "year")
                                 }
 
                                 Text {
-                                    x: heroMetaGrid.col2LabelX
-                                    y: 0
-                                    width: heroMetaGrid.labelWidth
+                                    x: heroMetaGrid.pair2LabelX
+                                    y: heroMetaGrid.topRowY
+                                    width: heroMetaGrid.pairLabelWidth
                                     text: "Volume:"
                                     color: root.textMuted
                                     font.family: root.uiFontFamily
@@ -3722,9 +3735,9 @@ ApplicationWindow {
 
                                 Text {
                                     id: heroVolumeValueText
-                                    x: heroMetaGrid.col2ValueX
-                                    y: 0
-                                    width: heroMetaGrid.valueWidth
+                                    x: heroMetaGrid.pair2ValueX
+                                    y: heroMetaGrid.topRowY
+                                    width: heroMetaGrid.pairValueWidth
                                     text: String(root.heroSeriesData.volume || "-")
                                     color: root.textPrimary
                                     font.family: root.uiFontFamily
@@ -3734,16 +3747,16 @@ ApplicationWindow {
                                 }
 
                                 HeroEditIconButton {
-                                    x: heroMetaGrid.col2ValueX
-                                    y: 0
+                                    x: heroMetaGrid.pair2ValueX
+                                    y: heroMetaGrid.topRowY
                                     visible: heroBlock.editIconsVisible && !heroSeriesController.heroFieldHasValue(root.heroSeriesData.volume)
                                     onClicked: root.openSeriesMetadataDialog(root.selectedSeriesKey, root.selectedSeriesTitle, "volume")
                                 }
 
                                 Text {
-                                    x: 0
-                                    y: 24
-                                    width: heroMetaGrid.labelWidth
+                                    x: heroMetaGrid.pair3LabelX
+                                    y: heroMetaGrid.bottomRowY
+                                    width: heroMetaGrid.pairLabelWidth
                                     text: "Publisher:"
                                     color: root.textMuted
                                     font.family: root.uiFontFamily
@@ -3752,9 +3765,9 @@ ApplicationWindow {
 
                                 Text {
                                     id: heroPublisherValueText
-                                    x: heroMetaGrid.labelWidth + heroMetaGrid.columnGap
-                                    y: 24
-                                    width: heroMetaGrid.valueWidth
+                                    x: heroMetaGrid.pair3ValueX
+                                    y: heroMetaGrid.bottomRowY
+                                    width: heroMetaGrid.pairValueWidth
                                     text: String(root.heroSeriesData.publisher || "-")
                                     color: root.textPrimary
                                     font.family: root.uiFontFamily
@@ -3764,16 +3777,16 @@ ApplicationWindow {
                                 }
 
                                 HeroEditIconButton {
-                                    x: heroMetaGrid.labelWidth + heroMetaGrid.columnGap
-                                    y: 24
+                                    x: heroMetaGrid.pair3ValueX
+                                    y: heroMetaGrid.bottomRowY
                                     visible: heroBlock.editIconsVisible && !heroSeriesController.heroFieldHasValue(root.heroSeriesData.publisher)
                                     onClicked: root.openSeriesMetadataDialog(root.selectedSeriesKey, root.selectedSeriesTitle, "publisher")
                                 }
 
                                 Text {
-                                    x: heroMetaGrid.col2LabelX
-                                    y: 24
-                                    width: heroMetaGrid.labelWidth
+                                    x: heroMetaGrid.pair4LabelX
+                                    y: heroMetaGrid.bottomRowY
+                                    width: heroMetaGrid.pairLabelWidth
                                     text: "Genres:"
                                     color: root.textMuted
                                     font.family: root.uiFontFamily
@@ -3782,9 +3795,9 @@ ApplicationWindow {
 
                                 Text {
                                     id: heroGenresValueText
-                                    x: heroMetaGrid.col2ValueX
-                                    y: 24
-                                    width: heroMetaGrid.valueWidth
+                                    x: heroMetaGrid.pair4ValueX
+                                    y: heroMetaGrid.bottomRowY
+                                    width: heroMetaGrid.pairValueWidth
                                     text: String(root.heroSeriesData.genres || "-")
                                     color: root.textPrimary
                                     font.family: root.uiFontFamily
@@ -3794,8 +3807,8 @@ ApplicationWindow {
                                 }
 
                                 HeroEditIconButton {
-                                    x: heroMetaGrid.col2ValueX
-                                    y: 24
+                                    x: heroMetaGrid.pair4ValueX
+                                    y: heroMetaGrid.bottomRowY
                                     visible: heroBlock.editIconsVisible && !heroSeriesController.heroFieldHasValue(root.heroSeriesData.genres)
                                     onClicked: root.openSeriesMetadataDialog(root.selectedSeriesKey, root.selectedSeriesTitle, "genres")
                                 }
