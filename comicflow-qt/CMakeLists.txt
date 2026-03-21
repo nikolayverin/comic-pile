@@ -252,19 +252,19 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/cover-bookmark.png
         assets/ui/cover-read.png
         assets/ui/cover-read-cancel.png
-        assets/ui/logo-marvel-studios.svg
-        assets/ui/logo-dc-comics.svg
-        assets/ui/logo-image-comics.svg
-        assets/ui/logo-dark-horse-comics.svg
-        assets/ui/logo-boom-studio.svg
-        assets/ui/logo-dynamite.svg
-        assets/ui/logo-valiant-comics.svg
-        assets/ui/logo-after-shock.svg
-        assets/ui/logo-awa.svg
-        assets/ui/logo-oni-press.svg
-        assets/ui/logo-top-cow-productions.svg
-        assets/ui/logo-idw-publishing.svg
-        assets/ui/logo-shueisha.svg
+        assets/ui/logo-marvel-studios-wide.svg
+        assets/ui/logo-dc-comics-round.svg
+        assets/ui/logo-image-comics-tall.svg
+        assets/ui/logo-dark-horse-comics-tall.svg
+        assets/ui/logo-boom-studio-standard.svg
+        assets/ui/logo-dynamite-wide.svg
+        assets/ui/logo-valiant-comics-tall.svg
+        assets/ui/logo-after-shock-standard.svg
+        assets/ui/logo-awa-standard.svg
+        assets/ui/logo-oni-press-standard.svg
+        assets/ui/logo-top-cow-productions-standard.svg
+        assets/ui/logo-idw-publishing-standard.svg
+        assets/ui/logo-shueisha-standard.svg
         assets/ui/icon-reader-page-arrow.svg
         assets/ui/icon-reader-issue-arrow.svg
         assets/ui/reader-boornark.svg

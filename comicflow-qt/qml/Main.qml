@@ -3518,29 +3518,72 @@ ApplicationWindow {
 
                         Item {
                             id: heroPublisherLogoArea
-                            width: 72
-                            height: 72
+                            width: 162
+                            height: 162
                             anchors.top: parent.top
-                            anchors.topMargin: 14
+                            anchors.topMargin: 20
                             anchors.right: parent.right
                             anchors.rightMargin: 32
-                            visible: root.selectedSeriesKey.length > 0 && String(root.heroSeriesData.logoSource || "").length > 0
+                            z: 0
+                            visible: root.selectedSeriesKey.length > 0
+                                && String(root.heroSeriesData.logoSource || "").length > 0
 
-                            Image {
-                                anchors.fill: parent
-                                anchors.horizontalCenterOffset: 1
-                                anchors.verticalCenterOffset: 1
-                                source: String(root.heroSeriesData.logoSource || "")
-                                fillMode: Image.PreserveAspectFit
-                                smooth: true
-                                opacity: 0.35
-                            }
+                            readonly property var logoLayout: PublisherCatalog.logoLayoutForPublisher(
+                                String(root.heroSeriesData.publisher || "")
+                            )
+                            readonly property int logoMaxWidth: Math.max(1, Number((logoLayout || {}).maxWidth || 56))
+                            readonly property int logoMaxHeight: Math.max(1, Number((logoLayout || {}).maxHeight || 44))
 
-                            Image {
-                                anchors.fill: parent
-                                source: String(root.heroSeriesData.logoSource || "")
-                                fillMode: Image.PreserveAspectFit
-                                smooth: true
+                            Item {
+                                id: heroPublisherLogoContent
+                                anchors.top: parent.top
+                                anchors.topMargin: 0
+                                anchors.right: parent.right
+                                anchors.rightMargin: 0
+                                width: heroPublisherLogoArea.logoMaxWidth
+                                height: heroPublisherLogoArea.logoMaxHeight
+                                readonly property real sourceAspectRatio: logoMetricsImage.status === Image.Ready
+                                    && logoMetricsImage.implicitWidth > 0
+                                    && logoMetricsImage.implicitHeight > 0
+                                    ? logoMetricsImage.implicitWidth / logoMetricsImage.implicitHeight
+                                    : 1.0
+                                readonly property real fittedWidth: {
+                                    const ratio = Math.max(0.001, sourceAspectRatio)
+                                    return Math.min(width, height * ratio)
+                                }
+                                readonly property real fittedHeight: {
+                                    const ratio = Math.max(0.001, sourceAspectRatio)
+                                    return Math.min(height, width / ratio)
+                                }
+
+                                Image {
+                                    id: logoMetricsImage
+                                    visible: false
+                                    source: String(root.heroSeriesData.logoSource || "")
+                                }
+
+                                Image {
+                                    anchors.top: parent.top
+                                    anchors.right: parent.right
+                                    anchors.topMargin: 1
+                                    anchors.rightMargin: 1
+                                    width: heroPublisherLogoContent.fittedWidth
+                                    height: heroPublisherLogoContent.fittedHeight
+                                    source: String(root.heroSeriesData.logoSource || "")
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                    opacity: 0.35
+                                }
+
+                                Image {
+                                    anchors.top: parent.top
+                                    anchors.right: parent.right
+                                    width: heroPublisherLogoContent.fittedWidth
+                                    height: heroPublisherLogoContent.fittedHeight
+                                    source: String(root.heroSeriesData.logoSource || "")
+                                    fillMode: Image.PreserveAspectFit
+                                    smooth: true
+                                }
                             }
                         }
 
@@ -3549,12 +3592,11 @@ ApplicationWindow {
                             x: heroSeriesCoverLayer.x + heroSeriesCoverLayer.width + 36
                             y: 24
                             width: {
-                                const rightLimit = heroPublisherLogoArea.visible
-                                    ? heroPublisherLogoArea.x - 24
-                                    : heroBlock.width - 32
+                                const rightLimit = heroBlock.width - 138
                                 return Math.max(0, rightLimit - x)
                             }
                             height: Math.max(0, heroBlock.height - y - 16)
+                            z: 2
                             visible: root.selectedSeriesKey.length > 0
 
                             Text {
