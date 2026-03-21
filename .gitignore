@@ -3,6 +3,9 @@ build/
 dist/
 coverage/
 .DS_Store
+Thumbs.db
+.vs/
+.idea/
 *.log
 .env*
 !.env.example
@@ -16,3 +19,11 @@ PROJECT_BIBLE.md
 PROJECT_BIBLE_RU.md
 THEME_AUDIT.md
 TODO.md
+assets-UI/
+tools/djvulibre/source/
+tools/djvulibre/*.tar
+tools/djvulibre/*.tar.gz
+tools/djvulibre/*Setup*.exe
+tools/djvulibre/*.real.exe
+tools/djvulibre/*.real.tar
+tools/djvulibre/*.real.tar.gz
