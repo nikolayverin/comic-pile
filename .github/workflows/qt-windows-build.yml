@@ -1,0 +1,36 @@
+name: qt-windows-build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "comicflow-qt/**"
+      - ".github/workflows/qt-windows-build.yml"
+  pull_request:
+    paths:
+      - "comicflow-qt/**"
+      - ".github/workflows/qt-windows-build.yml"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Qt
+      uses: jurplel/install-qt-action@v4
+      with:
+        version: "6.7.2"
+        host: "windows"
+        target: "desktop"
+        arch: "win64_msvc2019_64"
+
+      - name: Configure
+      run: cmake -S comicflow-qt -B comicflow-qt/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+      run: cmake --build comicflow-qt/build --config Release

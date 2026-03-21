@@ -1,0 +1,12 @@
+DjVuLibre / DjView Windows package
+Version: DjVuLibre 3.5.29 + DjView 4.12
+Website: https://djvu.sourceforge.net/
+Source archive included with this project:
+  tools/djvulibre/djvulibre-3.5.29.real.tar.gz
+
+This package is used by Comic Pile only as an external command-line tool
+for DJVU import via ddjvu.exe. Imported pages are rendered into Comic Pile's
+internal page-image CBZ format during import.
+
+License text for the bundled Windows package is included in:
+  tools/djvulibre/runtime/COPYING.txt

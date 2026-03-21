@@ -1,0 +1,35 @@
+#pragma once
+
+#include <QString>
+#include <QVariantMap>
+
+namespace ComicStartupRuntime {
+
+QString absolutePathIfExists(const QString &candidate);
+
+void resetTextLogFile(const QString &path);
+void appendNormalizedTextLogLine(const QString &path, const QString &line);
+
+QString startupRuntimeDirPath(const QString &dataRoot);
+QString startupLaunchLogPathForDataRoot(const QString &dataRoot);
+QString startupSnapshotPath(const QString &dataRoot);
+QString startupLogPath(const QString &dataRoot);
+QString startupDebugLogPath(const QString &dataRoot);
+QString startupPreviewPath(const QString &dataRoot);
+QString startupPreviewMetaPath(const QString &dataRoot);
+
+QString readStartupSnapshot(const QString &dataRoot);
+bool writeStartupSnapshot(const QString &dataRoot, const QString &payload);
+QString readStartupPreviewMeta(const QString &dataRoot);
+bool writeStartupPreviewMeta(const QString &dataRoot, const QString &payload);
+
+QString libraryStorageMigrationMarkerPath(const QString &dataRoot);
+bool hasLibraryStorageMigrationMarker(const QString &dataRoot);
+bool writeLibraryStorageMigrationMarker(const QString &dataRoot);
+
+void appendLaunchTimelineEventForDataRoot(const QString &dataRoot, const QString &message);
+
+QVariantMap runDatabaseHealthCheck(const QString &dbPath);
+QVariantMap buildStartupInventorySignature(const QString &dataRoot, const QString &dbPath);
+
+} // namespace ComicStartupRuntime
