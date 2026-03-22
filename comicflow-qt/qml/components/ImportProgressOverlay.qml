@@ -25,6 +25,20 @@ Item {
     signal cancelRequested()
     signal hidden()
 
+    function queueEntryPath(entry) {
+        if (!entry) return ""
+        if (typeof entry === "string") return String(entry || "")
+        if (typeof entry === "object") return String(entry.path || "")
+        return ""
+    }
+
+    function fileNameFromPath(pathValue) {
+        const normalized = String(pathValue || "").replace(/\\/g, "/").trim()
+        if (normalized.length < 1) return ""
+        const parts = normalized.split("/")
+        return parts.length > 0 ? String(parts[parts.length - 1] || "") : normalized
+    }
+
     visible: active && !blockedByModalPopup
     z: 980
 
@@ -49,6 +63,10 @@ Item {
         : 0
     readonly property string fileCounterText: String(processedCounterValue) + " / " + String(Math.max(0, totalCount))
     readonly property int rightInfoWidth: popupStyle.importProgressRightInfoWidth
+    readonly property string queuedPreviewFileName: {
+        if (!importQueue || importQueue.length < 1) return ""
+        return fileNameFromPath(queueEntryPath(importQueue[0]))
+    }
 
     PopupStyle {
         id: popupStyle
@@ -123,7 +141,9 @@ Item {
                     reserveSpace: true
                     currentFileName: root.currentFileName.length > 0
                         ? root.currentFileName
-                        : (root.importQueue.length > 0 ? "Preparing import..." : "Finalizing...")
+                        : (root.queuedPreviewFileName.length > 0
+                            ? root.queuedPreviewFileName
+                            : (root.importQueue.length > 0 ? "Preparing import..." : "Finalizing..."))
                     totalCount: root.totalCount
                     processedCount: root.processedCounterValue
                     progressFraction: root.progressFraction

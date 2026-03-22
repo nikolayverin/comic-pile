@@ -26,11 +26,13 @@ Rectangle {
     property color textShadowColor: themeColors.uiTextShadow
     property color actionMenuBackgroundColor: themeColors.fieldFillColor
     property color actionMenuHoverColor: themeColors.uiActionHoverBackground
+    property color openingOverlayColor: themeColors.readerLoadingChipBgColor
     property bool hoverUiEnabled: true
     property bool actionMenuSuppressed: false
     property int actionMenuHoldDelayMs: 0
     property Item actionMenuBoundsItem: null
     property bool actionMenuDismissed: false
+    property bool openingInProgress: false
 
     readonly property bool coverHovered: root.hoverUiEnabled && coverHoverHandler.hovered
     readonly property bool menuHovered: root.hoverUiEnabled
@@ -42,6 +44,7 @@ Rectangle {
     readonly property bool coverHoverVisible: effectiveHover && root.readStatus !== "read" && hasReadyCover
     readonly property bool coverReadStateVisible: root.readStatus === "read" && hasReadyCover
     readonly property bool coverDefaultStateVisible: hasReadyCover
+    readonly property bool openingOverlayVisible: root.openingInProgress
     readonly property int coverWidth: 170
     readonly property int coverHeight: 260
     readonly property int coverLiftOffset: effectiveHover ? -4 : 0
@@ -155,6 +158,35 @@ Rectangle {
                     if (status === Image.Ready && root.coverSource.length > 0) {
                         root.startupCoverReady()
                     }
+                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                visible: root.openingOverlayVisible
+                color: root.openingOverlayColor
+                z: 20
+
+                ShuffleBusySpinner {
+                    id: openingIndicator
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: -14
+                    running: root.openingOverlayVisible
+                    visible: root.openingOverlayVisible
+                    width: 40
+                    height: 40
+                }
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: openingIndicator.bottom
+                    anchors.topMargin: 10
+                    text: "Opening..."
+                    color: root.textPrimary
+                    font.family: root.uiFontFamily
+                    font.pixelSize: Math.max(12, root.uiFontPixelSize)
+                    font.weight: Font.Medium
                 }
             }
         }
@@ -371,7 +403,7 @@ Rectangle {
         id: cardMouseArea
         anchors.fill: parent
         z: 1
-        enabled: root.hoverUiEnabled
+        enabled: root.hoverUiEnabled && !root.openingInProgress
         hoverEnabled: root.hoverUiEnabled
         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
         acceptedButtons: Qt.LeftButton

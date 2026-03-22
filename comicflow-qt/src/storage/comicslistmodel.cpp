@@ -4192,6 +4192,103 @@ QVariantMap ComicsListModel::importSourceAndCreateIssueEx(
     return out;
 }
 
+int ComicsListModel::requestNormalizeImportArchiveAsync(const QString &sourcePath)
+{
+    const int requestId = m_nextAsyncRequestId++;
+    auto emitLaterSingle = [this, requestId](const QVariantMap &result) {
+        QMetaObject::invokeMethod(
+            this,
+            [this, requestId, result]() {
+                emit normalizeImportArchiveFinished(requestId, result);
+            },
+            Qt::QueuedConnection
+        );
+    };
+
+    const QString normalizedSourcePath = normalizeInputFilePath(sourcePath);
+    if (normalizedSourcePath.isEmpty()) {
+        emitLaterSingle({
+            { QStringLiteral("ok"), false },
+            { QStringLiteral("code"), QStringLiteral("invalid_input") },
+            { QStringLiteral("error"), QStringLiteral("Import file path is required.") },
+            { QStringLiteral("sourcePath"), normalizedSourcePath }
+        });
+        return requestId;
+    }
+
+    const QFileInfo sourceInfo(normalizedSourcePath);
+    if (!sourceInfo.exists() || !sourceInfo.isFile()) {
+        emitLaterSingle({
+            { QStringLiteral("ok"), false },
+            { QStringLiteral("code"), QStringLiteral("file_not_found") },
+            { QStringLiteral("error"), QStringLiteral("Import file not found: %1").arg(sourcePath.trimmed()) },
+            { QStringLiteral("sourcePath"), normalizedSourcePath }
+        });
+        return requestId;
+    }
+
+    const QString extension = normalizeArchiveExtension(sourceInfo.suffix());
+    if (!isImportArchiveExtensionSupported(extension)) {
+        emitLaterSingle({
+            { QStringLiteral("ok"), false },
+            { QStringLiteral("code"), QStringLiteral("unsupported_format") },
+            { QStringLiteral("error"), QStringLiteral("Supported import formats: %1").arg(formatSupportedArchiveList()) },
+            { QStringLiteral("sourcePath"), normalizedSourcePath }
+        });
+        return requestId;
+    }
+
+    if (extension == QStringLiteral("cbz")) {
+        emitLaterSingle({
+            { QStringLiteral("ok"), true },
+            { QStringLiteral("sourcePath"), normalizedSourcePath },
+            { QStringLiteral("normalizedPath"), normalizedSourcePath },
+            { QStringLiteral("filenameHint"), sourceInfo.fileName() },
+            { QStringLiteral("temporaryFile"), false }
+        });
+        return requestId;
+    }
+
+    auto *watcher = new QFutureWatcher<QVariantMap>(this);
+    connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, requestId]() {
+        const QVariantMap result = watcher->result();
+        emit normalizeImportArchiveFinished(requestId, result);
+        watcher->deleteLater();
+    });
+
+    watcher->setFuture(QtConcurrent::run([normalizedSourcePath]() {
+        QVariantMap result;
+        const QFileInfo localSourceInfo(normalizedSourcePath);
+        const QString tempTargetPath = QDir(QDir::tempPath()).filePath(
+            QStringLiteral("comicpile-import-stage-%1.cbz")
+                .arg(QUuid::createUuid().toString(QUuid::WithoutBraces))
+        );
+
+        QString normalizeError;
+        if (!ComicArchivePacking::normalizeArchiveToCbz(
+                normalizedSourcePath,
+                tempTargetPath,
+                normalizeError)) {
+            result.insert(QStringLiteral("ok"), false);
+            result.insert(QStringLiteral("code"), QStringLiteral("archive_normalize_failed"));
+            result.insert(QStringLiteral("error"), normalizeError);
+            result.insert(QStringLiteral("sourcePath"), normalizedSourcePath);
+            result.insert(QStringLiteral("normalizedPath"), tempTargetPath);
+            result.insert(QStringLiteral("temporaryFile"), true);
+            return result;
+        }
+
+        result.insert(QStringLiteral("ok"), true);
+        result.insert(QStringLiteral("sourcePath"), normalizedSourcePath);
+        result.insert(QStringLiteral("normalizedPath"), tempTargetPath);
+        result.insert(QStringLiteral("filenameHint"), localSourceInfo.fileName());
+        result.insert(QStringLiteral("temporaryFile"), true);
+        return result;
+    }));
+
+    return requestId;
+}
+
 QVariantMap ComicsListModel::importArchiveAndCreateIssueEx(
     const QString &sourcePath,
     const QString &filenameHint,

@@ -4172,6 +4172,8 @@ ApplicationWindow {
                                     hasBookmark: parent.hasBookmark
                                     readStatus: parent.readStatus
                                     selected: root.isSelected(parent.comicId)
+                                    openingInProgress: root.readerLoading && Number(root.readerComicId || 0) === Number(parent.comicId || 0)
+                                    openingOverlayColor: root.readerLoadingChipBgColor
                                     cardColor: root.cardBg
                                     textPrimary: root.textPrimary
                                     textMuted: root.textMuted

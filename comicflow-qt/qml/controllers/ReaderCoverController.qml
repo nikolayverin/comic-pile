@@ -194,6 +194,29 @@ Item {
         root.coverByComicId = next
     }
 
+    function stripSourceRevision(source) {
+        return String(source || "").trim().replace(/[?#].*$/, "")
+    }
+
+    function cacheBustedSource(source) {
+        const text = String(source || "").trim()
+        if (text.length < 1) return ""
+        const separator = text.indexOf("?") >= 0 ? "&" : "?"
+        return text + separator + "v=" + String(Date.now())
+    }
+
+    function refreshedCoverSource(existingSource, nextSource) {
+        const normalizedNext = String(nextSource || "").trim()
+        if (normalizedNext.length < 1) return ""
+
+        const existingBase = stripSourceRevision(existingSource)
+        const nextBase = stripSourceRevision(normalizedNext)
+        if (existingBase.length > 0 && existingBase === nextBase) {
+            return cacheBustedSource(normalizedNext)
+        }
+        return normalizedNext
+    }
+
     function requestIssueThumbnail(comicId) {
         if (comicId < 1 || !libraryModelRef) return
         libraryModelRef.requestIssueThumbnailAsync(comicId)
@@ -832,7 +855,7 @@ Item {
 
             if (thumbnail) {
                 if (String(error).length === 0 && String(imageSource).length > 0) {
-                    setCoverSource(comicId, imageSource)
+                    setCoverSource(comicId, refreshedCoverSource(coverSourceForComic(comicId), imageSource))
                 }
             }
         }

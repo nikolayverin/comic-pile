@@ -100,6 +100,7 @@ public:
         const QString &filenameHint,
         const QVariantMap &values
     );
+    Q_INVOKABLE int requestNormalizeImportArchiveAsync(const QString &sourcePath);
     Q_INVOKABLE QVariantMap importArchiveAndCreateIssueEx(
         const QString &sourcePath,
         const QString &filenameHint,
@@ -253,6 +254,7 @@ signals:
         const QString &imageSource,
         const QString &error
     );
+    void normalizeImportArchiveFinished(int requestId, QVariantMap result);
     void comicVineAutofillFinished(int requestId, QVariantMap result);
     void comicVineApiKeyValidationFinished(int requestId, QVariantMap result);
 

@@ -4,6 +4,8 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QElapsedTimer>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 #include <QImageReader>
@@ -78,6 +80,36 @@ QString quotePowerShellLiteral(const QString &value)
     return escaped;
 }
 
+bool waitForProcessWithUiPumping(
+    QProcess &process,
+    int timeoutMs,
+    QString &errorText,
+    const QString &timeoutMessage
+)
+{
+    QElapsedTimer timer;
+    timer.start();
+
+    while (process.state() != QProcess::NotRunning) {
+        const int remainingMs = timeoutMs - static_cast<int>(timer.elapsed());
+        if (remainingMs <= 0) {
+            process.kill();
+            process.waitForFinished(5000);
+            errorText = timeoutMessage;
+            return false;
+        }
+
+        const int waitSliceMs = std::min(50, remainingMs);
+        if (process.waitForFinished(waitSliceMs)) {
+            break;
+        }
+
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, waitSliceMs);
+    }
+
+    return true;
+}
+
 bool runPowerShellScript(
     const QString &script,
     QString &stdOut,
@@ -104,10 +136,11 @@ bool runPowerShellScript(
         return false;
     }
 
-    if (!process.waitForFinished(120000)) {
-        process.kill();
-        process.waitForFinished(5000);
-        errorText = QStringLiteral("PowerShell operation timed out.");
+    if (!waitForProcessWithUiPumping(
+            process,
+            120000,
+            errorText,
+            QStringLiteral("PowerShell operation timed out."))) {
         return false;
     }
 
@@ -244,10 +277,11 @@ bool runExternalProcess(
         return false;
     }
 
-    if (!process.waitForFinished(timeoutMs)) {
-        process.kill();
-        process.waitForFinished(5000);
-        errorText = QStringLiteral("Process timed out: %1").arg(program);
+    if (!waitForProcessWithUiPumping(
+            process,
+            timeoutMs,
+            errorText,
+            QStringLiteral("Process timed out: %1").arg(program))) {
         return false;
     }
 

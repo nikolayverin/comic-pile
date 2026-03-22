@@ -19,13 +19,16 @@ ColumnLayout {
     readonly property real clampedFraction: Math.max(0, Math.min(1, progressFraction))
     readonly property int progressPercent: Math.round(clampedFraction * 100)
     readonly property int rightInfoWidth: popupStyle.importProgressRightInfoWidth
+    readonly property bool singleItemMode: active && totalCount === 1
     readonly property bool indeterminate: active && totalCount <= 1
     readonly property string fileCounterText: active && !indeterminate && totalCount > 0
         ? String(Math.max(0, Math.min(totalCount, processedCount))) + " / " + String(Math.max(0, totalCount))
         : ""
     readonly property string rightStatusText: !active
         ? ""
-        : (indeterminate ? "Working..." : (String(progressPercent) + "%"))
+        : (indeterminate
+            ? (singleItemMode ? "Importing..." : "Working...")
+            : (String(progressPercent) + "%"))
 
     visible: reserveSpace || active
     spacing: popupStyle.dialogPlainTextSpacing

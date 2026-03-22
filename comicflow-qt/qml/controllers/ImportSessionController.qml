@@ -48,6 +48,8 @@ Item {
 
     property var importBatchRollbackOps: []
     property var importPendingOldFileDeletes: []
+    property int importArchiveNormalizationRequestId: -1
+    property var importPendingStepContext: ({})
 
     function root() {
         return rootObject
@@ -175,6 +177,84 @@ Item {
         const resolvedSizeBytes = Math.max(0, Number(sizeBytes || 0))
         if (resolvedSizeBytes < 1) return
         importProcessedBytes = Math.min(importTotalBytes, importProcessedBytes + resolvedSizeBytes)
+    }
+
+    function clearPendingImportStepContext() {
+        importArchiveNormalizationRequestId = -1
+        importPendingStepContext = ({})
+    }
+
+    function cleanupTemporaryNormalizedArchive(pathValue, temporaryFile) {
+        const normalizedPath = String(pathValue || "").trim()
+        if (!Boolean(temporaryFile) || normalizedPath.length < 1 || !libraryModelRef) return
+        libraryModelRef.deleteFileAtPath(normalizedPath)
+    }
+
+    function finalizeImportStepResult(sourcePath, queuedFileSizeBytes, result, cleanupPath, cleanupIsTemporary, stepContext) {
+        const effectiveResult = result || ({})
+        const context = stepContext || ({})
+        const ok = Boolean(effectiveResult.ok)
+        if (!ok) {
+            const code = String(effectiveResult.code || "runtime_error")
+            const errorText = String(effectiveResult.error || "Import failed.")
+            const duplicateTier = String(effectiveResult.duplicateTier || "").trim().toLowerCase()
+            if ((code === "duplicate" || code === "restore_review_required")
+                && Number(effectiveResult.existingId || 0) > 0) {
+                if (code === "duplicate"
+                    && duplicateTier === "exact"
+                    && (importConflictBatchAction === "skip_all" || importConflictBatchAction === "replace_all")) {
+                    const duplicateContext = createImportConflictContext(
+                        sourcePath,
+                        String(effectiveResult.sourceType || "archive"),
+                        String(context.seriesOverride || ""),
+                        String(context.filenameHint || ""),
+                        cloneVariantMap(context.importValues),
+                        effectiveResult
+                    )
+                    applyImportConflictChoice(importConflictBatchAction, duplicateContext)
+                    cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
+                    if (importQueue.length < 1) {
+                        finishImportBatch(false)
+                    } else {
+                        importBatchTimer.start()
+                    }
+                    return
+                }
+
+                openImportConflictDialog(
+                    sourcePath,
+                    String(effectiveResult.sourceType || "archive"),
+                    String(context.seriesOverride || ""),
+                    String(context.filenameHint || ""),
+                    cloneVariantMap(context.importValues),
+                    effectiveResult
+                )
+                cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
+                return
+            }
+
+            pushImportFailure(sourcePath, errorText, code)
+            advanceCompletedImportBytes(queuedFileSizeBytes)
+            cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
+            if (importQueue.length < 1) {
+                finishImportBatch(false)
+            } else {
+                importBatchTimer.start()
+            }
+            return
+        }
+
+        importImportedCount += 1
+        rememberLastImportComicId(Number(effectiveResult.comicId || 0))
+        registerBatchRollbackOp(effectiveResult, "", { newFilePath: String(effectiveResult.filePath || "") })
+        advanceCompletedImportBytes(queuedFileSizeBytes)
+        cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
+
+        if (importQueue.length < 1) {
+            finishImportBatch(false)
+        } else {
+            importBatchTimer.start()
+        }
     }
 
     function registerBatchRollbackOp(importResult, overrideType, extra) {
@@ -872,8 +952,8 @@ Item {
         importImportedCount = 0
         importErrorCount = 0
         importCancelRequested = false
-        importCurrentPath = ""
-        importCurrentFileName = ""
+        importCurrentPath = String((queue[0] || {}).path || "")
+        importCurrentFileName = fileNameFromPath(importCurrentPath)
         importBatchRollbackOps = []
         importPendingOldFileDeletes = []
         importPausedForConflict = false
@@ -892,6 +972,7 @@ Item {
         importConflictProgressTotalCount = 0
         importErrors = []
         importFailedPaths = []
+        clearPendingImportStepContext()
         importBatchTimer.start()
         return true
     }
@@ -935,6 +1016,7 @@ Item {
         importConflictProgressCurrentFileName = ""
         importConflictProgressProcessedCount = 0
         importConflictProgressTotalCount = 0
+        clearPendingImportStepContext()
 
         if (cancelled === true) {
             rollbackCurrentImportBatch()
@@ -1051,46 +1133,32 @@ Item {
                 finishImportBatch(false)
                 return
             }
-
-            const result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, filenameHint, importValues)
-            if (!Boolean((result || {}).ok)) {
-                const code = String((result || {}).code || "").toLowerCase()
-                const errorText = String((result || {}).error || "Import failed.")
-                const duplicateTier = String((result || {}).duplicateTier || "").trim().toLowerCase()
-                if ((code === "duplicate" || code === "restore_review_required")
-                    && Number((result || {}).existingId || 0) > 0) {
-                    if (code === "duplicate"
-                        && duplicateTier === "exact"
-                        && (importConflictBatchAction === "skip_all" || importConflictBatchAction === "replace_all")) {
-                        const duplicateContext = createImportConflictContext(
-                            sourcePath,
-                            sourceType,
-                            seriesOverride,
-                            filenameHint,
-                            importValues,
-                            result
-                        )
-                        applyImportConflictChoice(importConflictBatchAction, duplicateContext)
-                        if (importQueue.length < 1) {
-                            finishImportBatch(false)
-                        }
-                        return
-                    }
-                    openImportConflictDialog(sourcePath, sourceType, seriesOverride, filenameHint, importValues, result)
+            if (sourceType === "archive" && typeof libraryModelRef.requestNormalizeImportArchiveAsync === "function") {
+                importPendingStepContext = {
+                    sourcePath: sourcePath,
+                    sourceType: sourceType,
+                    seriesOverride: seriesOverride,
+                    filenameHint: filenameHint,
+                    importValues: cloneVariantMap(importValues),
+                    queuedFileSizeBytes: queuedFileSizeBytes
+                }
+                importArchiveNormalizationRequestId = Number(
+                    libraryModelRef.requestNormalizeImportArchiveAsync(sourcePath) || -1
+                )
+                if (importArchiveNormalizationRequestId > 0) {
+                    importBatchTimer.stop()
                     return
                 }
-                pushImportFailure(sourcePath, errorText, code)
-                advanceCompletedImportBytes(queuedFileSizeBytes)
-            } else {
-                importImportedCount += 1
-                rememberLastImportComicId(Number((result || {}).comicId || 0))
-                registerBatchRollbackOp(result, "", { newFilePath: String((result || {}).filePath || "") })
-                advanceCompletedImportBytes(queuedFileSizeBytes)
+                clearPendingImportStepContext()
             }
 
-            if (importQueue.length < 1) {
-                finishImportBatch(false)
-            }
+            const result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, filenameHint, importValues)
+            finalizeImportStepResult(sourcePath, queuedFileSizeBytes, result, "", false, ({
+                sourceType: sourceType,
+                seriesOverride: seriesOverride,
+                filenameHint: filenameHint,
+                importValues: cloneVariantMap(importValues)
+            }))
         } catch (e) {
             pushImportFailure("[runtime]", "Import runtime error: " + String(e), "runtime_error")
             finishImportBatch(false)
@@ -1191,6 +1259,76 @@ Item {
 
     function importArchivePaths(paths, options) {
         return importSourceEntries(paths, options)
+    }
+
+    Connections {
+        target: libraryModelRef
+
+        function onNormalizeImportArchiveFinished(requestId, result) {
+            if (Number(requestId || -1) !== Number(importArchiveNormalizationRequestId || -1)) return
+
+            const context = importPendingStepContext || ({})
+            clearPendingImportStepContext()
+
+            const sourcePath = String(context.sourcePath || "")
+            const queuedFileSizeBytes = Math.max(0, Number(context.queuedFileSizeBytes || 0))
+            const normalizationResult = result || ({})
+            const normalizedPath = String(normalizationResult.normalizedPath || "")
+            const temporaryFile = Boolean(normalizationResult.temporaryFile)
+
+            if (importCancelRequested) {
+                cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
+                finishImportBatch(true)
+                return
+            }
+
+            if (!Boolean(normalizationResult.ok)) {
+                pushImportFailure(
+                    sourcePath,
+                    String(normalizationResult.error || "Import preparation failed."),
+                    String(normalizationResult.code || "archive_normalize_failed")
+                )
+                advanceCompletedImportBytes(queuedFileSizeBytes)
+                cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
+                if (importQueue.length < 1) {
+                    finishImportBatch(false)
+                } else {
+                    importBatchTimer.start()
+                }
+                return
+            }
+
+            if (!libraryModelRef) {
+                pushImportFailure(sourcePath, "Import model is unavailable.", "runtime_error")
+                advanceCompletedImportBytes(queuedFileSizeBytes)
+                cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
+                finishImportBatch(false)
+                return
+            }
+
+            const effectiveFilenameHint = String(context.filenameHint || "").trim().length > 0
+                ? String(context.filenameHint || "").trim()
+                : String(normalizationResult.filenameHint || fileNameFromPath(sourcePath))
+            const importValues = cloneVariantMap(context.importValues)
+            importValues.importHistorySourcePath = sourcePath
+            importValues.importHistorySourceType = String(context.sourceType || "archive")
+            importValues.importHistorySourceLabel = fileNameFromPath(sourcePath)
+
+            const importResult = libraryModelRef.importSourceAndCreateIssueEx(
+                normalizedPath,
+                "archive",
+                effectiveFilenameHint,
+                importValues
+            )
+            finalizeImportStepResult(
+                sourcePath,
+                queuedFileSizeBytes,
+                importResult,
+                normalizedPath,
+                temporaryFile,
+                context
+            )
+        }
     }
 
     Timer {
