@@ -12,23 +12,14 @@ Item {
     property var readerDialog: null
     property var appSettingsRef: null
     property var issuesFlick: null
-    property bool popupOpenPending: false
     property int pendingReaderStartOverrideComicId: -1
     property int pendingReaderStartOverridePageIndex: -1
     property int pendingReaderPersistGuardComicId: -1
     property int pendingReaderPersistGuardPageIndex: -1
-    readonly property int popupRevealDelayMs: 24
 
     function normalizedBookmarkPageIndex(value) {
         const parsed = Number(value)
         return isNaN(parsed) ? -1 : parsed
-    }
-
-    Timer {
-        id: popupRevealTimer
-        interval: controller.popupRevealDelayMs
-        repeat: false
-        onTriggered: controller.flushPendingPopupOpen()
     }
 
     ReaderDisplayModeController {
@@ -82,56 +73,8 @@ Item {
         readerDisplayModeController.setReaderViewMode(mode)
     }
 
-    function hasPreparedReaderContent() {
-        const root = rootObject
-        if (!root) return false
-
-        if (String(root.readerImageSource || "").length > 0) {
-            return true
-        }
-
-        const pages = Array.isArray(root.readerDisplayPages) ? root.readerDisplayPages : []
-        for (let i = 0; i < pages.length; i += 1) {
-            if (String((pages[i] || {}).imageSource || "").length > 0) {
-                return true
-            }
-        }
-        return false
-    }
-
-    function isReaderPopupReadyToReveal() {
-        const root = rootObject
-        if (!root) return false
-        if (!popupOpenPending) return false
-        if (Number(root.readerComicId || 0) < 1) return false
-        if (Boolean(root.readerLoading)) return false
-        if (!hasPreparedReaderContent()) return false
-
-        if (readerDisplayModeController.currentReaderViewMode() === "two_page"
-            && Number(readerDisplayModeController.metricsRequestId || -1) > 0) {
-            return false
-        }
-
-        return true
-    }
-
-    function flushPendingPopupOpen() {
-        if (!isReaderPopupReadyToReveal()) return
-        if (!readerDialog || !popupControllerRef) return
-
-        popupOpenPending = false
-        popupControllerRef.openExclusivePopup(readerDialog)
-    }
-
-    function schedulePreparedPopupReveal() {
-        if (!popupOpenPending) return
-        if (!isReaderPopupReadyToReveal()) return
-        popupRevealTimer.restart()
-    }
-
     function clearPendingPopupOpen() {
-        popupOpenPending = false
-        popupRevealTimer.stop()
+        // Reader popup is revealed immediately. No deferred open state to clear.
     }
 
     function clearPendingReaderStartOverride() {
@@ -392,6 +335,9 @@ Item {
             } else {
                 root.readerUiFullscreen = shouldOpenFullscreen
             }
+            if (readerDialog && popupControllerRef) {
+                popupControllerRef.openExclusivePopup(readerDialog)
+            }
         }
         const normalizedStartPageOverride = Number(startPageOverride)
         if (!isNaN(normalizedStartPageOverride) && normalizedStartPageOverride >= 0) {
@@ -409,7 +355,6 @@ Item {
         root.readerBookmarkComicId = -1
         root.readerFavoriteActive = false
         root.readerDisplayPages = []
-        popupOpenPending = Boolean(openPopup)
         readerDisplayModeController.beginPageMetricsRequest(root.readerComicId)
     }
 

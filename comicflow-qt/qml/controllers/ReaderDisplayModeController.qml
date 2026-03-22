@@ -320,9 +320,6 @@ Item {
         displayRequestMeta = nextRequestMeta
         if (Object.keys(nextRequestMeta).length < 1) {
             root.readerLoading = false
-            if (readerCoverControllerRef && typeof readerCoverControllerRef.schedulePreparedPopupReveal === "function") {
-                readerCoverControllerRef.schedulePreparedPopupReveal()
-            }
         }
     }
 
@@ -404,16 +401,10 @@ Item {
                 pageMetrics = []
                 twoPageSpreads = []
                 twoPageLayoutReady = false
-                if (readerCoverControllerRef && typeof readerCoverControllerRef.schedulePreparedPopupReveal === "function") {
-                    readerCoverControllerRef.schedulePreparedPopupReveal()
-                }
                 return
             }
 
             applyReaderPageMetrics(comicId, (result || {}).pageMetrics || [])
-            if (readerCoverControllerRef && typeof readerCoverControllerRef.schedulePreparedPopupReveal === "function") {
-                readerCoverControllerRef.schedulePreparedPopupReveal()
-            }
         }
 
         function onPageImageReady(requestId, comicId, pageIndex, imageSource, error, thumbnail) {
@@ -445,9 +436,6 @@ Item {
                     }
                     root.readerError = ""
                     root.readerLoading = false
-                    if (readerCoverControllerRef && typeof readerCoverControllerRef.schedulePreparedPopupReveal === "function") {
-                        readerCoverControllerRef.schedulePreparedPopupReveal()
-                    }
                     return
                 }
                 if (readerDialogRef
@@ -484,9 +472,6 @@ Item {
             }
 
             root.readerLoading = false
-            if (readerCoverControllerRef && typeof readerCoverControllerRef.schedulePreparedPopupReveal === "function") {
-                readerCoverControllerRef.schedulePreparedPopupReveal()
-            }
             if (readerCoverControllerRef && typeof readerCoverControllerRef.persistReaderProgress === "function") {
                 readerCoverControllerRef.persistReaderProgress(false)
             }
