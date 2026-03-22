@@ -252,7 +252,7 @@ ApplicationWindow {
     property bool libraryLoading: false
     property bool cbrBackendAvailable: false
     property string cbrBackendMissingMessage: ""
-    property string pendingLibraryDataRelocationPath: String(libraryFacade.pendingDataRootRelocationPath() || "")
+    property string pendingLibraryDataRelocationPath: String(libraryModel.pendingDataRootRelocationPath() || "")
     property var importSeriesKeysBeforeBatch: ({})
     property bool importFocusNewSeriesAfterReload: false
     property string pendingImportPostReloadAction: ""
@@ -279,7 +279,6 @@ ApplicationWindow {
         id: readerCoverController
         rootObject: root
         libraryModelRef: libraryModel
-        libraryFacadeRef: libraryFacade
         popupControllerRef: popupController
         readerDialog: readerDialog
         appSettingsRef: appSettingsController
@@ -295,15 +294,10 @@ ApplicationWindow {
     HeroSeriesController {
         id: heroSeriesController
         rootObject: root
-        libraryFacadeRef: libraryFacade
+        libraryModelRef: libraryModel
         readerCoverControllerRef: readerCoverController
         startupControllerRef: startupController
         uiTokensRef: uiTokens
-    }
-
-    LibraryFacade {
-        id: libraryFacade
-        libraryModelRef: libraryModel
     }
 
     ImportController {
@@ -331,7 +325,6 @@ ApplicationWindow {
         id: seriesHeaderController
         rootObject: root
         libraryModelRef: libraryModel
-        libraryFacadeRef: libraryFacade
         heroSeriesControllerRef: heroSeriesController
         popupControllerRef: popupController
         startupControllerRef: startupController
@@ -610,7 +603,7 @@ ApplicationWindow {
     function fileSizeBytes(pathValue) {
         const normalized = normalizeImportPath(pathValue)
         if (normalized.length < 1) return 0
-        const value = Number(libraryFacade.fileSizeBytes(normalized))
+        const value = Number(libraryModel.fileSizeBytes(normalized))
         if (!isFinite(value) || value <= 0) return 0
         return Math.floor(value)
     }
@@ -655,7 +648,7 @@ ApplicationWindow {
         }
 
         if (normalizedSources.length < 1) return []
-        return libraryFacade.expandImportSources(normalizedSources, true)
+        return libraryModel.expandImportSources(normalizedSources, true)
     }
 
     function startImportFromSourcePaths(paths, options, emptyMessage) {
@@ -703,7 +696,7 @@ ApplicationWindow {
     }
 
     function reloadLibraryFromSettings() {
-        libraryFacade.reload()
+        libraryModel.reload()
     }
 
     function scheduleLibraryDataRelocationFromSettings() {
@@ -712,10 +705,10 @@ ApplicationWindow {
             || libraryModel.dataRoot
             || ""
         )
-        const selectedPath = String(libraryFacade.browseDataRootFolder(initialPath) || "")
+        const selectedPath = String(libraryModel.browseDataRootFolder(initialPath) || "")
         if (selectedPath.length < 1) return
 
-        const result = libraryFacade.scheduleDataRootRelocation(selectedPath)
+        const result = libraryModel.scheduleDataRootRelocation(selectedPath)
         if (!Boolean((result || {}).ok)) {
             popupController.showActionResult(
                 String((result || {}).error || "Failed to schedule the new library data location."),
@@ -779,7 +772,7 @@ ApplicationWindow {
             return
         }
 
-        const saveError = String(libraryFacade.saveReaderProgress(entry.comicId, entry.pageValue) || "")
+        const saveError = String(libraryModel.saveReaderProgress(entry.comicId, entry.pageValue) || "")
         if (saveError.length < 1) {
             delete entries[key]
             order.shift()
@@ -821,13 +814,13 @@ ApplicationWindow {
             return
         }
 
-        const issues = libraryFacade.issuesForSeries(normalizedSeriesKey, "__all__", "all", "")
+        const issues = libraryModel.issuesForSeries(normalizedSeriesKey, "__all__", "all", "")
         for (let i = 0; i < issues.length; i += 1) {
             const issue = issues[i] || {}
             const comicId = Number(issue.id || 0)
             if (comicId < 1) continue
 
-            const metadata = libraryFacade.loadComicMetadata(comicId)
+            const metadata = libraryModel.loadComicMetadata(comicId)
             const filePath = String((metadata || {}).filePath || "").trim()
             if (filePath.length < 1) continue
 
@@ -852,7 +845,7 @@ ApplicationWindow {
     }
 
     function archiveUnsupportedReason(pathValue) {
-        return String(libraryFacade.importArchiveUnsupportedReason(String(pathValue || "")) || "")
+        return String(libraryModel.importArchiveUnsupportedReason(String(pathValue || "")) || "")
     }
 
     function importErrorMatchesAny(lowerText, patterns) {
@@ -963,18 +956,18 @@ ApplicationWindow {
     }
 
     function refreshCbrSupportState() {
-        cbrBackendAvailable = libraryFacade.isCbrBackendAvailable()
-        cbrBackendMissingMessage = libraryFacade.cbrBackendMissingMessage()
-        sevenZipConfiguredPath = String(libraryFacade.configuredSevenZipExecutablePath() || "")
-        sevenZipEffectivePath = String(libraryFacade.effectiveSevenZipExecutablePath() || "")
+        cbrBackendAvailable = libraryModel.isCbrBackendAvailable()
+        cbrBackendMissingMessage = libraryModel.cbrBackendMissingMessage()
+        sevenZipConfiguredPath = String(libraryModel.configuredSevenZipExecutablePath() || "")
+        sevenZipEffectivePath = String(libraryModel.effectiveSevenZipExecutablePath() || "")
     }
 
     function chooseSevenZipPathFromSettings() {
         const initialPath = String(sevenZipConfiguredPath || sevenZipEffectivePath || "")
-        const selectedPath = String(libraryFacade.browseArchiveFile(initialPath) || "")
+        const selectedPath = String(libraryModel.browseArchiveFile(initialPath) || "")
         if (selectedPath.length < 1) return
 
-        const applyError = String(libraryFacade.setSevenZipExecutablePath(selectedPath) || "").trim()
+        const applyError = String(libraryModel.setSevenZipExecutablePath(selectedPath) || "").trim()
         if (applyError.length > 0) {
             popupController.showActionResult(applyError, true)
             return
@@ -992,7 +985,7 @@ ApplicationWindow {
         const currentPath = String(
             appSettingsController.settingValue("appearance_library_background_custom_image_path", "") || ""
         )
-        const selectedPath = String(libraryFacade.browseImageFile(currentPath) || "")
+        const selectedPath = String(libraryModel.browseImageFile(currentPath) || "")
         if (selectedPath.length < 1) return
 
         const limitBytes = libraryBackgroundCustomImageMode === "Tile"
@@ -1035,7 +1028,7 @@ ApplicationWindow {
 
     function quickAddFilesFromDialog() {
         if (importInProgress) return
-        const selected = libraryFacade.browseArchiveFiles("")
+        const selected = libraryModel.browseArchiveFiles("")
         if (!selected || selected.length < 1) return
         startImportFromSourcePaths(
             selected,
@@ -1046,7 +1039,7 @@ ApplicationWindow {
 
     function quickAddFilesForSeries(seriesTitle) {
         if (importInProgress) return
-        const selected = libraryFacade.browseArchiveFiles("")
+        const selected = libraryModel.browseArchiveFiles("")
         if (!selected || selected.length < 1) return
         const overrideSeries = String(seriesTitle || "").trim()
         if (overrideSeries.length > 0) {
@@ -1071,22 +1064,22 @@ ApplicationWindow {
             return
         }
 
-        const loaded = libraryFacade.loadComicMetadata(comicId)
+        const loaded = libraryModel.loadComicMetadata(comicId)
         if (loaded && loaded.error) {
             return
         }
 
         const currentFilePath = String((loaded || {}).filePath || "")
-        const selectedPath = libraryFacade.browseArchiveFile(currentFilePath)
+        const selectedPath = libraryModel.browseArchiveFile(currentFilePath)
         if (selectedPath.length < 1) return
 
-        const unsupportedReason = String(libraryFacade.importArchiveUnsupportedReason(selectedPath) || "")
+        const unsupportedReason = String(libraryModel.importArchiveUnsupportedReason(selectedPath) || "")
         if (unsupportedReason.length > 0) {
             popupController.showActionResult(unsupportedReason, true)
             return
         }
 
-        const result = libraryFacade.replaceComicFileFromSourceEx(
+        const result = libraryModel.replaceComicFileFromSourceEx(
             comicId,
             selectedPath,
             "archive",
@@ -1107,7 +1100,7 @@ ApplicationWindow {
 
     function quickAddFolderFromDialog() {
         if (importInProgress) return
-        const selectedFolder = String(libraryFacade.browseArchiveFolder("") || "")
+        const selectedFolder = String(libraryModel.browseArchiveFolder("") || "")
         if (selectedFolder.length < 1) return
         startImportFromSourcePaths(
             [selectedFolder],
@@ -1117,7 +1110,7 @@ ApplicationWindow {
     }
 
     function captureImportSeriesFocusBaseline() {
-        const groups = libraryFacade.seriesGroups()
+        const groups = libraryModel.seriesGroups()
         const snapshot = {}
         for (let i = 0; i < groups.length; i += 1) {
             const key = String(((groups[i] || {}).seriesKey) || "").trim()
@@ -1152,7 +1145,7 @@ ApplicationWindow {
 
     function applyConfiguredLaunchViewCore(modeLabel) {
         const mode = String(modeLabel || "Remember last state")
-        const lastImportCount = libraryFacade.quickFilterIssueCount("last_import", lastImportSessionComicIds)
+        const lastImportCount = libraryModel.quickFilterIssueCount("last_import", lastImportSessionComicIds)
 
         if (mode === "Last import" && lastImportCount > 0) {
             sidebarQuickFilterKey = "last_import"
@@ -1257,9 +1250,9 @@ ApplicationWindow {
     }
 
     function refreshQuickFilterCounts() {
-        quickFilterLastImportCount = libraryFacade.quickFilterIssueCount("last_import", lastImportSessionComicIds)
-        quickFilterFavoritesCount = libraryFacade.quickFilterIssueCount("favorites", lastImportSessionComicIds)
-        quickFilterBookmarksCount = libraryFacade.quickFilterIssueCount("bookmarks", lastImportSessionComicIds)
+        quickFilterLastImportCount = libraryModel.quickFilterIssueCount("last_import", lastImportSessionComicIds)
+        quickFilterFavoritesCount = libraryModel.quickFilterIssueCount("favorites", lastImportSessionComicIds)
+        quickFilterBookmarksCount = libraryModel.quickFilterIssueCount("bookmarks", lastImportSessionComicIds)
     }
 
     function sidebarQuickFilterCount(filterKey) {
@@ -1342,7 +1335,7 @@ ApplicationWindow {
     }
 
     function refreshSeriesList() {
-        const groups = libraryFacade.seriesGroups().slice(0)
+        const groups = libraryModel.seriesGroups().slice(0)
         if (
             startupSnapshotApplied
                 && startupHydrationInProgress
@@ -1457,7 +1450,7 @@ ApplicationWindow {
     function refreshVolumeList() {
         const previousKey = selectedVolumeKey
         const groups = selectedSeriesKey.length > 0
-            ? libraryFacade.volumeGroupsForSeries(selectedSeriesKey)
+            ? libraryModel.volumeGroupsForSeries(selectedSeriesKey)
             : []
 
         volumeListModel.clear()
@@ -1510,7 +1503,7 @@ ApplicationWindow {
 
     function refreshQuickFilterGridData(shouldPreserveSplitScroll, preservedSplitScroll) {
         const activeQuickFilterKey = String(sidebarQuickFilterKey || "").trim().toLowerCase()
-        issuesGridData = libraryFacade.issuesForQuickFilter(activeQuickFilterKey, lastImportSessionComicIds)
+        issuesGridData = libraryModel.issuesForQuickFilter(activeQuickFilterKey, lastImportSessionComicIds)
         primeVisibleIssueCoverSourcesFromCache()
         if (startupReconcileCompleted || !startupSnapshotApplied) {
             warmVisibleIssueThumbnails()
@@ -1533,7 +1526,7 @@ ApplicationWindow {
             return
         }
 
-        const liveIssues = libraryFacade.issuesForSeries(
+        const liveIssues = libraryModel.issuesForSeries(
             selectedSeriesKey,
             selectedVolumeKey,
             libraryReadStatusFilter,
@@ -1550,7 +1543,7 @@ ApplicationWindow {
         ) {
             startupSnapshotLiveReloadRequested = true
             startupController.startupLog("refreshIssuesGridData request live reload for key=" + String(selectedSeriesKey))
-            libraryFacade.reload()
+            libraryModel.reload()
         }
         if (startupSnapshotApplied && startupHydrationInProgress) {
             if (liveIssues.length < 1 && issuesGridData.length > 0) {
@@ -1743,7 +1736,7 @@ ApplicationWindow {
 
     function libraryStateVisible() {
         if (startupHydrationInProgress) return false
-        if (libraryFacade.lastError.length > 0) return true
+        if (libraryModel.lastError.length > 0) return true
         if (!startupReconcileCompleted) return false
         if (seriesListModel.count < 1) return true
         if (selectedSeriesKey.length < 1) return true
@@ -1751,10 +1744,10 @@ ApplicationWindow {
     }
 
     function openMetadataEditor(comic) {
-        let loaded = libraryFacade.loadComicMetadata(comic.id)
+        let loaded = libraryModel.loadComicMetadata(comic.id)
         if (loaded && loaded.error) {
-            libraryFacade.reload()
-            loaded = libraryFacade.loadComicMetadata(comic.id)
+            libraryModel.reload()
+            loaded = libraryModel.loadComicMetadata(comic.id)
         }
         if (loaded && loaded.error) {
             editingComic = null
@@ -1774,7 +1767,7 @@ ApplicationWindow {
         }
 
         const draft = draftState || metadataDialog.currentState()
-        const result = libraryFacade.updateComicMetadata(
+        const result = libraryModel.updateComicMetadata(
             editingComic.id,
             draft
         )
@@ -1791,7 +1784,7 @@ ApplicationWindow {
     function buildIssueMetadataSuggestion(draftState) {
         if (!editingComic) return null
         const draft = draftState || metadataDialog.currentState()
-        const suggestion = libraryFacade.issueMetadataSuggestion(draft, Number(editingComic.id || 0)) || {}
+        const suggestion = libraryModel.issueMetadataSuggestion(draft, Number(editingComic.id || 0)) || {}
         return Object.keys(suggestion).length > 0 ? suggestion : null
     }
 
@@ -1948,12 +1941,12 @@ ApplicationWindow {
         } else {
             editingSeriesTitle = String(seriesTitle || selectedSeriesTitle || "").trim()
             if (editingSeriesTitle.length < 1) {
-                editingSeriesTitle = String(libraryFacade.groupTitleForKey(key) || "")
+                editingSeriesTitle = String(libraryModel.groupTitleForKey(key) || "")
             }
         }
 
-        const rows = libraryFacade.issuesForSeries(key, "__all__", "all", "")
-        const storedSeriesMetadata = multiSelected ? {} : (libraryFacade.seriesMetadataForKey(key) || {})
+        const rows = libraryModel.issuesForSeries(key, "__all__", "all", "")
+        const storedSeriesMetadata = multiSelected ? {} : (libraryModel.seriesMetadataForKey(key) || {})
         let seedSeries = ""
         let seedVolume = String(storedSeriesMetadata.volume || "").trim()
         let seedSeriesTitle = String(storedSeriesMetadata.seriesTitle || "").trim()
@@ -2069,7 +2062,7 @@ ApplicationWindow {
         const volumeValue = String(seriesMetaVolumeField.text || "").trim()
         const seriesRawValue = String(seriesMetaSeriesField.text || "").trim()
         const seriesValue = normalizeSeriesNameForSave(seriesRawValue, volumeValue)
-        const suggestion = libraryFacade.seriesMetadataSuggestion({
+        const suggestion = libraryModel.seriesMetadataSuggestion({
             series: seriesValue,
             seriesTitle: String(seriesMetaTitleField.text || "").trim(),
             summary: String(seriesMetaSummaryField.text || "").trim(),
@@ -2164,12 +2157,12 @@ ApplicationWindow {
         const fallback = String(fallbackKey || "").trim()
         if (targetId < 1) return fallback
 
-        const groups = libraryFacade.seriesGroups()
+        const groups = libraryModel.seriesGroups()
         for (let i = 0; i < groups.length; i += 1) {
             const group = groups[i] || {}
             const groupKey = String(group.seriesKey || "").trim()
             if (groupKey.length < 1) continue
-            const rows = libraryFacade.issuesForSeries(groupKey, "__all__", "all", "")
+            const rows = libraryModel.issuesForSeries(groupKey, "__all__", "all", "")
             for (let j = 0; j < rows.length; j += 1) {
                 const id = Number((rows[j] || {}).id || 0)
                 if (id === targetId) {
@@ -2198,7 +2191,7 @@ ApplicationWindow {
         const leadIssueByKey = ({})
         for (let k = 0; k < normalizedKeys.length; k += 1) {
             const seriesKey = normalizedKeys[k]
-            const issues = libraryFacade.issuesForSeries(seriesKey, "__all__", "all", "")
+            const issues = libraryModel.issuesForSeries(seriesKey, "__all__", "all", "")
             for (let i = 0; i < issues.length; i += 1) {
                 const id = Number((issues[i] || {}).id || 0)
                 if (id > 0) {
@@ -2295,7 +2288,7 @@ ApplicationWindow {
             applyMap.ageRating = true
         }
 
-        const result = libraryFacade.bulkUpdateMetadata(dedupIds, values, applyMap)
+        const result = libraryModel.bulkUpdateMetadata(dedupIds, values, applyMap)
         if (result.length > 0) {
             startupController.startupLog("seriesDialog bulkUpdate error: " + result)
             seriesMetaDialog.errorText = result
@@ -2304,7 +2297,7 @@ ApplicationWindow {
 
         if (!multiMode) {
             const verifyId = Number(dedupIds[0] || 0)
-            const verify = libraryFacade.loadComicMetadata(verifyId)
+            const verify = libraryModel.loadComicMetadata(verifyId)
             if (verify && verify.error) {
                 startupController.startupLog("seriesDialog verify error: " + String(verify.error || "unknown"))
                 seriesMetaDialog.errorText = String(verify.error || "Save verification failed.")
@@ -2333,10 +2326,10 @@ ApplicationWindow {
             }
 
             const resolvedSeriesKey = findSeriesKeyForIssueId(verifyId, key)
-            const resolvedSeriesTitle = String(libraryFacade.groupTitleForKey(resolvedSeriesKey) || "").trim()
+            const resolvedSeriesTitle = String(libraryModel.groupTitleForKey(resolvedSeriesKey) || "").trim()
             const targetSeriesKey = String(resolvedSeriesKey || key).trim()
-            const sourceSeriesMetadata = libraryFacade.seriesMetadataForKey(key) || {}
-            const seriesMetaSaveResult = libraryFacade.setSeriesMetadataForKey(targetSeriesKey, {
+            const sourceSeriesMetadata = libraryModel.seriesMetadataForKey(key) || {}
+            const seriesMetaSaveResult = libraryModel.setSeriesMetadataForKey(targetSeriesKey, {
                 seriesTitle: seriesTitleValue,
                 summary: summaryValue,
                 year: yearValue,
@@ -2357,7 +2350,7 @@ ApplicationWindow {
                     seriesMetaDialog.errorText = preserveHeaderError
                     return false
                 }
-                libraryFacade.removeSeriesMetadataForKey(key)
+                libraryModel.removeSeriesMetadataForKey(key)
             }
             startupController.startupLog("seriesDialog save success targetKey=" + targetSeriesKey)
             seriesMetaDialog.errorText = ""
@@ -2370,7 +2363,7 @@ ApplicationWindow {
             if (effectiveSeriesKey.length > 0) {
                 selectedSeriesTitle = resolvedSeriesTitle.length > 0
                     ? resolvedSeriesTitle
-                    : String(libraryFacade.groupTitleForKey(effectiveSeriesKey) || selectedSeriesTitle)
+                    : String(libraryModel.groupTitleForKey(effectiveSeriesKey) || selectedSeriesTitle)
                 selectedSeriesKey = effectiveSeriesKey
                 const selection = {}
                 selection[effectiveSeriesKey] = true
@@ -2405,7 +2398,7 @@ ApplicationWindow {
                 const leadId = Number(leadIssueByKey[sourceKey] || 0)
                 const resolvedKey = leadId > 0 ? findSeriesKeyForIssueId(leadId, sourceKey) : sourceKey
                 const targetSeriesKey = String(resolvedKey || sourceKey).trim()
-                const sourceSeriesMetadata = libraryFacade.seriesMetadataForKey(sourceKey) || {}
+                const sourceSeriesMetadata = libraryModel.seriesMetadataForKey(sourceKey) || {}
                 const nextSeriesTitle = seriesTitleValue.length > 0
                     ? seriesTitleValue
                     : String(sourceSeriesMetadata.seriesTitle || "").trim()
@@ -2439,7 +2432,7 @@ ApplicationWindow {
                 if (nextSeriesVolume.length > 0) seriesMetaValues.volume = nextSeriesVolume
                 if (nextSeriesPublisher.length > 0) seriesMetaValues.publisher = nextSeriesPublisher
                 if (nextSeriesAgeRating.length > 0) seriesMetaValues.ageRating = nextSeriesAgeRating
-                const seriesMetaSaveResult = libraryFacade.setSeriesMetadataForKey(targetSeriesKey, seriesMetaValues)
+                const seriesMetaSaveResult = libraryModel.setSeriesMetadataForKey(targetSeriesKey, seriesMetaValues)
                 if (seriesMetaSaveResult.length > 0) {
                     startupController.startupLog("seriesDialog series metadata save error: " + seriesMetaSaveResult)
                     seriesMetaDialog.errorText = seriesMetaSaveResult
@@ -2451,7 +2444,7 @@ ApplicationWindow {
                         seriesMetaDialog.errorText = preserveHeaderError
                         return false
                     }
-                    libraryFacade.removeSeriesMetadataForKey(sourceKey)
+                    libraryModel.removeSeriesMetadataForKey(sourceKey)
                 }
             }
         }
@@ -2499,7 +2492,7 @@ ApplicationWindow {
         issuesGridData = nextItems
         scheduleGridSplitScrollRestore(preservedSplitScroll)
 
-        const result = libraryFacade.saveReaderProgress(comicId, 0)
+        const result = libraryModel.saveReaderProgress(comicId, 0)
         if (result.length > 0) {
             queueSilentReaderProgressSave(comicId, 0, false)
             return
@@ -2713,7 +2706,7 @@ ApplicationWindow {
             onAddFolderRequested: root.quickAddFolderFromDialog()
             onAddIssueRequested: root.quickAddFilesFromDialog()
             onSettingsRequested: popupController.openExclusivePopup(settingsDialog)
-            onRefreshRequested: libraryFacade.reload()
+            onRefreshRequested: libraryModel.reload()
             onExitRequested: root.close()
             onToggleFullscreenRequested: {
                 root.visibility = root.visibility === Window.FullScreen
@@ -2739,8 +2732,8 @@ ApplicationWindow {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: libraryFacade.lastError.length > 0 ? 30 : 0
-            visible: libraryFacade.lastError.length > 0
+            Layout.preferredHeight: libraryModel.lastError.length > 0 ? 30 : 0
+            visible: libraryModel.lastError.length > 0
             color: root.loadErrorBannerBg
 
             Label {
@@ -2750,7 +2743,7 @@ ApplicationWindow {
                 verticalAlignment: Text.AlignVCenter
                 elide: Text.ElideMiddle
                 color: root.loadErrorBannerText
-                text: "Load error: " + libraryFacade.lastError
+                text: "Load error: " + libraryModel.lastError
             }
         }
 
@@ -3050,7 +3043,7 @@ ApplicationWindow {
                             onEditSeriesRequested: root.openSeriesMetadataDialog(seriesKey, seriesName)
                             onShowFolderRequested: root.openSeriesFolder(seriesKey, seriesName)
                             onClearSelectionRequested: root.clearSelection()
-                            onRefreshRequested: libraryFacade.reload()
+                            onRefreshRequested: libraryModel.reload()
                             onDeleteSeriesRequested: deleteController.requestSeriesDelete(seriesKey, seriesName)
                         }
 
@@ -3792,7 +3785,8 @@ ApplicationWindow {
                                 x: 0
                                 y: heroSummaryLabel.y + heroSummaryLabel.implicitHeight + 14
                                 width: parent.width
-                                height: implicitHeight
+                                readonly property int reservedBodyHeight: lineHeight * maximumLineCount
+                                height: reservedBodyHeight
                                 text: String(root.heroSeriesData.summary || "-")
                                 color: root.textPrimary
                                 font.family: root.uiFontFamily

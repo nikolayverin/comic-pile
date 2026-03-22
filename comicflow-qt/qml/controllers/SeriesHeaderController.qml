@@ -8,7 +8,6 @@ Item {
 
     property var rootObject: null
     property var libraryModelRef: null
-    property var libraryFacadeRef: null
     property var heroSeriesControllerRef: null
     property var popupControllerRef: null
     property var startupControllerRef: null
@@ -140,8 +139,8 @@ Item {
         resolveHeroCoverForSelectedSeries()
         resolveHeroBackgroundForSelectedSeries()
 
-        const storedSeriesMetadata = libraryFacadeRef && typeof libraryFacadeRef.seriesMetadataForKey === "function"
-            ? libraryFacadeRef.seriesMetadataForKey(key) || {}
+        const storedSeriesMetadata = libraryModelRef && typeof libraryModelRef.seriesMetadataForKey === "function"
+            ? libraryModelRef.seriesMetadataForKey(key) || {}
             : {}
 
         dialogSeriesKey = key
@@ -171,14 +170,14 @@ Item {
     }
 
     function selectCoverImage() {
-        if (!libraryFacadeRef || typeof libraryFacadeRef.browseImageFile !== "function") return
+        if (!libraryModelRef || typeof libraryModelRef.browseImageFile !== "function") return
 
         const currentPath = dialogCoverPath.length > 0
             ? dialogCoverPath
             : (currentCustomCoverPath().length > 0
                 ? currentCustomCoverPath()
                 : automaticHeroCoverSource())
-        const selectedPath = imageFileSource(libraryFacadeRef.browseImageFile(currentPath))
+        const selectedPath = imageFileSource(libraryModelRef.browseImageFile(currentPath))
         if (selectedPath.length < 1) return
 
         dialogCoverPath = selectedPath
@@ -186,14 +185,14 @@ Item {
     }
 
     function selectBackgroundImage() {
-        if (!libraryFacadeRef || typeof libraryFacadeRef.browseImageFile !== "function") return
+        if (!libraryModelRef || typeof libraryModelRef.browseImageFile !== "function") return
 
         const currentPath = dialogBackgroundPath.length > 0
             ? dialogBackgroundPath
             : (currentCustomBackgroundPath().length > 0
                 ? currentCustomBackgroundPath()
                 : automaticHeroBackgroundSource())
-        const selectedPath = imageFileSource(libraryFacadeRef.browseImageFile(currentPath))
+        const selectedPath = imageFileSource(libraryModelRef.browseImageFile(currentPath))
         if (selectedPath.length < 1) return
 
         dialogBackgroundShuffleRequestId = -1
@@ -202,13 +201,13 @@ Item {
     }
 
     function canShuffleBackground(seriesKey) {
-        if (!libraryFacadeRef || typeof libraryFacadeRef.issuesForSeries !== "function") return false
+        if (!libraryModelRef || typeof libraryModelRef.issuesForSeries !== "function") return false
 
         const rootRef = root()
         const key = String(seriesKey || dialogSeriesKey || (rootRef ? rootRef.selectedSeriesKey : "") || "").trim()
         if (key.length < 1) return false
 
-        const rows = libraryFacadeRef.issuesForSeries(key, "__all__", "all", "")
+        const rows = libraryModelRef.issuesForSeries(key, "__all__", "all", "")
         return Boolean(rows && rows.length > 0)
     }
 
@@ -250,12 +249,12 @@ Item {
             setErrorText("Series context is missing.")
             return false
         }
-        if (!libraryFacadeRef || typeof libraryFacadeRef.saveSeriesHeaderImages !== "function") {
+        if (!libraryModelRef || typeof libraryModelRef.saveSeriesHeaderImages !== "function") {
             setErrorText("Failed to save series header images.")
             return false
         }
 
-        const result = libraryFacadeRef.saveSeriesHeaderImages(
+        const result = libraryModelRef.saveSeriesHeaderImages(
             key,
             dialogCoverPath,
             dialogBackgroundPath

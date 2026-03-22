@@ -8,7 +8,7 @@ Item {
     height: 0
 
     property var rootObject: null
-    property var libraryFacadeRef: null
+    property var libraryModelRef: null
     property var readerCoverControllerRef: null
     property var startupControllerRef: null
     property var uiTokensRef: null
@@ -170,7 +170,7 @@ Item {
     }
 
     function preserveHeaderOverridesIfNeeded(targetSeriesKey, sourceSeriesMetadata) {
-        if (!libraryFacadeRef || typeof libraryFacadeRef.seriesMetadataForKey !== "function") return ""
+        if (!libraryModelRef || typeof libraryModelRef.seriesMetadataForKey !== "function") return ""
 
         const targetKey = String(targetSeriesKey || "").trim()
         if (targetKey.length < 1) return ""
@@ -182,14 +182,14 @@ Item {
             return ""
         }
 
-        const targetMetadata = libraryFacadeRef.seriesMetadataForKey(targetKey) || {}
+        const targetMetadata = libraryModelRef.seriesMetadataForKey(targetKey) || {}
         const targetCoverPath = String(targetMetadata.headerCoverPath || "").trim()
         const targetBackgroundPath = String(targetMetadata.headerBackgroundPath || "").trim()
         if (targetCoverPath.length > 0 || targetBackgroundPath.length > 0) {
             return ""
         }
 
-        const carryResult = libraryFacadeRef.saveSeriesHeaderImages(
+        const carryResult = libraryModelRef.saveSeriesHeaderImages(
             targetKey,
             sourceCoverPath,
             sourceBackgroundPath
@@ -212,7 +212,7 @@ Item {
 
     function refreshSeriesData() {
         const rootRef = root()
-        if (!rootRef || !libraryFacadeRef) return
+        if (!rootRef || !libraryModelRef) return
 
         const key = String(rootRef.selectedSeriesKey || "")
         if (key.length < 1) {
@@ -222,10 +222,10 @@ Item {
             return
         }
 
-        let rows = libraryFacadeRef.issuesForSeries(key, "__all__", "all", "")
+        let rows = libraryModelRef.issuesForSeries(key, "__all__", "all", "")
         let seriesTitle = String(rootRef.selectedSeriesTitle || "")
         if (seriesTitle.length < 1) {
-            seriesTitle = String(libraryFacadeRef.groupTitleForKey(key) || "")
+            seriesTitle = String(libraryModelRef.groupTitleForKey(key) || "")
         }
 
         if ((!rows || rows.length < 1) && issuesGridMatchesSelectedSeries()) {
@@ -246,7 +246,7 @@ Item {
         }
 
         let startYear = 0
-        const storedSeriesMetadata = libraryFacadeRef.seriesMetadataForKey(key) || {}
+        const storedSeriesMetadata = libraryModelRef.seriesMetadataForKey(key) || {}
         rootRef.heroCustomCoverSource = preserveRefreshedCustomSource(
             rootRef.heroCustomCoverSource,
             String(storedSeriesMetadata.headerCoverPath || "").trim()
@@ -300,12 +300,12 @@ Item {
             }
         }
 
-        let seriesSummary = String(libraryFacadeRef.seriesSummaryForKey(key) || "").trim()
+        let seriesSummary = String(libraryModelRef.seriesSummaryForKey(key) || "").trim()
         if (seriesSummary.length < 1 && rowCount > 0) {
             const firstId = Number((rows[0] || {}).id || 0)
             const fallbackKey = findSeriesKeyForIssueId(firstId, key)
             if (fallbackKey.length > 0 && fallbackKey !== key) {
-                seriesSummary = String(libraryFacadeRef.seriesSummaryForKey(fallbackKey) || "").trim()
+                seriesSummary = String(libraryModelRef.seriesSummaryForKey(fallbackKey) || "").trim()
             }
         }
 

@@ -8,7 +8,6 @@ Item {
 
     property var rootObject: null
     property var libraryModelRef: null
-    property var libraryFacadeRef: null
     property var popupControllerRef: null
     property var readerDialog: null
     property var appSettingsRef: null
@@ -420,8 +419,8 @@ Item {
         const gridRows = listCopy(root.issuesGridData)
 
         const seriesKey = String(root.readerSeriesKey || root.selectedSeriesKey || "").trim()
-        if (libraryFacadeRef && seriesKey.length > 0) {
-            const seriesRows = libraryFacadeRef.issuesForSeries(seriesKey, "__all__", "all", "")
+        if (libraryModelRef && seriesKey.length > 0) {
+            const seriesRows = libraryModelRef.issuesForSeries(seriesKey, "__all__", "all", "")
             if (listCount(seriesRows) > 0) {
                 return listCopy(seriesRows)
             }

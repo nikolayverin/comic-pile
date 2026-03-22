@@ -128,7 +128,6 @@ qt_add_qml_module(comic_pile_qt
         qml/controllers/ReaderSessionController.qml
         qml/controllers/ReaderPopupStateController.qml
         qml/controllers/ReaderSpreadLayout.js
-        qml/controllers/LibraryFacade.qml
         qml/controllers/ImportController.qml
         qml/controllers/ImportSessionController.qml
         qml/controllers/DeleteController.qml
