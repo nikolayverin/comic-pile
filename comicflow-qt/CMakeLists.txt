@@ -23,7 +23,7 @@ set(CMAKE_AUTOMOC_COMPILER_PREDEFINES OFF)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick Sql Widgets Concurrent Svg Pdf)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick Sql Widgets Concurrent Svg Network Pdf)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -138,6 +138,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/SidebarQuickFilterItem.qml
         qml/components/SidebarSeriesItem.qml
         qml/components/MainSidebar.qml
+        qml/components/MainLibraryPane.qml
         qml/components/IssueCard.qml
         qml/components/FocusEdgeLine.qml
         qml/components/Typography.qml
@@ -283,6 +284,7 @@ target_link_libraries(comic_pile_qt
         Qt6::Widgets
         Qt6::Concurrent
         Qt6::Svg
+        Qt6::Network
         Qt6::Pdf
 )
 
@@ -298,6 +300,7 @@ target_link_libraries(comic_pile_smoke
         Qt6::Sql
         Qt6::Widgets
         Qt6::Concurrent
+        Qt6::Network
         Qt6::Pdf
 )
 
@@ -307,6 +310,7 @@ target_link_libraries(comic_pile_regression
         Qt6::Sql
         Qt6::Widgets
         Qt6::Concurrent
+        Qt6::Network
         Qt6::Pdf
 )
 
