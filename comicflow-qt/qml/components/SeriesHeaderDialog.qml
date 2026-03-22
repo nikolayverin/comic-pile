@@ -33,8 +33,6 @@ PopupDialogWindow {
     height: styleTokens.seriesHeaderHeight
 
     onCloseRequested: dialog.cancelRequested()
-    onOpened: console.log("SeriesHeaderDialog opened")
-
     component UploadPreviewCard: Item {
         id: card
 

@@ -171,6 +171,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupContentGeometry.qml
         qml/components/MetadataDropdownField.qml
         qml/components/MetadataTextUtils.js
+        qml/components/SettingsCatalog.js
         qml/components/ContextMenuPopup.qml
         qml/components/HoverActionButton.qml
         qml/components/HoverActionBar.qml

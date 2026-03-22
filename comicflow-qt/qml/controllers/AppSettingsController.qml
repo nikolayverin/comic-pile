@@ -1,5 +1,6 @@
 import QtQuick
 import QtCore
+import "../components/SettingsCatalog.js" as SettingsCatalog
 
 Item {
     id: controller
@@ -8,31 +9,31 @@ Item {
     width: 0
     height: 0
 
-    readonly property string defaultGeneralDefaultReadingMode: "Remember last state"
-    readonly property bool defaultGeneralOpenReaderFullscreenByDefault: false
-    readonly property string defaultGeneralAfterImport: "Focus imported series"
-    readonly property string defaultGeneralDefaultViewAfterLaunch: "Remember last state"
-    readonly property bool defaultReaderRestorePreviousWindowPosition: false
-    readonly property bool defaultReaderRememberLastReaderMode: false
-    readonly property string defaultReaderDefaultReadingMode: "1 page"
-    readonly property string defaultReaderMagnifierSize: "Medium"
-    readonly property string defaultReaderPageEdgeBehavior: "Stop at boundary"
-    readonly property bool defaultReaderShowBookmarkRibbonOnGridCovers: false
-    readonly property bool defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage: false
-    readonly property bool defaultImportDoubleClickArchiveIntoLibrary: false
-    readonly property bool defaultImportTreatImageFoldersAsIssues: false
-    readonly property string defaultAppearanceLibraryBackground: "Default"
-    readonly property string defaultAppearanceGridDensity: "Default"
-    readonly property bool defaultAppearanceShowHeroBlock: true
-    readonly property string defaultAppearanceLibraryBackgroundSolidColor: "#8A8A8A"
-    readonly property string defaultAppearanceLibraryBackgroundTexture: "Dots"
-    readonly property string defaultAppearanceLibraryBackgroundCustomImagePath: ""
-    readonly property string defaultAppearanceLibraryBackgroundImageMode: "Fill"
-    readonly property string defaultAppearanceLibraryBackgroundTileSize: "64x64px"
-    readonly property bool defaultSafetyConfirmBeforeDeletingFiles: true
-    readonly property bool defaultSafetyConfirmBeforeDeletingSeries: true
-    readonly property bool defaultSafetyConfirmBeforeReplace: true
-    readonly property string defaultSafetyMarkAsReadBehavior: "Open next issue"
+    readonly property string defaultGeneralDefaultReadingMode: SettingsCatalog.defaultGeneralDefaultReadingMode
+    readonly property bool defaultGeneralOpenReaderFullscreenByDefault: SettingsCatalog.defaultGeneralOpenReaderFullscreenByDefault
+    readonly property string defaultGeneralAfterImport: SettingsCatalog.defaultGeneralAfterImport
+    readonly property string defaultGeneralDefaultViewAfterLaunch: SettingsCatalog.defaultGeneralDefaultViewAfterLaunch
+    readonly property bool defaultReaderRestorePreviousWindowPosition: SettingsCatalog.defaultReaderRestorePreviousWindowPosition
+    readonly property bool defaultReaderRememberLastReaderMode: SettingsCatalog.defaultReaderRememberLastReaderMode
+    readonly property string defaultReaderDefaultReadingMode: SettingsCatalog.defaultReaderDefaultReadingMode
+    readonly property string defaultReaderMagnifierSize: SettingsCatalog.defaultReaderMagnifierSize
+    readonly property string defaultReaderPageEdgeBehavior: SettingsCatalog.defaultReaderPageEdgeBehavior
+    readonly property bool defaultReaderShowBookmarkRibbonOnGridCovers: SettingsCatalog.defaultReaderShowBookmarkRibbonOnGridCovers
+    readonly property bool defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage: SettingsCatalog.defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
+    readonly property bool defaultImportDoubleClickArchiveIntoLibrary: SettingsCatalog.defaultImportDoubleClickArchiveIntoLibrary
+    readonly property bool defaultImportTreatImageFoldersAsIssues: SettingsCatalog.defaultImportTreatImageFoldersAsIssues
+    readonly property string defaultAppearanceLibraryBackground: SettingsCatalog.defaultAppearanceLibraryBackground
+    readonly property string defaultAppearanceGridDensity: SettingsCatalog.defaultAppearanceGridDensity
+    readonly property bool defaultAppearanceShowHeroBlock: SettingsCatalog.defaultAppearanceShowHeroBlock
+    readonly property string defaultAppearanceLibraryBackgroundSolidColor: SettingsCatalog.defaultAppearanceLibraryBackgroundSolidColor
+    readonly property string defaultAppearanceLibraryBackgroundTexture: SettingsCatalog.defaultAppearanceLibraryBackgroundTexture
+    readonly property string defaultAppearanceLibraryBackgroundCustomImagePath: SettingsCatalog.defaultAppearanceLibraryBackgroundCustomImagePath
+    readonly property string defaultAppearanceLibraryBackgroundImageMode: SettingsCatalog.defaultAppearanceLibraryBackgroundImageMode
+    readonly property string defaultAppearanceLibraryBackgroundTileSize: SettingsCatalog.defaultAppearanceLibraryBackgroundTileSize
+    readonly property bool defaultSafetyConfirmBeforeDeletingFiles: SettingsCatalog.defaultSafetyConfirmBeforeDeletingFiles
+    readonly property bool defaultSafetyConfirmBeforeDeletingSeries: SettingsCatalog.defaultSafetyConfirmBeforeDeletingSeries
+    readonly property bool defaultSafetyConfirmBeforeReplace: SettingsCatalog.defaultSafetyConfirmBeforeReplace
+    readonly property string defaultSafetyMarkAsReadBehavior: SettingsCatalog.defaultSafetyMarkAsReadBehavior
 
     function normalizeChoice(value, allowedValues, fallbackValue) {
         const normalizedValue = String(value || "").trim()
@@ -54,7 +55,7 @@ Item {
     function normalizeGeneralDefaultReadingMode(value) {
         return normalizeChoice(
             value,
-            ["1 page", "2 pages", "Remember last state"],
+            SettingsCatalog.generalDefaultReadingModeOptions,
             defaultGeneralDefaultReadingMode
         )
     }
@@ -66,7 +67,7 @@ Item {
         }
         return normalizeChoice(
             normalized,
-            ["Focus imported series", "Open last import", "Do nothing"],
+            SettingsCatalog.generalAfterImportOptions,
             defaultGeneralAfterImport
         )
     }
@@ -78,7 +79,7 @@ Item {
         }
         return normalizeChoice(
             normalized,
-            ["First series in library", "Last import", "Remember last state"],
+            SettingsCatalog.generalDefaultViewAfterLaunchOptions,
             defaultGeneralDefaultViewAfterLaunch
         )
     }
@@ -86,7 +87,7 @@ Item {
     function normalizeReaderDefaultReadingMode(value) {
         return normalizeChoice(
             value,
-            ["1 page", "2 pages"],
+            SettingsCatalog.readerDefaultReadingModeOptions,
             defaultReaderDefaultReadingMode
         )
     }
@@ -94,7 +95,7 @@ Item {
     function normalizeReaderMagnifierSize(value) {
         return normalizeChoice(
             value,
-            ["Small", "Medium", "Large"],
+            SettingsCatalog.readerMagnifierSizeOptions,
             defaultReaderMagnifierSize
         )
     }
@@ -102,7 +103,7 @@ Item {
     function normalizeReaderPageEdgeBehavior(value) {
         return normalizeChoice(
             value,
-            ["Continue", "Stop at boundary"],
+            SettingsCatalog.readerPageEdgeBehaviorOptions,
             defaultReaderPageEdgeBehavior
         )
     }
@@ -110,7 +111,7 @@ Item {
     function normalizeAppearanceLibraryBackground(value) {
         return normalizeChoice(
             value,
-            ["Default", "Solid", "Texture", "Custom image"],
+            SettingsCatalog.appearanceBackgroundSourceModeKeys,
             defaultAppearanceLibraryBackground
         )
     }
@@ -118,7 +119,7 @@ Item {
     function normalizeAppearanceGridDensity(value) {
         return normalizeChoice(
             value,
-            ["Compact", "Default", "Comfortable"],
+            SettingsCatalog.appearanceGridDensityOptions,
             defaultAppearanceGridDensity
         )
     }
@@ -126,11 +127,7 @@ Item {
     function normalizeAppearanceLibraryBackgroundSolidColor(value) {
         return normalizeChoice(
             value,
-            [
-                "#EA0600", "#F17300", "#F0D200", "#86E600", "#29DC57",
-                "#18C7D8", "#1D68D9", "#4821BE", "#C7188D", "#4B392F",
-                "#000000", "#1F1F1F", "#4A4A4A", "#8A8A8A", "#C3C3C3"
-            ],
+            SettingsCatalog.appearanceSolidColorOptions,
             defaultAppearanceLibraryBackgroundSolidColor
         )
     }
@@ -138,7 +135,7 @@ Item {
     function normalizeAppearanceLibraryBackgroundTexture(value) {
         return normalizeChoice(
             value,
-            ["Dots", "Noise"],
+            SettingsCatalog.appearanceTexturePresetOptions,
             defaultAppearanceLibraryBackgroundTexture
         )
     }
@@ -150,7 +147,7 @@ Item {
     function normalizeAppearanceLibraryBackgroundImageMode(value) {
         return normalizeChoice(
             value,
-            ["Fit", "Fill", "Stretch", "Tile"],
+            SettingsCatalog.appearanceBackgroundImageModeOptions,
             defaultAppearanceLibraryBackgroundImageMode
         )
     }
@@ -158,7 +155,7 @@ Item {
     function normalizeAppearanceLibraryBackgroundTileSize(value) {
         return normalizeChoice(
             value,
-            ["64x64px", "256x256px", "512x512px"],
+            SettingsCatalog.appearanceBackgroundTileSizeOptions,
             defaultAppearanceLibraryBackgroundTileSize
         )
     }
@@ -166,7 +163,7 @@ Item {
     function normalizeSafetyMarkAsReadBehavior(value) {
         return normalizeChoice(
             value,
-            ["Open next issue", "Stay on current issue", "Close reader on last issue"],
+            SettingsCatalog.safetyMarkAsReadBehaviorOptions,
             defaultSafetyMarkAsReadBehavior
         )
     }

@@ -1290,7 +1290,7 @@ ApplicationWindow {
     function quickFilterTitleIconSource(filterKey) {
         const key = String(filterKey || "").trim().toLowerCase()
         if (key === "last_import") return uiTokens.quickFilterTitleLastImportIcon
-        if (key === "favorites") return uiTokens.quickFilterTitleFavoritIcon
+        if (key === "favorites") return uiTokens.quickFilterTitleFavoriteIcon
         if (key === "bookmarks") return uiTokens.quickFilterTitleBookmarkIcon
         return ""
     }
@@ -2932,8 +2932,8 @@ ApplicationWindow {
                             uiFontPixelSize: root.fontPxUiBase
                             textColor: root.textPrimary
                             hoverColor: root.sidebarRowHoverColor
-                            idleIconSource: uiTokens.sidebarFavoritsIdleIcon
-                            activeIconSource: uiTokens.sidebarFavoritsHoverIcon
+                            idleIconSource: uiTokens.sidebarFavoritesIdleIcon
+                            activeIconSource: uiTokens.sidebarFavoritesHoverIcon
                             onClicked: root.selectSidebarQuickFilter("favorites")
                         }
 
@@ -4672,7 +4672,7 @@ ApplicationWindow {
         canGoNextIssue: readerSessionController.canGoNextIssue
         bookmarkActive: readerSessionController.bookmarkActive
         bookmarkPageIndex: readerSessionController.bookmarkPageIndex
-        favoritsActive: readerSessionController.favoriteActive
+        favoriteActive: readerSessionController.favoriteActive
         magnifierSizePreset: appSettingsController.readerMagnifierSize
         onDismissRequested: readerSessionController.closeReader()
         onPreviousPageRequested: readerSessionController.previousReaderPage()

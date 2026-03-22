@@ -150,7 +150,7 @@ Window {
                     font.pixelSize: popupStyle.dialogHintFontSize
                     font.family: Qt.application.font.family
                     wrapMode: Text.WordWrap
-                    text: "ComicFlow is moving library data to the new location. This may take some time depending on database size."
+                    text: "Comic Pile is moving library data to the new location. This may take some time depending on database size."
                 }
 
                 PopupProgressBlock {

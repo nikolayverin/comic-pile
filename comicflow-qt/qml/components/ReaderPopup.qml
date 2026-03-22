@@ -32,7 +32,7 @@ Popup {
     property string readingViewMode: "one_page"
     property bool fullscreenMode: false
     property bool lightThemeEnabled: false
-    property bool favoritsActive: false
+    property bool favoriteActive: false
     property string magnifierSizePreset: "Medium"
     property alias magnifierModeEnabled: popupStateController.magnifierModeEnabled
     property alias magnifierOverlayVisible: popupStateController.magnifierOverlayVisible
@@ -61,8 +61,8 @@ Popup {
     readonly property real toolbarIconRightEdgeInButton: (toolButtonWidth + toolbarIconSize) / 2
     readonly property int toolbarInfoRightInset: 64
     readonly property int toolbarCopyRightInset: toolbarInfoRightInset + toolbarIconSize + 22
-    readonly property int toolbarFavoritsRightInset: toolbarCopyRightInset + toolbarIconSize + 38
-    readonly property int toolbarBookmarkRightInset: toolbarFavoritsRightInset + toolbarIconSize + 22
+    readonly property int toolbarFavoritesRightInset: toolbarCopyRightInset + toolbarIconSize + 38
+    readonly property int toolbarBookmarkRightInset: toolbarFavoritesRightInset + toolbarIconSize + 22
     readonly property int toolbarMagnifierRightInset: toolbarBookmarkRightInset + toolbarIconSize + 38
     readonly property int toolbarFullScreenRightInset: toolbarMagnifierRightInset + toolbarIconSize + 22
     readonly property int toolbarTwoPageRightInset: toolbarFullScreenRightInset + toolbarIconSize + 22
@@ -216,7 +216,7 @@ Popup {
         close()
     }
 
-    function toggleFavorits() {
+    function toggleFavorite() {
         favoriteRequested()
     }
 
@@ -682,7 +682,7 @@ Popup {
         sequence: "F"
         context: Qt.ApplicationShortcut
         enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible
-        onActivated: root.toggleFavorits()
+        onActivated: root.toggleFavorite()
     }
 
     Shortcut {
@@ -888,13 +888,13 @@ Popup {
             }
 
             ToolbarIconButton {
-                id: favoritsButton
-                x: parent.width - root.toolbarFavoritsRightInset - root.toolbarIconRightEdgeInButton
+                id: favoriteButton
+                x: parent.width - root.toolbarFavoritesRightInset - root.toolbarIconRightEdgeInButton
                 anchors.verticalCenter: parent.verticalCenter
-                activeState: root.favoritsActive
+                activeState: root.favoriteActive
                 activeIconColor: root.toolbarToggleActiveColor
-                icon.source: uiTokens.readerFavoritsIcon
-                onClicked: root.toggleFavorits()
+                icon.source: uiTokens.readerFavoritesIcon
+                onClicked: root.toggleFavorite()
             }
 
             ToolbarIconButton {

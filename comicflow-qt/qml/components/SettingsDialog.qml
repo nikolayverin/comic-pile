@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "SettingsCatalog.js" as SettingsCatalog
 
 PopupDialogWindow {
     id: dialog
@@ -60,140 +61,11 @@ PopupDialogWindow {
     readonly property int appearancePreviewCardGap: 10
     readonly property int appearancePreviewCardHeight: 82
     readonly property int appearanceContextGap: 12
-    readonly property var appearanceBackgroundSourceOptions: [
-        { key: "Default", label: "Default" },
-        { key: "Solid", label: "Solid" },
-        { key: "Texture", label: "Texture" },
-        { key: "Custom image", label: "Custom image" }
-    ]
-    readonly property var appearanceSolidColorOptions: [
-        "#EA0600", "#F17300", "#F0D200", "#86E600", "#29DC57",
-        "#18C7D8", "#1D68D9", "#4821BE", "#C7188D", "#4B392F",
-        "#000000", "#1F1F1F", "#4A4A4A", "#8A8A8A", "#C3C3C3"
-    ]
-    readonly property var appearanceTextureOptions: [
-        { key: "Dots", label: "Dots", source: "qrc:/qt/qml/ComicPile/assets/ui/grid-tile.png" },
-        { key: "Noise", label: "Noise", source: "qrc:/qt/qml/ComicPile/assets/textures/sidebar_dither_noise.png" }
-    ]
-    readonly property var settingsSections: [
-        { key: "general", label: "General", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-pencil-ruler.svg" },
-        { key: "reader", label: "Reader", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-book-open-text.svg" },
-        { key: "import_archives", label: "Import & Archives", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-download.svg" },
-        { key: "library_data", label: "Library & Data", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-library-big.svg" },
-        { key: "appearance", label: "Appearance", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-appearance.svg" },
-        { key: "safety", label: "Safety", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-shield-check.svg" }
-    ]
-    readonly property var sectionOptionRows: ({
-        general: [
-            {
-                label: "Default reading mode",
-                controlType: "dropdown",
-                valueKey: "general_default_reading_mode",
-                options: ["1 page", "2 pages", "Remember last state"]
-            },
-            {
-                label: "Open reader in fullscreen by default",
-                controlType: "checkbox",
-                valueKey: "general_open_reader_fullscreen_by_default"
-            },
-            {
-                label: "After import:",
-                controlType: "dropdown",
-                valueKey: "general_after_import",
-                options: ["Focus imported series", "Open last import", "Do nothing"]
-            },
-            {
-                label: "Default view after launch:",
-                controlType: "dropdown",
-                valueKey: "general_default_view_after_launch",
-                options: ["First series in library", "Last import", "Remember last state"]
-            }
-        ],
-        reader: [
-            {
-                label: "Default reading mode",
-                controlType: "segmented",
-                valueKey: "reader_default_reading_mode",
-                options: ["1 page", "2 pages"]
-            },
-            {
-                label: "Restore previous window position",
-                controlType: "switch",
-                valueKey: "reader_restore_previous_window_position"
-            },
-            {
-                label: "Remember last reader mode",
-                controlType: "switch",
-                valueKey: "reader_remember_last_reader_mode"
-            },
-            {
-                label: "Magnifier size",
-                controlType: "segmented",
-                valueKey: "reader_magnifier_size",
-                options: ["Small", "Medium", "Large"]
-            },
-            {
-                label: "Page edge behavior",
-                controlType: "segmented",
-                valueKey: "reader_page_edge_behavior",
-                options: ["Continue", "Stop at boundary"]
-            },
-            {
-                label: "Show bookmark ribbon on grid covers",
-                controlType: "switch",
-                valueKey: "reader_show_bookmark_ribbon_on_grid_covers"
-            },
-            {
-                label: "Auto-open bookmarked page instead of last page",
-                controlType: "switch",
-                valueKey: "reader_auto_open_bookmarked_page_instead_of_last_page"
-            }
-        ],
-        import_archives: [],
-        library_data: [],
-        appearance: [
-            {
-                label: "Cover grid background",
-                controlType: "dropdown",
-                valueKey: "appearance_library_background",
-                options: ["Default", "Solid", "Texture", "Custom image"]
-            },
-            {
-                label: "Grid density",
-                controlType: "segmented",
-                valueKey: "appearance_grid_density",
-                options: ["Compact", "Default", "Comfortable"]
-            },
-            {
-                label: "Show hero block",
-                controlType: "switch",
-                valueKey: "appearance_show_hero_block"
-            },
-        ],
-        safety: [
-            {
-                label: "Confirm before deleting files",
-                controlType: "switch",
-                valueKey: "safety_confirm_before_deleting_files"
-            },
-            {
-                label: "Confirm before deleting series",
-                controlType: "switch",
-                valueKey: "safety_confirm_before_deleting_series"
-            },
-            {
-                label: "Confirm before replace",
-                controlType: "switch",
-                valueKey: "safety_confirm_before_replace"
-            },
-            {
-                label: "Mark as read behavior",
-                controlType: "radio",
-                valueKey: "safety_mark_as_read_behavior",
-                options: ["Open next issue", "Stay on current issue", "Close reader on last issue"]
-            }
-        ]
-    })
+    readonly property var appearanceBackgroundSourceOptions: SettingsCatalog.appearanceBackgroundSourceOptions
+    readonly property var appearanceSolidColorOptions: SettingsCatalog.appearanceSolidColorOptions
+    readonly property var appearanceTextureOptions: SettingsCatalog.appearanceTextureOptions
+    readonly property var settingsSections: SettingsCatalog.settingsSections
+    readonly property var sectionOptionRows: SettingsCatalog.sectionOptionRows
 
     PopupStyle {
         id: styleTokens
@@ -595,22 +467,40 @@ PopupDialogWindow {
                 height: parent.height - y
 
                 readonly property string backgroundSource: String(
-                    dialog.settingValue("appearance_library_background", "Default")
+                    dialog.settingValue(
+                        "appearance_library_background",
+                        SettingsCatalog.defaultAppearanceLibraryBackground
+                    )
                 )
                 readonly property string solidColor: String(
-                    dialog.settingValue("appearance_library_background_solid_color", "#8A8A8A")
+                    dialog.settingValue(
+                        "appearance_library_background_solid_color",
+                        SettingsCatalog.defaultAppearanceLibraryBackgroundSolidColor
+                    )
                 )
                 readonly property string texturePreset: String(
-                    dialog.settingValue("appearance_library_background_texture", "Dots")
+                    dialog.settingValue(
+                        "appearance_library_background_texture",
+                        SettingsCatalog.defaultAppearanceLibraryBackgroundTexture
+                    )
                 )
                 readonly property string customImagePath: String(
-                    dialog.settingValue("appearance_library_background_custom_image_path", "")
+                    dialog.settingValue(
+                        "appearance_library_background_custom_image_path",
+                        SettingsCatalog.defaultAppearanceLibraryBackgroundCustomImagePath
+                    )
                 )
                 readonly property string customImageMode: String(
-                    dialog.settingValue("appearance_library_background_image_mode", "Fill")
+                    dialog.settingValue(
+                        "appearance_library_background_image_mode",
+                        SettingsCatalog.defaultAppearanceLibraryBackgroundImageMode
+                    )
                 )
                 readonly property string customTileSize: String(
-                    dialog.settingValue("appearance_library_background_tile_size", "64x64px")
+                    dialog.settingValue(
+                        "appearance_library_background_tile_size",
+                        SettingsCatalog.defaultAppearanceLibraryBackgroundTileSize
+                    )
                 )
                 readonly property int tilePixelSize: dialog.appearanceBackgroundTilePixelSize(customTileSize)
                 readonly property bool hasCustomImage: customImagePath.length > 0
