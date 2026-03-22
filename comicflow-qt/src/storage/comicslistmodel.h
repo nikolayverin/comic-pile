@@ -10,8 +10,6 @@
 #include <QVariantMap>
 #include <QVector>
 
-class ComicVineAutofillService;
-
 class ComicsListModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -210,11 +208,6 @@ public:
     Q_INVOKABLE QString syncComicInfoToArchive(int comicId);
     Q_INVOKABLE QString importComicInfoFromArchive(int comicId, const QString &mode);
     Q_INVOKABLE QVariantMap loadComicMetadata(int comicId) const;
-    Q_INVOKABLE int requestComicVineAutofillAsync(const QVariantMap &seedValues);
-    Q_INVOKABLE QVariantMap requestComicVineAutofill(const QVariantMap &seedValues);
-    Q_INVOKABLE QString configuredComicVineApiKey() const;
-    Q_INVOKABLE QString saveComicVineApiKey(const QString &apiKey);
-    Q_INVOKABLE int requestComicVineApiKeyValidationAsync(const QString &apiKey);
     Q_INVOKABLE QString deleteComic(int comicId);
     Q_INVOKABLE QString deleteComicHard(int comicId);
     Q_INVOKABLE QString normalizeSeriesKeyForLookup(const QString &value) const;
@@ -255,8 +248,6 @@ signals:
         const QString &error
     );
     void normalizeImportArchiveFinished(int requestId, QVariantMap result);
-    void comicVineAutofillFinished(int requestId, QVariantMap result);
-    void comicVineApiKeyValidationFinished(int requestId, QVariantMap result);
 
 private:
     struct ComicRow {
@@ -450,5 +441,4 @@ private:
     QString m_lastImportDuplicateTier;
     int m_lastImportRestoreCandidateCount = 0;
     int m_lastImportRestoreCandidateId = -1;
-    ComicVineAutofillService *m_comicVineAutofillService = nullptr;
 };

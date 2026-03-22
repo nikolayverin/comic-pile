@@ -50,14 +50,6 @@ $env:COMIC_PILE_7ZIP_PATH = "C:\Program Files\7-Zip\7z.exe"
 $env:COMIC_PILE_DJVU_PATH = "C:\path\to\ddjvu.exe"
 ```
 - Bundled `DjVuLibre` source archive for redistribution is stored at `tools/djvulibre/djvulibre-3.5.29.tar.gz` next to the app build.
-- ComicVine metadata autofill (optional, applied after import when key is present):
-```powershell
-$env:COMIC_PILE_COMICVINE_API_KEY = "your_comicvine_api_key"
-```
-- Alternative key file locations (first line = API key):
-  - `Database/.runtime/comicvine_api_key.txt`
-  - `Database/.runtime/comicvine.key`
-
 ## Current scope
 - CMake project created
 - Qt Quick window boots successfully

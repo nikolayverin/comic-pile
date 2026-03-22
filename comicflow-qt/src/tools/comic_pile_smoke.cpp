@@ -70,33 +70,6 @@ QString findSeedArchive(const QString &workspaceRoot)
     return {};
 }
 
-QString readComicVineKeyFromEnvFile(const QString &workspaceRoot)
-{
-    QFile file(QDir(workspaceRoot).filePath(".env"));
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return {};
-    }
-
-    while (!file.atEnd()) {
-        const QString line = QString::fromUtf8(file.readLine()).trimmed();
-        if (line.isEmpty() || line.startsWith('#')) continue;
-        const int separator = line.indexOf('=');
-        if (separator < 1) continue;
-        const QString key = line.left(separator).trimmed();
-        if (key != QStringLiteral("COMIC_PILE_COMICVINE_API_KEY")
-            && key != QStringLiteral("COMICVINE_API_KEY")) {
-            continue;
-        }
-        QString value = line.mid(separator + 1).trimmed();
-        if ((value.startsWith('"') && value.endsWith('"'))
-            || (value.startsWith('\'') && value.endsWith('\''))) {
-            value = value.mid(1, value.length() - 2);
-        }
-        return value.trimmed();
-    }
-    return {};
-}
-
 bool copyFileStrict(const QString &sourcePath, const QString &targetPath, QString &error)
 {
     QFileInfo sourceInfo(sourcePath);
@@ -707,90 +680,6 @@ int main(int argc, char *argv[])
         return 1;
     }
     printStepResult(QStringLiteral("requestReaderPageAsync"), true);
-
-    QVariantMap comicVineResult;
-    {
-        QEventLoop loop;
-        QTimer timer;
-        timer.setSingleShot(true);
-        const int autofillRequestId = model.requestComicVineAutofillAsync({});
-        QMetaObject::Connection autofillConn;
-        QMetaObject::Connection timerConn;
-        autofillConn = QObject::connect(
-            &model,
-            &ComicsListModel::comicVineAutofillFinished,
-            &loop,
-            [&](int requestId, const QVariantMap &result) {
-                if (requestId != autofillRequestId) return;
-                comicVineResult = result;
-                loop.quit();
-            }
-        );
-        timerConn = QObject::connect(&timer, &QTimer::timeout, &loop, [&]() {
-            comicVineResult.insert(QStringLiteral("error"), QStringLiteral("Timed out waiting for ComicVine async result."));
-            loop.quit();
-        });
-        timer.start(10000);
-        loop.exec();
-        QObject::disconnect(autofillConn);
-        QObject::disconnect(timerConn);
-    }
-    if (comicVineResult.value(QStringLiteral("code")).toString() != QStringLiteral("seed_missing")) {
-        printStepResult(
-            QStringLiteral("ComicVine async seed validation"),
-            false,
-            QString("code=%1 error=%2")
-                .arg(comicVineResult.value(QStringLiteral("code")).toString(),
-                     comicVineResult.value(QStringLiteral("error")).toString())
-        );
-        return 1;
-    }
-    printStepResult(QStringLiteral("ComicVine async seed validation"), true);
-
-    const QString comicVineApiKey = readComicVineKeyFromEnvFile(workspaceRoot);
-    if (comicVineApiKey.isEmpty()) {
-        printStepResult(QStringLiteral("ComicVine API key validation"), false, QStringLiteral("API key missing in workspace .env"));
-        return 1;
-    }
-
-    QVariantMap comicVineApiKeyValidation;
-    {
-        QEventLoop loop;
-        QTimer timer;
-        timer.setSingleShot(true);
-        const int validationRequestId = model.requestComicVineApiKeyValidationAsync(comicVineApiKey);
-        QMetaObject::Connection validationConn;
-        QMetaObject::Connection timerConn;
-        validationConn = QObject::connect(
-            &model,
-            &ComicsListModel::comicVineApiKeyValidationFinished,
-            &loop,
-            [&](int requestId, const QVariantMap &result) {
-                if (requestId != validationRequestId) return;
-                comicVineApiKeyValidation = result;
-                loop.quit();
-            }
-        );
-        timerConn = QObject::connect(&timer, &QTimer::timeout, &loop, [&]() {
-            comicVineApiKeyValidation.insert(QStringLiteral("error"), QStringLiteral("Timed out waiting for ComicVine API key validation result."));
-            loop.quit();
-        });
-        timer.start(30000);
-        loop.exec();
-        QObject::disconnect(validationConn);
-        QObject::disconnect(timerConn);
-    }
-    if (!comicVineApiKeyValidation.value(QStringLiteral("ok")).toBool()) {
-        printStepResult(
-            QStringLiteral("ComicVine API key validation"),
-            false,
-            QString("code=%1 error=%2")
-                .arg(comicVineApiKeyValidation.value(QStringLiteral("code")).toString(),
-                     comicVineApiKeyValidation.value(QStringLiteral("error")).toString())
-        );
-        return 1;
-    }
-    printStepResult(QStringLiteral("ComicVine API key validation"), true);
 
     const QString hardDeleteError = model.deleteComicHard(comicId);
     if (!hardDeleteError.isEmpty()) {

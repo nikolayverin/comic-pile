@@ -18,7 +18,6 @@
 #include "storage/startupinventoryops.h"
 #include "storage/startupruntimeutils.h"
 #include "common/scopedsqlconnectionremoval.h"
-#include "metadata/comicvineautofillservice.h"
 
 #include <algorithm>
 #include <cmath>
@@ -2229,19 +2228,6 @@ ComicsListModel::ComicsListModel(QObject *parent)
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_begin"));
     m_dbPath = QDir(m_dataRoot).filePath("library.db");
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_paths_ready"));
-    m_comicVineAutofillService = new ComicVineAutofillService(m_dataRoot, this);
-    connect(
-        m_comicVineAutofillService,
-        &ComicVineAutofillService::autofillFinished,
-        this,
-        &ComicsListModel::comicVineAutofillFinished
-    );
-    connect(
-        m_comicVineAutofillService,
-        &ComicVineAutofillService::apiKeyValidationFinished,
-        this,
-        &ComicsListModel::comicVineApiKeyValidationFinished
-    );
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_services_ready"));
     resetLastImportOutcome();
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_begin"));
@@ -4148,23 +4134,6 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
             requestIssueThumbnailAsync(importedComicId);
         }
 
-        const QVariantMap currentMetadata = loadComicMetadata(importedComicId);
-        if (!currentMetadata.contains(QStringLiteral("error"))) {
-            // Import path uses local metadata cache only (no network call).
-            const QVariantMap localCacheFill = m_comicVineAutofillService->requestAutofillFromCache(currentMetadata);
-            const QVariantMap autofillPatch = localCacheFill.value(QStringLiteral("values")).toMap();
-            if (!autofillPatch.isEmpty()) {
-                const QString updateError = updateComicMetadata(importedComicId, autofillPatch);
-                if (outResult) {
-                    outResult->insert(QStringLiteral("comicVineAutofillAttempted"), true);
-                    outResult->insert(QStringLiteral("comicVineAutofillFromCache"), localCacheFill.value(QStringLiteral("fromCache")).toBool());
-                    outResult->insert(QStringLiteral("comicVineAutofillApplied"), updateError.trimmed().isEmpty());
-                    if (!updateError.trimmed().isEmpty()) {
-                        outResult->insert(QStringLiteral("comicVineAutofillError"), updateError);
-                    }
-                }
-            }
-        }
     }
 
     return {};
@@ -8096,53 +8065,6 @@ QVariantMap ComicsListModel::loadComicMetadata(int comicId) const
     const int monthNumber = values.value(QStringLiteral("month")).toInt();
     values.insert(QStringLiteral("monthName"), monthNameForNumber(monthNumber));
     return values;
-}
-
-int ComicsListModel::requestComicVineAutofillAsync(const QVariantMap &seedValues)
-{
-    const int requestId = m_nextAsyncRequestId++;
-    m_comicVineAutofillService->requestAutofillAsync(requestId, seedValues);
-    return requestId;
-}
-
-QVariantMap ComicsListModel::requestComicVineAutofill(const QVariantMap &seedValues)
-{
-    return m_comicVineAutofillService->requestAutofillFromCache(seedValues);
-}
-
-QString ComicsListModel::configuredComicVineApiKey() const
-{
-    return m_comicVineAutofillService
-        ? m_comicVineAutofillService->configuredApiKey()
-        : QString();
-}
-
-QString ComicsListModel::saveComicVineApiKey(const QString &apiKey)
-{
-    return m_comicVineAutofillService
-        ? m_comicVineAutofillService->saveApiKey(apiKey)
-        : QStringLiteral("ComicVine service is unavailable.");
-}
-
-int ComicsListModel::requestComicVineApiKeyValidationAsync(const QString &apiKey)
-{
-    const int requestId = m_nextAsyncRequestId++;
-    if (!m_comicVineAutofillService) {
-        QMetaObject::invokeMethod(
-            this,
-            [this, requestId]() {
-                emit comicVineApiKeyValidationFinished(requestId, {
-                    { QStringLiteral("ok"), false },
-                    { QStringLiteral("code"), QStringLiteral("service_unavailable") },
-                    { QStringLiteral("error"), QStringLiteral("ComicVine service is unavailable.") }
-                });
-            },
-            Qt::QueuedConnection
-        );
-        return requestId;
-    }
-    m_comicVineAutofillService->requestApiKeyValidationAsync(requestId, apiKey);
-    return requestId;
 }
 
 QString ComicsListModel::deleteComic(int comicId)

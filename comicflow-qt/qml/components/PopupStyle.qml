@@ -72,12 +72,8 @@ QtObject {
     readonly property int failedImportsHintReserveWidth: 420
     readonly property int failedImportsTextReserveWidth: 360
     readonly property int failedImportsCounterReserveWidth: 44
-    readonly property int comicVineApiKeyWidth: 520
-    readonly property int comicVineApiKeyMinHeight: confirmDialogMinHeight
     readonly property int importProgressWidth: 454
     readonly property color importProgressBarColor: themeColors.importProgressBarColor
-    readonly property color successTextColor: themeColors.popupSuccessColor
-    readonly property color failureTextColor: themeColors.popupFailureColor
 
     readonly property int dialogHeaderTopMargin: 16
     readonly property int dialogBodyTopMargin: formSectionTop
@@ -98,9 +94,6 @@ QtObject {
     readonly property int formFieldBlockGap: 40
     readonly property int formFooterTopGap: 16
     readonly property int seriesMetadataSummaryHeight: 112
-    readonly property int comicVineCheckButtonWidth: 84
-    readonly property int comicVineStatusIndicatorSize: 18
-    readonly property int comicVineVerifiedGlyphSize: 16
     readonly property int importProgressRightInfoWidth: 72
     readonly property int importProgressBarHeight: 10
     readonly property int dialogTitleFontSize: typography.dialogTitlePx

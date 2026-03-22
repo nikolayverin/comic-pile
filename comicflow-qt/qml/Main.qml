@@ -355,7 +355,6 @@ ApplicationWindow {
         seriesHeaderDialogRef: seriesHeaderDialog
         deleteConfirmDialogRef: deleteConfirmDialog
         deleteErrorDialogRef: deleteErrorDialog
-        comicVineApiKeyDialogRef: comicVineApiKeyDialog
     }
 
     property string sevenZipConfiguredPath: ""
@@ -4721,22 +4720,11 @@ ApplicationWindow {
         onClosed: seriesHeaderController.resetDialogState()
     }
 
-    ComicVineApiKeyDialog {
-        id: comicVineApiKeyDialog
-        hostWidth: root.width
-        hostHeight: root.height
-        libraryModelRef: libraryModel
-    }
-
     Connections {
         target: libraryModel
 
         function onSeriesHeroReady(requestId, seriesKey, imageSource, error) {
             seriesHeaderController.handleSeriesHeroReady(requestId, seriesKey, imageSource, error)
-        }
-
-        function onComicVineApiKeyValidationFinished(requestId, result) {
-            comicVineApiKeyDialog.handleValidationResult(requestId, result)
         }
     }
 

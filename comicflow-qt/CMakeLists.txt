@@ -23,7 +23,7 @@ set(CMAKE_AUTOMOC_COMPILER_PREDEFINES OFF)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Quick Sql Widgets Concurrent Svg Network Pdf)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Quick Sql Widgets Concurrent Svg Pdf)
 
 qt_standard_project_setup(REQUIRES 6.5)
 
@@ -34,8 +34,6 @@ endif()
 set(_comicpile_core_sources
     src/common/singleinstanceguard.cpp
     src/common/singleinstanceguard.h
-    src/metadata/comicvineautofillservice.cpp
-    src/metadata/comicvineautofillservice.h
     src/storage/archivepacking.cpp
     src/storage/archivepacking.h
     src/storage/comicinfoarchive.cpp
@@ -122,7 +120,6 @@ qt_add_qml_module(comic_pile_qt
     QML_FILES
         qml/Main.qml
         qml/DatabaseMigrationWindow.qml
-        qml/controllers/ComicVineAutofillController.qml
         qml/controllers/StartupController.qml
         qml/controllers/WindowDisplayController.qml
         qml/controllers/AppSettingsController.qml
@@ -178,7 +175,6 @@ qt_add_qml_module(comic_pile_qt
         qml/components/HoverActionBar.qml
         qml/components/ImportProgressOverlay.qml
         qml/components/ImportConflictDialog.qml
-        qml/components/ComicVineApiKeyDialog.qml
         qml/components/IssueMetadataDialog.qml
         qml/components/ActionResultDialog.qml
         qml/components/SeriesDeleteConfirmDialog.qml
@@ -287,7 +283,6 @@ target_link_libraries(comic_pile_qt
         Qt6::Widgets
         Qt6::Concurrent
         Qt6::Svg
-        Qt6::Network
         Qt6::Pdf
 )
 
@@ -303,7 +298,6 @@ target_link_libraries(comic_pile_smoke
         Qt6::Sql
         Qt6::Widgets
         Qt6::Concurrent
-        Qt6::Network
         Qt6::Pdf
 )
 
@@ -313,7 +307,6 @@ target_link_libraries(comic_pile_regression
         Qt6::Sql
         Qt6::Widgets
         Qt6::Concurrent
-        Qt6::Network
         Qt6::Pdf
 )
 

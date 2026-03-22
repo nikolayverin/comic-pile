@@ -22,7 +22,6 @@ Item {
     property var seriesHeaderDialogRef: null
     property var deleteConfirmDialogRef: null
     property var deleteErrorDialogRef: null
-    property var comicVineApiKeyDialogRef: null
 
     property string actionResultMessage: ""
     property string actionResultDetailsText: ""
@@ -42,7 +41,6 @@ Item {
         || Boolean(seriesHeaderDialogRef && seriesHeaderDialogRef.visible)
         || Boolean(deleteConfirmDialogRef && deleteConfirmDialogRef.visible)
         || Boolean(deleteErrorDialogRef && deleteErrorDialogRef.visible)
-        || Boolean(comicVineApiKeyDialogRef && comicVineApiKeyDialogRef.visible)
 
     readonly property bool anyCriticalPopupVisible: Boolean(importModalOverlayRef && importModalOverlayRef.visible)
         || Boolean(importConflictDialogRef && importConflictDialogRef.visible)
@@ -103,8 +101,7 @@ Item {
             settingsDialogRef,
             seriesHeaderDialogRef,
             deleteConfirmDialogRef,
-            deleteErrorDialogRef,
-            comicVineApiKeyDialogRef
+            deleteErrorDialogRef
         ]
     }
 
@@ -235,15 +232,4 @@ Item {
         }
     }
 
-    function openPopupPreview(popupId) {
-        const key = String(popupId || "").trim().toLowerCase()
-        if (key.length < 1) return
-
-        if (key === "comicvine_api_key") {
-            closeAllManagedPopups(comicVineApiKeyDialogRef)
-            if (comicVineApiKeyDialogRef) {
-                comicVineApiKeyDialogRef.openPreview()
-            }
-        }
-    }
 }
