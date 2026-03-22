@@ -41,6 +41,10 @@ ApplicationWindow {
     ThemeColors { id: themeColors }
     PopupStyle { id: popupStyleTokens }
     AppSettingsController { id: appSettingsController }
+    MainStartupState {
+        id: startupState
+        launchStartedAtMs: Number(appLaunchStartedAtMs || 0)
+    }
 
     readonly property string libraryBackgroundMode: String(appSettingsController.appearanceLibraryBackground || "Default")
     readonly property color libraryBackgroundSolidColor: appSettingsController.appearanceLibraryBackgroundSolidColor
@@ -402,65 +406,59 @@ ApplicationWindow {
     property bool gridOverlayMenusSuppressed: false
     property int gridOverlayMenuPostScrollDelayMs: 180
     property var issuesGridData: []
-    property int startupLoadDelayMs: 16
-    property int startupInitialReconcileSettleDelayMs: 48
-    property int startupPrimaryContentRevealDelayMs: startupInitialReconcileSettleDelayMs
-    property int startupInventoryCheckDelayMs: 5000
-    property int startupHydrationRetryDelayMs: 100
-    property int startupHydrationMaxDeferredAttempts: 20
-    property bool restoringStartupSnapshot: false
-    property bool startupSnapshotApplied: false
-    property real startupSnapshotSeriesContentY: 0
-    property real startupSnapshotIssuesContentY: 0
-    property int startupSnapshotVersion: 1
-    property int startupSnapshotMaxSeries: 160
-    property int startupSnapshotMaxIssues: 24
-    property bool startupSnapshotLiveReloadRequested: false
+    property alias startupLoadDelayMs: startupState.startupLoadDelayMs
+    property alias startupInitialReconcileSettleDelayMs: startupState.startupInitialReconcileSettleDelayMs
+    property alias startupPrimaryContentRevealDelayMs: startupState.startupPrimaryContentRevealDelayMs
+    property alias startupInventoryCheckDelayMs: startupState.startupInventoryCheckDelayMs
+    property alias startupHydrationRetryDelayMs: startupState.startupHydrationRetryDelayMs
+    property alias startupHydrationMaxDeferredAttempts: startupState.startupHydrationMaxDeferredAttempts
+    property alias restoringStartupSnapshot: startupState.restoringStartupSnapshot
+    property alias startupSnapshotApplied: startupState.startupSnapshotApplied
+    property alias startupSnapshotSeriesContentY: startupState.startupSnapshotSeriesContentY
+    property alias startupSnapshotIssuesContentY: startupState.startupSnapshotIssuesContentY
+    property alias startupSnapshotVersion: startupState.startupSnapshotVersion
+    property alias startupSnapshotMaxSeries: startupState.startupSnapshotMaxSeries
+    property alias startupSnapshotMaxIssues: startupState.startupSnapshotMaxIssues
+    property alias startupSnapshotLiveReloadRequested: startupState.startupSnapshotLiveReloadRequested
     property bool suspendSidebarSearchRefresh: false
     property bool modelReconcilePending: false
     property bool suspendSelectionDrivenRefresh: false
-    property bool startupReconcileCompleted: false
-    property bool startupHydrationInProgress: true
-    property bool startupAwaitingFirstModelSignal: true
-    property int startupHydrationAttemptCount: 0
-    property bool startupDebugLogsEnabled: false
-    property real startupStartedAtMs: 0
-    property double launchStartedAtMs: Number(appLaunchStartedAtMs || 0)
-    property bool startupFirstStatusSignalReceived: false
-    property bool startupResultLogged: false
-    property string startupFirstFrameSource: "unknown"
-    property var startupInventorySignature: ({})
-    property var startupPendingInventorySignature: ({})
-    property int startupInventoryCheckRequestId: 0
-    property bool startupInventoryCheckInProgress: false
-    property bool startupInventoryRebuildInProgress: false
+    property alias startupReconcileCompleted: startupState.startupReconcileCompleted
+    property alias startupHydrationInProgress: startupState.startupHydrationInProgress
+    property alias startupAwaitingFirstModelSignal: startupState.startupAwaitingFirstModelSignal
+    property alias startupHydrationAttemptCount: startupState.startupHydrationAttemptCount
+    property alias startupDebugLogsEnabled: startupState.startupDebugLogsEnabled
+    property alias startupStartedAtMs: startupState.startupStartedAtMs
+    property alias launchStartedAtMs: startupState.launchStartedAtMs
+    property alias startupFirstStatusSignalReceived: startupState.startupFirstStatusSignalReceived
+    property alias startupResultLogged: startupState.startupResultLogged
+    property alias startupFirstFrameSource: startupState.startupFirstFrameSource
+    property alias startupInventorySignature: startupState.startupInventorySignature
+    property alias startupPendingInventorySignature: startupState.startupPendingInventorySignature
+    property alias startupInventoryCheckRequestId: startupState.startupInventoryCheckRequestId
+    property alias startupInventoryCheckInProgress: startupState.startupInventoryCheckInProgress
+    property alias startupInventoryRebuildInProgress: startupState.startupInventoryRebuildInProgress
     property var pendingReaderProgressSaveByComicId: ({})
     property var pendingReaderProgressSaveOrder: []
     property int readerProgressSaveRetryDelayMs: 180
-    property var startupColdRenderLoggedFlags: ({
-        topbar: false,
-        hero: false,
-        grid: false,
-        firstCard: false,
-        firstCover: false
-    })
-    property string startupPreviewPath: ""
-    property string startupPreviewPrimaryPath: ""
-    property string startupPreviewFallbackPath: ""
-    property string startupPreviewSource: ""
-    property bool startupPreviewTriedFallback: false
-    property int startupPreviewMaxLongSide: 1920
-    property bool startupPreviewOverlayEnabled: false
-    property bool showStartupPreview: false
-    property bool startupPrimaryContentReady: false
-    readonly property bool startupPrimaryContentVisible: startupPrimaryContentReady
-    property bool startupClosingAfterPreview: false
-    property int startupCloseSeq: 0
-    property real startupCloseRequestedAtMs: 0
-    property bool startupDbHealthWarningVisible: false
-    property string startupDbHealthWarningMessage: ""
-    property string startupDbHealthWarningCode: ""
-    property int startupDbHealthRequestId: 0
+    property alias startupColdRenderLoggedFlags: startupState.startupColdRenderLoggedFlags
+    property alias startupPreviewPath: startupState.startupPreviewPath
+    property alias startupPreviewPrimaryPath: startupState.startupPreviewPrimaryPath
+    property alias startupPreviewFallbackPath: startupState.startupPreviewFallbackPath
+    property alias startupPreviewSource: startupState.startupPreviewSource
+    property alias startupPreviewTriedFallback: startupState.startupPreviewTriedFallback
+    property alias startupPreviewMaxLongSide: startupState.startupPreviewMaxLongSide
+    property alias startupPreviewOverlayEnabled: startupState.startupPreviewOverlayEnabled
+    property alias showStartupPreview: startupState.showStartupPreview
+    property alias startupPrimaryContentReady: startupState.startupPrimaryContentReady
+    readonly property bool startupPrimaryContentVisible: startupState.startupPrimaryContentVisible
+    property alias startupClosingAfterPreview: startupState.startupClosingAfterPreview
+    property alias startupCloseSeq: startupState.startupCloseSeq
+    property alias startupCloseRequestedAtMs: startupState.startupCloseRequestedAtMs
+    property alias startupDbHealthWarningVisible: startupState.startupDbHealthWarningVisible
+    property alias startupDbHealthWarningMessage: startupState.startupDbHealthWarningMessage
+    property alias startupDbHealthWarningCode: startupState.startupDbHealthWarningCode
+    property alias startupDbHealthRequestId: startupState.startupDbHealthRequestId
 
     component PointerButton: Button {
         hoverEnabled: true
