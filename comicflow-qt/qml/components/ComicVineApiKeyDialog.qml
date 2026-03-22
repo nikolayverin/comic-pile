@@ -241,7 +241,7 @@ PopupDialogWindow {
                     anchors.centerIn: parent
                     visible: !dialog.checkPending && dialog.verifiedCurrentValue
                     text: "\u2713"
-                    color: "#44c267"
+                    color: styleTokens.successTextColor
                     font.pixelSize: styleTokens.comicVineVerifiedGlyphSize
                     font.bold: true
                 }
@@ -263,9 +263,9 @@ PopupDialogWindow {
             visible: dialog.statusText.length > 0
             wrapMode: Text.WordWrap
             color: dialog.statusKind === "success"
-                ? "#44c267"
+                ? styleTokens.successTextColor
                 : dialog.statusKind === "error"
-                    ? "#b91c1c"
+                    ? styleTokens.failureTextColor
                     : styleTokens.hintTextColor
             font.pixelSize: styleTokens.dialogHintFontSize
             text: dialog.statusText

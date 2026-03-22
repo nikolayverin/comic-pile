@@ -162,7 +162,7 @@ Item {
         }
     }
 
-    Item {
+    VerticalScrollThumb {
         id: scrollLayer
         anchors.top: parent.top
         anchors.bottom: parent.bottom
@@ -173,54 +173,11 @@ Item {
         width: root.scrollGutterWidth
         visible: root.showsVerticalScrollThumb
         z: 2
-
-        function setScrollFromPointer(localY) {
-            const maxContentY = Math.max(0, listView.contentHeight - listView.height)
-            if (maxContentY <= 0) return
-            const knobHeight = scrollThumb.height
-            const trackHeight = Math.max(1, scrollLayer.height - knobHeight)
-            const unclamped = localY - knobHeight / 2
-            const clamped = Math.max(0, Math.min(trackHeight, unclamped))
-            const ratio = clamped / trackHeight
-            listView.contentY = ratio * maxContentY
-        }
-
-        Rectangle {
-            id: scrollThumb
-            width: root.scrollThumbWidth
-            radius: width / 2
-            color: root.scrollThumbColor
-            antialiasing: true
-            anchors.right: parent.right
-            height: {
-                const ratio = Math.max(0, Math.min(1, listView.visibleArea.heightRatio))
-                return Math.max(root.scrollThumbMinHeight, Math.round(scrollLayer.height * ratio))
-            }
-            y: {
-                const maxY = Math.max(0, scrollLayer.height - height)
-                const visibleRatio = Math.max(0, Math.min(1, listView.visibleArea.heightRatio))
-                const yPosition = Math.max(0, Math.min(1, listView.visibleArea.yPosition))
-                const maxVisiblePosition = Math.max(0, 1 - visibleRatio)
-                const normalized = maxVisiblePosition > 0
-                    ? Math.max(0, Math.min(1, yPosition / maxVisiblePosition))
-                    : 0
-                return Math.round(maxY * normalized)
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
-            hoverEnabled: true
-            preventStealing: true
-            cursorShape: Qt.PointingHandCursor
-            onPressed: function(mouse) {
-                scrollLayer.setScrollFromPointer(mouse.y)
-            }
-            onPositionChanged: function(mouse) {
-                if (pressed) scrollLayer.setScrollFromPointer(mouse.y)
-            }
-        }
+        flickable: listView
+        thumbWidth: root.scrollThumbWidth
+        thumbMinHeight: root.scrollThumbMinHeight
+        thumbInset: root.scrollThumbInset
+        thumbColor: root.scrollThumbColor
     }
 
     TextMetrics {

@@ -361,7 +361,7 @@ ApplicationWindow {
     property string sevenZipConfiguredPath: ""
     property string sevenZipEffectivePath: ""
     property alias criticalPopupAttentionTarget: popupController.criticalPopupAttentionTarget
-    property color criticalPopupAttentionColor: "#b3fe03"
+    property color criticalPopupAttentionColor: themeColors.dialogAttentionColor
     property alias importInProgress: importController.importInProgress
     readonly property bool anyManagedModalPopupVisible: popupController.anyManagedModalPopupVisible
     readonly property bool anyCriticalPopupVisible: popupController.anyCriticalPopupVisible
@@ -2963,7 +2963,7 @@ ApplicationWindow {
                             x: 0
                             y: 2
                             text: "Library"
-                            color: "#000000"
+                            color: root.uiTextShadow
                             font.family: root.uiFontFamily
                             font.pixelSize: 12
                             font.weight: Font.Normal
@@ -3057,7 +3057,7 @@ ApplicationWindow {
 
                     }
 
-                    Item {
+                    VerticalScrollThumb {
                         id: seriesScrollLayer
                         x: parent.width - width - 8
                         y: seriesListView.y
@@ -3065,50 +3065,10 @@ ApplicationWindow {
                         height: seriesListView.height
                         visible: seriesListView.contentHeight > seriesListView.height
                         z: 2
-
-                        function setScrollFromPointer(localY) {
-                            const maxContentY = Math.max(0, seriesListView.contentHeight - seriesListView.height)
-                            if (maxContentY <= 0) return
-                            const knobHeight = seriesScrollKnob.height
-                            const trackHeight = Math.max(1, seriesScrollLayer.height - knobHeight)
-                            const unclamped = localY - knobHeight / 2
-                            const clamped = Math.max(0, Math.min(trackHeight, unclamped))
-                            const ratio = clamped / trackHeight
-                            seriesListView.contentY = ratio * maxContentY
-                        }
-
-                        Rectangle {
-                            id: seriesScrollKnob
-                            width: 8
-                            radius: width / 2
-                            color: root.bgSidebarEnd
-                            antialiasing: true
-                            height: Math.max(36, Math.round(seriesScrollLayer.height * Math.min(1, seriesListView.visibleArea.heightRatio)))
-                            y: {
-                                const maxY = Math.max(0, seriesScrollLayer.height - height)
-                                const visibleRatio = Math.max(0, Math.min(1, seriesListView.visibleArea.heightRatio))
-                                const yPosition = Math.max(0, Math.min(1, seriesListView.visibleArea.yPosition))
-                                const maxVisiblePosition = Math.max(0, 1 - visibleRatio)
-                                const normalized = maxVisiblePosition > 0
-                                    ? Math.max(0, Math.min(1, yPosition / maxVisiblePosition))
-                                    : 0
-                                return Math.round(maxY * normalized)
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            hoverEnabled: true
-                            preventStealing: true
-                            cursorShape: Qt.PointingHandCursor
-                            onPressed: function(mouse) {
-                                seriesScrollLayer.setScrollFromPointer(mouse.y)
-                            }
-                            onPositionChanged: function(mouse) {
-                                if (pressed) seriesScrollLayer.setScrollFromPointer(mouse.y)
-                            }
-                        }
+                        flickable: seriesListView
+                        thumbWidth: width
+                        thumbMinHeight: 36
+                        thumbColor: root.bgSidebarEnd
                     }
 
                     Item {
@@ -4473,7 +4433,7 @@ ApplicationWindow {
                         }
                     }
 
-                    Item {
+                    VerticalScrollThumb {
                         id: rightScrollLayer
                         x: parent.width - width - 8
                         y: 0
@@ -4481,52 +4441,25 @@ ApplicationWindow {
                         height: parent.height
                         visible: rightPane.hasIssueOverflow
                         z: 12
-
-                        function setScrollFromPointer(localY) {
+                        visibleRatioOverride: {
+                            const range = rightPane.totalSplitScrollRange
+                            const ratio = range > 0 ? (rightScrollLayer.height / (rightScrollLayer.height + range)) : 1
+                            return Math.max(0, Math.min(1, ratio))
+                        }
+                        positionRatioOverride: {
+                            const range = Math.max(0, rightPane.totalSplitScrollRange)
+                            if (range <= 0) return 0
+                            return Math.max(0, Math.min(1, rightPane.currentSplitScroll / range))
+                        }
+                        thumbWidth: width
+                        thumbMinHeight: 36
+                        thumbColor: root.bgApp
+                        onDragStarted: rightPane.stopSmoothScroll()
+                        onPositionRequested: function(ratio) {
                             const range = Math.max(0, rightPane.totalSplitScrollRange)
                             if (range <= 0) return
                             root.dismissGridOverlayMenusForScroll()
-                            const knobHeight = rightScrollKnob.height
-                            const trackHeight = Math.max(1, rightScrollLayer.height - knobHeight)
-                            const unclamped = localY - knobHeight / 2
-                            const clamped = Math.max(0, Math.min(trackHeight, unclamped))
-                            const ratio = clamped / trackHeight
                             rightPane.setAbsoluteSplitScroll(ratio * range)
-                        }
-
-                        Rectangle {
-                            id: rightScrollKnob
-                            width: 8
-                            radius: width / 2
-                            color: "#000000"
-                            antialiasing: true
-                            height: {
-                                const range = rightPane.totalSplitScrollRange
-                                const ratio = range > 0 ? (rightScrollLayer.height / (rightScrollLayer.height + range)) : 1
-                                return Math.max(36, Math.round(rightScrollLayer.height * Math.min(1, ratio)))
-                            }
-                            y: {
-                                const range = Math.max(0, rightPane.totalSplitScrollRange)
-                                const maxY = Math.max(0, rightScrollLayer.height - height)
-                                if (range <= 0 || maxY <= 0) return 0
-                                const ratio = Math.max(0, Math.min(1, rightPane.currentSplitScroll / range))
-                                return Math.round(maxY * ratio)
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            acceptedButtons: Qt.LeftButton
-                            hoverEnabled: true
-                            preventStealing: true
-                            cursorShape: Qt.PointingHandCursor
-                            onPressed: function(mouse) {
-                                rightPane.stopSmoothScroll()
-                                rightScrollLayer.setScrollFromPointer(mouse.y)
-                            }
-                            onPositionChanged: function(mouse) {
-                                if (pressed) rightScrollLayer.setScrollFromPointer(mouse.y)
-                            }
                         }
                     }
                 }

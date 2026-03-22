@@ -1657,7 +1657,7 @@ Popup {
                 }
             }
 
-            Item {
+            VerticalScrollThumb {
                 id: pageListScrollLayer
                 anchors.top: pageListBody.top
                 anchors.bottom: pageListBody.bottom
@@ -1668,54 +1668,11 @@ Popup {
                 width: root.listScrollGutterWidth
                 visible: pageListView.contentHeight > pageListView.height + 0.5
                 z: 2
-
-                function setScrollFromPointer(localY) {
-                    const maxContentY = Math.max(0, pageListView.contentHeight - pageListView.height)
-                    if (maxContentY <= 0) return
-                    const knobHeight = pageListScrollThumb.height
-                    const trackHeight = Math.max(1, height - knobHeight)
-                    const unclamped = localY - knobHeight / 2
-                    const clamped = Math.max(0, Math.min(trackHeight, unclamped))
-                    const ratio = clamped / trackHeight
-                    pageListView.contentY = ratio * maxContentY
-                }
-
-                Rectangle {
-                    id: pageListScrollThumb
-                    width: root.listScrollThumbWidth
-                    anchors.right: parent.right
-                    radius: width / 2
-                    color: root.lightThemeEnabled ? root.panelColor : root.textColor
-                    antialiasing: true
-                    height: {
-                        const ratio = Math.max(0, Math.min(1, pageListView.visibleArea.heightRatio))
-                        return Math.max(root.listScrollThumbMinHeight, Math.round(pageListScrollLayer.height * ratio))
-                    }
-                    y: {
-                        const maxY = Math.max(0, pageListScrollLayer.height - height)
-                        const visibleRatio = Math.max(0, Math.min(1, pageListView.visibleArea.heightRatio))
-                        const yPosition = Math.max(0, Math.min(1, pageListView.visibleArea.yPosition))
-                        const maxVisiblePosition = Math.max(0, 1 - visibleRatio)
-                        const normalized = maxVisiblePosition > 0
-                            ? Math.max(0, Math.min(1, yPosition / maxVisiblePosition))
-                            : 0
-                        return Math.round(maxY * normalized)
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton
-                    hoverEnabled: true
-                    preventStealing: true
-                    cursorShape: Qt.PointingHandCursor
-                    onPressed: function(mouse) {
-                        pageListScrollLayer.setScrollFromPointer(mouse.y)
-                    }
-                    onPositionChanged: function(mouse) {
-                        if (pressed) pageListScrollLayer.setScrollFromPointer(mouse.y)
-                    }
-                }
+                flickable: pageListView
+                thumbWidth: root.listScrollThumbWidth
+                thumbMinHeight: root.listScrollThumbMinHeight
+                thumbInset: root.listScrollThumbInset
+                thumbColor: root.lightThemeEnabled ? root.panelColor : root.textColor
             }
 
             PageListNotch {

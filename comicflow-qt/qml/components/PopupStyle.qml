@@ -76,6 +76,8 @@ QtObject {
     readonly property int comicVineApiKeyMinHeight: confirmDialogMinHeight
     readonly property int importProgressWidth: 454
     readonly property color importProgressBarColor: themeColors.importProgressBarColor
+    readonly property color successTextColor: themeColors.popupSuccessColor
+    readonly property color failureTextColor: themeColors.popupFailureColor
 
     readonly property int dialogHeaderTopMargin: 16
     readonly property int dialogBodyTopMargin: formSectionTop

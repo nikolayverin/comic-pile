@@ -3,9 +3,11 @@ import QtQuick
 Item {
     id: root
 
+    ThemeColors { id: themeColors }
+
     property var targetItem: null
     property int cornerRadius: 12
-    property color lineColor: "#878787"
+    property color lineColor: themeColors.edgeLineColor
     property string edge: "bottom" // "top" | "bottom"
     property bool forceVisible: false
 

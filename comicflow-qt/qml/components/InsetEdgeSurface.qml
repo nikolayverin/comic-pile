@@ -3,8 +3,10 @@ import QtQuick
 Item {
     id: root
 
-    property color fillColor: "#252525"
-    property color edgeColor: "#000000"
+    ThemeColors { id: themeColors }
+
+    property color fillColor: themeColors.popupFillColor
+    property color edgeColor: themeColors.lineTopbarBottom
     property int cornerRadius: 10
     property int fillOffsetX: 0
     property int fillOffsetY: -1
