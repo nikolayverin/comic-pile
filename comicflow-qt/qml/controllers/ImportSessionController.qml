@@ -91,6 +91,13 @@ Item {
             : ""
     }
 
+    function parentFolderPath(pathValue) {
+        const rootRef = root()
+        return rootRef && typeof rootRef.parentFolderPath === "function"
+            ? String(rootRef.parentFolderPath(pathValue) || "")
+            : ""
+    }
+
     function resolveImportSourceEntries(paths) {
         const rootRef = root()
         return rootRef && typeof rootRef.resolveImportSourceEntries === "function"
@@ -634,10 +641,58 @@ Item {
         return entries
     }
 
+    function adoptExistingSeriesContextForSiblingQueuedEntries(conflictContext) {
+        const ctx = conflictContext || ({})
+        const existingSeries = String(ctx.existingSeries || "").trim()
+        const sourceFolder = parentFolderPath(String(ctx.sourcePath || ""))
+        const importIntent = String(ctx.importIntent || ((ctx.importValues || {}).importIntent) || "").trim().toLowerCase()
+        if (existingSeries.length < 1 || sourceFolder.length < 1 || importIntent !== "global_add") {
+            return false
+        }
+
+        let changed = false
+        const nextQueue = []
+        for (let i = 0; i < importQueue.length; i += 1) {
+            const queued = importQueue[i]
+            if (!queued || typeof queued !== "object") {
+                nextQueue.push(queued)
+                continue
+            }
+
+            const queuedFolder = parentFolderPath(String(queued.path || ""))
+            const queuedIntent = String(queued.importIntent || ((queued.values || {}).importIntent) || "").trim().toLowerCase()
+            if (queuedFolder !== sourceFolder || queuedIntent !== "global_add" || String(queued.seriesOverride || "").trim().length > 0) {
+                nextQueue.push(queued)
+                continue
+            }
+
+            const nextValues = cloneVariantMap(queued.values)
+            const explicitSeries = String(nextValues.series || "").trim()
+            const contextSeries = String(nextValues.importContextSeries || "").trim()
+            if (explicitSeries.length > 0 || contextSeries.length > 0) {
+                nextQueue.push(queued)
+                continue
+            }
+
+            nextValues.importContextSeries = existingSeries
+            nextQueue.push(Object.assign({}, queued, { values: nextValues }))
+            changed = true
+        }
+
+        if (changed) {
+            importQueue = nextQueue
+        }
+        return changed
+    }
+
     function openImportConflictDialog(sourcePath, sourceType, seriesOverride, filenameHint, importValues, importResult) {
         importConflictContext = createImportConflictContext(sourcePath, sourceType, seriesOverride, filenameHint, importValues, importResult)
         importConflictIncomingLabel = String(importConflictContext.incomingLabel || "")
         importConflictExistingLabel = String(importConflictContext.existingLabel || "")
+
+        if (importConflictSupportsBatchActions(importConflictContext)) {
+            adoptExistingSeriesContextForSiblingQueuedEntries(importConflictContext)
+        }
 
         if (importConflictSupportsBatchActions(importConflictContext) && libraryModelRef) {
             const duplicateEntries = buildPendingImportConflictEntries(importConflictContext)
@@ -817,7 +872,7 @@ Item {
         importConflictOperationActive = true
         importConflictProgressCurrentFileName = currentImportConflictIncomingLabel(importConflictContext)
         importConflictProgressProcessedCount = 0
-        importConflictProgressTotalCount = action === "replace_all"
+        importConflictProgressTotalCount = (action === "replace_all" || action === "skip_all")
             ? Math.max(1, Number(importConflictBatchDuplicateCount || 1))
             : 1
         importConflictActionTimer.start()
@@ -833,7 +888,7 @@ Item {
             importConflictProgressProcessedCount += 1
         }
 
-        if (action === "replace_all") {
+        if (action === "replace_all" || action === "skip_all") {
             if (success && promoteNextImportConflict()) {
                 importConflictActionTimer.start()
                 return
@@ -862,7 +917,7 @@ Item {
         if (action === "skip_all" || action === "replace_all") {
             importConflictBatchAction = action
         }
-        if (action === "replace" || action === "replace_all" || action === "import_as_new") {
+        if (action === "replace" || action === "replace_all" || action === "skip_all" || action === "import_as_new") {
             queueImportConflictAction(action)
             return
         }

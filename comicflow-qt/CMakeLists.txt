@@ -139,6 +139,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/SidebarSeriesItem.qml
         qml/components/MainSidebar.qml
         qml/components/MainLibraryPane.qml
+        qml/components/MainDialogHost.qml
         qml/components/IssueCard.qml
         qml/components/FocusEdgeLine.qml
         qml/components/Typography.qml

@@ -1,0 +1,307 @@
+import QtQuick
+
+Item {
+    id: dialogHost
+    anchors.fill: parent
+
+    property var rootObject: null
+    property var popupStyleTokensRef: null
+    property var appSettingsControllerRef: null
+    property var importControllerRef: null
+    property var popupControllerRef: null
+    property var deleteControllerRef: null
+    property var readerSessionControllerRef: null
+    property var heroSeriesControllerRef: null
+    property var startupControllerRef: null
+    property var seriesHeaderControllerRef: null
+    property var libraryModelRef: null
+    property var failedImportItemsModelRef: null
+
+    readonly property var root: rootObject
+    readonly property var popupStyleTokens: popupStyleTokensRef
+    readonly property var appSettingsController: appSettingsControllerRef
+    readonly property var importController: importControllerRef
+    readonly property var popupController: popupControllerRef
+    readonly property var deleteController: deleteControllerRef
+    readonly property var readerSessionController: readerSessionControllerRef
+    readonly property var heroSeriesController: heroSeriesControllerRef
+    readonly property var startupController: startupControllerRef
+    readonly property var seriesHeaderController: seriesHeaderControllerRef
+    readonly property var libraryModel: libraryModelRef
+    readonly property var failedImportItemsModel: failedImportItemsModelRef
+
+    property alias importModalOverlayRef: importModalOverlay
+    property alias importConflictDialogRef: importConflictDialog
+    property alias seriesDeleteConfirmDialogRef: seriesDeleteConfirmDialog
+    property alias failedImportsDialogRef: failedImportsDialog
+    property alias metadataDialogRef: metadataDialog
+    property alias readerDialogRef: readerDialog
+    property alias actionResultDialogRef: actionResultDialog
+    property alias issueMetadataAutofillConfirmDialogRef: issueMetadataAutofillConfirmDialog
+    property alias seriesMetadataAutofillConfirmDialogRef: seriesMetadataAutofillConfirmDialog
+    property alias seriesMetaDialogRef: seriesMetaDialog
+    property alias settingsDialogRef: settingsDialog
+    property alias seriesHeaderDialogRef: seriesHeaderDialog
+    property alias deleteConfirmDialogRef: deleteConfirmDialog
+    property alias deleteErrorDialogRef: deleteErrorDialog
+    property alias seriesMetaSeriesField: seriesMetaDialog.seriesField
+    property alias seriesMetaTitleField: seriesMetaDialog.titleField
+    property alias seriesMetaVolumeField: seriesMetaDialog.volumeField
+    property alias seriesMetaGenresField: seriesMetaDialog.genresField
+    property alias seriesMetaPublisherField: seriesMetaDialog.publisherField
+    property alias seriesMetaYearField: seriesMetaDialog.yearField
+    property alias seriesMetaMonthCombo: seriesMetaDialog.monthCombo
+    property alias seriesMetaAgeRatingCombo: seriesMetaDialog.ageRatingCombo
+    property alias seriesMetaSummaryField: seriesMetaDialog.summaryField
+
+    ImportProgressOverlay {
+        id: importModalOverlay
+        active: root.importInProgress
+        blockedByModalPopup: root.anyManagedModalPopupVisible
+        criticalAttentionTarget: root.criticalPopupAttentionTarget
+        criticalAttentionColor: root.criticalPopupAttentionColor
+        currentFileName: root.importCurrentFileName
+        importQueue: root.importQueue
+        totalCount: root.importTotal
+        processedCount: root.importProcessed
+        totalBytes: root.importTotalBytes
+        processedBytes: root.importProcessedBytes
+        cancelInProgress: root.importCancelRequested
+        onCancelRequested: importController.cancelImportBatch()
+        onHidden: popupController.clearCriticalPopupAttention(importModalOverlay.dialogItem)
+    }
+
+    ImportConflictDialog {
+        id: importConflictDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        titleText: importController.importConflictDialogTitle(root.importConflictContext)
+        messageText: importController.importConflictDialogMessage(root.importConflictContext)
+        secondaryActionText: importController.importConflictDialogSecondaryLabel(root.importConflictContext)
+        primaryActionText: importController.importConflictDialogPrimaryLabel(root.importConflictContext)
+        incomingLabel: root.importConflictIncomingLabel
+        existingLabel: root.importConflictExistingLabel
+        nextIncomingLabel: root.importConflictNextIncomingLabel
+        nextExistingLabel: root.importConflictNextExistingLabel
+        showBatchActions: importController.importConflictSupportsBatchActions(root.importConflictContext)
+            && root.importConflictBatchDuplicateCount > 1
+        progressActive: root.importConflictOperationActive
+        progressCurrentFileName: root.importConflictProgressCurrentFileName
+        progressTotalCount: root.importConflictProgressTotalCount
+        progressProcessedCount: root.importConflictProgressProcessedCount
+        progressFraction: root.importConflictProgressFraction
+        criticalAttentionTarget: root.criticalPopupAttentionTarget
+        criticalAttentionColor: root.criticalPopupAttentionColor
+        onClosed: popupController.handleImportConflictClosed()
+        onSecondaryRequested: importController.resolveImportConflict(importController.importConflictSecondaryAction(root.importConflictContext))
+        onPrimaryRequested: importController.resolveImportConflict(importController.importConflictPrimaryAction(root.importConflictContext))
+        onSkipAllRequested: importController.resolveImportConflict("skip_all")
+        onReplaceAllRequested: importController.resolveImportConflict("replace_all")
+    }
+
+    SeriesDeleteConfirmDialog {
+        id: seriesDeleteConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        questionText: root.seriesDeleteQuestionText(popupStyleTokens.dialogBodyEmphasisFontSize)
+        criticalAttentionTarget: root.criticalPopupAttentionTarget
+        criticalAttentionColor: root.criticalPopupAttentionColor
+        onClosed: popupController.handleSeriesDeleteDialogClosed()
+        onCancelConfirmed: popupController.cancelSeriesDeleteDialog()
+        onDeleteRequested: deleteController.performSeriesDelete()
+    }
+
+    FailedImportsDialog {
+        id: failedImportsDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        itemsModel: failedImportItemsModel
+        actionsEnabled: !root.importInProgress
+        onRetryRequested: importController.retryFailedImportAt(index)
+        onSkipRequested: importController.skipFailedImportAt(index)
+        onSkipAllRequested: importController.skipAllFailedImports()
+        onPathOpenRequested: function(path) {
+            if (!root.openFolderForPath(path)) return
+        }
+    }
+
+    IssueMetadataDialog {
+        id: metadataDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        dangerColor: root.dangerColor
+        onSaveRequested: function(draft) {
+            root.requestApplyIssueMetadataEdit(draft)
+        }
+        onResetRequested: root.resetMetadataEditor()
+        onClosed: {
+            if (issueMetadataAutofillConfirmDialog.visible) {
+                issueMetadataAutofillConfirmDialog.close()
+            }
+            root.pendingIssueMetadataSuggestion = ({})
+            popupController.handleIssueMetadataDialogClosed()
+        }
+    }
+
+    ReaderPopup {
+        id: readerDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        uiFontFamily: root.uiFontFamily
+        issueTitle: readerSessionController.issueTitle
+        imageSource: readerSessionController.imageSource
+        displayPages: readerSessionController.displayPages
+        errorText: readerSessionController.errorText
+        loading: readerSessionController.loading
+        pageIndex: readerSessionController.pageIndex
+        pageCount: readerSessionController.pageCount
+        fullscreenMode: readerSessionController.fullscreenMode
+        readingViewMode: readerSessionController.readingViewMode
+        canGoPreviousPage: readerSessionController.canGoPreviousPage
+        canGoNextPage: readerSessionController.canGoNextPage
+        canGoPreviousIssue: readerSessionController.canGoPreviousIssue
+        canGoNextIssue: readerSessionController.canGoNextIssue
+        bookmarkActive: readerSessionController.bookmarkActive
+        bookmarkPageIndex: readerSessionController.bookmarkPageIndex
+        favoriteActive: readerSessionController.favoriteActive
+        magnifierSizePreset: appSettingsController.readerMagnifierSize
+        onDismissRequested: readerSessionController.closeReader()
+        onPreviousPageRequested: readerSessionController.previousReaderPage()
+        onNextPageRequested: readerSessionController.nextReaderPage()
+        onPreviousIssueRequested: readerSessionController.previousReaderIssue()
+        onNextIssueRequested: readerSessionController.nextReaderIssue()
+        onReadingViewModeChangeRequested: function(mode) { readerSessionController.setReaderViewMode(mode) }
+        onBookmarkRequested: readerSessionController.toggleReaderBookmark()
+        onBookmarkJumpRequested: readerSessionController.jumpToReaderBookmark()
+        onFavoriteRequested: readerSessionController.toggleReaderFavorite()
+        onCopyImageRequested: readerSessionController.copyCurrentReaderImage()
+        onMarkAsReadRequested: readerSessionController.markCurrentReaderIssueReadAndAdvance()
+        onReadFromStartRequested: readerSessionController.restartFromBeginning()
+        onFullscreenToggleRequested: readerSessionController.toggleFullscreenMode()
+        onPageSelected: function(pageIndex) { readerSessionController.loadReaderPage(pageIndex) }
+        onClosed: readerSessionController.handlePopupClosed()
+    }
+
+    ActionResultDialog {
+        id: actionResultDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        dangerColor: root.dangerColor
+        message: root.actionResultMessage
+        detailsText: popupController.actionResultDetailsText
+        secondaryActionText: popupController.actionResultSecondaryText
+        secondaryActionVisible: popupController.actionResultSecondaryVisible
+        onClosed: popupController.handleActionResultDialogClosed()
+        onSecondaryRequested: popupController.triggerActionResultSecondary()
+    }
+
+    PopupConfirmDialog {
+        id: issueMetadataAutofillConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        primaryButtonText: "Fill Fields"
+        secondaryButtonText: "Keep Current"
+        onPrimaryRequested: root.acceptIssueMetadataSuggestion()
+        onSecondaryRequested: root.skipIssueMetadataSuggestion()
+    }
+
+    PopupConfirmDialog {
+        id: seriesMetadataAutofillConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        primaryButtonText: "Fill Fields"
+        secondaryButtonText: "Keep Current"
+        onPrimaryRequested: root.acceptSeriesMetadataSuggestion()
+        onSecondaryRequested: root.skipSeriesMetadataSuggestion()
+    }
+
+    SeriesMetadataDialog {
+        id: seriesMetaDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        dangerColor: root.dangerColor
+        monthOptions: root.seriesMetaMonthOptions
+        ageRatingOptions: root.seriesMetaAgeRatingOptions
+        onSaveRequested: root.requestApplySeriesMetadataEdit()
+        onCancelRequested: popupController.closeSeriesMetadataDialog()
+        onClosed: {
+            if (seriesMetadataAutofillConfirmDialog.visible) {
+                seriesMetadataAutofillConfirmDialog.close()
+            }
+            root.pendingSeriesMetadataSuggestion = ({})
+            popupController.handleSeriesMetadataDialogClosed()
+        }
+    }
+
+    SettingsDialog {
+        id: settingsDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        settingsController: appSettingsController
+        sevenZipConfiguredPath: root.sevenZipConfiguredPath
+        sevenZipDisplayPath: root.sevenZipEffectivePath
+        sevenZipAvailable: root.cbrBackendAvailable
+        sevenZipStatusMessage: root.cbrBackendMissingMessage
+        libraryDataRootPath: String(libraryModel.dataRoot || "")
+        libraryDataPendingMovePath: root.pendingLibraryDataRelocationPath
+        libraryFolderPath: root.childPath(String(libraryModel.dataRoot || ""), "Library")
+        libraryRuntimeFolderPath: root.childPath(String(libraryModel.dataRoot || ""), ".runtime")
+        onChooseSevenZipRequested: root.chooseSevenZipPathFromSettings()
+        onVerifySevenZipRequested: root.verifySevenZipFromSettings()
+        onChangeLibraryDataLocationRequested: root.scheduleLibraryDataRelocationFromSettings()
+        onChooseLibraryBackgroundImageRequested: root.chooseLibraryBackgroundImageFromSettings()
+        onLibraryBackgroundImageModeRequested: root.setLibraryBackgroundImageModeFromSettings(mode)
+        onOpenLibraryDataFolderRequested: root.openExactFolderPath(String(libraryModel.dataRoot || ""))
+        onOpenLibraryFolderRequested: root.openExactFolderPath(root.childPath(String(libraryModel.dataRoot || ""), "Library"))
+        onOpenLibraryRuntimeFolderRequested: root.openExactFolderPath(root.childPath(String(libraryModel.dataRoot || ""), ".runtime"))
+        onReloadLibraryRequested: root.reloadLibraryFromSettings()
+    }
+
+    SeriesHeaderDialog {
+        id: seriesHeaderDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        shuffleBackgroundEnabled: seriesHeaderController.canShuffleBackground()
+        shuffleBackgroundBusy: seriesHeaderController.dialogBackgroundShuffleRequestId !== -1
+        coverPreviewSource: seriesHeaderController.dialogCoverPath.length > 0
+            ? seriesHeaderController.dialogCoverPath
+            : heroSeriesController.automaticHeroCoverSource()
+        backgroundPreviewSource: seriesHeaderController.dialogBackgroundPath.length > 0
+            ? seriesHeaderController.dialogBackgroundPath
+            : heroSeriesController.automaticHeroBackgroundSource()
+        onUploadCoverRequested: seriesHeaderController.selectCoverImage()
+        onUploadBackgroundRequested: seriesHeaderController.selectBackgroundImage()
+        onShuffleBackgroundRequested: seriesHeaderController.shuffleBackground()
+        onSaveRequested: seriesHeaderController.saveDialogChanges()
+        onResetRequested: seriesHeaderController.resetToDefaultPending()
+        onCancelRequested: seriesHeaderDialog.close()
+        onOpened: startupController.launchLog("series_header_dialog_opened")
+        onClosed: seriesHeaderController.resetDialogState()
+    }
+
+    DeleteConfirmDialog {
+        id: deleteConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        criticalAttentionTarget: root.criticalPopupAttentionTarget
+        criticalAttentionColor: root.criticalPopupAttentionColor
+        onClosed: popupController.handleDeleteConfirmDialogClosed()
+        onDeleteRequested: deleteController.performDelete()
+    }
+
+    DeleteErrorDialog {
+        id: deleteErrorDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        headline: root.deleteErrorHeadline
+        reasonText: root.deleteErrorReasonText
+        detailsText: root.deleteErrorDetailsText
+        systemText: root.deleteErrorSystemText
+        primaryPath: root.deleteErrorPrimaryPath
+        onClosed: popupController.handleDeleteErrorDialogClosed()
+        onRetryRequested: deleteController.retryDeleteFailure()
+        onOpenFolderRequested: {
+            if (!root.openFolderForPath(root.deleteErrorPrimaryPath)) return
+        }
+    }
+}
