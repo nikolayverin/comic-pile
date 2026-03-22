@@ -1009,11 +1009,33 @@ ComicImportMatching::ImportIdentityPassport buildArchiveImportPassport(
     const QVariantMap &values
 )
 {
+    QString passportSourcePath = valueFromMap(values, QStringLiteral("importHistorySourcePath"));
+    if (passportSourcePath.isEmpty()) {
+        passportSourcePath = normalizedSourcePath;
+    }
+
+    QString passportSourceLabel = valueFromMap(values, QStringLiteral("importHistorySourceLabel"));
+    if (passportSourceLabel.isEmpty()) {
+        passportSourceLabel = filenameHint.trimmed();
+    }
+    if (passportSourceLabel.isEmpty()) {
+        passportSourceLabel = sourceInfo.fileName();
+    } else {
+        passportSourceLabel = QFileInfo(passportSourceLabel).fileName().trimmed();
+    }
+
+    QString passportParentFolderLabel = parentFolderNameForFile(sourceInfo);
+    const QFileInfo originalSourceInfo(passportSourcePath);
+    const QString originalParentFolderLabel = parentFolderNameForFile(originalSourceInfo);
+    if (!originalParentFolderLabel.isEmpty()) {
+        passportParentFolderLabel = originalParentFolderLabel;
+    }
+
     return ComicImportMatching::buildImportIdentityPassport(
         QStringLiteral("archive"),
-        normalizedSourcePath,
-        sourceInfo.fileName(),
-        parentFolderNameForFile(sourceInfo),
+        passportSourcePath,
+        passportSourceLabel,
+        passportParentFolderLabel,
         filenameHint,
         values,
         readComicInfoIdentityHints(normalizedSourcePath)

@@ -575,6 +575,45 @@ bool isSupportedImageEntry(const QString &entryPath)
         || extension == QStringLiteral(".webp");
 }
 
+QString normalizedRelativePathForSort(const QString &rootPath, const QString &candidatePath)
+{
+    const QDir rootDir(rootPath);
+    return rootDir.relativeFilePath(candidatePath).replace('\\', '/').trimmed();
+}
+
+QStringList listSupportedImageFilesInFolderByRelativePath(const QString &folderPath)
+{
+    const QString normalizedFolderPath = normalizeInputFilePath(folderPath);
+    if (normalizedFolderPath.isEmpty()) return {};
+
+    const QFileInfo folderInfo(normalizedFolderPath);
+    if (!folderInfo.exists() || !folderInfo.isDir()) return {};
+
+    QStringList paths;
+    QSet<QString> dedupe;
+    QDirIterator iterator(
+        folderInfo.absoluteFilePath(),
+        QDir::Files | QDir::NoDotAndDotDot,
+        QDirIterator::Subdirectories
+    );
+    while (iterator.hasNext()) {
+        const QString candidate = QDir::toNativeSeparators(iterator.next());
+        if (!isSupportedImageEntry(candidate)) continue;
+        const QString key = normalizedRelativePathForSort(folderInfo.absoluteFilePath(), candidate).toLower();
+        if (dedupe.contains(key)) continue;
+        dedupe.insert(key);
+        paths.push_back(candidate);
+    }
+
+    std::sort(paths.begin(), paths.end(), [normalizedFolderPath](const QString &left, const QString &right) {
+        return compareNaturalText(
+            normalizedRelativePathForSort(normalizedFolderPath, left),
+            normalizedRelativePathForSort(normalizedFolderPath, right)
+        ) < 0;
+    });
+    return paths;
+}
+
 QStringList listSupportedImageFilesInFolder(const QString &folderPath)
 {
     const QString normalizedFolderPath = normalizeInputFilePath(folderPath);
@@ -603,6 +642,116 @@ QStringList listSupportedImageFilesInFolder(const QString &folderPath)
         return compareNaturalText(QFileInfo(left).fileName(), QFileInfo(right).fileName()) < 0;
     });
     return paths;
+}
+
+bool extractZipLikeArchiveToDirectory(
+    const QString &sourceArchivePath,
+    const QString &targetDirPath,
+    QString &errorText
+)
+{
+    errorText.clear();
+
+    if (!QDir().mkpath(targetDirPath)) {
+        errorText = QStringLiteral("Failed to create temporary extraction directory.");
+        return false;
+    }
+
+    const QString script = QString(
+        "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\n"
+        "Add-Type -AssemblyName System.IO.Compression\n"
+        "Add-Type -AssemblyName System.IO.Compression.FileSystem\n"
+        "$archivePath = [System.IO.Path]::GetFullPath('%1')\n"
+        "$targetDir = [System.IO.Path]::GetFullPath('%2').TrimEnd(@([char]92, [char]47))\n"
+        "try {\n"
+        "  if (-not (Test-Path -LiteralPath $archivePath)) { throw 'Archive not found.' }\n"
+        "  [System.IO.Directory]::CreateDirectory($targetDir) | Out-Null\n"
+        "  $zip = [System.IO.Compression.ZipFile]::OpenRead($archivePath)\n"
+        "  try {\n"
+        "    foreach ($entry in $zip.Entries) {\n"
+        "      if ([string]::IsNullOrWhiteSpace($entry.FullName)) { continue }\n"
+        "      $targetPath = [System.IO.Path]::GetFullPath((Join-Path $targetDir $entry.FullName))\n"
+        "      if (-not $targetPath.StartsWith($targetDir, [System.StringComparison]::OrdinalIgnoreCase)) {\n"
+        "        throw 'Archive contains an unsafe entry path.'\n"
+        "      }\n"
+        "      if ([string]::IsNullOrEmpty($entry.Name)) {\n"
+        "        [System.IO.Directory]::CreateDirectory($targetPath) | Out-Null\n"
+        "        continue\n"
+        "      }\n"
+        "      $parent = [System.IO.Path]::GetDirectoryName($targetPath)\n"
+        "      if (-not [string]::IsNullOrWhiteSpace($parent)) {\n"
+        "        [System.IO.Directory]::CreateDirectory($parent) | Out-Null\n"
+        "      }\n"
+        "      [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $targetPath, $true)\n"
+        "    }\n"
+        "  } finally {\n"
+        "    $zip.Dispose()\n"
+        "  }\n"
+        "} catch {\n"
+        "  [Console]::Error.WriteLine($_.Exception.Message)\n"
+        "  exit 2\n"
+        "}\n"
+    ).arg(
+        quotePowerShellLiteral(QDir::toNativeSeparators(sourceArchivePath)),
+        quotePowerShellLiteral(QDir::toNativeSeparators(targetDirPath))
+    );
+
+    QString stdOut;
+    QString stdErr;
+    return runPowerShellScript(script, stdOut, stdErr, errorText);
+}
+
+bool stageExtractedArchiveForCbz(
+    const QString &extractRootPath,
+    const QString &stagePagesPath,
+    QString &errorText
+)
+{
+    errorText.clear();
+
+    const QStringList imagePaths = listSupportedImageFilesInFolderByRelativePath(extractRootPath);
+    if (imagePaths.isEmpty()) {
+        errorText = QStringLiteral("No image pages found in archive.");
+        return false;
+    }
+
+    if (!QDir().mkpath(stagePagesPath)) {
+        errorText = QStringLiteral("Failed to create temporary staging directory for archive normalization.");
+        return false;
+    }
+
+    int index = 1;
+    for (const QString &imagePath : imagePaths) {
+        const QFileInfo imageInfo(imagePath);
+        const QString extension = imageInfo.suffix().trimmed().toLower();
+        QString stagedName = QStringLiteral("%1").arg(index, 6, 10, QLatin1Char('0'));
+        if (!extension.isEmpty()) {
+            stagedName += QStringLiteral(".%1").arg(extension);
+        }
+
+        const QString stagedPath = QDir(stagePagesPath).filePath(stagedName);
+        if (!QFile::rename(imageInfo.absoluteFilePath(), stagedPath)) {
+            if (!QFile::copy(imageInfo.absoluteFilePath(), stagedPath)) {
+                errorText = QStringLiteral("Failed to stage extracted page: %1")
+                    .arg(QDir::toNativeSeparators(imageInfo.absoluteFilePath()));
+                return false;
+            }
+            QFile::remove(imageInfo.absoluteFilePath());
+        }
+        index += 1;
+    }
+
+    const QString comicInfoPath = QDir(extractRootPath).filePath(QStringLiteral("ComicInfo.xml"));
+    if (QFileInfo::exists(comicInfoPath) && QFileInfo(comicInfoPath).isFile()) {
+        const QString stagedComicInfoPath = QDir(stagePagesPath).filePath(QStringLiteral("ComicInfo.xml"));
+        QFile::remove(stagedComicInfoPath);
+        if (!QFile::copy(comicInfoPath, stagedComicInfoPath)) {
+            errorText = QStringLiteral("Failed to stage ComicInfo.xml from extracted archive.");
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool isPdfExtension(const QString &extension)
@@ -933,8 +1082,9 @@ bool normalizeArchiveToCbz(
     const QString tempRootPath = QDir(QDir::tempPath()).filePath(
         QStringLiteral("comicpile-archive-stage-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces))
     );
+    const QString extractPath = QDir(tempRootPath).filePath(QStringLiteral("extract"));
     const QString stagePagesPath = QDir(tempRootPath).filePath(QStringLiteral("pages"));
-    if (!QDir().mkpath(stagePagesPath)) {
+    if (!QDir().mkpath(extractPath) || !QDir().mkpath(stagePagesPath)) {
         errorText = QStringLiteral("Failed to create temporary directory for archive normalization.");
         return false;
     }
@@ -942,6 +1092,23 @@ bool normalizeArchiveToCbz(
     auto cleanupTemp = [&]() {
         QDir(tempRootPath).removeRecursively();
     };
+
+    if (sourceExt == QStringLiteral("cbz") || sourceExt == QStringLiteral("zip")) {
+        if (!extractZipLikeArchiveToDirectory(sourceArchivePath, extractPath, errorText)) {
+            cleanupTemp();
+            return false;
+        }
+        if (!stageExtractedArchiveForCbz(extractPath, stagePagesPath, errorText)) {
+            cleanupTemp();
+            return false;
+        }
+        if (!ComicArchivePacking::createCbzFromDirectory(stagePagesPath, targetCbzPath, errorText)) {
+            cleanupTemp();
+            return false;
+        }
+        cleanupTemp();
+        return true;
+    }
 
     QStringList imageEntries;
     if (!ComicInfoArchive::listImageEntriesInArchive(sourceArchivePath, imageEntries, errorText)) {
@@ -970,20 +1137,6 @@ bool normalizeArchiveToCbz(
     if (!ComicArchivePacking::createCbzFromDirectory(stagePagesPath, targetCbzPath, errorText)) {
         cleanupTemp();
         return false;
-    }
-
-    QString comicInfoXml;
-    QString comicInfoError;
-    if ((sourceExt == QStringLiteral("cbz") || sourceExt == QStringLiteral("zip"))
-        && ComicInfoArchive::readComicInfoXmlFromArchive(sourceArchivePath, comicInfoXml, comicInfoError)
-        && !comicInfoXml.trimmed().isEmpty()) {
-        QString writeComicInfoError;
-        if (!ComicInfoArchive::writeComicInfoXmlToArchive(targetCbzPath, comicInfoXml, writeComicInfoError)) {
-            cleanupTemp();
-            QFile::remove(targetCbzPath);
-            errorText = writeComicInfoError;
-            return false;
-        }
     }
 
     cleanupTemp();
