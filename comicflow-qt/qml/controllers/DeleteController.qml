@@ -272,7 +272,7 @@ Item {
                 return
             }
 
-            const retryResult = String(libraryModelRef.deleteComicFilesKeepRecord(issueId) || "")
+            const retryResult = String(libraryModelRef.deleteComic(issueId) || "")
             if (retryResult.length > 0) {
                 openDeleteFailureDialog(retryResult, { mode: "issue", comicId: issueId })
                 return
@@ -292,7 +292,7 @@ Item {
             for (let i = 0; i < keys.length; i += 1) {
                 const key = String(keys[i] || "").trim()
                 if (key.length < 1) continue
-                const result = String(libraryModelRef.deleteSeriesFilesKeepRecords(key) || "")
+                const result = String(libraryModelRef.deleteSeriesFiles(key) || "")
                 if (result.length > 0) {
                     errors.push(result)
                 }
@@ -371,7 +371,7 @@ Item {
         for (let i = 0; i < keys.length; i += 1) {
             const key = String(keys[i] || "")
             if (key.length < 1) continue
-            const result = String(libraryModelRef.deleteSeriesFilesKeepRecords(key) || "")
+            const result = String(libraryModelRef.deleteSeriesFiles(key) || "")
             if (result.length > 0) {
                 errors.push(result)
             }
@@ -406,7 +406,7 @@ Item {
         if (pendingDeleteId < 1) return
 
         const targetComicId = Number(pendingDeleteId || -1)
-        const result = String(libraryModelRef.deleteComicFilesKeepRecord(targetComicId) || "")
+        const result = String(libraryModelRef.deleteComic(targetComicId) || "")
         if (result.length > 0) {
             openDeleteFailureDialog(result, {
                 mode: "issue",

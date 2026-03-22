@@ -172,6 +172,7 @@ public:
     Q_INVOKABLE QString saveReaderProgress(int comicId, int currentPage);
     Q_INVOKABLE QString saveReaderBookmark(int comicId, int bookmarkPage);
     Q_INVOKABLE QString saveReaderFavorite(int comicId, bool favoriteActive);
+    Q_INVOKABLE QString deleteSeriesFiles(const QString &seriesKey);
     Q_INVOKABLE QString deleteSeriesFilesKeepRecords(const QString &seriesKey);
     Q_INVOKABLE QString deleteComicFilesKeepRecord(int comicId);
     Q_INVOKABLE QString detachComicFileKeepMetadata(int comicId);
@@ -215,9 +216,12 @@ public:
     Q_INVOKABLE int requestComicVineApiKeyValidationAsync(const QString &apiKey);
     Q_INVOKABLE QString deleteComic(int comicId);
     Q_INVOKABLE QString deleteComicHard(int comicId);
+    Q_INVOKABLE QString normalizeSeriesKeyForLookup(const QString &value) const;
     Q_INVOKABLE QString groupTitleForKey(const QString &groupKey) const;
     Q_INVOKABLE QVariantMap seriesMetadataForKey(const QString &seriesKey) const;
+    Q_INVOKABLE QVariantMap seriesMetadataSuggestion(const QVariantMap &values, const QString &currentSeriesKey) const;
     Q_INVOKABLE QString setSeriesMetadataForKey(const QString &seriesKey, const QVariantMap &values);
+    Q_INVOKABLE QVariantMap issueMetadataSuggestion(const QVariantMap &values, int currentComicId) const;
     Q_INVOKABLE QVariantMap saveSeriesHeaderImages(
         const QString &seriesKey,
         const QString &coverSourcePath,
@@ -409,7 +413,13 @@ private:
         const QString &filename,
         const QVariantMap &importSignalValues
     );
+    QString deleteFileFingerprintHistoryForComicIds(const QVector<int> &comicIds);
     QString pruneEquivalentDetachedGhostRowsForComic(int comicId);
+    int liveIssueCountForSeries(const QString &seriesKey) const;
+    QVariantMap buildRetainedSeriesMetadata(const QString &seriesKey) const;
+    QVariantMap buildRetainedIssueMetadata(int comicId) const;
+    QString preserveRetainedSeriesMetadata(const QString &seriesKey);
+    QString preserveRetainedIssueMetadata(int comicId);
     void resetLastImportOutcome();
 
     QString m_dataRoot;

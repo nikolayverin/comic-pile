@@ -11,6 +11,7 @@ public:
     QString ensureSchemaUpToDate() const;
 
     static bool ensureSeriesMetadataTable(QSqlDatabase &db, QString &errorText);
+    static bool ensureIssueMetadataKnowledgeTable(QSqlDatabase &db, QString &errorText);
     static bool ensureFileFingerprintHistoryTable(QSqlDatabase &db, QString &errorText);
 
 private:
@@ -21,6 +22,7 @@ private:
     bool migrateSchemaToVersion5(QSqlDatabase &db, QString &errorText) const;
     bool migrateSchemaToVersion6(QSqlDatabase &db, QString &errorText) const;
     bool migrateSchemaToVersion7(QSqlDatabase &db, QString &errorText) const;
+    bool migrateSchemaToVersion8(QSqlDatabase &db, QString &errorText) const;
     bool backfillNormalizedSeriesKeys(QSqlDatabase &db, QString &errorText) const;
     bool backfillImportSignals(QSqlDatabase &db, QString &errorText) const;
     bool pruneObviousDetachedRestoreDuplicates(QSqlDatabase &db, QString &errorText) const;

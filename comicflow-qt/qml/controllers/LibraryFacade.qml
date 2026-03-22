@@ -129,12 +129,28 @@ Item {
         return libraryModelRef ? String(libraryModelRef.updateComicMetadata(comicId, draft) || "") : "Library model is unavailable."
     }
 
+    function normalizeSeriesKeyForLookup(value) {
+        return libraryModelRef ? String(libraryModelRef.normalizeSeriesKeyForLookup(String(value || "")) || "") : ""
+    }
+
     function seriesMetadataForKey(seriesKey) {
         return libraryModelRef ? (libraryModelRef.seriesMetadataForKey(seriesKey) || {}) : ({})
     }
 
+    function seriesMetadataSuggestion(values, currentSeriesKey) {
+        return libraryModelRef
+            ? (libraryModelRef.seriesMetadataSuggestion(values || ({}), String(currentSeriesKey || "")) || {})
+            : ({})
+    }
+
     function setSeriesMetadataForKey(seriesKey, values) {
         return libraryModelRef ? String(libraryModelRef.setSeriesMetadataForKey(seriesKey, values) || "") : "Library model is unavailable."
+    }
+
+    function issueMetadataSuggestion(values, comicId) {
+        return libraryModelRef
+            ? (libraryModelRef.issueMetadataSuggestion(values || ({}), Number(comicId || 0)) || {})
+            : ({})
     }
 
     function saveSeriesHeaderImages(seriesKey, coverSourcePath, backgroundSourcePath) {
@@ -173,5 +189,13 @@ Item {
 
     function saveReaderFavorite(comicId, favoriteActive) {
         return libraryModelRef ? String(libraryModelRef.saveReaderFavorite(comicId, favoriteActive) || "") : "Library model is unavailable."
+    }
+
+    function deleteSeriesFiles(seriesKey) {
+        return libraryModelRef ? String(libraryModelRef.deleteSeriesFiles(String(seriesKey || "")) || "") : "Library model is unavailable."
+    }
+
+    function deleteComic(comicId) {
+        return libraryModelRef ? String(libraryModelRef.deleteComic(Number(comicId || 0)) || "") : "Library model is unavailable."
     }
 }

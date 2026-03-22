@@ -160,6 +160,8 @@ ApplicationWindow {
     property string editingSeriesKey: ""
     property var editingSeriesKeys: []
     property string editingSeriesTitle: ""
+    property var pendingSeriesMetadataSuggestion: ({})
+    property var pendingIssueMetadataSuggestion: ({})
     readonly property var seriesMetaSeriesField: seriesMetaDialog.seriesField
     readonly property var seriesMetaTitleField: seriesMetaDialog.titleField
     readonly property var seriesMetaVolumeField: seriesMetaDialog.volumeField
@@ -1787,6 +1789,68 @@ ApplicationWindow {
         return true
     }
 
+    function buildIssueMetadataSuggestion(draftState) {
+        if (!editingComic) return null
+        const draft = draftState || metadataDialog.currentState()
+        const suggestion = libraryFacade.issueMetadataSuggestion(draft, Number(editingComic.id || 0)) || {}
+        return Object.keys(suggestion).length > 0 ? suggestion : null
+    }
+
+    function applyIssueMetadataSuggestionPatch(patch) {
+        if (!patch || typeof patch !== "object") return
+        const nextState = metadataDialog.currentState()
+        const keys = Object.keys(patch)
+        for (let i = 0; i < keys.length; i += 1) {
+            const key = String(keys[i] || "")
+            if (key.length < 1) continue
+            if (String(nextState[key] || "").trim().length > 0) continue
+            nextState[key] = patch[key]
+        }
+        metadataDialog.applyState(nextState)
+    }
+
+    function requestApplyIssueMetadataEdit(draftState) {
+        const draft = draftState || metadataDialog.currentState()
+        const suggestion = buildIssueMetadataSuggestion(draft)
+        if (suggestion) {
+            pendingIssueMetadataSuggestion = suggestion
+            const suggestionSeriesLabel = String(suggestion.displayTitle || draft.series || "this series")
+            const suggestionIssueLabel = String(suggestion.issueNumber || draft.issueNumber || "")
+            issueMetadataAutofillConfirmDialog.messageText =
+                "Saved issue info was found for issue #" + suggestionIssueLabel + " in \"" + suggestionSeriesLabel + "\".\n\n"
+                + "Fill the remaining issue fields automatically before saving?"
+            issueMetadataAutofillConfirmDialog.open()
+            return
+        }
+
+        pendingIssueMetadataSuggestion = ({})
+        if (saveMetadata(draft)) {
+            metadataDialog.close()
+        }
+    }
+
+    function acceptIssueMetadataSuggestion() {
+        const suggestion = pendingIssueMetadataSuggestion || ({})
+        pendingIssueMetadataSuggestion = ({})
+        if (issueMetadataAutofillConfirmDialog.visible) {
+            issueMetadataAutofillConfirmDialog.close()
+        }
+        applyIssueMetadataSuggestionPatch(suggestion.patch || {})
+        if (saveMetadata(metadataDialog.currentState())) {
+            metadataDialog.close()
+        }
+    }
+
+    function skipIssueMetadataSuggestion() {
+        pendingIssueMetadataSuggestion = ({})
+        if (issueMetadataAutofillConfirmDialog.visible) {
+            issueMetadataAutofillConfirmDialog.close()
+        }
+        if (saveMetadata(metadataDialog.currentState())) {
+            metadataDialog.close()
+        }
+    }
+
     function resetMetadataEditor() {
         if (!editingComic) return
         metadataDialog.resetToInitial()
@@ -1892,20 +1956,26 @@ ApplicationWindow {
         const rows = libraryFacade.issuesForSeries(key, "__all__", "all", "")
         const storedSeriesMetadata = multiSelected ? {} : (libraryFacade.seriesMetadataForKey(key) || {})
         let seedSeries = ""
-        let seedVolume = ""
+        let seedVolume = String(storedSeriesMetadata.volume || "").trim()
         let seedSeriesTitle = String(storedSeriesMetadata.seriesTitle || "").trim()
         let seedYear = String(storedSeriesMetadata.year || "").trim()
         let seedGenres = String(storedSeriesMetadata.genres || "").trim()
-        let seedMonthName = ""
-        let seedPublisher = ""
-        let seedAgeRating = ""
+        let seedMonthName = seriesMetaMonthNameFromNumber(storedSeriesMetadata.month)
+        let seedPublisher = String(storedSeriesMetadata.publisher || "").trim()
+        let seedAgeRating = String(storedSeriesMetadata.ageRating || "").trim()
         const rowCount = Number(rows && rows.length ? rows.length : 0)
         if (rowCount > 0) {
             const firstRow = rows[0] || {}
             seedSeries = normalizeSeriesNameForSave(String(firstRow.series || "").trim(), String(firstRow.volume || "").trim())
-            seedVolume = String(firstRow.volume || "").trim()
-            seedMonthName = seriesMetaMonthNameFromNumber(firstRow.month)
-            seedAgeRating = String(firstRow.ageRating || "").trim()
+            if (seedVolume.length < 1) {
+                seedVolume = String(firstRow.volume || "").trim()
+            }
+            if (seedMonthName.length < 1) {
+                seedMonthName = seriesMetaMonthNameFromNumber(firstRow.month)
+            }
+            if (seedAgeRating.length < 1) {
+                seedAgeRating = String(firstRow.ageRating || "").trim()
+            }
             let minYear = 0
             const publisherCounts = ({})
             const publisherLabel = ({})
@@ -1947,7 +2017,9 @@ ApplicationWindow {
                     topPublisher = String(publisherLabel[pk] || "")
                 }
             }
-            seedPublisher = topPublisher
+            if (seedPublisher.length < 1) {
+                seedPublisher = topPublisher
+            }
         }
 
         seriesMetaDialog.prepareDropdownState(seedYear, seedAgeRating, seedGenres, seedPublisher)
@@ -1988,6 +2060,104 @@ ApplicationWindow {
         seriesMetaDialog.pendingFocusField = String(focusField || "").trim()
         seriesMetaDialog.errorText = ""
         popupController.openExclusivePopup(seriesMetaDialog)
+    }
+
+    function buildSeriesMetadataSuggestion() {
+        const currentKey = String(editingSeriesKey || "").trim()
+        if (currentKey.length < 1) return null
+        if (Array.isArray(editingSeriesKeys) && editingSeriesKeys.length > 1) return null
+
+        const volumeValue = String(seriesMetaVolumeField.text || "").trim()
+        const seriesRawValue = String(seriesMetaSeriesField.text || "").trim()
+        const seriesValue = normalizeSeriesNameForSave(seriesRawValue, volumeValue)
+        const suggestion = libraryFacade.seriesMetadataSuggestion({
+            series: seriesValue,
+            seriesTitle: String(seriesMetaTitleField.text || "").trim(),
+            summary: String(seriesMetaSummaryField.text || "").trim(),
+            year: String(seriesMetaYearField.text || "").trim(),
+            month: seriesMetaMonthNumberFromName(seriesMetaMonthCombo.currentText),
+            genres: String(seriesMetaGenresField.text || "").trim(),
+            volume: volumeValue,
+            publisher: String(seriesMetaPublisherField.text || "").trim(),
+            ageRating: String(seriesMetaAgeRatingCombo.currentText || "").trim()
+        }, currentKey) || {}
+        return Object.keys(suggestion).length > 0 ? suggestion : null
+    }
+
+    function applySeriesMetadataSuggestionPatch(patch) {
+        const values = patch || {}
+        if (Object.prototype.hasOwnProperty.call(values, "seriesTitle")
+                && String(seriesMetaTitleField.text || "").trim().length < 1) {
+            seriesMetaTitleField.text = String(values.seriesTitle || "").trim()
+        }
+        if (Object.prototype.hasOwnProperty.call(values, "summary")
+                && String(seriesMetaSummaryField.text || "").trim().length < 1) {
+            seriesMetaSummaryField.text = String(values.summary || "").trim()
+        }
+        if (Object.prototype.hasOwnProperty.call(values, "year")
+                && String(seriesMetaYearField.text || "").trim().length < 1) {
+            seriesMetaYearField.text = String(values.year || "").trim()
+        }
+        if (Object.prototype.hasOwnProperty.call(values, "month")
+                && String(seriesMetaMonthCombo.currentText || "").trim().length < 1) {
+            seriesMetaMonthCombo.editText = seriesMetaMonthNameFromNumber(values.month)
+        }
+        if (Object.prototype.hasOwnProperty.call(values, "genres")
+                && String(seriesMetaGenresField.text || "").trim().length < 1) {
+            seriesMetaGenresField.text = String(values.genres || "").trim()
+        }
+        if (Object.prototype.hasOwnProperty.call(values, "volume")
+                && String(seriesMetaVolumeField.text || "").trim().length < 1) {
+            seriesMetaVolumeField.text = String(values.volume || "").trim()
+        }
+        if (Object.prototype.hasOwnProperty.call(values, "publisher")
+                && String(seriesMetaPublisherField.text || "").trim().length < 1) {
+            seriesMetaPublisherField.text = String(values.publisher || "").trim()
+        }
+        if (Object.prototype.hasOwnProperty.call(values, "ageRating")
+                && String(seriesMetaAgeRatingCombo.currentText || "").trim().length < 1) {
+            seriesMetaAgeRatingCombo.editText = String(values.ageRating || "").trim()
+        }
+    }
+
+    function requestApplySeriesMetadataEdit() {
+        const suggestion = buildSeriesMetadataSuggestion()
+        if (suggestion) {
+            pendingSeriesMetadataSuggestion = suggestion
+            const suggestionLabel = String(suggestion.displayTitle || seriesMetaSeriesField.text || "this series")
+            seriesMetadataAutofillConfirmDialog.messageText =
+                "Saved series info was found for \"" + suggestionLabel + "\".\n\n"
+                + "Fill the remaining series fields automatically before saving?"
+            seriesMetadataAutofillConfirmDialog.open()
+            return
+        }
+
+        pendingSeriesMetadataSuggestion = ({})
+        if (applySeriesMetadataEdit()) {
+            seriesMetaDialog.close()
+        }
+    }
+
+    function acceptSeriesMetadataSuggestion() {
+        const suggestion = pendingSeriesMetadataSuggestion || ({})
+        pendingSeriesMetadataSuggestion = ({})
+        if (seriesMetadataAutofillConfirmDialog.visible) {
+            seriesMetadataAutofillConfirmDialog.close()
+        }
+        applySeriesMetadataSuggestionPatch(suggestion.patch || {})
+        if (applySeriesMetadataEdit()) {
+            seriesMetaDialog.close()
+        }
+    }
+
+    function skipSeriesMetadataSuggestion() {
+        pendingSeriesMetadataSuggestion = ({})
+        if (seriesMetadataAutofillConfirmDialog.visible) {
+            seriesMetadataAutofillConfirmDialog.close()
+        }
+        if (applySeriesMetadataEdit()) {
+            seriesMetaDialog.close()
+        }
     }
 
     function findSeriesKeyForIssueId(issueId, fallbackKey) {
@@ -2171,7 +2341,11 @@ ApplicationWindow {
                 seriesTitle: seriesTitleValue,
                 summary: summaryValue,
                 year: yearValue,
-                genres: genresValue
+                month: monthValue,
+                genres: genresValue,
+                volume: volumeValue,
+                publisher: resolvedPublisherValue,
+                ageRating: ageRatingValue
             })
             if (seriesMetaSaveResult.length > 0) {
                 startupController.startupLog("seriesDialog series metadata save error: " + seriesMetaSaveResult)
@@ -2242,14 +2416,30 @@ ApplicationWindow {
                 const nextSeriesYear = yearValue.length > 0
                     ? yearValue
                     : String(sourceSeriesMetadata.year || "").trim()
+                const nextSeriesMonth = monthValue.length > 0
+                    ? monthValue
+                    : String(sourceSeriesMetadata.month || "").trim()
                 const nextSeriesGenres = genresValue.length > 0
                     ? genresValue
                     : String(sourceSeriesMetadata.genres || "").trim()
+                const nextSeriesVolume = volumeValue.length > 0
+                    ? volumeValue
+                    : String(sourceSeriesMetadata.volume || "").trim()
+                const nextSeriesPublisher = resolvedPublisherValue.length > 0
+                    ? resolvedPublisherValue
+                    : String(sourceSeriesMetadata.publisher || "").trim()
+                const nextSeriesAgeRating = ageRatingValue.length > 0
+                    ? ageRatingValue
+                    : String(sourceSeriesMetadata.ageRating || "").trim()
                 const seriesMetaValues = {}
                 if (nextSeriesTitle.length > 0) seriesMetaValues.seriesTitle = nextSeriesTitle
                 if (nextSummary.length > 0) seriesMetaValues.summary = nextSummary
                 if (nextSeriesYear.length > 0) seriesMetaValues.year = nextSeriesYear
+                if (nextSeriesMonth.length > 0) seriesMetaValues.month = nextSeriesMonth
                 if (nextSeriesGenres.length > 0) seriesMetaValues.genres = nextSeriesGenres
+                if (nextSeriesVolume.length > 0) seriesMetaValues.volume = nextSeriesVolume
+                if (nextSeriesPublisher.length > 0) seriesMetaValues.publisher = nextSeriesPublisher
+                if (nextSeriesAgeRating.length > 0) seriesMetaValues.ageRating = nextSeriesAgeRating
                 const seriesMetaSaveResult = libraryFacade.setSeriesMetadataForKey(targetSeriesKey, seriesMetaValues)
                 if (seriesMetaSaveResult.length > 0) {
                     startupController.startupLog("seriesDialog series metadata save error: " + seriesMetaSaveResult)
@@ -4448,12 +4638,16 @@ ApplicationWindow {
         hostHeight: root.height
         dangerColor: root.dangerColor
         onSaveRequested: function(draft) {
-            if (root.saveMetadata(draft)) {
-                metadataDialog.close()
-            }
+            root.requestApplyIssueMetadataEdit(draft)
         }
         onResetRequested: root.resetMetadataEditor()
-        onClosed: popupController.handleIssueMetadataDialogClosed()
+        onClosed: {
+            if (issueMetadataAutofillConfirmDialog.visible) {
+                issueMetadataAutofillConfirmDialog.close()
+            }
+            root.pendingIssueMetadataSuggestion = ({})
+            popupController.handleIssueMetadataDialogClosed()
+        }
     }
 
     ReaderPopup {
@@ -4508,6 +4702,26 @@ ApplicationWindow {
         onSecondaryRequested: popupController.triggerActionResultSecondary()
     }
 
+    PopupConfirmDialog {
+        id: issueMetadataAutofillConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        primaryButtonText: "Fill Fields"
+        secondaryButtonText: "Keep Current"
+        onPrimaryRequested: root.acceptIssueMetadataSuggestion()
+        onSecondaryRequested: root.skipIssueMetadataSuggestion()
+    }
+
+    PopupConfirmDialog {
+        id: seriesMetadataAutofillConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        primaryButtonText: "Fill Fields"
+        secondaryButtonText: "Keep Current"
+        onPrimaryRequested: root.acceptSeriesMetadataSuggestion()
+        onSecondaryRequested: root.skipSeriesMetadataSuggestion()
+    }
+
     SeriesMetadataDialog {
         id: seriesMetaDialog
         hostWidth: root.width
@@ -4515,13 +4729,15 @@ ApplicationWindow {
         dangerColor: root.dangerColor
         monthOptions: root.seriesMetaMonthOptions
         ageRatingOptions: root.seriesMetaAgeRatingOptions
-        onSaveRequested: {
-            if (root.applySeriesMetadataEdit()) {
-                seriesMetaDialog.close()
-            }
-        }
+        onSaveRequested: root.requestApplySeriesMetadataEdit()
         onCancelRequested: popupController.closeSeriesMetadataDialog()
-        onClosed: popupController.handleSeriesMetadataDialogClosed()
+        onClosed: {
+            if (seriesMetadataAutofillConfirmDialog.visible) {
+                seriesMetadataAutofillConfirmDialog.close()
+            }
+            root.pendingSeriesMetadataSuggestion = ({})
+            popupController.handleSeriesMetadataDialogClosed()
+        }
     }
 
     SettingsDialog {

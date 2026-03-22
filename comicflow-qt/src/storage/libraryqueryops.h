@@ -41,7 +41,14 @@ struct ComicRecord {
 bool loadComicRecords(const QString &dbPath, QVector<ComicRecord> &rowsOut, QString &errorText);
 QVariantMap loadComicMetadata(const QString &dbPath, int comicId);
 QVariantMap seriesMetadataForKey(const QString &dbPath, const QString &seriesKey);
+QVariantList seriesMetadataCandidates(const QString &dbPath, const QString &seriesName);
 QString setSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey, const QVariantMap &values);
 QString removeSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey);
+QVariantList issueMetadataKnowledgeCandidates(
+    const QString &dbPath,
+    const QString &seriesName,
+    const QString &issueNumber
+);
+QString setIssueMetadataKnowledge(const QString &dbPath, const QVariantMap &values);
 
 } // namespace ComicLibraryQueries

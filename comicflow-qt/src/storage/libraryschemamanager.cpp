@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr int kCurrentLibrarySchemaVersion = 7;
+constexpr int kCurrentLibrarySchemaVersion = 8;
 
 struct ComicsColumnSpec {
     const char *name;
@@ -393,6 +393,9 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
                 case 7:
                     migrated = migrateSchemaToVersion7(db, schemaError);
                     break;
+                case 8:
+                    migrated = migrateSchemaToVersion8(db, schemaError);
+                    break;
                 default:
                     schemaError = QStringLiteral("Unsupported schema migration target: %1").arg(nextVersion);
                     migrated = false;
@@ -416,6 +419,7 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
         }
 
         if (!ensureSeriesMetadataTable(db, schemaError)
+            || !ensureIssueMetadataKnowledgeTable(db, schemaError)
             || !ensureFileFingerprintHistoryTable(db, schemaError)) {
             db.close();
             return schemaError;
@@ -436,7 +440,11 @@ bool LibrarySchemaManager::ensureSeriesMetadataTable(QSqlDatabase &db, QString &
             "series_title TEXT NOT NULL DEFAULT '', "
             "series_summary TEXT NOT NULL DEFAULT '', "
             "series_year INTEGER, "
+            "series_month INTEGER, "
             "series_genres TEXT NOT NULL DEFAULT '', "
+            "series_volume TEXT NOT NULL DEFAULT '', "
+            "series_publisher TEXT NOT NULL DEFAULT '', "
+            "series_age_rating TEXT NOT NULL DEFAULT '', "
             "series_header_cover_path TEXT NOT NULL DEFAULT '', "
             "series_header_background_path TEXT NOT NULL DEFAULT '', "
             "updated_at TEXT NOT NULL DEFAULT (datetime('now'))"
@@ -473,6 +481,20 @@ bool LibrarySchemaManager::ensureSeriesMetadataTable(QSqlDatabase &db, QString &
         }
     }
 
+    bool monthColumnExists = false;
+    if (!tableHasColumn(db, QStringLiteral("series_metadata"), QStringLiteral("series_month"), monthColumnExists, errorText)) {
+        return false;
+    }
+    if (!monthColumnExists) {
+        if (!execSqlStatement(
+                db,
+                QStringLiteral("ALTER TABLE series_metadata ADD COLUMN series_month INTEGER"),
+                QStringLiteral("Failed to add series_metadata.series_month"),
+                errorText)) {
+            return false;
+        }
+    }
+
     bool genresColumnExists = false;
     if (!tableHasColumn(db, QStringLiteral("series_metadata"), QStringLiteral("series_genres"), genresColumnExists, errorText)) {
         return false;
@@ -482,6 +504,48 @@ bool LibrarySchemaManager::ensureSeriesMetadataTable(QSqlDatabase &db, QString &
                 db,
                 QStringLiteral("ALTER TABLE series_metadata ADD COLUMN series_genres TEXT NOT NULL DEFAULT ''"),
                 QStringLiteral("Failed to add series_metadata.series_genres"),
+                errorText)) {
+            return false;
+        }
+    }
+
+    bool volumeColumnExists = false;
+    if (!tableHasColumn(db, QStringLiteral("series_metadata"), QStringLiteral("series_volume"), volumeColumnExists, errorText)) {
+        return false;
+    }
+    if (!volumeColumnExists) {
+        if (!execSqlStatement(
+                db,
+                QStringLiteral("ALTER TABLE series_metadata ADD COLUMN series_volume TEXT NOT NULL DEFAULT ''"),
+                QStringLiteral("Failed to add series_metadata.series_volume"),
+                errorText)) {
+            return false;
+        }
+    }
+
+    bool publisherColumnExists = false;
+    if (!tableHasColumn(db, QStringLiteral("series_metadata"), QStringLiteral("series_publisher"), publisherColumnExists, errorText)) {
+        return false;
+    }
+    if (!publisherColumnExists) {
+        if (!execSqlStatement(
+                db,
+                QStringLiteral("ALTER TABLE series_metadata ADD COLUMN series_publisher TEXT NOT NULL DEFAULT ''"),
+                QStringLiteral("Failed to add series_metadata.series_publisher"),
+                errorText)) {
+            return false;
+        }
+    }
+
+    bool ageRatingColumnExists = false;
+    if (!tableHasColumn(db, QStringLiteral("series_metadata"), QStringLiteral("series_age_rating"), ageRatingColumnExists, errorText)) {
+        return false;
+    }
+    if (!ageRatingColumnExists) {
+        if (!execSqlStatement(
+                db,
+                QStringLiteral("ALTER TABLE series_metadata ADD COLUMN series_age_rating TEXT NOT NULL DEFAULT ''"),
+                QStringLiteral("Failed to add series_metadata.series_age_rating"),
                 errorText)) {
             return false;
         }
@@ -514,6 +578,64 @@ bool LibrarySchemaManager::ensureSeriesMetadataTable(QSqlDatabase &db, QString &
             return false;
         }
     }
+    return true;
+}
+
+bool LibrarySchemaManager::ensureIssueMetadataKnowledgeTable(QSqlDatabase &db, QString &errorText)
+{
+    if (!execSqlStatement(
+            db,
+            QStringLiteral(
+                "CREATE TABLE IF NOT EXISTS issue_metadata_knowledge ("
+                "series_name_key TEXT NOT NULL DEFAULT '', "
+                "series_group_key TEXT NOT NULL DEFAULT '', "
+                "series_title TEXT NOT NULL DEFAULT '', "
+                "series_volume TEXT NOT NULL DEFAULT '', "
+                "issue_key TEXT NOT NULL DEFAULT '', "
+                "issue_number TEXT NOT NULL DEFAULT '', "
+                "issue_title TEXT NOT NULL DEFAULT '', "
+                "issue_publisher TEXT NOT NULL DEFAULT '', "
+                "issue_year INTEGER, "
+                "issue_month INTEGER, "
+                "issue_age_rating TEXT NOT NULL DEFAULT '', "
+                "issue_writer TEXT NOT NULL DEFAULT '', "
+                "issue_penciller TEXT NOT NULL DEFAULT '', "
+                "issue_inker TEXT NOT NULL DEFAULT '', "
+                "issue_colorist TEXT NOT NULL DEFAULT '', "
+                "issue_letterer TEXT NOT NULL DEFAULT '', "
+                "issue_cover_artist TEXT NOT NULL DEFAULT '', "
+                "issue_editor TEXT NOT NULL DEFAULT '', "
+                "issue_story_arc TEXT NOT NULL DEFAULT '', "
+                "issue_characters TEXT NOT NULL DEFAULT '', "
+                "updated_at TEXT NOT NULL DEFAULT (datetime('now')), "
+                "PRIMARY KEY (series_group_key, issue_key)"
+                ")"
+            ),
+            QStringLiteral("Failed to ensure issue metadata knowledge table"),
+            errorText)) {
+        return false;
+    }
+
+    const QStringList indexSql = {
+        QStringLiteral(
+            "CREATE INDEX IF NOT EXISTS idx_issue_metadata_knowledge_series_issue "
+            "ON issue_metadata_knowledge (series_name_key, issue_key, updated_at)"
+        ),
+        QStringLiteral(
+            "CREATE INDEX IF NOT EXISTS idx_issue_metadata_knowledge_group "
+            "ON issue_metadata_knowledge (series_group_key, updated_at)"
+        )
+    };
+    for (const QString &sql : indexSql) {
+        if (!execSqlStatement(
+                db,
+                sql,
+                QStringLiteral("Failed to ensure issue metadata knowledge index"),
+                errorText)) {
+            return false;
+        }
+    }
+
     return true;
 }
 
@@ -781,6 +903,14 @@ bool LibrarySchemaManager::migrateSchemaToVersion7(QSqlDatabase &db, QString &er
     }
 
     return true;
+}
+
+bool LibrarySchemaManager::migrateSchemaToVersion8(QSqlDatabase &db, QString &errorText) const
+{
+    if (!ensureSeriesMetadataTable(db, errorText)) {
+        return false;
+    }
+    return ensureIssueMetadataKnowledgeTable(db, errorText);
 }
 
 bool LibrarySchemaManager::backfillNormalizedSeriesKeys(QSqlDatabase &db, QString &errorText) const
