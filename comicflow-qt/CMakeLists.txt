@@ -34,6 +34,8 @@ endif()
 set(_comicpile_core_sources
     src/common/singleinstanceguard.cpp
     src/common/singleinstanceguard.h
+    src/common/startuplaunchbootstrap.cpp
+    src/common/startuplaunchbootstrap.h
     src/storage/archivepacking.cpp
     src/storage/archivepacking.h
     src/storage/comicinfoarchive.cpp
