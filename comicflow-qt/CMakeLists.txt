@@ -126,6 +126,7 @@ qt_add_qml_module(comic_pile_qt
         qml/DatabaseMigrationWindow.qml
         qml/controllers/StartupController.qml
         qml/controllers/StartupTelemetryController.qml
+        qml/controllers/StartupSnapshotController.qml
         qml/controllers/WindowDisplayController.qml
         qml/controllers/AppSettingsController.qml
         qml/controllers/ReaderCoverController.qml
