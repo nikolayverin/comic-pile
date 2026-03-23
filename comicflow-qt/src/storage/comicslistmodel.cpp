@@ -683,13 +683,29 @@ QString normalizeInputFilePath(const QString &rawInput)
 }
 
 QString fastResolveStoredFilePath(
+    const QString &dataRoot,
     const QString &libraryPath,
     const QString &storedFilePath,
     const QString &storedFilename
 )
 {
     QString candidatePath = normalizeInputFilePath(storedFilePath);
-    if (candidatePath.isEmpty()) {
+    if (!candidatePath.isEmpty()) {
+        const QString normalizedStoredPath = QDir::cleanPath(QDir::fromNativeSeparators(candidatePath));
+        const QFileInfo storedPathInfo(normalizedStoredPath);
+        if (!storedPathInfo.isAbsolute()) {
+            const QDir dataRootDir(dataRoot);
+            const QDir libraryDir(libraryPath);
+            if (
+                normalizedStoredPath.compare(QStringLiteral("Library"), Qt::CaseInsensitive) == 0
+                    || normalizedStoredPath.startsWith(QStringLiteral("Library/"), Qt::CaseInsensitive)
+            ) {
+                candidatePath = dataRootDir.absoluteFilePath(normalizedStoredPath);
+            } else {
+                candidatePath = libraryDir.absoluteFilePath(normalizedStoredPath);
+            }
+        }
+    } else {
         const QString filenameInput = storedFilename.trimmed();
         if (filenameInput.isEmpty()) return {};
 
@@ -2474,7 +2490,7 @@ void ComicsListModel::reload()
             row.favoriteAddedAt = record.favoriteAddedAt;
             row.addedDate = record.addedDate;
 
-            const QString resolvedPath = fastResolveStoredFilePath(libraryPath, row.filePath, row.filename);
+            const QString resolvedPath = fastResolveStoredFilePath(m_dataRoot, libraryPath, row.filePath, row.filename);
             if (resolvedPath.isEmpty()) {
                 ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, row.id);
                 continue;

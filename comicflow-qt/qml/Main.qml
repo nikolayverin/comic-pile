@@ -270,6 +270,9 @@ ApplicationWindow {
     property bool libraryLoading: false
     property bool cbrBackendAvailable: false
     property string cbrBackendMissingMessage: ""
+    property string libraryDataRootPath: String(libraryModel.dataRoot || "")
+    property string libraryFolderPath: childPath(libraryDataRootPath, "Library")
+    property string libraryRuntimeFolderPath: childPath(libraryDataRootPath, ".runtime")
     property string pendingLibraryDataRelocationPath: String(libraryModel.pendingDataRootRelocationPath() || "")
     property var importSeriesKeysBeforeBatch: ({})
     property bool importFocusNewSeriesAfterReload: false
@@ -714,7 +717,7 @@ ApplicationWindow {
     function scheduleLibraryDataRelocationFromSettings() {
         const initialPath = String(
             pendingLibraryDataRelocationPath
-            || libraryModel.dataRoot
+            || libraryDataRootPath
             || ""
         )
         const selectedPath = String(libraryModel.browseDataRootFolder(initialPath) || "")

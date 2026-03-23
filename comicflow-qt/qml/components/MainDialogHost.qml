@@ -242,18 +242,18 @@ Item {
         sevenZipDisplayPath: root.sevenZipEffectivePath
         sevenZipAvailable: root.cbrBackendAvailable
         sevenZipStatusMessage: root.cbrBackendMissingMessage
-        libraryDataRootPath: String(libraryModel.dataRoot || "")
+        libraryDataRootPath: String(root.libraryDataRootPath || "")
         libraryDataPendingMovePath: root.pendingLibraryDataRelocationPath
-        libraryFolderPath: root.childPath(String(libraryModel.dataRoot || ""), "Library")
-        libraryRuntimeFolderPath: root.childPath(String(libraryModel.dataRoot || ""), ".runtime")
+        libraryFolderPath: String(root.libraryFolderPath || "")
+        libraryRuntimeFolderPath: String(root.libraryRuntimeFolderPath || "")
         onChooseSevenZipRequested: root.chooseSevenZipPathFromSettings()
         onVerifySevenZipRequested: root.verifySevenZipFromSettings()
         onChangeLibraryDataLocationRequested: root.scheduleLibraryDataRelocationFromSettings()
         onChooseLibraryBackgroundImageRequested: root.chooseLibraryBackgroundImageFromSettings()
         onLibraryBackgroundImageModeRequested: root.setLibraryBackgroundImageModeFromSettings(mode)
-        onOpenLibraryDataFolderRequested: root.openExactFolderPath(String(libraryModel.dataRoot || ""))
-        onOpenLibraryFolderRequested: root.openExactFolderPath(root.childPath(String(libraryModel.dataRoot || ""), "Library"))
-        onOpenLibraryRuntimeFolderRequested: root.openExactFolderPath(root.childPath(String(libraryModel.dataRoot || ""), ".runtime"))
+        onOpenLibraryDataFolderRequested: root.openExactFolderPath(String(root.libraryDataRootPath || ""))
+        onOpenLibraryFolderRequested: root.openExactFolderPath(String(root.libraryFolderPath || ""))
+        onOpenLibraryRuntimeFolderRequested: root.openExactFolderPath(String(root.libraryRuntimeFolderPath || ""))
         onReloadLibraryRequested: root.reloadLibraryFromSettings()
     }
 

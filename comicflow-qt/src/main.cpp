@@ -285,6 +285,21 @@ bool clearPendingDataRootRelocationPath()
     return settings.status() == QSettings::NoError;
 }
 
+void clearCopiedLibraryStorageMigrationMarker(const QString &dataRoot)
+{
+    const QString markerPath = ComicStartupRuntime::libraryStorageMigrationMarkerPath(dataRoot);
+    if (markerPath.trimmed().isEmpty()) {
+        return;
+    }
+
+    const QFileInfo markerInfo(markerPath);
+    if (!markerInfo.exists() || !markerInfo.isFile()) {
+        return;
+    }
+
+    QFile::remove(markerInfo.absoluteFilePath());
+}
+
 bool hasExternalDataRootOverride()
 {
     return !qEnvironmentVariable("COMIC_PILE_DATA_DIR").trimmed().isEmpty()
@@ -652,6 +667,7 @@ void processPendingDataRootRelocation()
         }
         return;
     }
+    clearCopiedLibraryStorageMigrationMarker(normalizedTarget);
     if (!writeConfiguredDataRootOverridePath(normalizedTarget)) {
         if (migrationWindowVisible) {
             closeDataMigrationWindow(migrationEngine);
