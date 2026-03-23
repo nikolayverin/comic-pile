@@ -42,6 +42,8 @@ set(_comicpile_core_sources
     src/storage/comicinfoops.h
     src/storage/comicslistmodel.cpp
     src/storage/comicslistmodel.h
+    src/storage/datarootrelocationbootstrap.cpp
+    src/storage/datarootrelocationbootstrap.h
     src/storage/deletestagingops.cpp
     src/storage/deletestagingops.h
     src/storage/duplicaterestoreresolver.cpp
