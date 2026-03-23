@@ -21,8 +21,8 @@ Rectangle {
     readonly property var deleteController: deleteControllerRef
     readonly property var metadataDialog: metadataDialogRef
     // Temporary measurement mode for preparing raster publisher logos.
-    // Set back to false to restore normal hero logo presentation.
-    property bool publisherLogoDebugMode: true
+    // Keep disabled for normal hero logo presentation.
+    property bool publisherLogoDebugMode: false
 
     readonly property var activeIssuesFlick: rightPane.activeIssuesFlick
     property alias heroCollapseOffset: rightPane.heroCollapseOffset
@@ -478,8 +478,8 @@ Rectangle {
         visible: root.selectedSeriesKey.length > 0
             && String(root.heroSeriesData.logoSource || "").length > 0
 
-        readonly property var logoLayout: PublisherCatalog.logoLayoutForPublisher(
-            String(root.heroSeriesData.publisher || "")
+        readonly property var logoLayout: PublisherCatalog.logoLayoutForLogoSource(
+            String(root.heroSeriesData.logoSource || "")
         )
         readonly property string logoLayoutKind: String((logoLayout || {}).kind || "standard")
         readonly property int logoMaxWidth: Math.max(1, Number((logoLayout || {}).maxWidth || 56))

@@ -1,41 +1,41 @@
 .pragma library
 
 // Logo integration workflow:
-// - keep the source logo filename suffix descriptive on the design side (for example `-wide`, `-tall`, `-round`)
-// - when adding the logo to the app, set `logoLayoutKind` explicitly here
-// - the app should not guess the display class from the publisher name
+// - keep the source logo filename suffix descriptive on the design side (for example `-wide`, `-tall`, `-round`, `-standard`)
+// - the app resolves the display class only from the selected logo filename suffix
+// - publisher mapping should only decide which asset is used, not how it is laid out
 
 var majorPublisherEntries = [
-    { name: "Marvel Comics", logoTokenKey: "publisherLogoMarvelComics", logoLayoutKind: "wide" },
-    { name: "DC Comics", logoTokenKey: "publisherLogoDcComics", logoLayoutKind: "round" },
-    { name: "Image Comics", logoTokenKey: "publisherLogoImageComics", logoLayoutKind: "tall" },
-    { name: "Dark Horse Comics", logoTokenKey: "publisherLogoDarkHorseComics", logoLayoutKind: "tall" },
-    { name: "IDW Publishing", logoTokenKey: "publisherLogoIdwPublishing", logoLayoutKind: "wide" },
-    { name: "Boom! Studios", logoTokenKey: "publisherLogoBoomStudios", logoLayoutKind: "standard" },
-    { name: "Dynamite Entertainment", logoTokenKey: "publisherLogoDynamiteEntertainment", logoLayoutKind: "wide" },
-    { name: "Valiant Comics", logoTokenKey: "publisherLogoValiantComics", logoLayoutKind: "tall" },
-    { name: "AfterShock Comics", logoTokenKey: "publisherLogoAfterShockComics", logoLayoutKind: "standard" },
-    { name: "AWA Studios", logoTokenKey: "publisherLogoAwaStudios", logoLayoutKind: "standard" },
-    { name: "Oni Press", logoTokenKey: "publisherLogoOniPress", logoLayoutKind: "standard" },
-    { name: "Top Cow Productions", logoTokenKey: "publisherLogoTopCowProductions", logoLayoutKind: "wide" },
-    { name: "Aspen Comics", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Archie Comics", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Shueisha", logoTokenKey: "publisherLogoShueisha", logoLayoutKind: "standard" },
-    { name: "Kodansha", logoTokenKey: "", logoLayoutKind: "tall" },
-    { name: "Shogakukan", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Kadokawa Corporation", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Square Enix", logoTokenKey: "", logoLayoutKind: "tall" },
-    { name: "Hakusensha", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Dargaud", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Dupuis", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Glenat", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Casterman", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Delcourt", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Panini Comics", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Titan Comics", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Rebellion Developments", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Humanoids", logoTokenKey: "", logoLayoutKind: "standard" },
-    { name: "Viz Media", logoTokenKey: "", logoLayoutKind: "standard" }
+    { name: "Marvel Comics", logoTokenKey: "publisherLogoMarvelComics" },
+    { name: "DC Comics", logoTokenKey: "publisherLogoDcComics" },
+    { name: "Image Comics", logoTokenKey: "publisherLogoImageComics" },
+    { name: "Dark Horse Comics", logoTokenKey: "publisherLogoDarkHorseComics" },
+    { name: "IDW Publishing", logoTokenKey: "publisherLogoIdwPublishing" },
+    { name: "Boom! Studios", logoTokenKey: "publisherLogoBoomStudios" },
+    { name: "Dynamite Entertainment", logoTokenKey: "publisherLogoDynamiteEntertainment" },
+    { name: "Valiant Comics", logoTokenKey: "publisherLogoValiantComics" },
+    { name: "AfterShock Comics", logoTokenKey: "publisherLogoAfterShockComics" },
+    { name: "AWA Studios", logoTokenKey: "publisherLogoAwaStudios" },
+    { name: "Oni Press", logoTokenKey: "publisherLogoOniPress" },
+    { name: "Top Cow Productions", logoTokenKey: "publisherLogoTopCowProductions" },
+    { name: "Aspen Comics", logoTokenKey: "" },
+    { name: "Archie Comics", logoTokenKey: "" },
+    { name: "Shueisha", logoTokenKey: "publisherLogoShueisha" },
+    { name: "Kodansha", logoTokenKey: "" },
+    { name: "Shogakukan", logoTokenKey: "" },
+    { name: "Kadokawa Corporation", logoTokenKey: "" },
+    { name: "Square Enix", logoTokenKey: "" },
+    { name: "Hakusensha", logoTokenKey: "" },
+    { name: "Dargaud", logoTokenKey: "" },
+    { name: "Dupuis", logoTokenKey: "" },
+    { name: "Glenat", logoTokenKey: "" },
+    { name: "Casterman", logoTokenKey: "" },
+    { name: "Delcourt", logoTokenKey: "" },
+    { name: "Panini Comics", logoTokenKey: "" },
+    { name: "Titan Comics", logoTokenKey: "" },
+    { name: "Rebellion Developments", logoTokenKey: "" },
+    { name: "Humanoids", logoTokenKey: "" },
+    { name: "Viz Media", logoTokenKey: "" }
 ]
 
 var publisherAliasToName = {
@@ -141,9 +141,25 @@ function publisherEntryForPublisher(value) {
     return null
 }
 
-function logoLayoutForPublisher(value) {
-    const entry = publisherEntryForPublisher(value)
-    const kind = entry ? String(entry.logoLayoutKind || "standard") : "standard"
+function logoLayoutKindFromLogoSource(value) {
+    const source = String(value || "").trim().replace(/[?#].*$/, "").toLowerCase()
+    if (source.length < 1)
+        return "standard"
+
+    if (source.endsWith("-round.svg"))
+        return "round"
+
+    if (source.endsWith("-wide.svg"))
+        return "wide"
+
+    if (source.endsWith("-tall.svg"))
+        return "tall"
+
+    return "standard"
+}
+
+function logoLayoutForLogoSource(value) {
+    const kind = logoLayoutKindFromLogoSource(value)
 
     if (kind === "round") {
         return {
