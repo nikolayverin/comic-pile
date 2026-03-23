@@ -45,6 +45,7 @@ set(_comicpile_core_sources
     src/storage/comicslistmodel.cpp
     src/storage/comicslistmodel_hero.cpp
     src/storage/comicslistmodel.h
+    src/storage/comicslistmodel_metadata.cpp
     src/storage/comicslistmodel_reader.cpp
     src/storage/comicslistmodel_startup.cpp
     src/storage/datarootrelocationbootstrap.cpp
