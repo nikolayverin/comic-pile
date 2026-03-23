@@ -312,6 +312,7 @@ target_include_directories(comic_pile_qt
 target_link_libraries(comic_pile_smoke
     PRIVATE
         Qt6::Core
+        Qt6::Quick
         Qt6::Sql
         Qt6::Widgets
         Qt6::Concurrent
@@ -322,6 +323,7 @@ target_link_libraries(comic_pile_smoke
 target_link_libraries(comic_pile_regression
     PRIVATE
         Qt6::Core
+        Qt6::Quick
         Qt6::Sql
         Qt6::Widgets
         Qt6::Concurrent

@@ -20,6 +20,9 @@ Rectangle {
     readonly property var seriesHeaderController: seriesHeaderControllerRef
     readonly property var deleteController: deleteControllerRef
     readonly property var metadataDialog: metadataDialogRef
+    // Temporary measurement mode for preparing raster publisher logos.
+    // Set back to false to restore normal hero logo presentation.
+    property bool publisherLogoDebugMode: true
 
     readonly property var activeIssuesFlick: rightPane.activeIssuesFlick
     property alias heroCollapseOffset: rightPane.heroCollapseOffset
@@ -478,6 +481,7 @@ Rectangle {
         readonly property var logoLayout: PublisherCatalog.logoLayoutForPublisher(
             String(root.heroSeriesData.publisher || "")
         )
+        readonly property string logoLayoutKind: String((logoLayout || {}).kind || "standard")
         readonly property int logoMaxWidth: Math.max(1, Number((logoLayout || {}).maxWidth || 56))
         readonly property int logoMaxHeight: Math.max(1, Number((logoLayout || {}).maxHeight || 44))
 
@@ -530,6 +534,53 @@ Rectangle {
                 source: String(root.heroSeriesData.logoSource || "")
                 fillMode: Image.PreserveAspectFit
                 smooth: true
+            }
+        }
+
+        Rectangle {
+            anchors.fill: parent
+            visible: libraryPane.publisherLogoDebugMode
+            color: "transparent"
+            border.width: 1
+            border.color: "#ff6b57"
+            z: 20
+        }
+
+        Rectangle {
+            x: heroPublisherLogoContent.x
+            y: heroPublisherLogoContent.y
+            width: heroPublisherLogoContent.width
+            height: heroPublisherLogoContent.height
+            visible: libraryPane.publisherLogoDebugMode
+            color: "transparent"
+            border.width: 1
+            border.color: "#4dc7ff"
+            z: 21
+        }
+
+        Rectangle {
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.topMargin: heroPublisherLogoContent.height + 8
+            width: debugLabelText.implicitWidth + 12
+            height: debugLabelText.implicitHeight + 8
+            visible: libraryPane.publisherLogoDebugMode
+            radius: 4
+            color: "#cc000000"
+            border.width: 1
+            border.color: "#80ffffff"
+            z: 22
+
+            Text {
+                id: debugLabelText
+                anchors.centerIn: parent
+                text: heroPublisherLogoArea.logoLayoutKind
+                    + " | block " + heroPublisherLogoArea.width + "x" + heroPublisherLogoArea.height
+                    + " | field " + heroPublisherLogoArea.logoMaxWidth + "x" + heroPublisherLogoArea.logoMaxHeight
+                color: "#ffffff"
+                font.family: root.uiFontFamily
+                font.pixelSize: 10
+                font.weight: Font.Medium
             }
         }
     }

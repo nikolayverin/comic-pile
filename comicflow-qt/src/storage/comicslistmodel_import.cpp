@@ -64,6 +64,13 @@ QString valueFromMap(const QVariantMap &map, const QString &key)
     return map.value(key).toString().trimmed();
 }
 
+QString valueFromMap(const QVariantMap &map, const QString &primary, const QString &fallback)
+{
+    const QString primaryValue = valueFromMap(map, primary);
+    if (!primaryValue.isEmpty()) return primaryValue;
+    return valueFromMap(map, fallback);
+}
+
 bool boolFromMap(const QVariantMap &map, const QString &key)
 {
     return map.value(key).toBool();
@@ -85,6 +92,79 @@ int compareNaturalText(const QString &left, const QString &right)
 QString sevenZipMissingMessage()
 {
     return QStringLiteral("Archive support component (7z) is missing. Reinstall/repair Comic Pile or set a custom 7z path.");
+}
+
+QString normalizeImportSourceTypeValue(const QString &value)
+{
+    const QString normalized = value.trimmed().toLower();
+    if (normalized == QStringLiteral("archive") || normalized == QStringLiteral("image_folder")) {
+        return normalized;
+    }
+    return {};
+}
+
+QString validateArchiveImageEntries(const QString &archivePath)
+{
+    QStringList entries;
+    QString errorText;
+    if (!ComicInfoArchive::listImageEntriesInArchive(archivePath, entries, errorText)) {
+        return errorText.trimmed();
+    }
+    if (entries.isEmpty()) {
+        return QStringLiteral("No image pages found in archive.");
+    }
+    return {};
+}
+
+QString archiveValidationCode(const QString &errorText)
+{
+    return errorText == QStringLiteral("No image pages found in archive.")
+        ? QStringLiteral("archive_has_no_images")
+        : QStringLiteral("archive_validation_failed");
+}
+
+struct PersistedImportSignals {
+    QString originalFilename;
+    QString strictFilenameSignature;
+    QString looseFilenameSignature;
+    QString sourceType;
+};
+
+PersistedImportSignals resolvedImportSignals(
+    const QVariantMap &values,
+    const QString &fallbackOriginalFilename,
+    const QString &fallbackSourceType
+)
+{
+    PersistedImportSignals resolvedSignals;
+    resolvedSignals.originalFilename = valueFromMap(values, QStringLiteral("importOriginalFilename"));
+    if (resolvedSignals.originalFilename.isEmpty()) {
+        resolvedSignals.originalFilename = fallbackOriginalFilename.trimmed();
+    }
+
+    resolvedSignals.sourceType = normalizeImportSourceTypeValue(
+        valueFromMap(values, QStringLiteral("importSourceType"))
+    );
+    if (resolvedSignals.sourceType.isEmpty()) {
+        resolvedSignals.sourceType = normalizeImportSourceTypeValue(fallbackSourceType);
+    }
+    if (resolvedSignals.sourceType.isEmpty()) {
+        resolvedSignals.sourceType = QStringLiteral("archive");
+    }
+
+    resolvedSignals.strictFilenameSignature = valueFromMap(values, QStringLiteral("importStrictFilenameSignature"));
+    if (resolvedSignals.strictFilenameSignature.isEmpty()) {
+        resolvedSignals.strictFilenameSignature =
+            ComicImportMatching::normalizeFilenameSignatureStrict(resolvedSignals.originalFilename);
+    }
+
+    resolvedSignals.looseFilenameSignature = valueFromMap(values, QStringLiteral("importLooseFilenameSignature"));
+    if (resolvedSignals.looseFilenameSignature.isEmpty()) {
+        resolvedSignals.looseFilenameSignature =
+            ComicImportMatching::normalizeFilenameSignatureLoose(resolvedSignals.originalFilename);
+    }
+
+    return resolvedSignals;
 }
 
 QString parentFolderNameForFile(const QFileInfo &fileInfo)
@@ -462,6 +542,11 @@ bool isDjvuExtension(const QString &extension)
 {
     const QString normalized = normalizeArchiveExtension(extension);
     return normalized == QStringLiteral("djvu") || normalized == QStringLiteral("djv");
+}
+
+bool isPdfExtension(const QString &extension)
+{
+    return normalizeArchiveExtension(extension) == QStringLiteral("pdf");
 }
 
 QString djvuBackendMissingMessage()
