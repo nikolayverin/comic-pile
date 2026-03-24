@@ -2600,9 +2600,12 @@ QString ComicsListModel::bulkUpdateMetadata(
         QVector<int> staleIds;
         for (int id : ids) {
             const BulkUpdateSnapshot row = preflightRows.value(id);
-            const QString preflightPath = row.filePath.trimmed();
-            if (preflightPath.isEmpty()) continue;
-            if (!filePathExists(preflightPath)) {
+            const QString preflightPath = resolveStoredArchivePathForDataRoot(
+                m_dataRoot,
+                row.filePath,
+                row.filename
+            );
+            if (preflightPath.isEmpty()) {
                 staleIds.push_back(id);
             }
         }
@@ -2658,7 +2661,11 @@ QString ComicsListModel::bulkUpdateMetadata(
 
             for (int id : ids) {
                 const BulkUpdateSnapshot row = preflightRows.value(id);
-                const QString sourcePath = normalizeInputFilePath(row.filePath);
+                const QString sourcePath = resolveStoredArchivePathForDataRoot(
+                    m_dataRoot,
+                    row.filePath,
+                    row.filename
+                );
                 if (sourcePath.isEmpty()) continue;
 
                 const QFileInfo sourceInfo(sourcePath);
@@ -2851,7 +2858,12 @@ QString ComicsListModel::bulkUpdateMetadata(
 
             if (movedPathById.contains(id)) {
                 const QString expectedFilePath = movedPathById.value(id);
-                if (normalizedPathForCompare(expectedFilePath) != normalizedPathForCompare(actual.filePath)) {
+                const QString actualResolvedFilePath = resolveStoredArchivePathForDataRoot(
+                    m_dataRoot,
+                    actual.filePath,
+                    actual.filename
+                );
+                if (normalizedPathForCompare(expectedFilePath) != normalizedPathForCompare(actualResolvedFilePath)) {
                     verifyFailures.push_back(
                         QStringLiteral("Issue %1 file path mismatch after move.").arg(id)
                     );
@@ -2862,7 +2874,10 @@ QString ComicsListModel::bulkUpdateMetadata(
                     );
                 }
                 appendTextMismatch(id, QStringLiteral("filename"), movedFilenameById.value(id), actual.filename);
-            } else if (!actual.filePath.trimmed().isEmpty() && !filePathExists(actual.filePath)) {
+            } else if (
+                (!actual.filePath.trimmed().isEmpty() || !actual.filename.trimmed().isEmpty())
+                && resolveStoredArchivePathForDataRoot(m_dataRoot, actual.filePath, actual.filename).isEmpty()
+            ) {
                 verifyFailures.push_back(
                     QStringLiteral("Issue %1 archive file is missing after save.").arg(id)
                 );
@@ -3330,12 +3345,22 @@ QString ComicsListModel::archivePathForComicId(int comicId) const
 
     const QString cachedPath = m_readerArchivePathById.value(comicId).trimmed();
     if (!cachedPath.isEmpty()) {
-        return cachedPath;
+        const QString resolvedCachedPath = resolveStoredArchivePathForDataRoot(
+            m_dataRoot,
+            cachedPath,
+            QString()
+        );
+        return resolvedCachedPath.isEmpty() ? cachedPath : resolvedCachedPath;
     }
 
     for (const ComicRow &row : m_rows) {
         if (row.id != comicId) continue;
-        return row.filePath.trimmed();
+        const QString resolvedRowPath = resolveStoredArchivePathForDataRoot(
+            m_dataRoot,
+            row.filePath,
+            row.filename
+        );
+        return resolvedRowPath.isEmpty() ? row.filePath.trimmed() : resolvedRowPath;
     }
 
     return {};
@@ -3749,17 +3774,22 @@ QString ComicsListModel::relinkComicFileKeepMetadataInternal(
 
 QVariantMap ComicsListModel::exportComicInfoXml(int comicId)
 {
-    return ComicInfoOps::exportComicInfoXml(m_dbPath, comicId);
+    return ComicInfoOps::exportComicInfoXml(m_dbPath, comicId, archivePathForComicId(comicId));
 }
 
 QString ComicsListModel::syncComicInfoToArchive(int comicId)
 {
-    return ComicInfoOps::syncComicInfoToArchive(m_dbPath, comicId);
+    return ComicInfoOps::syncComicInfoToArchive(m_dbPath, comicId, archivePathForComicId(comicId));
 }
 
 QString ComicsListModel::importComicInfoFromArchive(int comicId, const QString &mode)
 {
-    const QVariantMap patch = ComicInfoOps::buildComicInfoImportPatch(m_dbPath, comicId, mode);
+    const QVariantMap patch = ComicInfoOps::buildComicInfoImportPatch(
+        m_dbPath,
+        comicId,
+        mode,
+        archivePathForComicId(comicId)
+    );
     if (patch.contains(QStringLiteral("error"))) {
         return patch.value(QStringLiteral("error")).toString();
     }
@@ -3888,6 +3918,20 @@ QString ComicsListModel::resolveLibraryFilePath(const QString &libraryPath, cons
         return QDir::toNativeSeparators(filenameMatchPath);
     }
     return {};
+}
+
+QString ComicsListModel::resolveStoredArchivePathForDataRoot(
+    const QString &dataRoot,
+    const QString &storedFilePath,
+    const QString &storedFilename
+)
+{
+    return fastResolveStoredFilePath(
+        dataRoot,
+        QDir(dataRoot).filePath(QStringLiteral("Library")),
+        storedFilePath,
+        storedFilename
+    );
 }
 
 QString ComicsListModel::resolveDataRoot() const

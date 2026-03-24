@@ -109,7 +109,11 @@ QVariantMap ComicsListModel::loadReaderSessionPayload(
         };
     }
 
-    QString archivePath = record.filePath;
+    QString archivePath = resolveStoredArchivePathForDataRoot(
+        dataRoot,
+        record.filePath,
+        record.filename
+    );
     if (archivePath.isEmpty() && !record.filename.isEmpty()) {
         const QString fallbackPath = resolveLibraryFilePath(
             QDir(dataRoot).filePath(QStringLiteral("Library")),
@@ -767,14 +771,7 @@ QString ComicsListModel::cachedIssueThumbnailSource(int comicId) const
 {
     if (comicId < 1) return {};
 
-    QString archivePath = m_readerArchivePathById.value(comicId).trimmed();
-    if (archivePath.isEmpty()) {
-        for (const ComicRow &row : m_rows) {
-            if (row.id != comicId) continue;
-            archivePath = row.filePath.trimmed();
-            break;
-        }
-    }
+    const QString archivePath = archivePathForComicId(comicId);
     if (archivePath.isEmpty()) return {};
 
     return ComicReaderPayloads::cachedIssueThumbnailSource(m_dataRoot, comicId, archivePath);

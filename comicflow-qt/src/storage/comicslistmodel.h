@@ -384,6 +384,11 @@ private:
     void updateReaderFavoriteCache(int comicId, bool favoriteActive);
     static QString makeGroupTitle(const QString &groupKey);
     static QString resolveLibraryFilePath(const QString &libraryPath, const QString &inputFilename);
+    static QString resolveStoredArchivePathForDataRoot(
+        const QString &dataRoot,
+        const QString &storedFilePath,
+        const QString &storedFilename
+    );
     QString resolveDataRoot() const;
     static QString baseNameWithoutExtension(const QString &filename);
     static QString buildSubtitle(const ComicRow &row);

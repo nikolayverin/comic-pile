@@ -36,7 +36,7 @@ bool openDatabaseConnectionForPath(
 
 namespace ComicInfoOps {
 
-QVariantMap exportComicInfoXml(const QString &dbPath, int comicId)
+QVariantMap exportComicInfoXml(const QString &dbPath, int comicId, const QString &archivePathOverride)
 {
     if (comicId < 1) {
         return {
@@ -87,7 +87,12 @@ QVariantMap exportComicInfoXml(const QString &dbPath, int comicId)
             };
         }
 
-        values.insert(QStringLiteral("archivePath"), trimOrEmpty(query.value(0)));
+        values.insert(
+            QStringLiteral("archivePath"),
+            archivePathOverride.trimmed().isEmpty()
+                ? trimOrEmpty(query.value(0))
+                : archivePathOverride.trimmed()
+        );
         values.insert(QStringLiteral("filename"), trimOrEmpty(query.value(1)));
         values.insert(QStringLiteral("series"), trimOrEmpty(query.value(2)));
         values.insert(QStringLiteral("volume"), trimOrEmpty(query.value(3)));
@@ -129,9 +134,9 @@ QVariantMap exportComicInfoXml(const QString &dbPath, int comicId)
     };
 }
 
-QString syncComicInfoToArchive(const QString &dbPath, int comicId)
+QString syncComicInfoToArchive(const QString &dbPath, int comicId, const QString &archivePathOverride)
 {
-    const QVariantMap exported = exportComicInfoXml(dbPath, comicId);
+    const QVariantMap exported = exportComicInfoXml(dbPath, comicId, archivePathOverride);
     if (exported.contains(QStringLiteral("error"))) {
         return exported.value(QStringLiteral("error")).toString();
     }
@@ -154,7 +159,12 @@ QString syncComicInfoToArchive(const QString &dbPath, int comicId)
     return {};
 }
 
-QVariantMap buildComicInfoImportPatch(const QString &dbPath, int comicId, const QString &mode)
+QVariantMap buildComicInfoImportPatch(
+    const QString &dbPath,
+    int comicId,
+    const QString &mode,
+    const QString &archivePathOverride
+)
 {
     if (comicId < 1) {
         return {
@@ -202,7 +212,9 @@ QVariantMap buildComicInfoImportPatch(const QString &dbPath, int comicId, const 
             };
         }
 
-        archivePath = trimOrEmpty(query.value(0));
+        archivePath = archivePathOverride.trimmed().isEmpty()
+            ? trimOrEmpty(query.value(0))
+            : archivePathOverride.trimmed();
         filename = trimOrEmpty(query.value(1));
         db.close();
     }
