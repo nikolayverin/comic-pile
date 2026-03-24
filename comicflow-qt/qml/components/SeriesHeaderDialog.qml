@@ -355,12 +355,45 @@ PopupDialogWindow {
                         }
 
                         Label {
+                            id: backgroundSizeLabel
                             anchors.left: backgroundTitleLabel.right
                             anchors.leftMargin: 8
                             anchors.verticalCenter: parent.verticalCenter
                             text: headerLayout.backgroundTargetSizeLabel
                             color: styleTokens.hintTextColor
                             font.pixelSize: styleTokens.dialogHintFontSize
+                        }
+
+                        Row {
+                            visible: dialog.errorText.length > 0
+                            anchors.left: backgroundSizeLabel.right
+                            anchors.leftMargin: 38
+                            anchors.right: shuffleButton.left
+                            anchors.rightMargin: 16
+                            anchors.verticalCenter: parent.verticalCenter
+                            spacing: 14
+
+                            Image {
+                                width: 16
+                                height: 16
+                                source: "qrc:/qt/qml/ComicPile/assets/icons/icon-alert-triangle.svg"
+                                sourceSize.width: 16
+                                sourceSize.height: 16
+                                fillMode: Image.PreserveAspectFit
+                                smooth: true
+                            }
+
+                            Text {
+                                width: Math.max(0, parent.width - 16 - 14)
+                                text: dialog.errorText
+                                color: styleTokens.textColor
+                                font.family: Qt.application.font.family
+                                font.pixelSize: 12
+                                font.weight: Font.Normal
+                                elide: Text.ElideRight
+                                wrapMode: Text.NoWrap
+                                verticalAlignment: Text.AlignVCenter
+                            }
                         }
                     }
 
@@ -374,17 +407,6 @@ PopupDialogWindow {
                     }
                 }
             }
-        }
-
-        PopupErrorText {
-            x: styleTokens.dialogSideMargin
-            width: dialog.width - (styleTokens.dialogSideMargin * 2)
-            anchors.bottom: footerRow.top
-            anchors.bottomMargin: 16
-            popupStyle: styleTokens
-            text: dialog.errorText
-            visible: dialog.errorText.length > 0
-            horizontalAlignment: Text.AlignHCenter
         }
 
         PopupFooterRow {

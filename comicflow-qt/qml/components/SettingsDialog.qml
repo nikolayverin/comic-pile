@@ -24,6 +24,7 @@ PopupDialogWindow {
     property string supportedImageFormatsSummary: "JPG / JPEG / PNG / BMP / WEBP"
     property string supportedDocumentFormatsSummary: "PDF / DJVU"
     property string selectedSection: "general"
+    property string requestedSection: ""
     readonly property color sidebarHoverColor: themeColors.settingsSidebarHoverColor
     readonly property color sidebarSelectedColor: themeColors.settingsSidebarSelectedColor
     readonly property color sidebarPressedColor: themeColors.settingsSidebarPressedColor
@@ -77,7 +78,10 @@ PopupDialogWindow {
     width: 820
     height: 360
 
-    onOpened: selectedSection = "general"
+    onOpened: {
+        const requested = String(requestedSection || "").trim()
+        selectedSection = requested.length > 0 ? requested : "general"
+    }
     onCloseRequested: close()
 
     signal chooseSevenZipRequested()

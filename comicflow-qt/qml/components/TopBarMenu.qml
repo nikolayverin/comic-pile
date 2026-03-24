@@ -315,6 +315,7 @@ Rectangle {
             labelText: "Help"
             menuPopup: helpMenu
         }
+
     }
 
     Item {

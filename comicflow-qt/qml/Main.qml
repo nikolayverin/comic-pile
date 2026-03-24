@@ -278,6 +278,7 @@ ApplicationWindow {
     property bool importFocusNewSeriesAfterReload: false
     property string pendingImportPostReloadAction: ""
     property bool pendingConfiguredLaunchViewApply: true
+    property string lastPresentedLibraryLoadError: ""
     StartupController {
         id: startupController
         rootObject: root
@@ -712,6 +713,24 @@ ApplicationWindow {
 
     function reloadLibraryFromSettings() {
         libraryModel.reload()
+    }
+
+    function openSettingsDialog(sectionKey) {
+        const requested = String(sectionKey || "").trim()
+        settingsDialog.requestedSection = requested
+        popupController.openExclusivePopup(settingsDialog)
+    }
+
+    function presentLibraryLoadError(messageText) {
+        const message = String(messageText || "").trim()
+        if (message.length < 1) return
+        popupController.actionResultTitle = "Library load failed"
+        popupController.showActionResultWithAction(
+            message,
+            "Check the library data location in Settings and try reloading the library.",
+            "Open Settings",
+            "open_library_data_settings"
+        )
     }
 
     function scheduleLibraryDataRelocationFromSettings() {
@@ -2652,7 +2671,7 @@ ApplicationWindow {
             onAddFilesRequested: root.quickAddFilesFromDialog()
             onAddFolderRequested: root.quickAddFolderFromDialog()
             onAddIssueRequested: root.quickAddFilesFromDialog()
-            onSettingsRequested: popupController.openExclusivePopup(settingsDialog)
+            onSettingsRequested: root.openSettingsDialog("")
             onRefreshRequested: libraryModel.reload()
             onExitRequested: root.close()
             onToggleFullscreenRequested: {
@@ -2674,23 +2693,6 @@ ApplicationWindow {
             onCloseRequested: root.close()
             Component.onCompleted: {
                 root.markStartupColdRenderOnce("topbar", "height=" + String(height))
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: libraryModel.lastError.length > 0 ? 30 : 0
-            visible: libraryModel.lastError.length > 0
-            color: root.loadErrorBannerBg
-
-            Label {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideMiddle
-                color: root.loadErrorBannerText
-                text: "Load error: " + libraryModel.lastError
             }
         }
 
@@ -2790,6 +2792,18 @@ ApplicationWindow {
 
         function onSeriesHeroReady(requestId, seriesKey, imageSource, error) {
             seriesHeaderController.handleSeriesHeroReady(requestId, seriesKey, imageSource, error)
+        }
+
+        function onStatusChanged() {
+            const liveError = String(libraryModel.lastError || "").trim()
+            if (liveError.length > 0) {
+                if (root.lastPresentedLibraryLoadError !== liveError) {
+                    root.lastPresentedLibraryLoadError = liveError
+                    root.presentLibraryLoadError(liveError)
+                }
+                return
+            }
+            root.lastPresentedLibraryLoadError = ""
         }
     }
 

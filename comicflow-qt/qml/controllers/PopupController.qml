@@ -24,9 +24,11 @@ Item {
     property var deleteErrorDialogRef: null
 
     property string actionResultMessage: ""
+    property string actionResultTitle: "Action Error"
     property string actionResultDetailsText: ""
     property string actionResultSecondaryText: ""
     property string actionResultSecondaryPath: ""
+    property string actionResultSecondaryAction: ""
     property var criticalPopupAttentionTarget: null
     readonly property bool actionResultSecondaryVisible: actionResultSecondaryText.length > 0
 
@@ -126,6 +128,7 @@ Item {
 
     function showActionResult(message, isError) {
         if (!Boolean(isError)) return
+        actionResultTitle = "Action Error"
         actionResultMessage = String(message || "").trim()
         if (actionResultMessage.length < 1) {
             actionResultMessage = "Unknown error."
@@ -133,24 +136,67 @@ Item {
         actionResultDetailsText = ""
         actionResultSecondaryText = ""
         actionResultSecondaryPath = ""
+        actionResultSecondaryAction = ""
+        openExclusivePopup(actionResultDialogRef)
+    }
+
+    function showActionResultWithDetails(message, detailsText) {
+        actionResultTitle = "Action Error"
+        actionResultMessage = String(message || "").trim()
+        if (actionResultMessage.length < 1) {
+            actionResultMessage = "Unknown error."
+        }
+        actionResultDetailsText = String(detailsText || "").trim()
+        actionResultSecondaryText = ""
+        actionResultSecondaryPath = ""
+        actionResultSecondaryAction = ""
         openExclusivePopup(actionResultDialogRef)
     }
 
     function showActionResultWithFolder(message, detailsText, filePath, buttonText) {
+        actionResultTitle = "Action Error"
         actionResultMessage = String(message || "").trim()
         if (actionResultMessage.length < 1) {
             actionResultMessage = "Unknown error."
         }
         actionResultDetailsText = String(detailsText || "").trim()
         actionResultSecondaryPath = String(filePath || "").trim()
+        actionResultSecondaryAction = ""
         actionResultSecondaryText = actionResultSecondaryPath.length > 0
             ? String(buttonText || "Open folder")
             : ""
         openExclusivePopup(actionResultDialogRef)
     }
 
+    function showActionResultWithAction(message, detailsText, buttonText, actionKey) {
+        if (String(actionResultTitle || "").trim().length < 1) {
+            actionResultTitle = "Action Error"
+        }
+        actionResultMessage = String(message || "").trim()
+        if (actionResultMessage.length < 1) {
+            actionResultMessage = "Unknown error."
+        }
+        actionResultDetailsText = String(detailsText || "").trim()
+        actionResultSecondaryPath = ""
+        actionResultSecondaryAction = String(actionKey || "").trim()
+        actionResultSecondaryText = actionResultSecondaryAction.length > 0
+            ? String(buttonText || "").trim()
+            : ""
+        openExclusivePopup(actionResultDialogRef)
+    }
+
     function triggerActionResultSecondary() {
         const rootRef = root()
+        const actionKey = String(actionResultSecondaryAction || "").trim()
+        if (rootRef && actionKey === "open_library_data_settings") {
+            if (typeof rootRef.openSettingsDialog === "function") {
+                rootRef.openSettingsDialog("library_data")
+            }
+            if (actionResultDialogRef) {
+                actionResultDialogRef.close()
+            }
+            return
+        }
         const targetPath = String(actionResultSecondaryPath || "").trim()
         if (!rootRef || targetPath.length < 1) return
         if (typeof rootRef.openFolderForPath === "function" && rootRef.openFolderForPath(targetPath)) {
@@ -212,10 +258,12 @@ Item {
     }
 
     function handleActionResultDialogClosed() {
+        actionResultTitle = "Action Error"
         actionResultMessage = ""
         actionResultDetailsText = ""
         actionResultSecondaryText = ""
         actionResultSecondaryPath = ""
+        actionResultSecondaryAction = ""
     }
 
     function handleSeriesMetadataDialogClosed() {

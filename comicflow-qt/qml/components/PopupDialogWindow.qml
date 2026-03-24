@@ -15,6 +15,7 @@ Popup {
     property var popupStyle: popupStyleFallback
     property string title: ""
     property bool showCloseButton: true
+    property real titleTopMargin: -1
     property bool attentionActive: false
     property color attentionColor: themeColors.dialogAttentionColor
     default property alias bodyData: shell.bodyData
@@ -46,6 +47,7 @@ Popup {
         popupStyle: root.popupStyle
         title: root.title
         showCloseButton: root.showCloseButton
+        titleTopMargin: root.titleTopMargin
         onCloseRequested: root.closeRequested()
     }
 }

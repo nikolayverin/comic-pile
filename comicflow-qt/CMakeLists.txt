@@ -177,6 +177,8 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupDialogWindow.qml
         qml/components/PopupBodyColumn.qml
         qml/components/PopupErrorText.qml
+        qml/components/PopupInlineErrorMessage.qml
+        qml/components/PopupSystemErrorLayout.qml
         qml/components/PopupInfoBlock.qml
         qml/components/PopupGhostBlock.qml
         qml/components/PopupProgressBlock.qml

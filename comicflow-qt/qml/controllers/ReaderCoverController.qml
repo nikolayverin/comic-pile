@@ -103,6 +103,32 @@ Item {
         finalizeReaderSession(true)
     }
 
+    function readerActionErrorDetails(message) {
+        const text = String(message || "").trim().toLowerCase()
+        if (text.indexOf("not found") >= 0
+                || text.indexOf("no longer available") >= 0
+                || text.indexOf("archive path is empty") >= 0) {
+            return "Close the reader, reload the library, and make sure the issue file is still available on disk."
+        }
+        return "Close the reader and try again. If the problem continues, reload the library and verify that the issue file is still available on disk."
+    }
+
+    function showReaderActionError(message) {
+        const text = String(message || "").trim()
+        if (text.length < 1 || !popupControllerRef) return
+        const details = readerActionErrorDetails(text)
+        if (text.toLowerCase().indexOf("not found") >= 0
+                || text.toLowerCase().indexOf("no longer available") >= 0
+                || text.toLowerCase().indexOf("archive path is empty") >= 0) {
+            popupControllerRef.actionResultTitle = "Issue archive unavailable"
+        }
+        if (typeof popupControllerRef.showActionResultWithDetails === "function") {
+            popupControllerRef.showActionResultWithDetails(text, details)
+            return
+        }
+        popupControllerRef.showActionResult(text, true)
+    }
+
     function scheduleReaderGridRefresh() {
         const root = rootObject
         if (!root || typeof root.scheduleIssuesGridRefresh !== "function") return
@@ -116,9 +142,7 @@ Item {
         if (Boolean(suppressPopup) || text.length < 1) {
             return
         }
-        if (popupControllerRef) {
-            popupControllerRef.showActionResult(text, true)
-        }
+        showReaderActionError(text)
     }
 
     function coverSourceForComic(comicId) {
@@ -738,10 +762,9 @@ Item {
                 }
                 if (suppressPopup) {
                     root.readerError = ""
-                } else if (popupControllerRef) {
-                    popupControllerRef.showActionResult(requestError, true)
                 } else {
-                    root.readerError = requestError
+                    root.readerError = ""
+                    showReaderActionError(requestError)
                 }
                 return
             }

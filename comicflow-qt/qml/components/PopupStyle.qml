@@ -5,7 +5,7 @@ QtObject {
     readonly property QtObject themeColors: ThemeColors {}
 
     readonly property int issueMetadataWidth: 910
-    readonly property int issueMetadataHeight: 708
+    readonly property int issueMetadataHeight: 726
     readonly property int seriesMetadataWidth: 930
     readonly property int seriesMetadataHeight: 392
     readonly property int seriesHeaderWidth: 930

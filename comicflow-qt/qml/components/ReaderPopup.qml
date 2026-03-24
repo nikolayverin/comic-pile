@@ -1343,17 +1343,6 @@ Popup {
                 font.pixelSize: 14
             }
 
-            Text {
-                anchors.centerIn: parent
-                visible: root.errorText.length > 0
-                width: parent.width - 40
-                wrapMode: Text.WordWrap
-                horizontalAlignment: Text.AlignHCenter
-                text: root.errorText
-                color: root.errorColor
-                font.family: root.uiFontFamily
-                font.pixelSize: 14
-            }
         }
 
         Item {
