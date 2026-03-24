@@ -10,6 +10,7 @@ Item {
     property var popupStyle: null
     property string title: ""
     property bool showCloseButton: true
+    property real titleTopMargin: -1
     default property alias bodyData: bodyHost.data
     property alias bodyHost: bodyHost
 
@@ -20,7 +21,9 @@ Item {
         color: root.popupStyle ? root.popupStyle.textColor : themeColors.textPrimary
         font.pixelSize: root.popupStyle ? root.popupStyle.dialogTitleFontSize : 18
         anchors.top: parent.top
-        anchors.topMargin: root.popupStyle ? root.popupStyle.dialogHeaderTopMargin : 16
+        anchors.topMargin: root.titleTopMargin >= 0
+            ? root.titleTopMargin
+            : (root.popupStyle ? root.popupStyle.dialogHeaderTopMargin : 16)
         anchors.horizontalCenter: parent.horizontalCenter
     }
 

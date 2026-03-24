@@ -10,6 +10,25 @@ PopupDialogWindow {
     property string detailsText: ""
     property string systemText: ""
     property string primaryPath: ""
+    readonly property int textColumnMinWidth: 120
+    readonly property int textColumnMaxWidth: 420
+    readonly property int footerTopGap: 16
+    readonly property int contentTextWidth: Math.max(
+        textColumnMinWidth,
+        Math.min(
+            textColumnMaxWidth,
+            Math.max(
+                dialog.reasonText.length > 0 ? deleteReasonMetrics.advanceWidth : 0,
+                dialog.detailsText.length > 0 ? deleteDetailsMetrics.advanceWidth : 0,
+                dialog.systemText.length > 0 ? deleteSystemMetrics.advanceWidth : 0
+            )
+        )
+    )
+    readonly property int titlePreferredWidth: deleteErrorTitleMetrics.advanceWidth
+        + styleTokens.closeButtonSize
+        + styleTokens.closeRightMargin
+        + styleTokens.dialogSideMargin
+        + 24
     readonly property int availableDialogHeight: hostHeight > 0
         ? hostHeight - 80
         : popupStyle.deleteErrorMinHeight
@@ -22,9 +41,14 @@ PopupDialogWindow {
     }
 
     popupStyle: styleTokens
-    title: dialog.headline.length > 0 ? dialog.headline : "Couldn't Remove File"
+    titleTopMargin: 12
+    title: dialog.headline.length > 0 ? dialog.headline : "Couldn't remove file"
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
-    width: Math.max(styleTokens.deleteErrorWidth, deleteErrorFooter.requiredDialogWidth)
+    width: Math.max(
+        deleteErrorFooter.requiredDialogWidth,
+        deleteErrorContent.implicitWidth,
+        titlePreferredWidth
+    )
     height: Math.min(
         availableDialogHeight,
         Math.max(styleTokens.deleteErrorMinHeight, deleteErrorLayout.implicitHeight)
@@ -35,39 +59,60 @@ PopupDialogWindow {
     PopupBodyColumn {
         id: deleteErrorLayout
         popupStyle: styleTokens
-        spacing: styleTokens.dialogContentSpacing
+        topMargin: styleTokens.dialogBodyTopMargin
+        bottomMargin: styleTokens.dialogBottomMargin
+        sideMargin: 0
+        spacing: 0
 
-        PopupInfoBlock {
-            Layout.fillWidth: true
+        TextMetrics {
+            id: deleteErrorTitleMetrics
+            font.pixelSize: styleTokens.dialogTitleFontSize
+            text: dialog.title
+        }
+
+        PopupSystemErrorLayout {
+            id: deleteErrorContent
+            Layout.alignment: Qt.AlignHCenter
             popupStyle: styleTokens
+            contentWidth: dialog.contentTextWidth
+            iconSize: 30
+            blockSpacing: 18
             visible: dialog.reasonText.length > 0 || dialog.detailsText.length > 0 || dialog.systemText.length > 0
 
-            Label {
+            Text {
                 visible: dialog.reasonText.length > 0
                 text: dialog.reasonText
                 color: styleTokens.textColor
-                font.pixelSize: styleTokens.dialogBodyFontSize
+                font.pixelSize: 12
                 wrapMode: Text.WordWrap
-                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
             }
 
-            Label {
+            Text {
                 visible: dialog.detailsText.length > 0
                 text: dialog.detailsText
-                color: styleTokens.hintTextColor
-                font.pixelSize: styleTokens.dialogHintFontSize
+                color: styleTokens.subtleTextColor
+                font.pixelSize: 12
                 wrapMode: Text.WordWrap
-                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
             }
 
-            Label {
+            Text {
                 visible: dialog.systemText.length > 0
                 text: "System: " + dialog.systemText
                 color: styleTokens.subtleTextColor
-                font.pixelSize: styleTokens.dialogHintFontSize
+                font.pixelSize: 12
                 wrapMode: Text.WordWrap
-                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
             }
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: dialog.footerTopGap
         }
 
         PopupFooterRow {
@@ -86,9 +131,7 @@ PopupDialogWindow {
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
                 text: "Retry"
-                onClicked: {
-                    dialog.retryRequested()
-                }
+                onClicked: dialog.retryRequested()
             }
 
             PopupActionButton {
@@ -102,9 +145,7 @@ PopupDialogWindow {
                 textPixelSize: styleTokens.footerButtonTextSize
                 text: "Open folder"
                 enabled: dialog.primaryPath.length > 0
-                onClicked: {
-                    dialog.openFolderRequested()
-                }
+                onClicked: dialog.openFolderRequested()
             }
 
             PopupActionButton {
@@ -119,6 +160,24 @@ PopupDialogWindow {
                 text: "Close"
                 onClicked: dialog.close()
             }
+        }
+
+        TextMetrics {
+            id: deleteReasonMetrics
+            font.pixelSize: 12
+            text: dialog.reasonText
+        }
+
+        TextMetrics {
+            id: deleteDetailsMetrics
+            font.pixelSize: 12
+            text: dialog.detailsText
+        }
+
+        TextMetrics {
+            id: deleteSystemMetrics
+            font.pixelSize: 12
+            text: dialog.systemText.length > 0 ? ("System: " + dialog.systemText) : ""
         }
     }
 }

@@ -186,7 +186,7 @@ Item {
         id: actionResultDialog
         hostWidth: root.width
         hostHeight: root.height
-        dangerColor: root.dangerColor
+        dialogTitle: popupController.actionResultTitle
         message: root.actionResultMessage
         detailsText: popupController.actionResultDetailsText
         secondaryActionText: popupController.actionResultSecondaryText
@@ -220,6 +220,7 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         dangerColor: root.dangerColor
+        previewErrorText: ""
         monthOptions: root.seriesMetaMonthOptions
         ageRatingOptions: root.seriesMetaAgeRatingOptions
         onSaveRequested: root.requestApplySeriesMetadataEdit()

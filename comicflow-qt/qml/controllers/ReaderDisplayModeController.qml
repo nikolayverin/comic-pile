@@ -438,6 +438,9 @@ Item {
                     root.readerLoading = false
                     return
                 }
+                const popupController = readerCoverControllerRef
+                    ? readerCoverControllerRef.popupControllerRef
+                    : null
                 if (readerDialogRef
                     && !readerDialogRef.visible
                     && readerCoverControllerRef
@@ -445,7 +448,17 @@ Item {
                     readerCoverControllerRef.handlePendingPopupLoadFailure(String(error), false)
                     return
                 }
-                root.readerError = String(error)
+                if (popupController && typeof popupController.showActionResult === "function") {
+                    root.readerError = ""
+                    root.readerLoading = false
+                    if (readerCoverControllerRef && typeof readerCoverControllerRef.showReaderActionError === "function") {
+                        readerCoverControllerRef.showReaderActionError(String(error))
+                    } else {
+                        popupController.showActionResult(String(error), true)
+                    }
+                    return
+                }
+                root.readerError = ""
                 root.readerLoading = false
                 return
             }

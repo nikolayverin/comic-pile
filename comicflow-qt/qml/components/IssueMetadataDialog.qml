@@ -840,14 +840,17 @@ Popup {
             FocusEdgeLine { targetItem: editStoryArcField; cornerRadius: metadataContent.fieldRadius; lineColor: popupStyle.edgeLineColor; edge: "bottom" }
             FocusEdgeLine { targetItem: editCharactersField; cornerRadius: metadataContent.fieldRadius; lineColor: popupStyle.edgeLineColor; edge: "bottom" }
 
-            Label {
+            PopupInlineErrorMessage {
                 visible: metadataDialog.errorText.length > 0
-                text: metadataDialog.errorText
-                color: metadataDialog.dangerColor
-                font.pixelSize: popupStyle.dialogHintFontSize
-                anchors.horizontalCenter: parent.horizontalCenter
+                headline: "Save failed"
+                message: metadataDialog.errorText
+                textColor: popupStyle.textColor
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.leftMargin: metadataContent.generalX + metadataContent.labelInsetX
+                anchors.rightMargin: popupStyle.footerSideMargin
                 anchors.bottom: metadataFooter.top
-                anchors.bottomMargin: 16
+                anchors.bottomMargin: 10
             }
 
             PopupFooterRow {

@@ -5,16 +5,26 @@ import QtQuick.Layouts
 PopupDialogWindow {
     id: dialog
 
-    ThemeColors { id: themeColors }
-
-    property color dangerColor: themeColors.dangerColor
+    property string dialogTitle: "Action Error"
     property string message: ""
     property string detailsText: ""
     property string secondaryActionText: ""
     property bool secondaryActionVisible: false
-    readonly property int alertIconSize: 32
-    readonly property int alertBlockSpacing: 24
-    readonly property int alertMaxTextWidth: 360
+    readonly property int textColumnMinWidth: 120
+    readonly property int textColumnMaxWidth: 420
+    readonly property int footerTopGap: 16
+    readonly property int contentTextWidth: Math.max(
+        textColumnMinWidth,
+        Math.min(
+            textColumnMaxWidth,
+            Math.max(
+                dialog.message.length > 0 ? messageMeasure.advanceWidth : 0,
+                dialog.detailsText.length > 0 ? detailsMeasure.advanceWidth : 0
+            )
+        )
+    )
+    readonly property int titlePreferredWidth: actionResultTitleMetrics.advanceWidth
+        + 48
     readonly property int availableDialogHeight: hostHeight > 0
         ? hostHeight - 80
         : popupStyle.actionResultMinHeight
@@ -26,10 +36,15 @@ PopupDialogWindow {
     }
 
     popupStyle: styleTokens
-    title: "Action Error"
+    titleTopMargin: 12
+    title: dialog.dialogTitle
     showCloseButton: false
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
-    width: Math.max(styleTokens.actionResultWidth, actionResultFooter.requiredDialogWidth)
+    width: Math.max(
+        actionResultFooter.requiredDialogWidth,
+        actionResultContent.implicitWidth,
+        titlePreferredWidth
+    )
     height: Math.min(
         availableDialogHeight,
         Math.max(styleTokens.actionResultMinHeight, actionResultLayout.implicitHeight)
@@ -40,98 +55,52 @@ PopupDialogWindow {
     PopupBodyColumn {
         id: actionResultLayout
         popupStyle: styleTokens
+        topMargin: styleTokens.dialogBodyTopMargin
+        bottomMargin: styleTokens.dialogBottomMargin
+        sideMargin: 0
         spacing: 0
 
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredHeight: styleTokens.dialogContentSpacing
+        TextMetrics {
+            id: actionResultTitleMetrics
+            font.pixelSize: styleTokens.dialogTitleFontSize
+            text: dialog.title
         }
 
-        Item {
-            id: alertBlock
-            Layout.fillWidth: true
+        PopupSystemErrorLayout {
+            id: actionResultContent
+            Layout.alignment: Qt.AlignHCenter
             visible: dialog.message.length > 0 || dialog.detailsText.length > 0
-            readonly property int measuredTextWidth: Math.max(
-                dialog.message.length > 0 ? messageMeasure.implicitWidth : 0,
-                dialog.detailsText.length > 0 ? detailsMeasure.implicitWidth : 0
-            )
-            readonly property int textColumnWidth: Math.min(
-                alertMaxTextWidth,
-                Math.max(1, measuredTextWidth)
-            )
-            implicitHeight: Math.max(dialog.alertIconSize, textBlock.implicitHeight)
-
-            Row {
-                id: alertRow
-                anchors.centerIn: parent
-                spacing: dialog.alertBlockSpacing
-
-                Image {
-                    anchors.verticalCenter: textBlock.verticalCenter
-                    source: "qrc:/qt/qml/ComicPile/assets/icons/icon-alert-triangle.svg"
-                    sourceSize.width: dialog.alertIconSize
-                    sourceSize.height: dialog.alertIconSize
-                    width: dialog.alertIconSize
-                    height: dialog.alertIconSize
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                }
-
-                Column {
-                    id: textBlock
-                    width: alertBlock.textColumnWidth
-                    spacing: 8
-
-                    Text {
-                        visible: dialog.message.length > 0
-                        id: messageText
-                        text: dialog.message
-                        color: styleTokens.textColor
-                        font.family: Qt.application.font.family
-                        font.pixelSize: styleTokens.dialogBodyFontSize + 1
-                        font.weight: Font.Medium
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        width: parent.width
-                    }
-
-                    Text {
-                        visible: dialog.detailsText.length > 0
-                        id: detailsTextItem
-                        text: dialog.detailsText
-                        color: styleTokens.subtleTextColor
-                        font.family: Qt.application.font.family
-                        font.pixelSize: styleTokens.dialogHintFontSize + 1
-                        wrapMode: Text.WordWrap
-                        horizontalAlignment: Text.AlignHCenter
-                        width: parent.width
-                    }
-                }
-            }
+            popupStyle: styleTokens
+            contentWidth: dialog.contentTextWidth
+            iconSize: 30
+            blockSpacing: 18
 
             Text {
-                id: messageMeasure
-                visible: false
+                visible: dialog.message.length > 0
                 text: dialog.message
+                color: styleTokens.textColor
                 font.family: Qt.application.font.family
-                font.pixelSize: styleTokens.dialogBodyFontSize + 1
-                font.weight: Font.Medium
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
             }
 
             Text {
-                id: detailsMeasure
-                visible: false
+                visible: dialog.detailsText.length > 0
                 text: dialog.detailsText
+                color: styleTokens.subtleTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: styleTokens.dialogHintFontSize + 1
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
             }
         }
 
         Item {
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredHeight: styleTokens.dialogContentSpacing
+            Layout.preferredHeight: dialog.footerTopGap
         }
 
         PopupFooterRow {
@@ -165,6 +134,20 @@ PopupDialogWindow {
                 text: "OK"
                 onClicked: dialog.close()
             }
+        }
+
+        TextMetrics {
+            id: messageMeasure
+            font.family: Qt.application.font.family
+            font.pixelSize: 12
+            text: dialog.message
+        }
+
+        TextMetrics {
+            id: detailsMeasure
+            font.family: Qt.application.font.family
+            font.pixelSize: 12
+            text: dialog.detailsText
         }
     }
 }

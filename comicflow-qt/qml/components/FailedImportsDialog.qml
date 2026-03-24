@@ -23,25 +23,33 @@ PopupDialogWindow {
     readonly property string currentCounterText: currentPosition > 0 && reviewTotalCount > 0
         ? (String(currentPosition) + " / " + String(reviewTotalCount))
         : ""
+    readonly property int textColumnMinWidth: 120
+    readonly property int textColumnMaxWidth: 420
+    readonly property int footerTopGap: 16
     readonly property int availableDialogWidth: hostWidth > 0
         ? Math.max(0, hostWidth - 80)
-        : styleTokens.failedImportsMaxWidth
-    readonly property int contentLineWidth: styleTokens.failedImportsTextReserveWidth
+        : 592
+    readonly property int currentFileLineWidth: currentFileNameMetrics.advanceWidth
         + (currentCounterText.length > 0
-            ? styleTokens.dialogInlineMetricGap + styleTokens.failedImportsCounterReserveWidth
+            ? styleTokens.dialogInlineMetricGap + currentCounterMetrics.advanceWidth
             : 0)
-    readonly property int bodyPreferredWidth: Math.max(
-        styleTokens.failedImportsHintReserveWidth,
-        contentLineWidth
+    readonly property int contentTextWidth: Math.max(
+        textColumnMinWidth,
+        Math.min(
+            textColumnMaxWidth,
+            Math.max(
+                failedImportsIntroMetrics.advanceWidth,
+                failedImportsErrorMetrics.advanceWidth,
+                currentFileLineWidth,
+                currentPathMetrics.advanceWidth
+            )
+        )
     )
     readonly property int titlePreferredWidth: failedImportsTitleMetrics.advanceWidth
-        + styleTokens.closeButtonSize
-        + styleTokens.closeRightMargin
-        + styleTokens.dialogSideMargin
-        + 24
+        + 48
     readonly property int preferredDialogWidth: Math.max(
         failedImportsFooter.requiredDialogWidth,
-        bodyPreferredWidth + (styleTokens.dialogSideMargin * 2),
+        failedImportsContent.implicitWidth,
         titlePreferredWidth
     )
 
@@ -55,10 +63,11 @@ PopupDialogWindow {
     }
 
     popupStyle: styleTokens
+    titleTopMargin: 12
     title: "Import Errors"
     showCloseButton: false
     closePolicy: Popup.NoAutoClose
-    width: Math.min(availableDialogWidth, Math.min(styleTokens.failedImportsMaxWidth, preferredDialogWidth))
+    width: Math.min(availableDialogWidth, preferredDialogWidth)
     height: Math.max(styleTokens.confirmDialogMinHeight, failedImportsBody.implicitHeight)
 
     onCloseRequested: close()
@@ -71,7 +80,10 @@ PopupDialogWindow {
     PopupBodyColumn {
         id: failedImportsBody
         popupStyle: styleTokens
-        spacing: styleTokens.dialogContentSpacing
+        topMargin: styleTokens.dialogBodyTopMargin
+        bottomMargin: styleTokens.dialogBottomMargin
+        sideMargin: 0
+        spacing: 0
 
         TextMetrics {
             id: failedImportsTitleMetrics
@@ -79,60 +91,68 @@ PopupDialogWindow {
             text: dialog.title
         }
 
-        Label {
-            text: "These archives were not imported. Review reason and retry after fixing."
-            color: styleTokens.hintTextColor
-            font.pixelSize: styleTokens.dialogHintFontSize
-            Layout.fillWidth: true
-            wrapMode: Text.WordWrap
-        }
-
-        PopupInfoBlock {
-            Layout.fillWidth: true
+        PopupSystemErrorLayout {
+            id: failedImportsContent
+            Layout.alignment: Qt.AlignHCenter
             popupStyle: styleTokens
+            contentWidth: dialog.contentTextWidth
+            iconSize: 30
+            blockSpacing: 18
 
-            PopupErrorText {
-                visible: currentError.length > 0
-                text: currentError
-                popupStyle: styleTokens
-                Layout.fillWidth: true
+            Text {
+                text: "These archives were not imported. Review reason and retry after fixing."
+                color: styleTokens.subtleTextColor
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
             }
 
-            RowLayout {
+            Text {
+                visible: currentError.length > 0
+                text: currentError
+                color: styleTokens.errorTextColor
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
+            }
+
+            Row {
                 visible: currentFileName.length > 0 || currentCounterText.length > 0
-                Layout.fillWidth: true
+                width: parent.width
                 spacing: styleTokens.dialogInlineMetricGap
 
                 Text {
                     text: currentFileName
                     color: styleTokens.textColor
-                    font.pixelSize: styleTokens.dialogBodyFontSize
+                    font.pixelSize: 12
                     horizontalAlignment: Text.AlignLeft
                     elide: Text.ElideRight
                     wrapMode: Text.NoWrap
-                    Layout.alignment: Qt.AlignVCenter
-                    Layout.fillWidth: true
+                    width: parent.width - (currentCounterText.length > 0
+                        ? currentCounter.width + styleTokens.dialogInlineMetricGap
+                        : 0)
                 }
 
                 Text {
+                    id: currentCounter
                     visible: currentCounterText.length > 0
                     text: currentCounterText
                     color: styleTokens.textColor
-                    font.pixelSize: styleTokens.dialogBodyFontSize
+                    font.pixelSize: 12
                     horizontalAlignment: Text.AlignRight
-                    Layout.alignment: Qt.AlignVCenter
                 }
             }
 
-            Label {
+            Text {
                 visible: currentPath.length > 0
                 text: currentPath
                 color: styleTokens.subtleTextColor
-                font.pixelSize: styleTokens.dialogHintFontSize
-                elide: Text.ElideRight
-                wrapMode: Text.NoWrap
-                maximumLineCount: 1
-                Layout.fillWidth: true
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+                horizontalAlignment: Text.AlignLeft
+                width: parent.width
                 font.underline: pathMouseArea.containsMouse
 
                 MouseArea {
@@ -143,6 +163,11 @@ PopupDialogWindow {
                     onClicked: dialog.pathOpenRequested(dialog.currentPath)
                 }
             }
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: dialog.footerTopGap
         }
 
         PopupFooterRow {
@@ -191,6 +216,36 @@ PopupDialogWindow {
                 enabled: dialog.actionsEnabled && itemCount > 0
                 onClicked: dialog.skipAllRequested()
             }
+        }
+
+        TextMetrics {
+            id: failedImportsIntroMetrics
+            font.pixelSize: 12
+            text: "These archives were not imported. Review reason and retry after fixing."
+        }
+
+        TextMetrics {
+            id: failedImportsErrorMetrics
+            font.pixelSize: 12
+            text: currentError
+        }
+
+        TextMetrics {
+            id: currentFileNameMetrics
+            font.pixelSize: 12
+            text: currentFileName
+        }
+
+        TextMetrics {
+            id: currentCounterMetrics
+            font.pixelSize: 12
+            text: currentCounterText
+        }
+
+        TextMetrics {
+            id: currentPathMetrics
+            font.pixelSize: 12
+            text: currentPath
         }
     }
 }

@@ -46,7 +46,9 @@ Popup {
     ]
     property var effectiveGenreOptions: []
     property string errorText: ""
+    property string previewErrorText: ""
     property string pendingFocusField: ""
+    readonly property string inlineErrorText: errorText.length > 0 ? errorText : previewErrorText
     readonly property bool dropdownPopupVisible: seriesMetaGenresField.popupVisible
         || seriesMetaPublisherField.popupVisible
         || seriesMetaYearField.popupVisible
@@ -573,14 +575,17 @@ Popup {
         FocusEdgeLine { targetItem: seriesMetaAgeRatingCombo; cornerRadius: shell.fieldRadius; lineColor: popupStyle.edgeLineColor; edge: "bottom" }
         FocusEdgeLine { targetItem: seriesMetaSummaryField; cornerRadius: shell.fieldRadius; lineColor: popupStyle.edgeLineColor; edge: "bottom" }
 
-        Label {
-            visible: seriesMetaDialog.errorText.length > 0
-            text: seriesMetaDialog.errorText
-            color: seriesMetaDialog.dangerColor
-            font.pixelSize: popupStyle.dialogHintFontSize
-            anchors.horizontalCenter: parent.horizontalCenter
+        PopupInlineErrorMessage {
+            visible: seriesMetaDialog.inlineErrorText.length > 0
+            headline: "Save failed"
+            message: seriesMetaDialog.inlineErrorText
+            textColor: popupStyle.textColor
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: shell.generalX + shell.labelInsetX
+            anchors.rightMargin: popupStyle.footerSideMargin
             anchors.bottom: seriesMetaFooter.top
-            anchors.bottomMargin: 16
+            anchors.bottomMargin: 10
         }
 
         PopupFooterRow {
