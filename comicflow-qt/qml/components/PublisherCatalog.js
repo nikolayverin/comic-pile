@@ -18,24 +18,25 @@ var majorPublisherEntries = [
     { name: "AWA Studios", logoTokenKey: "publisherLogoAwaStudios" },
     { name: "Oni Press", logoTokenKey: "publisherLogoOniPress" },
     { name: "Top Cow Productions", logoTokenKey: "publisherLogoTopCowProductions" },
-    { name: "Aspen Comics", logoTokenKey: "" },
-    { name: "Archie Comics", logoTokenKey: "" },
+    { name: "Aspen Comics", logoTokenKey: "publisherLogoAspenComics" },
+    { name: "Archie Comics", logoTokenKey: "publisherLogoArchieComics" },
     { name: "Shueisha", logoTokenKey: "publisherLogoShueisha" },
-    { name: "Kodansha", logoTokenKey: "" },
-    { name: "Shogakukan", logoTokenKey: "" },
-    { name: "Kadokawa Corporation", logoTokenKey: "" },
-    { name: "Square Enix", logoTokenKey: "" },
-    { name: "Hakusensha", logoTokenKey: "" },
-    { name: "Dargaud", logoTokenKey: "" },
-    { name: "Dupuis", logoTokenKey: "" },
-    { name: "Glenat", logoTokenKey: "" },
-    { name: "Casterman", logoTokenKey: "" },
-    { name: "Delcourt", logoTokenKey: "" },
-    { name: "Panini Comics", logoTokenKey: "" },
-    { name: "Titan Comics", logoTokenKey: "" },
-    { name: "Rebellion Developments", logoTokenKey: "" },
-    { name: "Humanoids", logoTokenKey: "" },
-    { name: "Viz Media", logoTokenKey: "" }
+    { name: "Kodansha", logoTokenKey: "publisherLogoKodansha" },
+    { name: "Shogakukan", logoTokenKey: "publisherLogoShogakukan" },
+    { name: "Kadokawa Corporation", logoTokenKey: "publisherLogoKadokawaCorporation" },
+    { name: "Square Enix", logoTokenKey: "publisherLogoSquareEnix" },
+    { name: "Hakusensha", logoTokenKey: "publisherLogoHakusensha" },
+    { name: "Dargaud", logoTokenKey: "publisherLogoDargaud" },
+    { name: "Dupuis", logoTokenKey: "publisherLogoDupuis" },
+    { name: "Glenat", logoTokenKey: "publisherLogoGlenat" },
+    { name: "Casterman", logoTokenKey: "publisherLogoCasterman" },
+    { name: "Delcourt", logoTokenKey: "publisherLogoDelcourt" },
+    { name: "Panini Comics", logoTokenKey: "publisherLogoPaniniComics" },
+    { name: "Titan Comics", logoTokenKey: "publisherLogoTitanComics" },
+    { name: "Rebellion Developments", logoTokenKey: "publisherLogoRebellionDevelopments" },
+    { name: "Humanoids", logoTokenKey: "publisherLogoHumanoids" },
+    { name: "Viz Media", logoTokenKey: "publisherLogoVizMedia" },
+    { name: "Udon Entertainment", logoTokenKey: "publisherLogoUdonEntertainment" }
 ]
 
 var publisherAliasToName = {
@@ -89,7 +90,9 @@ var publisherAliasToName = {
     "humanoids": "Humanoids",
     "humanoids inc": "Humanoids",
     "viz": "Viz Media",
-    "viz media": "Viz Media"
+    "viz media": "Viz Media",
+    "udon": "Udon Entertainment",
+    "udon entertainment": "Udon Entertainment"
 }
 
 function normalizePublisherKey(value) {

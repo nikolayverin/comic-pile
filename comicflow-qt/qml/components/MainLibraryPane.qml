@@ -491,21 +491,12 @@ Rectangle {
             anchors.topMargin: 0
             anchors.right: parent.right
             anchors.rightMargin: 0
-            width: heroPublisherLogoArea.logoMaxWidth
-            height: heroPublisherLogoArea.logoMaxHeight
-            readonly property real sourceAspectRatio: logoMetricsImage.status === Image.Ready
-                && logoMetricsImage.implicitWidth > 0
-                && logoMetricsImage.implicitHeight > 0
-                ? logoMetricsImage.implicitWidth / logoMetricsImage.implicitHeight
-                : 1.0
-            readonly property real fittedWidth: {
-                const ratio = Math.max(0.001, sourceAspectRatio)
-                return Math.min(width, height * ratio)
-            }
-            readonly property real fittedHeight: {
-                const ratio = Math.max(0.001, sourceAspectRatio)
-                return Math.min(height, width / ratio)
-            }
+            width: logoMetricsImage.status === Image.Ready && logoMetricsImage.implicitWidth > 0
+                ? logoMetricsImage.implicitWidth
+                : heroPublisherLogoArea.logoMaxWidth
+            height: logoMetricsImage.status === Image.Ready && logoMetricsImage.implicitHeight > 0
+                ? logoMetricsImage.implicitHeight
+                : heroPublisherLogoArea.logoMaxHeight
 
             Image {
                 id: logoMetricsImage
@@ -518,10 +509,9 @@ Rectangle {
                 anchors.right: parent.right
                 anchors.topMargin: 1
                 anchors.rightMargin: 1
-                width: heroPublisherLogoContent.fittedWidth
-                height: heroPublisherLogoContent.fittedHeight
+                width: heroPublisherLogoContent.width
+                height: heroPublisherLogoContent.height
                 source: String(root.heroSeriesData.logoSource || "")
-                fillMode: Image.PreserveAspectFit
                 smooth: true
                 opacity: 0.35
             }
@@ -529,10 +519,9 @@ Rectangle {
             Image {
                 anchors.top: parent.top
                 anchors.right: parent.right
-                width: heroPublisherLogoContent.fittedWidth
-                height: heroPublisherLogoContent.fittedHeight
+                width: heroPublisherLogoContent.width
+                height: heroPublisherLogoContent.height
                 source: String(root.heroSeriesData.logoSource || "")
-                fillMode: Image.PreserveAspectFit
                 smooth: true
             }
         }

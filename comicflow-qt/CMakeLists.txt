@@ -266,19 +266,37 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/cover-bookmark.png
         assets/ui/cover-read.png
         assets/ui/cover-read-cancel.png
-        assets/ui/logo-marvel-studios-wide.svg
-        assets/ui/logo-dc-comics-round.svg
-        assets/ui/logo-image-comics-tall.svg
-        assets/ui/logo-dark-horse-comics-tall.svg
-        assets/ui/logo-boom-studio-standard.svg
-        assets/ui/logo-dynamite-wide.svg
-        assets/ui/logo-valiant-comics-tall.svg
-        assets/ui/logo-after-shock-standard.svg
-        assets/ui/logo-awa-standard.svg
-        assets/ui/logo-oni-press-standard.svg
-        assets/ui/logo-top-cow-productions-standard.svg
-        assets/ui/logo-idw-publishing-standard.svg
-        assets/ui/logo-shueisha-standard.svg
+        assets/ui/logo-after-shock-round.png
+        assets/ui/logo-archie-comics-wide.png
+        assets/ui/logo-aspen-comics-tall.png
+        assets/ui/logo-awa-wide.png
+        assets/ui/logo-boom-studio-wide.png
+        assets/ui/logo-casterman-wide.png
+        assets/ui/logo-dargaud-wide.png
+        assets/ui/logo-dark-horse-studio-tall.png
+        assets/ui/logo-dc-comics-round.png
+        assets/ui/logo-delcourt-wide.png
+        assets/ui/logo-dupuis-wide.png
+        assets/ui/logo-dynamite-wide.png
+        assets/ui/logo-glenat-wide.png
+        assets/ui/logo-hakesensha-wide.png
+        assets/ui/logo-humanoids-standard.png
+        assets/ui/logo-idw-publishing-round.png
+        assets/ui/logo-image-comics-tall.png
+        assets/ui/logo-kadokawa-corporation-standard.png
+        assets/ui/logo-kodansha-tall.png
+        assets/ui/logo-marvel-comics-wide.png
+        assets/ui/logo-oni-press-wide.png
+        assets/ui/logo-panini-comics-wide.png
+        assets/ui/logo-rebellion-wide.png
+        assets/ui/logo-shogakui-wide.png
+        assets/ui/logo-shueisha-standard.png
+        assets/ui/logo-square-enix-wide.png
+        assets/ui/logo-titan-comics-tall.png
+        assets/ui/logo-top-cow-productions-standard.png
+        assets/ui/logo-udon-entertainment-tall.png
+        assets/ui/logo-valiant-comics-tall.png
+        assets/ui/logo-viz-media-wide.png
         assets/ui/icon-reader-page-arrow.svg
         assets/ui/icon-reader-issue-arrow.svg
         assets/ui/reader-boornark.svg
