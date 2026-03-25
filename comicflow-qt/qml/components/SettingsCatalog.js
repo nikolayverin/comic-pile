@@ -36,12 +36,6 @@ var appearanceTextureOptions = [
 var appearanceTexturePresetOptions = optionKeys(appearanceTextureOptions)
 var appearanceBackgroundImageModeOptions = ["Fit", "Fill", "Stretch", "Tile"]
 var appearanceBackgroundTileSizeOptions = ["64x64px", "256x256px", "512x512px"]
-var safetyMarkAsReadBehaviorOptions = [
-    "Open next issue",
-    "Stay on current issue",
-    "Close reader on last issue"
-]
-
 var settingsSections = [
     { key: "general", label: "General", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-pencil-ruler.svg" },
     { key: "reader", label: "Reader", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-book-open-text.svg" },
@@ -83,11 +77,6 @@ var sectionOptionRows = {
             controlType: "segmented",
             valueKey: "reader_default_reading_mode",
             options: readerDefaultReadingModeOptions
-        },
-        {
-            label: "Restore previous window position",
-            controlType: "switch",
-            valueKey: "reader_restore_previous_window_position"
         },
         {
             label: "Remember last reader mode",
@@ -155,10 +144,9 @@ var sectionOptionRows = {
             valueKey: "safety_confirm_before_replace"
         },
         {
-            label: "Mark as read behavior",
-            controlType: "radio",
-            valueKey: "safety_mark_as_read_behavior",
-            options: safetyMarkAsReadBehaviorOptions
+            label: "Confirm before deleting page",
+            controlType: "switch",
+            valueKey: "safety_confirm_before_deleting_page"
         }
     ]
 }
@@ -167,7 +155,6 @@ var defaultGeneralDefaultReadingMode = "Remember last state"
 var defaultGeneralOpenReaderFullscreenByDefault = false
 var defaultGeneralAfterImport = "Focus imported series"
 var defaultGeneralDefaultViewAfterLaunch = "Remember last state"
-var defaultReaderRestorePreviousWindowPosition = false
 var defaultReaderRememberLastReaderMode = false
 var defaultReaderDefaultReadingMode = "1 page"
 var defaultReaderMagnifierSize = "Medium"
@@ -187,4 +174,4 @@ var defaultAppearanceLibraryBackgroundTileSize = "64x64px"
 var defaultSafetyConfirmBeforeDeletingFiles = true
 var defaultSafetyConfirmBeforeDeletingSeries = true
 var defaultSafetyConfirmBeforeReplace = true
-var defaultSafetyMarkAsReadBehavior = "Open next issue"
+var defaultSafetyConfirmBeforeDeletingPage = true

@@ -40,6 +40,7 @@ Item {
     property alias issueMetadataAutofillConfirmDialogRef: issueMetadataAutofillConfirmDialog
     property alias seriesMetadataAutofillConfirmDialogRef: seriesMetadataAutofillConfirmDialog
     property alias readerDeletePageConfirmDialogRef: readerDeletePageConfirmDialog
+    property alias replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
     property alias seriesMetaDialogRef: seriesMetaDialog
     property alias settingsDialogRef: settingsDialog
     property alias seriesHeaderDialogRef: seriesHeaderDialog
@@ -228,6 +229,17 @@ Item {
         secondaryButtonText: "Cancel"
         onPrimaryRequested: root.confirmDeleteReaderPage()
         onSecondaryRequested: root.cancelDeleteReaderPageConfirmation()
+    }
+
+    PopupConfirmDialog {
+        id: replaceArchiveConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        messageText: "Replace the current archive with the selected file?"
+        primaryButtonText: "Replace"
+        secondaryButtonText: "Cancel"
+        onPrimaryRequested: root.confirmReplaceIssueArchive()
+        onSecondaryRequested: root.cancelReplaceIssueArchiveConfirmation()
     }
 
     SeriesMetadataDialog {

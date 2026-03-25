@@ -114,6 +114,29 @@ Item {
         return canNavigateReaderIssue(offset)
     }
 
+    function preferredReaderStartPageIndex(sessionResult) {
+        const result = sessionResult || ({})
+        const pageCount = Math.max(0, Number(result.pageCount || 0))
+        if (pageCount < 1) return 0
+
+        const bookmarkPage = Number(result.bookmarkPage || 0)
+        const currentPage = Number(result.currentPage || 0)
+        const bookmarkPageIndex = bookmarkPage > 0 && bookmarkPage <= pageCount
+            ? (bookmarkPage - 1)
+            : -1
+        const currentPageIndex = currentPage > 0
+            ? Math.max(0, Math.min(pageCount - 1, currentPage - 1))
+            : -1
+        const preferBookmark = appSettingsRef
+            ? Boolean(appSettingsRef.readerAutoOpenBookmarkedPageInsteadOfLastPage)
+            : false
+
+        if (preferBookmark && bookmarkPageIndex >= 0) return bookmarkPageIndex
+        if (currentPageIndex >= 0) return currentPageIndex
+        if (bookmarkPageIndex >= 0) return bookmarkPageIndex
+        return Math.max(0, Math.min(pageCount - 1, Number(result.startPageIndex || 0)))
+    }
+
     function handleReaderDialogClosed() {
         finalizeReaderSession(true)
     }
@@ -823,7 +846,7 @@ Item {
                 : -1
             root.readerPageIndex = hasPendingStartOverride
                 ? overridePageIndex
-                : Number(result.startPageIndex || 0)
+                : preferredReaderStartPageIndex(result)
             clearPendingReaderStartOverride()
             if (Number(pendingReaderPersistGuardComicId || -1) === Number(root.readerComicId || 0)
                 && Number(pendingReaderPersistGuardPageIndex || -1) >= 0) {

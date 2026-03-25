@@ -70,6 +70,9 @@ ApplicationWindow {
             : 64
     readonly property bool libraryShowHeroBlock: Boolean(appSettingsController.appearanceShowHeroBlock)
     readonly property string libraryGridDensity: String(appSettingsController.appearanceGridDensity || "Default")
+    readonly property bool readerShowBookmarkRibbonOnGridCovers: Boolean(
+        appSettingsController.readerShowBookmarkRibbonOnGridCovers
+    )
     readonly property string libraryTextureSource: libraryBackgroundTexturePreset === "Noise"
         ? uiTokens.sidebarNoiseTexture
         : uiTokens.gridTile
@@ -177,6 +180,7 @@ ApplicationWindow {
     readonly property var issueMetadataAutofillConfirmDialog: mainDialogHost.issueMetadataAutofillConfirmDialogRef
     readonly property var seriesMetadataAutofillConfirmDialog: mainDialogHost.seriesMetadataAutofillConfirmDialogRef
     readonly property var readerDeletePageConfirmDialog: mainDialogHost.readerDeletePageConfirmDialogRef
+    readonly property var replaceArchiveConfirmDialog: mainDialogHost.replaceArchiveConfirmDialogRef
     readonly property var seriesMetaDialog: mainDialogHost.seriesMetaDialogRef
     readonly property var settingsDialog: mainDialogHost.settingsDialogRef
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
@@ -216,6 +220,8 @@ ApplicationWindow {
     property bool readerFavoriteActive: false
     property int pendingDeleteReaderPageComicId: -1
     property int pendingDeleteReaderPageIndex: -1
+    property int pendingReplaceArchiveComicId: -1
+    property string pendingReplaceArchiveSourcePath: ""
     property string readerViewMode: "one_page"
     property string readerSeriesKey: ""
     readonly property int readerIssueIndexInSeries: readerSessionController.issueIndexInSeries
@@ -342,6 +348,7 @@ ApplicationWindow {
         libraryModelRef: libraryModel
         popupControllerRef: popupController
         seriesListModelRef: seriesListModel
+        appSettingsRef: appSettingsController
         deleteConfirmDialogRef: deleteConfirmDialog
         deleteErrorDialogRef: deleteErrorDialog
         seriesDeleteConfirmDialogRef: seriesDeleteConfirmDialog
@@ -1095,6 +1102,46 @@ ApplicationWindow {
         )
     }
 
+    function performReplaceIssueArchive(comicId, selectedPath) {
+        const normalizedComicId = Number(comicId || 0)
+        const normalizedPath = String(selectedPath || "").trim()
+        if (normalizedComicId < 1 || normalizedPath.length < 1) return false
+
+        const result = libraryModel.replaceComicFileFromSourceEx(
+            normalizedComicId,
+            normalizedPath,
+            "archive",
+            "",
+            ({})
+        )
+        if (!Boolean((result || {}).ok)) {
+            const replaceError = String((result || {}).error || "Replace failed.")
+            if (isSilentReplaceStateError(replaceError)) {
+                return false
+            }
+            popupController.showActionResult(replaceError, true)
+            return false
+        }
+
+        heroSeriesController.resolveHeroMediaForSelectedSeries()
+        return true
+    }
+
+    function cancelReplaceIssueArchiveConfirmation() {
+        pendingReplaceArchiveComicId = -1
+        pendingReplaceArchiveSourcePath = ""
+        if (replaceArchiveConfirmDialog && replaceArchiveConfirmDialog.visible) {
+            replaceArchiveConfirmDialog.close()
+        }
+    }
+
+    function confirmReplaceIssueArchive() {
+        const comicId = Number(pendingReplaceArchiveComicId || 0)
+        const selectedPath = String(pendingReplaceArchiveSourcePath || "")
+        cancelReplaceIssueArchiveConfirmation()
+        return performReplaceIssueArchive(comicId, selectedPath)
+    }
+
     function replaceIssueArchive(comicId) {
         if (comicId < 1) return
         if (importInProgress) {
@@ -1108,7 +1155,7 @@ ApplicationWindow {
         }
 
         const currentFilePath = String((loaded || {}).filePath || "")
-        const selectedPath = libraryModel.browseArchiveFile(currentFilePath)
+        const selectedPath = String(libraryModel.browseArchiveFile(currentFilePath) || "")
         if (selectedPath.length < 1) return
 
         const unsupportedReason = String(libraryModel.importArchiveUnsupportedReason(selectedPath) || "")
@@ -1117,23 +1164,16 @@ ApplicationWindow {
             return
         }
 
-        const result = libraryModel.replaceComicFileFromSourceEx(
-            comicId,
-            selectedPath,
-            "archive",
-            "",
-            ({})
-        )
-        if (!Boolean((result || {}).ok)) {
-            const replaceError = String((result || {}).error || "Replace failed.")
-            if (isSilentReplaceStateError(replaceError)) {
-                return
-            }
-            popupController.showActionResult(replaceError, true)
+        if (!Boolean(appSettingsController.safetyConfirmBeforeReplace)) {
+            performReplaceIssueArchive(comicId, selectedPath)
             return
         }
 
-        heroSeriesController.resolveHeroMediaForSelectedSeries()
+        pendingReplaceArchiveComicId = Number(comicId || -1)
+        pendingReplaceArchiveSourcePath = selectedPath
+        if (replaceArchiveConfirmDialog && !replaceArchiveConfirmDialog.visible) {
+            popupController.openExclusivePopup(replaceArchiveConfirmDialog)
+        }
     }
 
     function quickAddFolderFromDialog() {
@@ -1940,6 +1980,9 @@ ApplicationWindow {
         if (normalizedComicId < 1 || normalizedPageIndex < 0) return false
         pendingDeleteReaderPageComicId = normalizedComicId
         pendingDeleteReaderPageIndex = normalizedPageIndex
+        if (!Boolean(appSettingsController.safetyConfirmBeforeDeletingPage)) {
+            return confirmDeleteReaderPage()
+        }
         if (readerDeletePageConfirmDialog && !readerDeletePageConfirmDialog.visible) {
             readerDeletePageConfirmDialog.open()
         }

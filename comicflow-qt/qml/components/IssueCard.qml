@@ -14,6 +14,7 @@ Rectangle {
     property string fallbackTitle: ""
     property string coverSource: ""
     property bool hasBookmark: false
+    property bool showBookmarkRibbon: true
     property string readStatus: "unread"
     property bool selected: false
     property color cardColor: themeColors.cardBg
@@ -389,7 +390,7 @@ Rectangle {
 
     Image {
         id: coverBookmarkBadge
-        visible: root.hasBookmark && root.hasReadyCover && status === Image.Ready
+        visible: root.showBookmarkRibbon && root.hasBookmark && root.hasReadyCover && status === Image.Ready
         source: uiTokens.coverBookmark
         asynchronous: true
         cache: true

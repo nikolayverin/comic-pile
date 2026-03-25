@@ -10,6 +10,7 @@ Item {
     property var libraryModelRef: null
     property var popupControllerRef: null
     property var seriesListModelRef: null
+    property var appSettingsRef: null
     property var deleteConfirmDialogRef: null
     property var deleteErrorDialogRef: null
     property var seriesDeleteConfirmDialogRef: null
@@ -336,6 +337,10 @@ Item {
             }
         }
         pendingSeriesIssueCount = selectedSeriesIssueCount()
+        if (appSettingsRef && !Boolean(appSettingsRef.safetyConfirmBeforeDeletingSeries)) {
+            performSeriesDelete()
+            return
+        }
         openExclusivePopup(seriesDeleteConfirmDialogRef)
     }
 
@@ -358,6 +363,10 @@ Item {
             pendingSeriesIssueCount = idx >= 0 && seriesListModelRef
                 ? Number(seriesListModelRef.get(idx).count || 0)
                 : 0
+        }
+        if (appSettingsRef && !Boolean(appSettingsRef.safetyConfirmBeforeDeletingSeries)) {
+            performSeriesDelete()
+            return
         }
         openExclusivePopup(seriesDeleteConfirmDialogRef)
     }
@@ -398,6 +407,10 @@ Item {
 
     function requestDelete(comicId) {
         pendingDeleteId = Number(comicId || -1)
+        if (appSettingsRef && !Boolean(appSettingsRef.safetyConfirmBeforeDeletingFiles)) {
+            performDelete()
+            return
+        }
         openExclusivePopup(deleteConfirmDialogRef)
     }
 

@@ -13,7 +13,6 @@ Item {
     readonly property bool defaultGeneralOpenReaderFullscreenByDefault: SettingsCatalog.defaultGeneralOpenReaderFullscreenByDefault
     readonly property string defaultGeneralAfterImport: SettingsCatalog.defaultGeneralAfterImport
     readonly property string defaultGeneralDefaultViewAfterLaunch: SettingsCatalog.defaultGeneralDefaultViewAfterLaunch
-    readonly property bool defaultReaderRestorePreviousWindowPosition: SettingsCatalog.defaultReaderRestorePreviousWindowPosition
     readonly property bool defaultReaderRememberLastReaderMode: SettingsCatalog.defaultReaderRememberLastReaderMode
     readonly property string defaultReaderDefaultReadingMode: SettingsCatalog.defaultReaderDefaultReadingMode
     readonly property string defaultReaderMagnifierSize: SettingsCatalog.defaultReaderMagnifierSize
@@ -33,7 +32,7 @@ Item {
     readonly property bool defaultSafetyConfirmBeforeDeletingFiles: SettingsCatalog.defaultSafetyConfirmBeforeDeletingFiles
     readonly property bool defaultSafetyConfirmBeforeDeletingSeries: SettingsCatalog.defaultSafetyConfirmBeforeDeletingSeries
     readonly property bool defaultSafetyConfirmBeforeReplace: SettingsCatalog.defaultSafetyConfirmBeforeReplace
-    readonly property string defaultSafetyMarkAsReadBehavior: SettingsCatalog.defaultSafetyMarkAsReadBehavior
+    readonly property bool defaultSafetyConfirmBeforeDeletingPage: SettingsCatalog.defaultSafetyConfirmBeforeDeletingPage
 
     function normalizeChoice(value, allowedValues, fallbackValue) {
         const normalizedValue = String(value || "").trim()
@@ -160,19 +159,12 @@ Item {
         )
     }
 
-    function normalizeSafetyMarkAsReadBehavior(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.safetyMarkAsReadBehaviorOptions,
-            defaultSafetyMarkAsReadBehavior
-        )
-    }
-
     function normalizedReaderViewMode(currentMode) {
-        const mode = normalizeGeneralDefaultReadingMode(generalDefaultReadingMode)
-        if (mode === "1 page") return "one_page"
-        if (mode === "2 pages") return "two_page"
-        return String(currentMode || "one_page") === "two_page" ? "two_page" : "one_page"
+        if (Boolean(readerRememberLastReaderMode)) {
+            return String(currentMode || "one_page") === "two_page" ? "two_page" : "one_page"
+        }
+        const mode = normalizeReaderDefaultReadingMode(readerDefaultReadingMode)
+        return mode === "2 pages" ? "two_page" : "one_page"
     }
 
     function shouldOpenReaderFullscreen() {
@@ -192,9 +184,6 @@ Item {
         }
         if (key === "general_open_reader_fullscreen_by_default") {
             return normalizeBoolean(generalOpenReaderFullscreenByDefault, fallbackValue)
-        }
-        if (key === "reader_restore_previous_window_position") {
-            return normalizeBoolean(readerRestorePreviousWindowPosition, fallbackValue)
         }
         if (key === "reader_remember_last_reader_mode") {
             return normalizeBoolean(readerRememberLastReaderMode, fallbackValue)
@@ -253,8 +242,8 @@ Item {
         if (key === "safety_confirm_before_replace") {
             return normalizeBoolean(safetyConfirmBeforeReplace, fallbackValue)
         }
-        if (key === "safety_mark_as_read_behavior") {
-            return normalizeSafetyMarkAsReadBehavior(safetyMarkAsReadBehavior)
+        if (key === "safety_confirm_before_deleting_page") {
+            return normalizeBoolean(safetyConfirmBeforeDeletingPage, fallbackValue)
         }
         return fallbackValue
     }
@@ -275,10 +264,6 @@ Item {
         }
         if (key === "general_open_reader_fullscreen_by_default") {
             generalOpenReaderFullscreenByDefault = normalizeBoolean(nextValue, defaultGeneralOpenReaderFullscreenByDefault)
-            return
-        }
-        if (key === "reader_restore_previous_window_position") {
-            readerRestorePreviousWindowPosition = normalizeBoolean(nextValue, defaultReaderRestorePreviousWindowPosition)
             return
         }
         if (key === "reader_remember_last_reader_mode") {
@@ -375,8 +360,11 @@ Item {
             )
             return
         }
-        if (key === "safety_mark_as_read_behavior") {
-            safetyMarkAsReadBehavior = normalizeSafetyMarkAsReadBehavior(nextValue)
+        if (key === "safety_confirm_before_deleting_page") {
+            safetyConfirmBeforeDeletingPage = normalizeBoolean(
+                nextValue,
+                defaultSafetyConfirmBeforeDeletingPage
+            )
         }
     }
 
@@ -387,7 +375,6 @@ Item {
         property bool generalOpenReaderFullscreenByDefault: controller.defaultGeneralOpenReaderFullscreenByDefault
         property string generalAfterImport: controller.defaultGeneralAfterImport
         property string generalDefaultViewAfterLaunch: controller.defaultGeneralDefaultViewAfterLaunch
-        property bool readerRestorePreviousWindowPosition: controller.defaultReaderRestorePreviousWindowPosition
         property bool readerRememberLastReaderMode: controller.defaultReaderRememberLastReaderMode
         property string readerDefaultReadingMode: controller.defaultReaderDefaultReadingMode
         property string readerMagnifierSize: controller.defaultReaderMagnifierSize
@@ -407,7 +394,7 @@ Item {
         property bool safetyConfirmBeforeDeletingFiles: controller.defaultSafetyConfirmBeforeDeletingFiles
         property bool safetyConfirmBeforeDeletingSeries: controller.defaultSafetyConfirmBeforeDeletingSeries
         property bool safetyConfirmBeforeReplace: controller.defaultSafetyConfirmBeforeReplace
-        property string safetyMarkAsReadBehavior: controller.defaultSafetyMarkAsReadBehavior
+        property bool safetyConfirmBeforeDeletingPage: controller.defaultSafetyConfirmBeforeDeletingPage
     }
 
     property string generalDefaultReadingMode: normalizeGeneralDefaultReadingMode(settingsStore.generalDefaultReadingMode)
@@ -418,10 +405,6 @@ Item {
     property string generalAfterImport: normalizeGeneralAfterImport(settingsStore.generalAfterImport)
     property string generalDefaultViewAfterLaunch: normalizeGeneralDefaultViewAfterLaunch(
         settingsStore.generalDefaultViewAfterLaunch
-    )
-    property bool readerRestorePreviousWindowPosition: normalizeBoolean(
-        settingsStore.readerRestorePreviousWindowPosition,
-        defaultReaderRestorePreviousWindowPosition
     )
     property bool readerRememberLastReaderMode: normalizeBoolean(
         settingsStore.readerRememberLastReaderMode,
@@ -489,8 +472,9 @@ Item {
         settingsStore.safetyConfirmBeforeReplace,
         defaultSafetyConfirmBeforeReplace
     )
-    property string safetyMarkAsReadBehavior: normalizeSafetyMarkAsReadBehavior(
-        settingsStore.safetyMarkAsReadBehavior
+    property bool safetyConfirmBeforeDeletingPage: normalizeBoolean(
+        settingsStore.safetyConfirmBeforeDeletingPage,
+        defaultSafetyConfirmBeforeDeletingPage
     )
 
     onGeneralDefaultReadingModeChanged: {
@@ -537,20 +521,6 @@ Item {
         }
         if (settingsStore.generalDefaultViewAfterLaunch !== normalized) {
             settingsStore.generalDefaultViewAfterLaunch = normalized
-        }
-    }
-
-    onReaderRestorePreviousWindowPositionChanged: {
-        const normalized = normalizeBoolean(
-            readerRestorePreviousWindowPosition,
-            defaultReaderRestorePreviousWindowPosition
-        )
-        if (readerRestorePreviousWindowPosition !== normalized) {
-            readerRestorePreviousWindowPosition = normalized
-            return
-        }
-        if (settingsStore.readerRestorePreviousWindowPosition !== normalized) {
-            settingsStore.readerRestorePreviousWindowPosition = normalized
         }
     }
 
@@ -792,14 +762,17 @@ Item {
         }
     }
 
-    onSafetyMarkAsReadBehaviorChanged: {
-        const normalized = normalizeSafetyMarkAsReadBehavior(safetyMarkAsReadBehavior)
-        if (safetyMarkAsReadBehavior !== normalized) {
-            safetyMarkAsReadBehavior = normalized
+    onSafetyConfirmBeforeDeletingPageChanged: {
+        const normalized = normalizeBoolean(
+            safetyConfirmBeforeDeletingPage,
+            defaultSafetyConfirmBeforeDeletingPage
+        )
+        if (safetyConfirmBeforeDeletingPage !== normalized) {
+            safetyConfirmBeforeDeletingPage = normalized
             return
         }
-        if (settingsStore.safetyMarkAsReadBehavior !== normalized) {
-            settingsStore.safetyMarkAsReadBehavior = normalized
+        if (settingsStore.safetyConfirmBeforeDeletingPage !== normalized) {
+            settingsStore.safetyConfirmBeforeDeletingPage = normalized
         }
     }
 }

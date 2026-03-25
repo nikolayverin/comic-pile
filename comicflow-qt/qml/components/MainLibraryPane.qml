@@ -1001,6 +1001,7 @@ Item {
                 fallbackTitle: parent.filename
                 coverSource: parent.coverSource
                 hasBookmark: parent.hasBookmark
+                showBookmarkRibbon: Boolean(root.readerShowBookmarkRibbonOnGridCovers)
                 readStatus: parent.readStatus
                 selected: root.isSelected(parent.comicId)
                 openingInProgress: root.readerLoading && Number(root.readerComicId || 0) === Number(parent.comicId || 0)
