@@ -33,6 +33,7 @@ Popup {
     property bool fullscreenMode: false
     property bool lightThemeEnabled: false
     property bool favoriteActive: false
+    property bool inputSuspended: false
     property string magnifierSizePreset: "Medium"
     property alias magnifierModeEnabled: popupStateController.magnifierModeEnabled
     property alias magnifierOverlayVisible: popupStateController.magnifierOverlayVisible
@@ -108,6 +109,7 @@ Popup {
     readonly property int magnifierBlockGap: 12
     readonly property int magnifierCursorSize: 18
     readonly property real magnifierZoomFactor: 2.4
+    readonly property bool keyboardInputEnabled: root.visible && !root.inputSuspended
     readonly property var readerThemeDark: ({
         panelColor: "#000000",
         chromeColor: "#333333",
@@ -630,91 +632,91 @@ Popup {
     Shortcut {
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        enabled: root.visible
+        enabled: root.keyboardInputEnabled
         onActivated: popupStateController.dismissWithEscape()
     }
 
     Shortcut {
         sequence: "Left"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousPage
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousPage
         onActivated: root.previousPageRequested()
     }
 
     Shortcut {
         sequence: "Right"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextPage
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextPage
         onActivated: root.nextPageRequested()
     }
 
     Shortcut {
         sequence: "PgUp"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousPage
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousPage
         onActivated: root.previousPageRequested()
     }
 
     Shortcut {
         sequence: "PgDown"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextPage
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextPage
         onActivated: root.nextPageRequested()
     }
 
     Shortcut {
         sequence: "A"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousIssue
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousIssue
         onActivated: root.previousIssueRequested()
     }
 
     Shortcut {
         sequence: "D"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextIssue
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextIssue
         onActivated: root.nextIssueRequested()
     }
 
     Shortcut {
         sequence: "B"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible && root.pageCount > 0
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.pageCount > 0
         onActivated: root.bookmarkRequested()
     }
 
     Shortcut {
         sequence: "F"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible
         onActivated: root.toggleFavorite()
     }
 
     Shortcut {
         sequence: "P"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible
         onActivated: root.toggleReadingViewMode()
     }
 
     Shortcut {
         sequence: "Z"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible
         onActivated: root.toggleMagnifierMode()
     }
 
     Shortcut {
         sequence: "S"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible && !root.shortcutsPopupVisible
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible
         onActivated: root.toggleFullscreenMode()
     }
 
     Shortcut {
         sequence: "Ctrl+C"
         context: Qt.ApplicationShortcut
-        enabled: root.visible
+        enabled: root.keyboardInputEnabled
             && !root.pageListVisible
             && !root.shortcutsPopupVisible
             && root.readingViewMode === "one_page"
@@ -725,7 +727,7 @@ Popup {
     Shortcut {
         sequence: "M"
         context: Qt.ApplicationShortcut
-        enabled: root.visible
+        enabled: root.keyboardInputEnabled
             && !root.pageListVisible
             && !root.shortcutsPopupVisible
             && root.pageCount > 0
@@ -735,14 +737,14 @@ Popup {
     Shortcut {
         sequence: "I"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && !root.pageListVisible
+        enabled: root.keyboardInputEnabled && !root.pageListVisible
         onActivated: popupStateController.toggleShortcutsPopup()
     }
 
     Shortcut {
         sequence: "1"
         context: Qt.ApplicationShortcut
-        enabled: root.visible
+        enabled: root.keyboardInputEnabled
             && !root.pageListVisible
             && !root.shortcutsPopupVisible
             && root.pageCount > 0

@@ -166,6 +166,7 @@ Item {
         bookmarkActive: readerSessionController.bookmarkActive
         bookmarkPageIndex: readerSessionController.bookmarkPageIndex
         favoriteActive: readerSessionController.favoriteActive
+        inputSuspended: settingsDialog.visible
         magnifierSizePreset: appSettingsController.readerMagnifierSize
         onDismissRequested: readerSessionController.closeReader()
         onPreviousPageRequested: readerSessionController.previousReaderPage()

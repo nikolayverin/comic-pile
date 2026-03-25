@@ -137,6 +137,19 @@ Item {
         return Math.max(0, Math.min(pageCount - 1, Number(result.startPageIndex || 0)))
     }
 
+    function syncOpenReaderViewModeFromSettings() {
+        const root = rootObject
+        if (!root || !appSettingsRef) return
+        if (Number(root.readerComicId || 0) < 1) return
+        if (!readerDialog || !readerDialog.visible) return
+        if (Boolean(appSettingsRef.readerRememberLastReaderMode)) return
+
+        const nextMode = typeof appSettingsRef.normalizedReaderViewMode === "function"
+            ? appSettingsRef.normalizedReaderViewMode(root.readerViewMode)
+            : "one_page"
+        setReaderViewMode(nextMode)
+    }
+
     function handleReaderDialogClosed() {
         finalizeReaderSession(true)
     }
@@ -910,6 +923,18 @@ Item {
             }
 
             root.heroBackgroundSource = String(imageSource || "")
+        }
+    }
+
+    Connections {
+        target: appSettingsRef
+
+        function onReaderDefaultReadingModeChanged() {
+            controller.syncOpenReaderViewModeFromSettings()
+        }
+
+        function onReaderRememberLastReaderModeChanged() {
+            controller.syncOpenReaderViewModeFromSettings()
         }
     }
 }

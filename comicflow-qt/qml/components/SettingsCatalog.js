@@ -96,11 +96,6 @@ var sectionOptionRows = {
             options: readerPageEdgeBehaviorOptions
         },
         {
-            label: "Show bookmark ribbon on grid covers",
-            controlType: "switch",
-            valueKey: "reader_show_bookmark_ribbon_on_grid_covers"
-        },
-        {
             label: "Auto-open bookmarked page instead of last page",
             controlType: "switch",
             valueKey: "reader_auto_open_bookmarked_page_instead_of_last_page"
@@ -125,6 +120,11 @@ var sectionOptionRows = {
             label: "Show hero block",
             controlType: "switch",
             valueKey: "appearance_show_hero_block"
+        },
+        {
+            label: "Show bookmark ribbon on grid covers",
+            controlType: "switch",
+            valueKey: "reader_show_bookmark_ribbon_on_grid_covers"
         }
     ],
     safety: [
