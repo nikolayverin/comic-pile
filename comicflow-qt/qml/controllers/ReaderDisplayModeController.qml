@@ -250,7 +250,11 @@ Item {
         if (currentPageIndex < 0) return -1
 
         if (!readerUsesTwoPageLayout()) {
-            return normalizedReaderPageIndex(currentPageIndex + Number(offset || 0))
+            const target = currentPageIndex + Number(offset || 0)
+            if (target < 0 || target >= Number(root.readerPageCount || 0)) {
+                return -1
+            }
+            return target
         }
 
         return ReaderSpreadLayout.targetAnchorForOffset(
