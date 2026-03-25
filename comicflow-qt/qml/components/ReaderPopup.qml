@@ -60,16 +60,17 @@ Popup {
     readonly property int toolbarIconSize: 16
     readonly property real toolbarIconLeftEdgeInButton: (toolButtonWidth - toolbarIconSize) / 2
     readonly property real toolbarIconRightEdgeInButton: (toolButtonWidth + toolbarIconSize) / 2
-    readonly property int toolbarInfoRightInset: 64
-    readonly property int toolbarDeleteLeftInset: toolbarInfoRightInset
-    readonly property int toolbarCopyRightInset: toolbarInfoRightInset + toolbarIconSize + 22
+    readonly property int toolbarDeleteLeftInset: 64
+    readonly property int toolbarHotkeysLeftInset: toolbarDeleteLeftInset + toolbarIconSize + 38
+    readonly property int toolbarSettingsLeftInset: toolbarHotkeysLeftInset + toolbarIconSize + 22
+    readonly property int toolbarThemeLeftInset: toolbarSettingsLeftInset + toolbarIconSize + 22
+    readonly property int toolbarCopyRightInset: 64
     readonly property int toolbarFavoritesRightInset: toolbarCopyRightInset + toolbarIconSize + 38
     readonly property int toolbarBookmarkRightInset: toolbarFavoritesRightInset + toolbarIconSize + 22
     readonly property int toolbarMagnifierRightInset: toolbarBookmarkRightInset + toolbarIconSize + 38
     readonly property int toolbarFullScreenRightInset: toolbarMagnifierRightInset + toolbarIconSize + 22
     readonly property int toolbarTwoPageRightInset: toolbarFullScreenRightInset + toolbarIconSize + 22
     readonly property int toolbarOnePageRightInset: toolbarTwoPageRightInset + toolbarIconSize + 22
-    readonly property int toolbarThemeRightInset: toolbarOnePageRightInset + toolbarIconSize + 38
     readonly property int sideButtonWidth: 34
     readonly property int sideButtonHeight: 96
     readonly property int sideButtonOffset: 14
@@ -195,6 +196,7 @@ Popup {
     signal bookmarkJumpRequested()
     signal favoriteRequested()
     signal deletePageRequested(int pageIndex)
+    signal settingsRequested()
     signal copyImageRequested()
     signal markAsReadRequested()
     signal readFromStartRequested()
@@ -835,8 +837,16 @@ Popup {
             }
 
             ToolbarIconButton {
+                id: settingsButton
+                x: root.toolbarSettingsLeftInset - root.toolbarIconLeftEdgeInButton
+                anchors.verticalCenter: parent.verticalCenter
+                icon.source: uiTokens.readerSettingsIcon
+                onClicked: root.settingsRequested()
+            }
+
+            ToolbarIconButton {
                 id: themeToggleButton
-                x: parent.width - root.toolbarThemeRightInset - root.toolbarIconRightEdgeInButton
+                x: root.toolbarThemeLeftInset - root.toolbarIconLeftEdgeInButton
                 anchors.verticalCenter: parent.verticalCenter
                 icon.source: root.lightThemeEnabled
                     ? uiTokens.readerThemeSunIcon
@@ -921,7 +931,7 @@ Popup {
 
             ToolbarIconButton {
                 id: infoButton
-                x: parent.width - root.toolbarInfoRightInset - root.toolbarIconRightEdgeInButton
+                x: root.toolbarHotkeysLeftInset - root.toolbarIconLeftEdgeInButton
                 anchors.verticalCenter: parent.verticalCenter
                 activeState: root.shortcutsPopupVisible
                 showActiveBackground: true

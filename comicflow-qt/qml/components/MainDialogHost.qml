@@ -179,6 +179,7 @@ Item {
         onDeletePageRequested: function(pageIndex) {
             root.requestDeleteReaderPageConfirmation(root.readerComicId, pageIndex)
         }
+        onSettingsRequested: root.openSettingsDialog("reader", true)
         onCopyImageRequested: readerSessionController.copyCurrentReaderImage()
         onMarkAsReadRequested: readerSessionController.markCurrentReaderIssueReadAndAdvance()
         onReadFromStartRequested: readerSessionController.restartFromBeginning()

@@ -726,9 +726,16 @@ ApplicationWindow {
         libraryModel.reload()
     }
 
-    function openSettingsDialog(sectionKey) {
+    function openSettingsDialog(sectionKey, preserveReaderPopup) {
         const requested = String(sectionKey || "").trim()
         settingsDialog.requestedSection = requested
+        settingsDialog.selectedSection = requested.length > 0 ? requested : "general"
+        if (Boolean(preserveReaderPopup) && readerDialog && readerDialog.visible) {
+            if (!settingsDialog.visible) {
+                settingsDialog.open()
+            }
+            return
+        }
         popupController.openExclusivePopup(settingsDialog)
     }
 
