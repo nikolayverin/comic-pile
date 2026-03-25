@@ -193,101 +193,33 @@ Rectangle {
         }
     }
 
-    component WindowControlButton: Item {
+    component WindowControlButton: ToolButton {
         id: winBtn
         property string glyphType: "min"
-        property bool enabled: true
-        readonly property bool active: winBtn.enabled && (hitArea.containsMouse || hitArea.pressed)
+        readonly property bool active: winBtn.enabled && (winBtn.hovered || winBtn.down)
         readonly property color frontColor: active
             ? (glyphType === "close" ? root.windowControlCloseHoverColor : root.windowControlActiveColor)
             : root.windowControlIdleColor
-        signal clicked()
 
         width: root.windowControlButtonWidth
         height: root.windowControlButtonHeight
         opacity: winBtn.enabled ? 1 : 0.35
+        hoverEnabled: true
+        display: AbstractButton.IconOnly
+        padding: 0
 
-        function drawGlyph(ctx, color) {
-            ctx.reset()
-            ctx.strokeStyle = color
-            ctx.fillStyle = color
-            ctx.lineCap = "square"
-            ctx.lineJoin = "miter"
+        icon.source: glyphType === "close"
+            ? "qrc:/qt/qml/ComicPile/assets/icons/win-close.svg"
+            : glyphType === "restore"
+                ? "qrc:/qt/qml/ComicPile/assets/icons/win-restore.svg"
+                : glyphType === "max"
+                    ? "qrc:/qt/qml/ComicPile/assets/icons/win-max.svg"
+                    : "qrc:/qt/qml/ComicPile/assets/icons/win-min.svg"
+        icon.width: 12
+        icon.height: 12
+        icon.color: frontColor
 
-            if (glyphType === "min") {
-                ctx.lineWidth = 1.2
-                ctx.beginPath()
-                ctx.moveTo(2, 8)
-                ctx.lineTo(10, 8)
-                ctx.stroke()
-                return
-            }
-
-            if (glyphType === "max") {
-                ctx.lineWidth = 1.1
-                ctx.strokeRect(2.5, 2.5, 7, 7)
-                return
-            }
-
-            if (glyphType === "restore") {
-                ctx.lineWidth = 1.1
-                ctx.strokeRect(2.5, 3.5, 6.5, 6.5)
-                ctx.strokeRect(4.5, 1.5, 6.5, 6.5)
-                return
-            }
-
-            if (glyphType === "close") {
-                ctx.lineWidth = 1.4
-                ctx.beginPath()
-                ctx.moveTo(2, 2)
-                ctx.lineTo(10, 10)
-                ctx.moveTo(10, 2)
-                ctx.lineTo(2, 10)
-                ctx.stroke()
-            }
-        }
-
-        onActiveChanged: {
-            shadowGlyph.requestPaint()
-            frontGlyph.requestPaint()
-        }
-        onGlyphTypeChanged: {
-            shadowGlyph.requestPaint()
-            frontGlyph.requestPaint()
-        }
-        onFrontColorChanged: {
-            frontGlyph.requestPaint()
-        }
-
-        Canvas {
-            id: shadowGlyph
-            anchors.centerIn: parent
-            width: 12
-            height: 12
-            y: winBtn.active ? 1 : -1
-            onPaint: {
-                winBtn.drawGlyph(getContext("2d"), root.textShadowColor)
-            }
-        }
-
-        Canvas {
-            id: frontGlyph
-            anchors.centerIn: parent
-            width: 12
-            height: 12
-            onPaint: {
-                winBtn.drawGlyph(getContext("2d"), winBtn.frontColor)
-            }
-        }
-
-        MouseArea {
-            id: hitArea
-            anchors.fill: parent
-            enabled: winBtn.enabled
-            hoverEnabled: true
-            cursorShape: winBtn.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: winBtn.clicked()
-        }
+        background: Item {}
     }
 
     Row {
