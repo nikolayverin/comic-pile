@@ -1,5 +1,6 @@
 #include "storage/comicslistmodel.h"
 
+#include "storage/archivepacking.h"
 #include "storage/imagepreparationops.h"
 #include "storage/readercacheutils.h"
 #include "storage/readerpayloadutils.h"
@@ -865,6 +866,112 @@ QString ComicsListModel::saveReaderFavorite(int comicId, bool favoriteActive)
 
     updateReaderFavoriteCache(comicId, favoriteActive);
     return {};
+}
+
+QVariantMap ComicsListModel::deleteReaderPageFromArchive(int comicId, int pageIndex)
+{
+    if (comicId < 1) {
+        return {
+            { QStringLiteral("error"), QStringLiteral("Invalid issue id.") }
+        };
+    }
+
+    const QVariantMap session = loadReaderSessionPayload(m_dbPath, m_dataRoot, comicId);
+    const QString sessionError = session.value(QStringLiteral("error")).toString().trimmed();
+    if (!sessionError.isEmpty()) {
+        return {
+            { QStringLiteral("error"), sessionError }
+        };
+    }
+
+    const QString archivePath = session.value(QStringLiteral("archivePath")).toString().trimmed();
+    const QStringList entries = session.value(QStringLiteral("entries")).toStringList();
+    if (archivePath.isEmpty() || entries.isEmpty()) {
+        return {
+            { QStringLiteral("error"), QStringLiteral("No image pages found in archive.") }
+        };
+    }
+    if (pageIndex < 0 || pageIndex >= entries.size()) {
+        return {
+            { QStringLiteral("error"), QStringLiteral("Page index is out of range.") }
+        };
+    }
+
+    int remainingPageCount = 0;
+    QString deleteError;
+    if (!ComicArchivePacking::deletePageFromArchive(
+            archivePath,
+            pageIndex,
+            remainingPageCount,
+            deleteError
+        )) {
+        return {
+            { QStringLiteral("error"), deleteError }
+        };
+    }
+
+    const int deletedPageNumber = pageIndex + 1;
+    int currentPage = session.value(QStringLiteral("currentPage")).toInt();
+    int bookmarkPage = session.value(QStringLiteral("bookmarkPage")).toInt();
+    QString readStatus = QStringLiteral("unread");
+    QString seriesKey;
+    for (const ComicRow &row : m_rows) {
+        if (row.id != comicId) continue;
+        readStatus = row.readStatus.trimmed().isEmpty() ? QStringLiteral("unread") : row.readStatus.trimmed();
+        seriesKey = row.seriesGroupKey.trimmed();
+        break;
+    }
+
+    auto adjustStoredPage = [deletedPageNumber, remainingPageCount](int storedPage) -> int {
+        if (storedPage <= 0) return 0;
+        if (storedPage > deletedPageNumber) return std::max(1, storedPage - 1);
+        return std::min(storedPage, remainingPageCount);
+    };
+
+    const int adjustedCurrentPage = adjustStoredPage(currentPage);
+    const int adjustedBookmarkPage = adjustStoredPage(bookmarkPage);
+
+    const QString progressError = ComicReaderSessionOps::saveReaderProgress(
+        m_dbPath,
+        comicId,
+        adjustedCurrentPage,
+        readStatus
+    );
+    if (!progressError.isEmpty()) {
+        return {
+            { QStringLiteral("error"), progressError }
+        };
+    }
+
+    const QString bookmarkError = ComicReaderSessionOps::saveReaderBookmark(
+        m_dbPath,
+        comicId,
+        adjustedBookmarkPage
+    );
+    if (!bookmarkError.isEmpty()) {
+        return {
+            { QStringLiteral("error"), bookmarkError }
+        };
+    }
+
+    updateReaderProgressCache(comicId, adjustedCurrentPage, readStatus);
+    updateReaderBookmarkCache(comicId, adjustedBookmarkPage);
+
+    m_readerArchivePathById.remove(comicId);
+    m_readerImageEntriesById.remove(comicId);
+    m_readerPageMetricsById.remove(comicId);
+    ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
+    if (!seriesKey.isEmpty()) {
+        ComicReaderCache::purgeSeriesHeroForKey(m_dataRoot, seriesKey);
+    }
+
+    return {
+        { QStringLiteral("comicId"), comicId },
+        { QStringLiteral("deletedPageIndex"), pageIndex },
+        { QStringLiteral("pageCount"), remainingPageCount },
+        { QStringLiteral("currentPage"), adjustedCurrentPage },
+        { QStringLiteral("bookmarkPage"), adjustedBookmarkPage }
+    };
 }
 
 QString ComicsListModel::copyImageFileToClipboard(const QString &imageSource)

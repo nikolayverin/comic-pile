@@ -19,5 +19,11 @@ bool packageImageFolderToCbz(
     const QString &targetCbzPath,
     QString &errorText
 );
+bool deletePageFromArchive(
+    const QString &archivePath,
+    int pageIndex,
+    int &remainingPageCount,
+    QString &errorText
+);
 
 } // namespace ComicArchivePacking

@@ -248,6 +248,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-last-import-hover.png
         assets/icons/icon-last-import-idle.png
         assets/icons/icon-reader-bookmark.svg
+        assets/icons/icon-reader-delete.svg
         assets/icons/icon-reader-favorits.svg
         assets/icons/icon-reader-copy.svg
         assets/icons/icon-reader-one-page.svg

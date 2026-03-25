@@ -39,6 +39,7 @@ Item {
     property alias actionResultDialogRef: actionResultDialog
     property alias issueMetadataAutofillConfirmDialogRef: issueMetadataAutofillConfirmDialog
     property alias seriesMetadataAutofillConfirmDialogRef: seriesMetadataAutofillConfirmDialog
+    property alias readerDeletePageConfirmDialogRef: readerDeletePageConfirmDialog
     property alias seriesMetaDialogRef: seriesMetaDialog
     property alias settingsDialogRef: settingsDialog
     property alias seriesHeaderDialogRef: seriesHeaderDialog
@@ -174,6 +175,9 @@ Item {
         onBookmarkRequested: readerSessionController.toggleReaderBookmark()
         onBookmarkJumpRequested: readerSessionController.jumpToReaderBookmark()
         onFavoriteRequested: readerSessionController.toggleReaderFavorite()
+        onDeletePageRequested: function(pageIndex) {
+            root.requestDeleteReaderPageConfirmation(root.readerComicId, pageIndex)
+        }
         onCopyImageRequested: readerSessionController.copyCurrentReaderImage()
         onMarkAsReadRequested: readerSessionController.markCurrentReaderIssueReadAndAdvance()
         onReadFromStartRequested: readerSessionController.restartFromBeginning()
@@ -213,6 +217,17 @@ Item {
         secondaryButtonText: "Keep Current"
         onPrimaryRequested: root.acceptSeriesMetadataSuggestion()
         onSecondaryRequested: root.skipSeriesMetadataSuggestion()
+    }
+
+    PopupConfirmDialog {
+        id: readerDeletePageConfirmDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        messageText: "Вы уверены что хотите удалить эту страницу?"
+        primaryButtonText: "OK"
+        secondaryButtonText: "Cancel"
+        onPrimaryRequested: root.confirmDeleteReaderPage()
+        onSecondaryRequested: root.cancelDeleteReaderPageConfirmation()
     }
 
     SeriesMetadataDialog {

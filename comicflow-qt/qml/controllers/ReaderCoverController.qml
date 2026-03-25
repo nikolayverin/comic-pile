@@ -562,6 +562,32 @@ Item {
         return String(libraryModelRef.copyImageFileToClipboard(String(root.readerImageSource || "")) || "").trim()
     }
 
+    function refreshReaderAfterDeletedPage(result) {
+        const root = rootObject
+        if (!root) return
+        if (Number(root.readerComicId || 0) < 1) return
+
+        const nextPageCount = Math.max(0, Number((result || {}).pageCount || 0))
+        const nextCurrentPage = Math.max(0, Number((result || {}).currentPage || 0))
+        const nextBookmarkPage = Math.max(0, Number((result || {}).bookmarkPage || 0))
+        const deletedPageIndex = Number((result || {}).deletedPageIndex)
+        const targetPageIndex = nextPageCount > 0
+            ? Math.max(0, Math.min(nextPageCount - 1, nextCurrentPage - 1))
+            : 0
+
+        root.readerPageCount = nextPageCount
+        root.readerBookmarkPageIndex = nextBookmarkPage > 0 ? (nextBookmarkPage - 1) : -1
+        root.readerBookmarkActive = root.readerBookmarkPageIndex >= 0
+        root.readerBookmarkComicId = root.readerBookmarkActive
+            ? Number(root.readerComicId || -1)
+            : -1
+        root.readerError = ""
+
+        readerDisplayModeController.applyDeletedPageToLayout(deletedPageIndex, nextPageCount)
+        readerDisplayModeController.loadReaderPage(targetPageIndex, true)
+        scheduleReaderGridRefresh()
+    }
+
     function openReader(comicId, title) {
         beginReaderSession(comicId, title, true, -1, -1)
     }

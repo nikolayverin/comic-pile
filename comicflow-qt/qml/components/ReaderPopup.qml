@@ -58,8 +58,10 @@ Popup {
     readonly property int closeButtonSize: 24
     readonly property int closeIconSize: 12
     readonly property int toolbarIconSize: 16
+    readonly property real toolbarIconLeftEdgeInButton: (toolButtonWidth - toolbarIconSize) / 2
     readonly property real toolbarIconRightEdgeInButton: (toolButtonWidth + toolbarIconSize) / 2
     readonly property int toolbarInfoRightInset: 64
+    readonly property int toolbarDeleteLeftInset: toolbarInfoRightInset
     readonly property int toolbarCopyRightInset: toolbarInfoRightInset + toolbarIconSize + 22
     readonly property int toolbarFavoritesRightInset: toolbarCopyRightInset + toolbarIconSize + 38
     readonly property int toolbarBookmarkRightInset: toolbarFavoritesRightInset + toolbarIconSize + 22
@@ -192,6 +194,7 @@ Popup {
     signal bookmarkRequested()
     signal bookmarkJumpRequested()
     signal favoriteRequested()
+    signal deletePageRequested(int pageIndex)
     signal copyImageRequested()
     signal markAsReadRequested()
     signal readFromStartRequested()
@@ -819,6 +822,16 @@ Popup {
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                 }
+            }
+
+            ToolbarIconButton {
+                id: deletePageButton
+                x: root.toolbarDeleteLeftInset - root.toolbarIconLeftEdgeInButton
+                anchors.verticalCenter: parent.verticalCenter
+                visible: root.readingViewMode !== "two_page"
+                clickEnabled: root.pageCount > 1
+                icon.source: uiTokens.readerDeletePageIcon
+                onClicked: root.deletePageRequested(root.pageIndex)
             }
 
             ToolbarIconButton {

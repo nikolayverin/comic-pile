@@ -171,6 +171,7 @@ public:
     Q_INVOKABLE QString saveReaderProgress(int comicId, int currentPage);
     Q_INVOKABLE QString saveReaderBookmark(int comicId, int bookmarkPage);
     Q_INVOKABLE QString saveReaderFavorite(int comicId, bool favoriteActive);
+    Q_INVOKABLE QVariantMap deleteReaderPageFromArchive(int comicId, int pageIndex);
     Q_INVOKABLE QString deleteSeriesFiles(const QString &seriesKey);
     Q_INVOKABLE QString deleteSeriesFilesKeepRecords(const QString &seriesKey);
     Q_INVOKABLE QString deleteComicFilesKeepRecord(int comicId);

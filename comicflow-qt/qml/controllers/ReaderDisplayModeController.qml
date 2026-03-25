@@ -284,7 +284,7 @@ Item {
         }
     }
 
-    function loadReaderPage(pageIndex) {
+    function loadReaderPage(pageIndex, preserveVisibleContent) {
         const root = rootObject
         if (!root || !libraryModelRef) return
         if (Number(root.readerComicId || 0) < 1) return
@@ -295,12 +295,30 @@ Item {
         root.readerError = ""
         root.readerLoading = true
         root.readerPageIndex = normalizedIndex
-        clearDisplayState()
+        if (!Boolean(preserveVisibleContent)) {
+            clearDisplayState()
+        } else {
+            root.readerPageRequestId = -1
+        }
 
         const nextDisplayToken = Number(displayToken || 0) + 1
         displayToken = nextDisplayToken
         const displayPageIndexes = displayPageIndexesForReaderPage(normalizedIndex)
-        root.readerDisplayPages = buildDisplayPageDescriptors(displayPageIndexes)
+        const nextDisplayPages = buildDisplayPageDescriptors(displayPageIndexes)
+        if (Boolean(preserveVisibleContent)) {
+            const currentPages = Array.isArray(root.readerDisplayPages) ? root.readerDisplayPages : []
+            for (let i = 0; i < nextDisplayPages.length; i += 1) {
+                const fallbackSource = String((currentPages[i] || {}).imageSource || "")
+                if (fallbackSource.length > 0) {
+                    nextDisplayPages[i].imageSource = fallbackSource
+                    continue
+                }
+                if (i === 0) {
+                    nextDisplayPages[i].imageSource = String(root.readerImageSource || "")
+                }
+            }
+        }
+        root.readerDisplayPages = nextDisplayPages
 
         const nextRequestMeta = ({})
         for (let i = 0; i < displayPageIndexes.length; i += 1) {
@@ -321,6 +339,38 @@ Item {
         if (Object.keys(nextRequestMeta).length < 1) {
             root.readerLoading = false
         }
+    }
+
+    function applyDeletedPageToLayout(deletedPageIndex, remainingPageCount) {
+        const normalizedDeletedPageIndex = Number(deletedPageIndex)
+        const nextEntries = listCopy(sessionEntries)
+        if (normalizedDeletedPageIndex >= 0 && normalizedDeletedPageIndex < nextEntries.length) {
+            nextEntries.splice(normalizedDeletedPageIndex, 1)
+        }
+        sessionEntries = nextEntries
+
+        const sourceMetrics = Array.isArray(pageMetrics) ? pageMetrics : []
+        const nextMetrics = []
+        for (let i = 0; i < sourceMetrics.length; i += 1) {
+            if (i === normalizedDeletedPageIndex) continue
+            nextMetrics.push(sourceMetrics[i])
+        }
+
+        if (nextMetrics.length < 1) {
+            pageMetrics = []
+            twoPageSpreads = []
+            twoPageLayoutReady = false
+            return
+        }
+
+        const layout = ReaderSpreadLayout.buildTwoPageLayout(
+            nextMetrics,
+            Number(remainingPageCount || nextMetrics.length),
+            widePageThresholdFactor
+        )
+        pageMetrics = Array.isArray(layout.metrics) ? layout.metrics : []
+        twoPageSpreads = Array.isArray(layout.spreads) ? layout.spreads : []
+        twoPageLayoutReady = twoPageSpreads.length > 0
     }
 
     function prefetchReaderNeighborPage(pageIndex) {

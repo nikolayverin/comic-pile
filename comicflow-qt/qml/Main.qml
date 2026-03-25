@@ -176,6 +176,7 @@ ApplicationWindow {
     readonly property var actionResultDialog: mainDialogHost.actionResultDialogRef
     readonly property var issueMetadataAutofillConfirmDialog: mainDialogHost.issueMetadataAutofillConfirmDialogRef
     readonly property var seriesMetadataAutofillConfirmDialog: mainDialogHost.seriesMetadataAutofillConfirmDialogRef
+    readonly property var readerDeletePageConfirmDialog: mainDialogHost.readerDeletePageConfirmDialogRef
     readonly property var seriesMetaDialog: mainDialogHost.seriesMetaDialogRef
     readonly property var settingsDialog: mainDialogHost.settingsDialogRef
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
@@ -213,6 +214,8 @@ ApplicationWindow {
     property int readerBookmarkPageIndex: -1
     property int readerBookmarkComicId: -1
     property bool readerFavoriteActive: false
+    property int pendingDeleteReaderPageComicId: -1
+    property int pendingDeleteReaderPageIndex: -1
     property string readerViewMode: "one_page"
     property string readerSeriesKey: ""
     readonly property int readerIssueIndexInSeries: readerSessionController.issueIndexInSeries
@@ -1929,6 +1932,46 @@ ApplicationWindow {
 
     function copyCurrentReaderImage() {
         return readerSessionController.copyCurrentReaderImage()
+    }
+
+    function requestDeleteReaderPageConfirmation(comicId, pageIndex) {
+        const normalizedComicId = Number(comicId || 0)
+        const normalizedPageIndex = Number(pageIndex)
+        if (normalizedComicId < 1 || normalizedPageIndex < 0) return false
+        pendingDeleteReaderPageComicId = normalizedComicId
+        pendingDeleteReaderPageIndex = normalizedPageIndex
+        if (readerDeletePageConfirmDialog && !readerDeletePageConfirmDialog.visible) {
+            readerDeletePageConfirmDialog.open()
+        }
+        return true
+    }
+
+    function cancelDeleteReaderPageConfirmation() {
+        pendingDeleteReaderPageComicId = -1
+        pendingDeleteReaderPageIndex = -1
+        if (readerDeletePageConfirmDialog && readerDeletePageConfirmDialog.visible) {
+            readerDeletePageConfirmDialog.close()
+        }
+    }
+
+    function confirmDeleteReaderPage() {
+        const comicId = Number(pendingDeleteReaderPageComicId || 0)
+        const pageIndex = Number(pendingDeleteReaderPageIndex)
+        cancelDeleteReaderPageConfirmation()
+        if (comicId < 1 || pageIndex < 0) return false
+
+        const result = libraryModel.deleteReaderPageFromArchive(comicId, pageIndex) || ({})
+        const errorText = String(result.error || "").trim()
+        if (errorText.length > 0) {
+            popupController.actionResultTitle = "Couldn't delete page"
+            popupController.showActionResultWithAction(errorText, "", "", "")
+            return false
+        }
+
+        if (readerComicId === comicId) {
+            readerCoverController.refreshReaderAfterDeletedPage(result)
+        }
+        return true
     }
 
     function markCurrentReaderIssueReadAndAdvance() {

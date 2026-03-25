@@ -1304,4 +1304,123 @@ bool packageImageFolderToCbz(
     return ok;
 }
 
+bool deletePageFromArchive(
+    const QString &archivePath,
+    int pageIndex,
+    int &remainingPageCount,
+    QString &errorText
+)
+{
+    errorText.clear();
+    remainingPageCount = 0;
+
+    const QString normalizedArchivePath = normalizeInputFilePath(archivePath);
+    if (normalizedArchivePath.isEmpty()) {
+        errorText = QStringLiteral("Archive path is required.");
+        return false;
+    }
+
+    const QFileInfo archiveInfo(normalizedArchivePath);
+    if (!archiveInfo.exists() || !archiveInfo.isFile()) {
+        errorText = QStringLiteral("Archive not found: %1").arg(archivePath);
+        return false;
+    }
+
+    const QString extension = archiveInfo.suffix().trimmed().toLower();
+    if (extension != QStringLiteral("cbz") && extension != QStringLiteral("zip")) {
+        errorText = QStringLiteral("Page deletion is only supported for .cbz and .zip archives.");
+        return false;
+    }
+
+    QStringList imageEntries;
+    if (!ComicInfoArchive::listImageEntriesInArchive(normalizedArchivePath, imageEntries, errorText)) {
+        return false;
+    }
+
+    if (imageEntries.size() < 2) {
+        errorText = QStringLiteral("Cannot delete the only page from the archive.");
+        return false;
+    }
+    if (pageIndex < 0 || pageIndex >= imageEntries.size()) {
+        errorText = QStringLiteral("Page index is out of range.");
+        return false;
+    }
+
+    const QString tempRootPath = QDir(QDir::tempPath()).filePath(
+        QStringLiteral("comicpile-page-delete-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces))
+    );
+    const QString extractPath = QDir(tempRootPath).filePath(QStringLiteral("extract"));
+    const QString stagePagesPath = QDir(tempRootPath).filePath(QStringLiteral("pages"));
+    const QString rebuiltArchivePath = QDir(tempRootPath).filePath(QStringLiteral("rebuilt.cbz"));
+    if (!QDir().mkpath(extractPath) || !QDir().mkpath(stagePagesPath)) {
+        errorText = QStringLiteral("Failed to create temporary directory for page deletion.");
+        return false;
+    }
+
+    auto cleanupTemp = [&]() {
+        QDir(tempRootPath).removeRecursively();
+    };
+
+    if (!extractZipLikeArchiveToDirectory(normalizedArchivePath, extractPath, errorText)) {
+        cleanupTemp();
+        return false;
+    }
+
+    const QString entryToDelete = imageEntries.at(pageIndex);
+    const QString extractedEntryPath = QDir(extractPath).filePath(entryToDelete);
+    const QFileInfo extractedInfo(extractedEntryPath);
+    if (!extractedInfo.exists() || !extractedInfo.isFile()) {
+        cleanupTemp();
+        errorText = QStringLiteral("Selected page was not found after archive extraction.");
+        return false;
+    }
+
+    if (!QFile::remove(extractedInfo.absoluteFilePath())) {
+        cleanupTemp();
+        errorText = QStringLiteral("Failed to remove the selected page from the extracted archive.");
+        return false;
+    }
+
+    if (!stageExtractedArchiveForCbz(extractPath, stagePagesPath, errorText)) {
+        cleanupTemp();
+        return false;
+    }
+
+    if (!ComicArchivePacking::createCbzFromDirectory(stagePagesPath, rebuiltArchivePath, errorText)) {
+        cleanupTemp();
+        return false;
+    }
+
+    remainingPageCount = imageEntries.size() - 1;
+    if (remainingPageCount < 1) {
+        cleanupTemp();
+        errorText = QStringLiteral("Cannot delete the only page from the archive.");
+        return false;
+    }
+
+    const QString backupPath = archiveInfo.absolutePath().isEmpty()
+        ? normalizedArchivePath + QStringLiteral(".comicpile-backup")
+        : QDir(archiveInfo.absolutePath()).filePath(
+            archiveInfo.fileName() + QStringLiteral(".comicpile-backup")
+        );
+    QFile::remove(backupPath);
+
+    if (!QFile::rename(normalizedArchivePath, backupPath)) {
+        cleanupTemp();
+        errorText = QStringLiteral("Failed to prepare the original archive for replacement.");
+        return false;
+    }
+
+    if (!QFile::rename(rebuiltArchivePath, normalizedArchivePath)) {
+        QFile::rename(backupPath, normalizedArchivePath);
+        cleanupTemp();
+        errorText = QStringLiteral("Failed to replace the archive after page deletion.");
+        return false;
+    }
+
+    QFile::remove(backupPath);
+    cleanupTemp();
+    return true;
+}
+
 } // namespace ComicArchivePacking
