@@ -85,6 +85,7 @@ QtObject {
     readonly property string readerFavoritesIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-favorits.svg"
     readonly property string readerDeletePageIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-delete.svg"
     readonly property string readerCopyIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-copy.svg"
+    readonly property string readerMagnifierCursorShadowIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-magnifier-shadow.svg"
     readonly property string readerOnePageIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-one-page.svg"
     readonly property string readerTwoPageIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-two-page.svg"
     readonly property string readerFullScreenIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-full-screen.svg"

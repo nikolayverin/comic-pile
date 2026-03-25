@@ -251,6 +251,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-reader-delete.svg
         assets/icons/icon-reader-favorits.svg
         assets/icons/icon-reader-copy.svg
+        assets/icons/icon-reader-magnifier-shadow.svg
         assets/icons/icon-reader-one-page.svg
         assets/icons/icon-reader-two-page.svg
         assets/icons/icon-reader-full-screen.svg

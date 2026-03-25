@@ -749,7 +749,7 @@ Popup {
     }
 
     Overlay.modal: Rectangle {
-        color: "transparent"
+        color: popupStyle.overlayColor
     }
 
     background: Rectangle {
@@ -1222,6 +1222,19 @@ Popup {
                     root.magnifierCursorVisible = false
                     root.hideMagnifierOverlay()
                 }
+            }
+
+            Image {
+                id: magnifierCursorShadowIcon
+                visible: root.magnifierModeEnabled && root.magnifierCursorVisible
+                x: Math.round(root.magnifierCursorX - width * 0.24)
+                y: Math.round(root.magnifierCursorY - height * 0.2) + 1
+                width: root.magnifierCursorSize
+                height: root.magnifierCursorSize
+                z: 5
+                source: uiTokens.readerMagnifierCursorShadowIcon
+                fillMode: Image.PreserveAspectFit
+                smooth: true
             }
 
             Image {

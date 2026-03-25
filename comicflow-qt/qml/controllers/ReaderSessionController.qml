@@ -78,14 +78,18 @@ Item {
             ? Boolean(readerCoverControllerRef.canGoPreviousDisplayPage())
             : false
         if (hasPreviousPageInIssue) return true
-        return issueIndexInSeries > 0
+        return readerCoverControllerRef && typeof readerCoverControllerRef.canCrossReaderIssueBoundary === "function"
+            ? Boolean(readerCoverControllerRef.canCrossReaderIssueBoundary(-1))
+            : (issueIndexInSeries > 0)
     }
     readonly property bool canGoNextPage: {
         const hasNextPageInIssue = readerCoverControllerRef && typeof readerCoverControllerRef.canGoNextDisplayPage === "function"
             ? Boolean(readerCoverControllerRef.canGoNextDisplayPage())
             : false
         if (hasNextPageInIssue) return true
-        return issueIndexInSeries >= 0 && issueIndexInSeries + 1 < issueCountInSeries
+        return readerCoverControllerRef && typeof readerCoverControllerRef.canCrossReaderIssueBoundary === "function"
+            ? Boolean(readerCoverControllerRef.canCrossReaderIssueBoundary(1))
+            : (issueIndexInSeries >= 0 && issueIndexInSeries + 1 < issueCountInSeries)
     }
 
     function openReader(comicId, title) {

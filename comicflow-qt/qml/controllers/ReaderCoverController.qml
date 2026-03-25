@@ -99,6 +99,21 @@ Item {
         root.readerUiFullscreen = Boolean(enabled)
     }
 
+    function readerPageEdgeBehaviorValue() {
+        return appSettingsRef
+            ? String(appSettingsRef.readerPageEdgeBehavior || "Stop at boundary")
+            : "Stop at boundary"
+    }
+
+    function shouldContinueReaderAtBoundary() {
+        return readerPageEdgeBehaviorValue() === "Continue"
+    }
+
+    function canCrossReaderIssueBoundary(offset) {
+        if (!shouldContinueReaderAtBoundary()) return false
+        return canNavigateReaderIssue(offset)
+    }
+
     function handleReaderDialogClosed() {
         finalizeReaderSession(true)
     }
@@ -753,6 +768,7 @@ Item {
     function nextReaderPage() {
         const targetAnchor = readerDisplayModeController.targetAnchorForDisplayOffset(1)
         if (targetAnchor < 0) {
+            if (!shouldContinueReaderAtBoundary()) return
             advanceToNextReaderIssueFromPageFlow()
             return
         }
@@ -762,6 +778,7 @@ Item {
     function previousReaderPage() {
         const targetAnchor = readerDisplayModeController.targetAnchorForDisplayOffset(-1)
         if (targetAnchor < 0) {
+            if (!shouldContinueReaderAtBoundary()) return
             retreatToPreviousReaderIssueFromPageFlow()
             return
         }
