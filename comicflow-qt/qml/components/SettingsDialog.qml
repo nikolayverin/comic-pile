@@ -1022,7 +1022,7 @@ PopupDialogWindow {
                     y: appearanceContent.optionsTop + dialog.optionRowPitch
                     width: parent.width
                     height: dialog.optionRowPitch
-                    visible: false
+                    visible: true
 
                     Text {
                         x: 0
@@ -1050,7 +1050,7 @@ PopupDialogWindow {
                     y: appearanceContent.optionsTop + (dialog.optionRowPitch * 2)
                     width: parent.width
                     height: dialog.optionRowPitch
-                    visible: false
+                    visible: true
 
                     Text {
                         x: 0
