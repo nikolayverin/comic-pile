@@ -223,6 +223,7 @@ Item {
         rootRef.editingSeriesKey = ""
         rootRef.editingSeriesKeys = []
         rootRef.editingSeriesTitle = ""
+        rootRef.editingSeriesDialogMode = "single"
     }
 
     function closeSeriesMetadataDialog() {

@@ -220,6 +220,7 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         dangerColor: root.dangerColor
+        dialogMode: root.editingSeriesDialogMode
         previewErrorText: ""
         monthOptions: root.seriesMetaMonthOptions
         ageRatingOptions: root.seriesMetaAgeRatingOptions

@@ -164,6 +164,7 @@ ApplicationWindow {
     property string editingSeriesKey: ""
     property var editingSeriesKeys: []
     property string editingSeriesTitle: ""
+    property string editingSeriesDialogMode: "single"
     property var pendingSeriesMetadataSuggestion: ({})
     property var pendingIssueMetadataSuggestion: ({})
     readonly property var importModalOverlay: mainDialogHost.importModalOverlayRef
@@ -1956,7 +1957,7 @@ ApplicationWindow {
         return ""
     }
 
-    function openSeriesMetadataDialog(seriesKey, seriesTitle, focusField) {
+    function openSeriesMetadataDialog(seriesKey, seriesTitle, focusField, mode) {
         const key = String(seriesKey || selectedSeriesKey || "").trim()
         if (key.length < 1) {
             popupController.showActionResult("Select a series first.", true)
@@ -1968,8 +1969,13 @@ ApplicationWindow {
         })
         const multiSelected = selectedKeys.length > 1 && selectedKeys.indexOf(key) >= 0
         const targetKeys = multiSelected ? selectedKeys : [key]
+        const requestedMode = String(mode || "").trim().toLowerCase()
+        const effectiveMode = multiSelected
+            ? (requestedMode === "merge" ? "merge" : "bulk")
+            : "single"
         editingSeriesKey = key
         editingSeriesKeys = targetKeys
+        editingSeriesDialogMode = effectiveMode
         if (multiSelected) {
             editingSeriesTitle = String(targetKeys.length) + " series selected"
         } else {
@@ -2070,6 +2076,7 @@ ApplicationWindow {
         if (seriesMetaPublisherField.text === "-") seriesMetaPublisherField.text = ""
         startupController.startupLog(
             "seriesDialog open key=" + key
+            + " mode=" + effectiveMode
             + " multi=" + String(multiSelected)
             + " targetKeys=" + String(targetKeys.length)
             + " rows=" + String(rowCount)
@@ -2088,13 +2095,17 @@ ApplicationWindow {
         popupController.openExclusivePopup(seriesMetaDialog)
     }
 
+    function openSeriesMergeDialog(seriesKey, seriesTitle) {
+        openSeriesMetadataDialog(seriesKey, seriesTitle, "series", "merge")
+    }
+
     function buildSeriesMetadataSuggestion() {
         const currentKey = String(editingSeriesKey || "").trim()
         if (currentKey.length < 1) return null
         if (Array.isArray(editingSeriesKeys) && editingSeriesKeys.length > 1) return null
 
-        const volumeValue = String(seriesMetaVolumeField.text || "").trim()
         const seriesRawValue = String(seriesMetaSeriesField.text || "").trim()
+        const volumeValue = String(seriesMetaVolumeField.text || "").trim()
         const seriesValue = normalizeSeriesNameForSave(seriesRawValue, volumeValue)
         const suggestion = libraryModel.seriesMetadataSuggestion({
             series: seriesValue,
@@ -2220,7 +2231,10 @@ ApplicationWindow {
         }
 
         const key = normalizedKeys[0]
-        const multiMode = normalizedKeys.length > 1
+        const multiSelection = normalizedKeys.length > 1
+        const editMode = String(editingSeriesDialogMode || "").trim().toLowerCase()
+        const mergeMode = editMode === "merge" && multiSelection
+        const bulkMode = editMode === "bulk" && multiSelection
         const ids = []
         const leadIssueByKey = ({})
         for (let k = 0; k < normalizedKeys.length; k += 1) {
@@ -2250,9 +2264,11 @@ ApplicationWindow {
             dedupIds.push(id)
         }
 
-        const volumeValue = String(seriesMetaVolumeField.text || "").trim()
         const seriesRawValue = String(seriesMetaSeriesField.text || "").trim()
-        const seriesValue = normalizeSeriesNameForSave(seriesRawValue, volumeValue)
+        const volumeValue = String(seriesMetaVolumeField.text || "").trim()
+        const seriesValue = mergeMode
+            ? String(seriesRawValue || "").trim()
+            : normalizeSeriesNameForSave(seriesRawValue, volumeValue)
         const seriesTitleValue = String(seriesMetaTitleField.text || "").trim()
         const summaryValue = String(seriesMetaSummaryField.text || "").trim()
         const yearValue = String(seriesMetaYearField.text || "").trim()
@@ -2265,7 +2281,8 @@ ApplicationWindow {
             "seriesDialog save key=" + key
             + " keys=" + String(normalizedKeys.length)
             + " ids=" + String(dedupIds.length)
-            + " multi=" + String(multiMode)
+            + " mode=" + editMode
+            + " multi=" + String(multiSelection)
             + " series=\"" + seriesValue + "\""
             + " seriesTitle=\"" + seriesTitleValue + "\""
             + " volume=\"" + volumeValue + "\""
@@ -2279,18 +2296,17 @@ ApplicationWindow {
 
         const values = {}
         const applyMap = {}
-        if (multiMode) {
-            if (seriesRawValue.length > 0) {
-                values.series = seriesValue
-                applyMap.series = true
+        if (mergeMode) {
+            if (seriesValue.length < 1) {
+                seriesMetaDialog.errorText = "Enter a series name to merge into."
+                return false
             }
+            values.series = seriesValue
+            applyMap.series = true
+        } else if (bulkMode) {
             if (monthValue.length > 0) {
                 values.month = monthValue
                 applyMap.month = true
-            }
-            if (volumeValue.length > 0) {
-                values.volume = volumeValue
-                applyMap.volume = true
             }
             if (publisherValue.length > 0) {
                 values.publisher = publisherValue
@@ -2329,7 +2345,7 @@ ApplicationWindow {
             return false
         }
 
-        if (!multiMode) {
+        if (!multiSelection) {
             const verifyId = Number(dedupIds[0] || 0)
             const verify = libraryModel.loadComicMetadata(verifyId)
             if (verify && verify.error) {
@@ -2422,9 +2438,44 @@ ApplicationWindow {
             return true
         }
 
-        if (summaryValue.length > 0
+        if (mergeMode) {
+            const primaryLeadId = Number(leadIssueByKey[key] || 0)
+            const primaryTargetSeriesKey = primaryLeadId > 0
+                ? String(findSeriesKeyForIssueId(primaryLeadId, key) || key).trim()
+                : key
+            const primarySourceMetadata = libraryModel.seriesMetadataForKey(key) || {}
+            if (primaryTargetSeriesKey !== key) {
+                const preserveHeaderError = heroSeriesController.preserveHeaderOverridesIfNeeded(
+                    primaryTargetSeriesKey,
+                    primarySourceMetadata
+                )
+                if (preserveHeaderError.length > 0) {
+                    seriesMetaDialog.errorText = preserveHeaderError
+                    return false
+                }
+                const primarySeriesMetaSaveResult = libraryModel.setSeriesMetadataForKey(primaryTargetSeriesKey, {
+                    seriesTitle: String(primarySourceMetadata.seriesTitle || "").trim(),
+                    summary: String(primarySourceMetadata.summary || "").trim(),
+                    year: String(primarySourceMetadata.year || "").trim(),
+                    month: String(primarySourceMetadata.month || "").trim(),
+                    genres: String(primarySourceMetadata.genres || "").trim(),
+                    volume: String(primarySourceMetadata.volume || "").trim(),
+                    publisher: String(primarySourceMetadata.publisher || "").trim(),
+                    ageRating: String(primarySourceMetadata.ageRating || "").trim()
+                })
+                if (primarySeriesMetaSaveResult.length > 0) {
+                    startupController.startupLog("seriesDialog merge metadata save error: " + primarySeriesMetaSaveResult)
+                    seriesMetaDialog.errorText = primarySeriesMetaSaveResult
+                    return false
+                }
+            }
+            for (let i = 0; i < normalizedKeys.length; i += 1) {
+                const sourceKey = normalizedKeys[i]
+                if (sourceKey === primaryTargetSeriesKey) continue
+                libraryModel.removeSeriesMetadataForKey(sourceKey)
+            }
+        } else if (summaryValue.length > 0
                 || seriesTitleValue.length > 0
-                || applyMap.series === true
                 || yearValue.length > 0
                 || genresValue.length > 0) {
             for (let i = 0; i < normalizedKeys.length; i += 1) {
@@ -2463,7 +2514,7 @@ ApplicationWindow {
                 if (nextSeriesYear.length > 0) seriesMetaValues.year = nextSeriesYear
                 if (nextSeriesMonth.length > 0) seriesMetaValues.month = nextSeriesMonth
                 if (nextSeriesGenres.length > 0) seriesMetaValues.genres = nextSeriesGenres
-                if (nextSeriesVolume.length > 0) seriesMetaValues.volume = nextSeriesVolume
+                if (!bulkMode && nextSeriesVolume.length > 0) seriesMetaValues.volume = nextSeriesVolume
                 if (nextSeriesPublisher.length > 0) seriesMetaValues.publisher = nextSeriesPublisher
                 if (nextSeriesAgeRating.length > 0) seriesMetaValues.ageRating = nextSeriesAgeRating
                 const seriesMetaSaveResult = libraryModel.setSeriesMetadataForKey(targetSeriesKey, seriesMetaValues)
@@ -2482,12 +2533,13 @@ ApplicationWindow {
                 }
             }
         }
-        startupController.startupLog("seriesDialog bulk save success keys=" + String(normalizedKeys.length))
+        startupController.startupLog("seriesDialog bulk save success mode=" + editMode + " keys=" + String(normalizedKeys.length))
 
         seriesMetaDialog.errorText = ""
         editingSeriesKey = ""
         editingSeriesKeys = []
         editingSeriesTitle = ""
+        editingSeriesDialogMode = "single"
         scheduleModelReconcile(true)
         startupController.requestSnapshotSave()
         return true

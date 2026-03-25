@@ -273,6 +273,9 @@ Rectangle {
                 menuBulkEditMode: rootObject
                     ? rootObject.selectedSeriesCount() > 1 && rootObject.isSeriesSelected(seriesKey)
                     : false
+                menuMergeMode: rootObject
+                    ? rootObject.selectedSeriesCount() > 1 && rootObject.isSeriesSelected(seriesKey)
+                    : false
                 menuDeleteLabel: (rootObject
                     && rootObject.selectedSeriesCount() > 1
                     && rootObject.isSeriesSelected(seriesKey))
@@ -303,7 +306,15 @@ Rectangle {
                 onDismissMenusRequested: if (rootObject) rootObject.seriesMenuDismissToken += 1
                 onAddFilesRequested: if (rootObject) rootObject.quickAddFilesFromDialog()
                 onAddIssueRequested: if (rootObject) rootObject.quickAddFilesForSeries(seriesName)
-                onEditSeriesRequested: if (rootObject) rootObject.openSeriesMetadataDialog(seriesKey, seriesName)
+                onEditSeriesRequested: if (rootObject) rootObject.openSeriesMetadataDialog(
+                    seriesKey,
+                    seriesName,
+                    "",
+                    rootObject.selectedSeriesCount() > 1 && rootObject.isSeriesSelected(seriesKey)
+                        ? "bulk"
+                        : "single"
+                )
+                onMergeSeriesRequested: if (rootObject) rootObject.openSeriesMergeDialog(seriesKey, seriesName)
                 onShowFolderRequested: if (rootObject) rootObject.openSeriesFolder(seriesKey, seriesName)
                 onClearSelectionRequested: if (rootObject) rootObject.clearSelection()
                 onRefreshRequested: if (libraryModelRef) libraryModelRef.reload()

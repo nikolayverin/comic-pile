@@ -20,6 +20,7 @@ Popup {
     property real hostWidth: 0
     property real hostHeight: 0
     property color dangerColor: themeColors.dangerColor
+    property string dialogMode: "single"
     property var yearOptions: []
     property var monthOptions: []
     property var ageRatingOptions: []
@@ -48,6 +49,9 @@ Popup {
     property string errorText: ""
     property string previewErrorText: ""
     property string pendingFocusField: ""
+    readonly property bool bulkMode: dialogMode === "bulk"
+    readonly property bool mergeMode: dialogMode === "merge"
+    readonly property bool volumeEditable: !bulkMode && !mergeMode
     readonly property string inlineErrorText: errorText.length > 0 ? errorText : previewErrorText
     readonly property bool dropdownPopupVisible: seriesMetaGenresField.popupVisible
         || seriesMetaPublisherField.popupVisible
@@ -215,6 +219,18 @@ Popup {
         effectiveGenreOptions = buildGenreOptions(genreText)
     }
 
+    function labelColor(active) {
+        return active ? popupStyle.textColor : popupStyle.subtleTextColor
+    }
+
+    function fieldTextColor(active) {
+        return active ? popupStyle.textColor : popupStyle.subtleTextColor
+    }
+
+    function fieldOpacity(active) {
+        return active ? 1.0 : 0.58
+    }
+
     function focusTextInput(control) {
         if (!control || typeof control.forceActiveFocus !== "function") return
         control.forceActiveFocus()
@@ -268,7 +284,9 @@ Popup {
     contentItem: PopupDialogShell {
         id: shell
         popupStyle: popupStyle
-        title: "Series Metadata"
+        title: seriesMetaDialog.mergeMode
+            ? "Merge into series"
+            : (seriesMetaDialog.bulkMode ? "Bulk Edit" : "Series Metadata")
         onCloseRequested: seriesMetaDialog.cancelRequested()
 
         PopupContentGeometry {
@@ -315,7 +333,7 @@ Popup {
             x: shell.generalX + shell.labelInsetX
             y: shell.ySeriesLabel
             text: "Series"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.bulkMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -323,6 +341,8 @@ Popup {
             x: shell.generalX + popupStyle.leftFieldWidth - popupStyle.copyIconRightInset - width
             y: shell.ySeriesLabel + popupStyle.copyIconTopOffset
             popupStyle: popupStyle
+            enabled: !seriesMetaDialog.bulkMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.bulkMode)
             onClicked: seriesMetaDialog.copyControlText(seriesMetaSeriesField)
         }
 
@@ -335,12 +355,14 @@ Popup {
             leftPadding: shell.fieldPadX
             rightPadding: shell.fieldPadX
             font.pixelSize: popupStyle.dialogBodyFontSize
-            color: popupStyle.textColor
+            color: seriesMetaDialog.fieldTextColor(!seriesMetaDialog.bulkMode)
             verticalAlignment: TextInput.AlignVCenter
             placeholderText: ""
             clip: true
             cornerRadius: shell.fieldRadius
             fillColor: popupStyle.fieldFillColor
+            enabled: !seriesMetaDialog.bulkMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.bulkMode)
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeTextControl(seriesMetaSeriesField, "preserveCase")
         }
 
@@ -348,7 +370,7 @@ Popup {
             x: shell.rightColX + shell.labelInsetX
             y: shell.ySeriesLabel
             text: "Volume"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(seriesMetaDialog.volumeEditable)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -361,12 +383,14 @@ Popup {
             leftPadding: shell.fieldPadX
             rightPadding: shell.fieldPadX
             font.pixelSize: popupStyle.dialogBodyFontSize
-            color: popupStyle.textColor
+            color: seriesMetaDialog.fieldTextColor(seriesMetaDialog.volumeEditable)
             verticalAlignment: TextInput.AlignVCenter
             placeholderText: ""
             clip: true
             cornerRadius: shell.fieldRadius
             fillColor: popupStyle.fieldFillColor
+            enabled: seriesMetaDialog.volumeEditable
+            opacity: seriesMetaDialog.fieldOpacity(seriesMetaDialog.volumeEditable)
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeTextControl(seriesMetaVolumeField, "preserveCase")
         }
 
@@ -374,7 +398,7 @@ Popup {
             x: shell.rightCol2X + shell.labelInsetX
             y: shell.ySeriesLabel
             text: "Genres"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -389,6 +413,8 @@ Popup {
             indicatorHitBoxSize: 24
             model: seriesMetaDialog.effectiveGenreOptions
             popupMaxBodyHeight: Math.max(popupMinBodyHeight, popupRowHeight * seriesMetaDialog.effectiveGenreOptions.length)
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onTextChanged: seriesMetaDialog.errorText = ""
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeGenreComboValue()
             onAccepted: seriesMetaDialog.normalizeGenreComboValue()
@@ -398,7 +424,7 @@ Popup {
             x: shell.rightCol3X + shell.labelInsetX
             y: shell.ySeriesLabel
             text: "Publisher"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -406,6 +432,8 @@ Popup {
             x: shell.rightCol3X + popupStyle.rightFieldWidth - popupStyle.copyIconRightInset - width
             y: shell.ySeriesLabel + popupStyle.copyIconTopOffset
             popupStyle: popupStyle
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onClicked: seriesMetaDialog.copyControlText(seriesMetaPublisherField)
         }
 
@@ -419,6 +447,8 @@ Popup {
             fieldFontPixelSize: popupStyle.dialogBodyFontSize
             indicatorHitBoxSize: 24
             model: seriesMetaDialog.effectivePublisherOptions
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onTextChanged: seriesMetaDialog.errorText = ""
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizePublisherComboValue()
             onAccepted: seriesMetaDialog.normalizePublisherComboValue()
@@ -428,7 +458,7 @@ Popup {
             x: shell.generalX + shell.labelInsetX
             y: shell.yTitleLabel
             text: "Series title"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -436,6 +466,8 @@ Popup {
             x: shell.generalX + popupStyle.leftFieldWidth - popupStyle.copyIconRightInset - width
             y: shell.yTitleLabel + popupStyle.copyIconTopOffset
             popupStyle: popupStyle
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onClicked: seriesMetaDialog.copyControlText(seriesMetaTitleField)
         }
 
@@ -448,12 +480,14 @@ Popup {
             leftPadding: shell.fieldPadX
             rightPadding: shell.fieldPadX
             font.pixelSize: popupStyle.dialogBodyFontSize
-            color: popupStyle.textColor
+            color: seriesMetaDialog.fieldTextColor(!seriesMetaDialog.mergeMode)
             verticalAlignment: TextInput.AlignVCenter
             placeholderText: ""
             clip: true
             cornerRadius: shell.fieldRadius
             fillColor: popupStyle.fieldFillColor
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeTextControl(seriesMetaTitleField, "preserveCase")
         }
 
@@ -461,7 +495,7 @@ Popup {
             x: shell.rightColX + shell.labelInsetX
             y: shell.yTitleLabel
             text: "Year"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -478,6 +512,8 @@ Popup {
             inputMethodHints: Qt.ImhDigitsOnly
             validator: IntValidator { bottom: 0; top: 9999 }
             maximumLength: 4
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onTextChanged: seriesMetaDialog.errorText = ""
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeYearField()
             onAccepted: seriesMetaDialog.normalizeYearField()
@@ -487,7 +523,7 @@ Popup {
             x: shell.rightCol2X + shell.labelInsetX
             y: shell.yTitleLabel
             text: "Month"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -502,6 +538,8 @@ Popup {
             indicatorHitBoxSize: 24
             model: seriesMetaDialog.monthOptions
             popupMaxBodyHeight: Math.max(popupMinBodyHeight, popupRowHeight * seriesMetaDialog.monthOptions.length)
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onTextChanged: seriesMetaDialog.errorText = ""
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeMonthComboValue()
             onAccepted: seriesMetaDialog.normalizeMonthComboValue()
@@ -511,7 +549,7 @@ Popup {
             x: shell.rightCol3X + shell.labelInsetX
             y: shell.yTitleLabel
             text: "Age rating"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -525,6 +563,8 @@ Popup {
             fieldFontPixelSize: popupStyle.dialogBodyFontSize
             indicatorHitBoxSize: 24
             model: seriesMetaDialog.effectiveAgeRatingOptions
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onTextChanged: seriesMetaDialog.errorText = ""
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeAgeRatingComboValue()
             onAccepted: seriesMetaDialog.normalizeAgeRatingComboValue()
@@ -534,7 +574,7 @@ Popup {
             x: shell.generalX + shell.labelInsetX
             y: shell.ySummaryLabel
             text: "Summary"
-            color: popupStyle.textColor
+            color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
 
@@ -542,6 +582,8 @@ Popup {
             x: shell.generalX + shell.summaryWidth - popupStyle.copyIconRightInset - width
             y: shell.ySummaryLabel + popupStyle.copyIconTopOffset
             popupStyle: popupStyle
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onClicked: seriesMetaDialog.copyControlText(seriesMetaSummaryField)
         }
 
@@ -556,12 +598,14 @@ Popup {
             topPadding: shell.areaPadY
             bottomPadding: shell.areaPadY
             font.pixelSize: popupStyle.dialogBodyFontSize
-            color: popupStyle.textColor
+            color: seriesMetaDialog.fieldTextColor(!seriesMetaDialog.mergeMode)
             wrapMode: TextEdit.Wrap
             placeholderText: ""
             clip: true
             cornerRadius: shell.fieldRadius
             fillColor: popupStyle.fieldFillColor
+            enabled: !seriesMetaDialog.mergeMode
+            opacity: seriesMetaDialog.fieldOpacity(!seriesMetaDialog.mergeMode)
             onActiveFocusChanged: if (!activeFocus) seriesMetaDialog.normalizeTextControl(seriesMetaSummaryField, "sentence")
         }
 
@@ -606,7 +650,7 @@ Popup {
                 hoverColor: popupStyle.footerButtonHoverColor
                 textColor: popupStyle.textColor
                 textPixelSize: popupStyle.footerButtonTextSize
-                text: "Save"
+                text: seriesMetaDialog.mergeMode ? "Merge" : "Save"
                 onClicked: seriesMetaDialog.saveRequested()
             }
 

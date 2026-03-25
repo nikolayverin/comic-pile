@@ -20,6 +20,7 @@ Item {
     property bool importInProgress: false
     property bool menuDeleteOnly: false
     property bool menuBulkEditMode: false
+    property bool menuMergeMode: false
     property string menuDeleteLabel: "Delete files"
     property string menuShowFolderLabel: "Show folder"
     readonly property string menuEditLabel: menuBulkEditMode ? "Bulk Edit" : "Edit Series"
@@ -41,6 +42,7 @@ Item {
     signal clearSelectionRequested()
     signal refreshRequested()
     signal deleteSeriesRequested()
+    signal mergeSeriesRequested()
     signal dismissMenusRequested()
 
     width: sidebarWidth
@@ -65,6 +67,12 @@ Item {
             items.push({
                 text: menuEditLabel,
                 action: "editSeries"
+            })
+        }
+        if (menuMergeMode) {
+            items.push({
+                text: "Merge into series",
+                action: "mergeSeries"
             })
         }
         if (!menuDeleteOnly) {
@@ -194,6 +202,10 @@ Item {
                 }
                 if (action === "editSeries") {
                     root.editSeriesRequested()
+                    return
+                }
+                if (action === "mergeSeries") {
+                    root.mergeSeriesRequested()
                     return
                 }
                 if (action === "showFolder") {
