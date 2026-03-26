@@ -286,6 +286,7 @@ Item {
         onOpenLibraryFolderRequested: root.openExactFolderPath(String(root.libraryFolderPath || ""))
         onOpenLibraryRuntimeFolderRequested: root.openExactFolderPath(String(root.libraryRuntimeFolderPath || ""))
         onReloadLibraryRequested: root.reloadLibraryFromSettings()
+        onResetSettingsRequested: root.resetSettingsToDefaults()
     }
 
     SeriesHeaderDialog {

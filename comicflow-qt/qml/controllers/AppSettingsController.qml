@@ -368,6 +368,19 @@ Item {
         }
     }
 
+    function applySettingsSnapshot(snapshot) {
+        const values = snapshot || ({})
+        const keys = Object.keys(values)
+        for (let i = 0; i < keys.length; i += 1) {
+            const key = String(keys[i] || "")
+            setSettingValue(key, values[key])
+        }
+    }
+
+    function resetAllSettingsToDefaults() {
+        applySettingsSnapshot(SettingsCatalog.defaultSettingsSnapshot())
+    }
+
     Settings {
         id: settingsStore
         category: "AppSettings"

@@ -20,6 +20,7 @@ PopupDialogWindow {
     property string sevenZipVerifyInlineMessage: ""
     property bool sevenZipVerifyPendingSuccess: false
     property string sevenZipVerifyPendingMessage: ""
+    property string resetSettingsState: "idle"
     property string supportedArchiveFormatsSummary: "CBZ / ZIP / CBR / RAR / 7Z / CB7 / CBT / TAR"
     property string supportedImageFormatsSummary: "JPG / JPEG / PNG / BMP / WEBP"
     property string supportedDocumentFormatsSummary: "PDF / DJVU"
@@ -94,6 +95,7 @@ PopupDialogWindow {
     signal openLibraryFolderRequested()
     signal openLibraryRuntimeFolderRequested()
     signal reloadLibraryRequested()
+    signal resetSettingsRequested()
 
     function conciseSevenZipVerifyMessage() {
         const rawText = String(dialog.sevenZipStatusMessage || "").trim()
@@ -228,6 +230,23 @@ PopupDialogWindow {
         interval: 1400
         repeat: false
         onTriggered: dialog.sevenZipVerifyState = "idle"
+    }
+
+    Timer {
+        id: resetSettingsFinalizeTimer
+        interval: 260
+        repeat: false
+        onTriggered: {
+            dialog.resetSettingsState = "success"
+            resetSettingsResetTimer.restart()
+        }
+    }
+
+    Timer {
+        id: resetSettingsResetTimer
+        interval: 1400
+        repeat: false
+        onTriggered: dialog.resetSettingsState = "idle"
     }
 
     Item {
@@ -460,6 +479,106 @@ PopupDialogWindow {
                             }
                         }
                     }
+                }
+            }
+
+            Item {
+                id: generalResetBlock
+                visible: dialog.selectedSection === "general"
+                x: 0
+                y: optionListColumn.y + optionListColumn.height + 8
+                width: parent.width
+                height: 54
+
+                Rectangle {
+                    x: 0
+                    y: 0
+                    width: parent.width - dialog.optionControlRightMargin
+                    height: 1
+                    color: styleTokens.sectionBorderColor
+                    opacity: 0.55
+                }
+
+                PopupActionButton {
+                    id: resetSettingsButton
+                    anchors.right: parent.right
+                    anchors.rightMargin: dialog.optionControlRightMargin
+                    y: 14
+                    text: "Reset"
+                    textPixelSize: 13
+                    cornerRadius: Math.round(height / 2)
+                    minimumWidth: 92
+                    enabled: dialog.resetSettingsState === "idle"
+                    idleColor: styleTokens.footerButtonIdleColor
+                    hoverColor: styleTokens.footerButtonHoverColor
+                    textColor: dialog.resetSettingsState === "idle"
+                        ? styleTokens.textColor
+                        : styleTokens.subtleTextColor
+                    hoverEdgeColor: dialog.actionHoverEdgeColor
+                    pressedEffectEnabled: true
+                    pressedColor: dialog.actionPressedColor
+                    pressedEdgeColor: dialog.actionPressedEdgeColor
+                    onClicked: {
+                        resetSettingsFinalizeTimer.stop()
+                        resetSettingsResetTimer.stop()
+                        dialog.resetSettingsState = "running"
+                        dialog.resetSettingsRequested()
+                        resetSettingsFinalizeTimer.restart()
+                    }
+                }
+
+                Item {
+                    id: resetSettingsStatusIndicator
+                    anchors.right: resetSettingsButton.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: resetSettingsButton.verticalCenter
+                    width: visible ? 24 : 0
+                    height: 24
+                    visible: dialog.resetSettingsState !== "idle"
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: styleTokens.footerButtonIdleColor
+                    }
+
+                    ShuffleBusySpinner {
+                        anchors.centerIn: parent
+                        width: 14
+                        height: 14
+                        running: dialog.resetSettingsState === "running"
+                        visible: running
+                    }
+
+                    Canvas {
+                        anchors.centerIn: parent
+                        width: 14
+                        height: 14
+                        visible: dialog.resetSettingsState === "success"
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            ctx.clearRect(0, 0, width, height)
+                            ctx.beginPath()
+                            ctx.lineCap = "round"
+                            ctx.lineJoin = "round"
+                            ctx.lineWidth = 2.6
+                            ctx.strokeStyle = themeColors.popupSuccessColor
+                            ctx.moveTo(width * 0.18, height * 0.56)
+                            ctx.lineTo(width * 0.42, height * 0.8)
+                            ctx.lineTo(width * 0.84, height * 0.2)
+                            ctx.stroke()
+                        }
+                    }
+                }
+
+                Text {
+                    x: 0
+                    y: resetSettingsButton.y + Math.round((resetSettingsButton.height - implicitHeight) / 2)
+                    text: "Reset settings to default"
+                    color: styleTokens.textColor
+                    font.family: Qt.application.font.family
+                    font.pixelSize: dialog.optionTextSize
                 }
             }
 

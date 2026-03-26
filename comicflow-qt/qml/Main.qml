@@ -1035,6 +1035,14 @@ ApplicationWindow {
         refreshCbrSupportState()
     }
 
+    function resetSettingsToDefaults() {
+        if (appSettingsController && typeof appSettingsController.resetAllSettingsToDefaults === "function") {
+            appSettingsController.resetAllSettingsToDefaults()
+        }
+        refreshCbrSupportState()
+        startupController.requestSnapshotSave()
+    }
+
     function chooseLibraryBackgroundImageFromSettings() {
         const currentPath = String(
             appSettingsController.settingValue("appearance_library_background_custom_image_path", "") || ""
