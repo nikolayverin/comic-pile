@@ -15,6 +15,10 @@
 #include <QSqlQuery>
 #include <QUuid>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 namespace {
 
 qint64 launchStartedAtMsFromEnv()
@@ -58,6 +62,28 @@ bool writeTextFileAtomically(
     return file.commit();
 }
 
+#ifdef Q_OS_WIN
+void ensureHiddenDirectoryOnWindows(const QString &path)
+{
+    const QFileInfo info(path);
+    if (!info.exists() || !info.isDir()) {
+        return;
+    }
+
+    const std::wstring nativePath = QDir::toNativeSeparators(info.absoluteFilePath()).toStdWString();
+    const DWORD currentAttributes = GetFileAttributesW(nativePath.c_str());
+    if (currentAttributes == INVALID_FILE_ATTRIBUTES) {
+        return;
+    }
+
+    if ((currentAttributes & FILE_ATTRIBUTE_HIDDEN) != 0) {
+        return;
+    }
+
+    SetFileAttributesW(nativePath.c_str(), currentAttributes | FILE_ATTRIBUTE_HIDDEN);
+}
+#endif
+
 } // namespace
 
 namespace ComicStartupRuntime {
@@ -97,6 +123,9 @@ QString startupRuntimeDirPath(const QString &dataRoot)
 {
     const QString runtimeDirPath = QDir(dataRoot).filePath(QStringLiteral(".runtime"));
     QDir().mkpath(runtimeDirPath);
+#ifdef Q_OS_WIN
+    ensureHiddenDirectoryOnWindows(runtimeDirPath);
+#endif
     return runtimeDirPath;
 }
 
