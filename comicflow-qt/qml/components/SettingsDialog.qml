@@ -62,6 +62,7 @@ PopupDialogWindow {
     readonly property int appearancePreviewCardGap: 10
     readonly property int appearancePreviewCardHeight: 82
     readonly property int appearanceContextGap: 12
+    readonly property int appearanceOptionsGap: 12
     readonly property var appearanceBackgroundSourceOptions: SettingsCatalog.appearanceBackgroundSourceOptions
     readonly property var appearanceSolidColorOptions: SettingsCatalog.appearanceSolidColorOptions
     readonly property var appearanceTextureOptions: SettingsCatalog.appearanceTextureOptions
@@ -76,7 +77,7 @@ PopupDialogWindow {
     title: ""
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: 820
-    height: 360
+    height: 340
 
     onOpened: {
         const requested = String(requestedSection || "").trim()
@@ -519,7 +520,7 @@ PopupDialogWindow {
                     const maxCenter = 543
                     return Math.max(minCenter, Math.min(maxCenter, center))
                 }
-                readonly property int optionsTop: backgroundSourceCards.y + backgroundSourceCards.height + 14
+                readonly property int optionsTop: contextPanel.y + contextPanel.height + dialog.appearanceOptionsGap
 
                 Text {
                     id: libraryBackgroundLabel
@@ -1019,7 +1020,7 @@ PopupDialogWindow {
 
                 Item {
                     x: 0
-                    y: appearanceContent.optionsTop + dialog.optionRowPitch
+                    y: appearanceContent.optionsTop
                     width: parent.width
                     height: dialog.optionRowPitch
                     visible: true
@@ -1047,7 +1048,7 @@ PopupDialogWindow {
 
                 Item {
                     x: 0
-                    y: appearanceContent.optionsTop + (dialog.optionRowPitch * 2)
+                    y: appearanceContent.optionsTop + dialog.optionRowPitch
                     width: parent.width
                     height: dialog.optionRowPitch
                     visible: true
@@ -1068,6 +1069,33 @@ PopupDialogWindow {
                         checked: Boolean(dialog.settingValue("appearance_show_hero_block", true))
                         onToggled: function(checked) {
                             dialog.setSettingValue("appearance_show_hero_block", checked)
+                        }
+                    }
+                }
+
+                Item {
+                    x: 0
+                    y: appearanceContent.optionsTop + (dialog.optionRowPitch * 2)
+                    width: parent.width
+                    height: dialog.optionRowPitch
+                    visible: true
+
+                    Text {
+                        x: 0
+                        y: Math.round((parent.height - implicitHeight) / 2)
+                        text: "Show bookmark ribbon on grid covers"
+                        color: styleTokens.textColor
+                        font.family: Qt.application.font.family
+                        font.pixelSize: dialog.optionTextSize
+                    }
+
+                    SettingsSwitch {
+                        anchors.right: parent.right
+                        anchors.rightMargin: dialog.optionControlRightMargin
+                        anchors.verticalCenter: parent.verticalCenter
+                        checked: Boolean(dialog.settingValue("reader_show_bookmark_ribbon_on_grid_covers", false))
+                        onToggled: function(checked) {
+                            dialog.setSettingValue("reader_show_bookmark_ribbon_on_grid_covers", checked)
                         }
                     }
                 }
@@ -1257,7 +1285,7 @@ PopupDialogWindow {
                 }
 
                 Text {
-                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 12
+                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
                     text: "Supported archive formats:"
@@ -1267,7 +1295,7 @@ PopupDialogWindow {
                 }
 
                 Text {
-                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 12
+                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16
                     x: dialog.importFormatsValueX
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
                     width: parent.width - x - dialog.optionControlRightMargin
@@ -1281,7 +1309,7 @@ PopupDialogWindow {
 
                 Rectangle {
                     x: 0
-                    y: verifySevenZipButton.y + verifySevenZipButton.height + 4
+                    y: verifySevenZipButton.y + verifySevenZipButton.height + 8
                     width: parent.width - dialog.optionControlRightMargin
                     height: 1
                     color: styleTokens.sectionBorderColor
@@ -1289,7 +1317,7 @@ PopupDialogWindow {
                 }
 
                 Text {
-                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 12 + 24
+                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 24
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
                     text: "Supported image formats:"
@@ -1299,7 +1327,7 @@ PopupDialogWindow {
                 }
 
                 Text {
-                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 12 + 24
+                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 24
                     x: dialog.importFormatsValueX
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
                     width: parent.width - x - dialog.optionControlRightMargin
@@ -1312,7 +1340,7 @@ PopupDialogWindow {
                 }
 
                 Text {
-                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 12 + 48
+                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 48
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
                     text: "Supported document formats:"
@@ -1322,7 +1350,7 @@ PopupDialogWindow {
                 }
 
                 Text {
-                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 12 + 48
+                    readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 48
                     x: dialog.importFormatsValueX
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
                     width: parent.width - x - dialog.optionControlRightMargin
@@ -1343,7 +1371,7 @@ PopupDialogWindow {
                 width: parent.width
                 height: parent.height - y
                 readonly property bool hasPendingMove: String(dialog.libraryDataPendingMovePath || "").trim().length > 0
-                readonly property int relocationBlockTop: dialog.optionRowPitch * 3 + 18
+                readonly property int relocationBlockTop: dialog.optionRowPitch * 3 + 14
 
                 PopupActionButton {
                     id: openDataFolderButton
@@ -1502,7 +1530,7 @@ PopupDialogWindow {
 
                 Rectangle {
                     x: 0
-                    y: dialog.optionRowPitch * 3 + 6
+                    y: dialog.optionRowPitch * 3 + 10
                     width: parent.width - dialog.optionControlRightMargin
                     height: 1
                     color: styleTokens.sectionBorderColor
