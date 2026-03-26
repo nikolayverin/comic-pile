@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.1.0 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.2.0 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -91,6 +91,10 @@ qt_add_executable(comic_pile_qt
     ${_comicpile_core_sources}
 )
 
+target_compile_definitions(comic_pile_qt PRIVATE
+    COMICPILE_APP_VERSION="${PROJECT_VERSION}"
+)
+
 set(_comicpile_build_meta_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/build_meta")
 set(_comicpile_build_iteration_state_file "${_comicpile_build_meta_dir}/build_iteration_state.txt")
 set(_comicpile_build_iteration_header "${_comicpile_build_meta_dir}/comicpile_build_iteration.h")
@@ -118,9 +122,17 @@ add_executable(comic_pile_smoke
     ${_comicpile_core_sources}
 )
 
+target_compile_definitions(comic_pile_smoke PRIVATE
+    COMICPILE_APP_VERSION="${PROJECT_VERSION}"
+)
+
 add_executable(comic_pile_regression
     src/tools/comic_pile_regression.cpp
     ${_comicpile_core_sources}
+)
+
+target_compile_definitions(comic_pile_regression PRIVATE
+    COMICPILE_APP_VERSION="${PROJECT_VERSION}"
 )
 
 qt_add_qml_module(comic_pile_qt

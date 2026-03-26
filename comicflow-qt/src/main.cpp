@@ -21,6 +21,10 @@
 #include <windows.h>
 #endif
 
+#ifndef COMICPILE_APP_VERSION
+#define COMICPILE_APP_VERSION "0.0.0"
+#endif
+
 namespace {
 
 #ifdef Q_OS_WIN
@@ -114,6 +118,7 @@ int main(int argc, char *argv[])
     }
 
     QApplication app(argc, argv);
+    app.setApplicationVersion(QStringLiteral(COMICPILE_APP_VERSION));
     deferLaunchLog(QStringLiteral("qapplication_created"));
 
 #ifdef Q_OS_WIN
@@ -156,6 +161,9 @@ int main(int argc, char *argv[])
     ComicStartupLaunch::appendLaunchLog(launchLogPath, launchTimer, QStringLiteral("library_model_created"));
     bool pendingActivation = false;
     engine.rootContext()->setContextProperty("libraryModel", &libraryModel);
+    engine.rootContext()->setContextProperty(
+        "appVersion",
+        QString::fromLatin1(COMICPILE_APP_VERSION));
     engine.rootContext()->setContextProperty(
         "appBuildIteration",
         QString::fromLatin1(ComicPileBuildIteration::kText));
