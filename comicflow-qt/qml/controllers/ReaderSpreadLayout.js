@@ -119,18 +119,37 @@ function buildSpread(pageIndexes, kind) {
     }
 }
 
-function buildTwoPageLayout(rawMetrics, totalCount, thresholdFactor) {
+function buildPairSpread(leftPageIndex, rightPageIndex, kind, rtl) {
+    if (Boolean(rtl)) {
+        return buildSpread([rightPageIndex, leftPageIndex], kind)
+    }
+    return buildSpread([leftPageIndex, rightPageIndex], kind)
+}
+
+function buildTwoPageLayout(rawMetrics, totalCount, thresholdFactor, options) {
     const metrics = normalizePageMetrics(rawMetrics, totalCount)
     const pageCount = metrics.length
     const ordinaryWidth = typicalPageWidth(metrics)
     const wideFlags = buildWideFlags(metrics, ordinaryWidth, thresholdFactor)
     const spreads = []
+    const rtl = Boolean(options && options.rtl)
+    const spreadOffset = Boolean(options && options.spreadOffset)
 
     if (pageCount > 0) {
         spreads.push(buildSpread([0], "cover"))
     }
 
     let cursor = 1
+    if (rtl && !spreadOffset && cursor < pageCount) {
+        if (wideFlags[cursor]) {
+            spreads.push(buildSpread([cursor], "wide"))
+            cursor += 1
+        } else {
+            spreads.push(buildSpread([cursor], "offset_single_start"))
+            cursor += 1
+        }
+    }
+
     while (cursor < pageCount) {
         if (wideFlags[cursor]) {
             spreads.push(buildSpread([cursor], "wide"))
@@ -150,7 +169,7 @@ function buildTwoPageLayout(rawMetrics, totalCount, thresholdFactor) {
             continue
         }
 
-        spreads.push(buildSpread([cursor, cursor + 1], "pair"))
+        spreads.push(buildPairSpread(cursor, cursor + 1, "pair", rtl))
 
         const bridgePageIndex = cursor + 2
         const wideAfterBridgeIndex = cursor + 3
@@ -160,7 +179,7 @@ function buildTwoPageLayout(rawMetrics, totalCount, thresholdFactor) {
             && wideFlags[wideAfterBridgeIndex]
 
         if (canBridgeBeforeWide) {
-            spreads.push(buildSpread([cursor + 1, cursor + 2], "bridge_before_wide"))
+            spreads.push(buildPairSpread(cursor + 1, cursor + 2, "bridge_before_wide", rtl))
             spreads.push(buildSpread([cursor + 3], "wide"))
             cursor += 4
             continue

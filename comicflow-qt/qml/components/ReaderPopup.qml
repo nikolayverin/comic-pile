@@ -25,6 +25,7 @@ Popup {
     property int pageCount: 0
     property bool canGoPreviousPage: false
     property bool canGoNextPage: false
+    property bool mangaModeEnabled: false
     property bool canGoPreviousIssue: false
     property bool canGoNextIssue: false
     property bool bookmarkActive: false
@@ -59,8 +60,14 @@ Popup {
     readonly property int closeButtonSize: 24
     readonly property int closeIconSize: 12
     readonly property int toolbarIconSize: 16
+    readonly property int mangaButtonWidth: 41
+    readonly property int mangaButtonHeight: 22
+    readonly property int mangaIconWidth: 31
+    readonly property int mangaIconHeight: 14
     readonly property real toolbarIconLeftEdgeInButton: (toolButtonWidth - toolbarIconSize) / 2
     readonly property real toolbarIconRightEdgeInButton: (toolButtonWidth + toolbarIconSize) / 2
+    readonly property real mangaIconLeftEdgeInButton: (mangaButtonWidth - mangaIconWidth) / 2
+    readonly property real mangaIconRightEdgeInButton: (mangaButtonWidth + mangaIconWidth) / 2
     readonly property int toolbarDeleteLeftInset: 64
     readonly property int toolbarHotkeysLeftInset: toolbarDeleteLeftInset + toolbarIconSize + 38
     readonly property int toolbarSettingsLeftInset: toolbarHotkeysLeftInset + toolbarIconSize + 22
@@ -72,6 +79,7 @@ Popup {
     readonly property int toolbarFullScreenRightInset: toolbarMagnifierRightInset + toolbarIconSize + 22
     readonly property int toolbarTwoPageRightInset: toolbarFullScreenRightInset + toolbarIconSize + 22
     readonly property int toolbarOnePageRightInset: toolbarTwoPageRightInset + toolbarIconSize + 22
+    readonly property int toolbarMangaRightInset: toolbarOnePageRightInset + toolbarIconSize + 38
     readonly property int sideButtonWidth: 34
     readonly property int sideButtonHeight: 96
     readonly property int sideButtonOffset: 14
@@ -198,6 +206,7 @@ Popup {
     signal bookmarkJumpRequested()
     signal favoriteRequested()
     signal deletePageRequested(int pageIndex)
+    signal mangaModeToggleRequested()
     signal settingsRequested()
     signal copyImageRequested()
     signal markAsReadRequested()
@@ -639,15 +648,29 @@ Popup {
     Shortcut {
         sequence: "Left"
         context: Qt.ApplicationShortcut
-        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousPage
-        onActivated: root.previousPageRequested()
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible
+            && (root.mangaModeEnabled ? root.canGoNextPage : root.canGoPreviousPage)
+        onActivated: {
+            if (root.mangaModeEnabled) {
+                root.nextPageRequested()
+                return
+            }
+            root.previousPageRequested()
+        }
     }
 
     Shortcut {
         sequence: "Right"
         context: Qt.ApplicationShortcut
-        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextPage
-        onActivated: root.nextPageRequested()
+        enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible
+            && (root.mangaModeEnabled ? root.canGoPreviousPage : root.canGoNextPage)
+        onActivated: {
+            if (root.mangaModeEnabled) {
+                root.previousPageRequested()
+                return
+            }
+            root.nextPageRequested()
+        }
     }
 
     Shortcut {
@@ -857,6 +880,23 @@ Popup {
                     root.lightThemeEnabled = !root.lightThemeEnabled
                     root.themeToggleRequested()
                 }
+            }
+
+            PopupIconButton {
+                id: mangaModeButton
+                width: root.mangaButtonWidth
+                height: root.mangaButtonHeight
+                x: parent.width - root.toolbarMangaRightInset - root.mangaIconRightEdgeInButton
+                anchors.verticalCenter: parent.verticalCenter
+                clickEnabled: true
+                activeState: root.mangaModeEnabled
+                activeIconColor: root.readingModeActiveColor
+                idleIconColor: root.textColor
+                unavailableIconColor: root.textColor
+                icon.width: root.mangaIconWidth
+                icon.height: root.mangaIconHeight
+                icon.source: uiTokens.readerMangaIcon
+                onClicked: root.mangaModeToggleRequested()
             }
 
             ToolbarIconButton {
@@ -1454,13 +1494,19 @@ Popup {
             x: root.sideButtonOffset
             y: Math.round((parent.height - height) / 2)
             hoverCornerRadius: 6
-            clickEnabled: root.canGoPreviousPage
+            clickEnabled: root.mangaModeEnabled ? root.canGoNextPage : root.canGoPreviousPage
             hoverBackgroundColor: root.hoverFieldColor
             mirrorIcon: true
             icon.width: 24
             icon.height: 72
             icon.source: uiTokens.readerPageArrow
-            onClicked: root.previousPageRequested()
+            onClicked: {
+                if (root.mangaModeEnabled) {
+                    root.nextPageRequested()
+                    return
+                }
+                root.previousPageRequested()
+            }
         }
 
         PopupIconButton {
@@ -1470,12 +1516,18 @@ Popup {
             x: parent.width - root.sideButtonOffset - width
             y: Math.round((parent.height - height) / 2)
             hoverCornerRadius: 6
-            clickEnabled: root.canGoNextPage
+            clickEnabled: root.mangaModeEnabled ? root.canGoPreviousPage : root.canGoNextPage
             hoverBackgroundColor: root.hoverFieldColor
             icon.width: 24
             icon.height: 72
             icon.source: uiTokens.readerPageArrow
-            onClicked: root.nextPageRequested()
+            onClicked: {
+                if (root.mangaModeEnabled) {
+                    root.previousPageRequested()
+                    return
+                }
+                root.nextPageRequested()
+            }
         }
 
         Item {

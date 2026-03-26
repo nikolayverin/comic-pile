@@ -47,6 +47,21 @@ Item {
             : "one_page"
     }
 
+    function currentReaderLayoutOptions() {
+        const root = rootObject
+        if (!root) {
+            return {
+                rtl: false,
+                spreadOffset: false
+            }
+        }
+        const rtl = Boolean(root.readerMangaModeEnabled)
+        return {
+            rtl: rtl,
+            spreadOffset: rtl && Boolean(root.readerMangaSpreadOffsetEnabled)
+        }
+    }
+
     function readerUsesTwoPageLayout() {
         return currentReaderViewMode() === "two_page" && twoPageLayoutReady
     }
@@ -107,7 +122,8 @@ Item {
         const layout = ReaderSpreadLayout.buildTwoPageLayout(
             metricsInput,
             total,
-            widePageThresholdFactor
+            widePageThresholdFactor,
+            currentReaderLayoutOptions()
         )
         pageMetrics = Array.isArray(layout.metrics) ? layout.metrics : []
         twoPageSpreads = Array.isArray(layout.spreads) ? layout.spreads : []
@@ -370,11 +386,37 @@ Item {
         const layout = ReaderSpreadLayout.buildTwoPageLayout(
             nextMetrics,
             Number(remainingPageCount || nextMetrics.length),
-            widePageThresholdFactor
+            widePageThresholdFactor,
+            currentReaderLayoutOptions()
         )
         pageMetrics = Array.isArray(layout.metrics) ? layout.metrics : []
         twoPageSpreads = Array.isArray(layout.spreads) ? layout.spreads : []
         twoPageLayoutReady = twoPageSpreads.length > 0
+    }
+
+    function refreshCurrentTwoPageLayoutForPreferences() {
+        const root = rootObject
+        if (!root) return
+        if (currentReaderViewMode() !== "two_page") return
+        if (Number(root.readerComicId || 0) < 1) return
+        if (Number(root.readerPageCount || 0) < 1) return
+
+        let metricsSource = Array.isArray(pageMetrics) ? pageMetrics : []
+        if (metricsSource.length < 1) {
+            metricsSource = buildProvisionalReaderPageMetrics(sessionEntries, root.readerPageCount)
+        }
+        if (metricsSource.length < 1) return
+
+        const layout = ReaderSpreadLayout.buildTwoPageLayout(
+            metricsSource,
+            Number(root.readerPageCount || metricsSource.length),
+            widePageThresholdFactor,
+            currentReaderLayoutOptions()
+        )
+        pageMetrics = Array.isArray(layout.metrics) ? layout.metrics : []
+        twoPageSpreads = Array.isArray(layout.spreads) ? layout.spreads : []
+        twoPageLayoutReady = twoPageSpreads.length > 0
+        loadReaderPage(root.readerPageIndex, true)
     }
 
     function prefetchReaderNeighborPage(pageIndex) {

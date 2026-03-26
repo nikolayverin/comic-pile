@@ -223,6 +223,8 @@ ApplicationWindow {
     property int pendingReplaceArchiveComicId: -1
     property string pendingReplaceArchiveSourcePath: ""
     property string readerViewMode: "one_page"
+    property bool readerMangaModeEnabled: false
+    property bool readerMangaSpreadOffsetEnabled: false
     property string readerSeriesKey: ""
     readonly property int readerIssueIndexInSeries: readerSessionController.issueIndexInSeries
     readonly property int readerIssueCountInSeries: readerSessionController.issueCountInSeries

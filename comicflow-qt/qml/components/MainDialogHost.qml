@@ -159,6 +159,7 @@ Item {
         pageCount: readerSessionController.pageCount
         fullscreenMode: readerSessionController.fullscreenMode
         readingViewMode: readerSessionController.readingViewMode
+        mangaModeEnabled: Boolean(root.readerMangaModeEnabled)
         canGoPreviousPage: readerSessionController.canGoPreviousPage
         canGoNextPage: readerSessionController.canGoNextPage
         canGoPreviousIssue: readerSessionController.canGoPreviousIssue
@@ -180,6 +181,7 @@ Item {
         onDeletePageRequested: function(pageIndex) {
             root.requestDeleteReaderPageConfirmation(root.readerComicId, pageIndex)
         }
+        onMangaModeToggleRequested: readerSessionController.toggleReaderMangaMode()
         onSettingsRequested: root.openSettingsDialog("reader", true)
         onCopyImageRequested: readerSessionController.copyCurrentReaderImage()
         onMarkAsReadRequested: readerSessionController.markCurrentReaderIssueReadAndAdvance()

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.2.0 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.3.0 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -265,6 +265,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-reader-favorits.svg
         assets/icons/icon-reader-copy.svg
         assets/icons/icon-reader-magnifier-shadow.svg
+        assets/icons/icon-reader-manga.svg
         assets/icons/icon-reader-one-page.svg
         assets/icons/icon-reader-two-page.svg
         assets/icons/icon-reader-full-screen.svg

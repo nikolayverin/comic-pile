@@ -150,6 +150,14 @@ Item {
         setReaderViewMode(nextMode)
     }
 
+    function syncOpenReaderMangaLayoutPreferences() {
+        const root = rootObject
+        if (!root) return
+        if (Number(root.readerComicId || 0) < 1) return
+        if (!readerDialog || !readerDialog.visible) return
+        readerDisplayModeController.refreshCurrentTwoPageLayoutForPreferences()
+    }
+
     function handleReaderDialogClosed() {
         finalizeReaderSession(true)
     }
@@ -935,6 +943,18 @@ Item {
 
         function onReaderRememberLastReaderModeChanged() {
             controller.syncOpenReaderViewModeFromSettings()
+        }
+    }
+
+    Connections {
+        target: rootObject
+
+        function onReaderMangaModeEnabledChanged() {
+            controller.syncOpenReaderMangaLayoutPreferences()
+        }
+
+        function onReaderMangaSpreadOffsetEnabledChanged() {
+            controller.syncOpenReaderMangaLayoutPreferences()
         }
     }
 }

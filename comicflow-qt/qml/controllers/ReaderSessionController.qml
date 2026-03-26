@@ -216,6 +216,12 @@ Item {
         }
     }
 
+    function toggleReaderMangaMode() {
+        const root = rootObject
+        if (!root) return
+        root.readerMangaModeEnabled = !Boolean(root.readerMangaModeEnabled)
+    }
+
     function toggleFullscreenMode() {
         const root = rootObject
         if (!root) return
