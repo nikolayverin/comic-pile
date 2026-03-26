@@ -151,27 +151,67 @@ var sectionOptionRows = {
     ]
 }
 
-var defaultGeneralDefaultReadingMode = "Remember last state"
-var defaultGeneralOpenReaderFullscreenByDefault = false
-var defaultGeneralAfterImport = "Focus imported series"
-var defaultGeneralDefaultViewAfterLaunch = "Remember last state"
-var defaultReaderRememberLastReaderMode = false
-var defaultReaderDefaultReadingMode = "1 page"
-var defaultReaderMagnifierSize = "Medium"
-var defaultReaderPageEdgeBehavior = "Stop at boundary"
-var defaultReaderShowBookmarkRibbonOnGridCovers = false
-var defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage = false
-var defaultImportDoubleClickArchiveIntoLibrary = false
-var defaultImportTreatImageFoldersAsIssues = false
-var defaultAppearanceLibraryBackground = "Default"
-var defaultAppearanceGridDensity = "Default"
-var defaultAppearanceShowHeroBlock = true
-var defaultAppearanceLibraryBackgroundSolidColor = "#8A8A8A"
-var defaultAppearanceLibraryBackgroundTexture = "Dots"
-var defaultAppearanceLibraryBackgroundCustomImagePath = ""
-var defaultAppearanceLibraryBackgroundImageMode = "Fill"
-var defaultAppearanceLibraryBackgroundTileSize = "64x64px"
-var defaultSafetyConfirmBeforeDeletingFiles = true
-var defaultSafetyConfirmBeforeDeletingSeries = true
-var defaultSafetyConfirmBeforeReplace = true
-var defaultSafetyConfirmBeforeDeletingPage = true
+var defaultSettingsState = {
+    general_default_reading_mode: "Remember last state",
+    general_open_reader_fullscreen_by_default: false,
+    general_after_import: "Focus imported series",
+    general_default_view_after_launch: "Remember last state",
+
+    reader_remember_last_reader_mode: true,
+    reader_default_reading_mode: "1 page",
+    reader_magnifier_size: "Medium",
+    reader_page_edge_behavior: "Continue",
+    reader_show_bookmark_ribbon_on_grid_covers: true,
+    reader_auto_open_bookmarked_page_instead_of_last_page: true,
+
+    import_double_click_archive_into_library: false,
+    import_treat_image_folders_as_issues: false,
+
+    appearance_library_background: "Default",
+    appearance_grid_density: "Default",
+    appearance_show_hero_block: true,
+    appearance_library_background_solid_color: "#8A8A8A",
+    appearance_library_background_texture: "Dots",
+    appearance_library_background_custom_image_path: "",
+    appearance_library_background_image_mode: "Fill",
+    appearance_library_background_tile_size: "64x64px",
+
+    safety_confirm_before_deleting_files: true,
+    safety_confirm_before_deleting_series: true,
+    safety_confirm_before_replace: true,
+    safety_confirm_before_deleting_page: true
+}
+
+function defaultSettingValue(valueKey) {
+    const key = String(valueKey || "")
+    return defaultSettingsState[key]
+}
+
+function defaultSettingsSnapshot() {
+    return Object.assign({}, defaultSettingsState)
+}
+
+var defaultGeneralDefaultReadingMode = defaultSettingsState.general_default_reading_mode
+var defaultGeneralOpenReaderFullscreenByDefault = defaultSettingsState.general_open_reader_fullscreen_by_default
+var defaultGeneralAfterImport = defaultSettingsState.general_after_import
+var defaultGeneralDefaultViewAfterLaunch = defaultSettingsState.general_default_view_after_launch
+var defaultReaderRememberLastReaderMode = defaultSettingsState.reader_remember_last_reader_mode
+var defaultReaderDefaultReadingMode = defaultSettingsState.reader_default_reading_mode
+var defaultReaderMagnifierSize = defaultSettingsState.reader_magnifier_size
+var defaultReaderPageEdgeBehavior = defaultSettingsState.reader_page_edge_behavior
+var defaultReaderShowBookmarkRibbonOnGridCovers = defaultSettingsState.reader_show_bookmark_ribbon_on_grid_covers
+var defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage = defaultSettingsState.reader_auto_open_bookmarked_page_instead_of_last_page
+var defaultImportDoubleClickArchiveIntoLibrary = defaultSettingsState.import_double_click_archive_into_library
+var defaultImportTreatImageFoldersAsIssues = defaultSettingsState.import_treat_image_folders_as_issues
+var defaultAppearanceLibraryBackground = defaultSettingsState.appearance_library_background
+var defaultAppearanceGridDensity = defaultSettingsState.appearance_grid_density
+var defaultAppearanceShowHeroBlock = defaultSettingsState.appearance_show_hero_block
+var defaultAppearanceLibraryBackgroundSolidColor = defaultSettingsState.appearance_library_background_solid_color
+var defaultAppearanceLibraryBackgroundTexture = defaultSettingsState.appearance_library_background_texture
+var defaultAppearanceLibraryBackgroundCustomImagePath = defaultSettingsState.appearance_library_background_custom_image_path
+var defaultAppearanceLibraryBackgroundImageMode = defaultSettingsState.appearance_library_background_image_mode
+var defaultAppearanceLibraryBackgroundTileSize = defaultSettingsState.appearance_library_background_tile_size
+var defaultSafetyConfirmBeforeDeletingFiles = defaultSettingsState.safety_confirm_before_deleting_files
+var defaultSafetyConfirmBeforeDeletingSeries = defaultSettingsState.safety_confirm_before_deleting_series
+var defaultSafetyConfirmBeforeReplace = defaultSettingsState.safety_confirm_before_replace
+var defaultSafetyConfirmBeforeDeletingPage = defaultSettingsState.safety_confirm_before_deleting_page

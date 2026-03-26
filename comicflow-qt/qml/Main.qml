@@ -1010,8 +1010,10 @@ ApplicationWindow {
     function refreshCbrSupportState() {
         cbrBackendAvailable = libraryModel.isCbrBackendAvailable()
         cbrBackendMissingMessage = libraryModel.cbrBackendMissingMessage()
-        sevenZipConfiguredPath = String(libraryModel.configuredSevenZipExecutablePath() || "")
-        sevenZipEffectivePath = String(libraryModel.effectiveSevenZipExecutablePath() || "")
+        const configuredPath = String(libraryModel.configuredSevenZipExecutablePath() || "")
+        const effectivePath = String(libraryModel.effectiveSevenZipExecutablePath() || "")
+        sevenZipEffectivePath = effectivePath
+        sevenZipConfiguredPath = configuredPath.length > 0 ? configuredPath : effectivePath
     }
 
     function chooseSevenZipPathFromSettings() {
