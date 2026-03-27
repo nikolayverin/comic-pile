@@ -24,24 +24,28 @@ struct RelinkInput {
 
 QString applyComicFilePathBindings(
     const QString &dbPath,
+    const QString &dataRoot,
     const QVector<ComicFilePathBinding> &bindings,
     const QString &connectionTag
 );
 
 QString loadComicFilePath(
     const QString &dbPath,
+    const QString &dataRoot,
     int comicId,
     QString &filePathOut
 );
 
 QString hardDeleteComicRecord(
     const QString &dbPath,
+    const QString &dataRoot,
     int comicId,
     QString &deletedFilePathOut
 );
 
 QString relinkComicFileKeepMetadata(
     const QString &dbPath,
+    const QString &dataRoot,
     const RelinkInput &input
 );
 

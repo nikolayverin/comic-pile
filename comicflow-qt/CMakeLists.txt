@@ -80,6 +80,8 @@ set(_comicpile_core_sources
     src/storage/readerrequestutils.h
     src/storage/readersessionops.cpp
     src/storage/readersessionops.h
+    src/storage/storedpathutils.cpp
+    src/storage/storedpathutils.h
     src/storage/startupinventoryops.cpp
     src/storage/startupinventoryops.h
     src/storage/startupruntimeutils.cpp

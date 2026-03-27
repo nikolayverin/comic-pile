@@ -12,6 +12,7 @@
 #include "storage/libraryschemamanager.h"
 #include "storage/librarylayoututils.h"
 #include "storage/readercacheutils.h"
+#include "storage/storedpathutils.h"
 
 #include <QCollator>
 #include <QCoreApplication>
@@ -712,22 +713,44 @@ QString resolve7ZipExecutable()
     return {};
 }
 
-bool filePathExists(const QString &filePath)
-{
-    const QString normalized = QDir::toNativeSeparators(filePath.trimmed());
-    if (normalized.isEmpty()) return false;
-    const QFileInfo info(normalized);
-    return info.exists() && info.isFile();
-}
-
-bool lookupComicIdByFilePath(QSqlDatabase &db, const QString &normalizedFilePath, int &comicIdOut, QString &errorText)
+bool lookupComicIdByFilePath(
+    QSqlDatabase &db,
+    const QString &dataRoot,
+    const QString &candidatePath,
+    int &comicIdOut,
+    QString &errorText
+)
 {
     comicIdOut = -1;
     errorText.clear();
 
+    const QString normalizedCandidatePath = ComicStoragePaths::normalizePathInput(candidatePath);
+    const QFileInfo candidateInfo(QDir::fromNativeSeparators(normalizedCandidatePath));
+    const bool candidateExists = candidateInfo.exists() && candidateInfo.isFile();
+
+    const QStringList lookupCandidates = ComicStoragePaths::archivePathLookupCandidates(
+        dataRoot,
+        normalizedCandidatePath
+    );
+    if (lookupCandidates.isEmpty()) {
+        comicIdOut = 0;
+        return true;
+    }
+
+    QStringList predicates;
+    predicates.reserve(lookupCandidates.size());
+    for (int i = 0; i < lookupCandidates.size(); i += 1) {
+        predicates.push_back(QStringLiteral("file_path = ? COLLATE NOCASE"));
+    }
+
     QSqlQuery query(db);
-    query.prepare(QStringLiteral("SELECT id FROM comics WHERE file_path = ? COLLATE NOCASE ORDER BY id ASC"));
-    query.addBindValue(normalizedFilePath);
+    query.prepare(
+        QStringLiteral("SELECT id FROM comics WHERE %1 ORDER BY id ASC LIMIT 1")
+            .arg(predicates.join(QStringLiteral(" OR ")))
+    );
+    for (const QString &lookupCandidate : lookupCandidates) {
+        query.addBindValue(lookupCandidate);
+    }
     if (!query.exec()) {
         errorText = QStringLiteral("Failed to check duplicates: %1").arg(query.lastError().text());
         return false;
@@ -738,12 +761,13 @@ bool lookupComicIdByFilePath(QSqlDatabase &db, const QString &normalizedFilePath
         return true;
     }
 
-    comicIdOut = filePathExists(normalizedFilePath) ? query.value(0).toInt() : 0;
+    comicIdOut = candidateExists ? query.value(0).toInt() : 0;
     return true;
 }
 
 QVector<ImportDuplicateClassifier::Candidate> loadLiveDuplicateCandidates(
     QSqlDatabase &db,
+    const QString &dataRoot,
     const QString &seriesKey,
     QString &errorText
 )
@@ -778,7 +802,13 @@ QVector<ImportDuplicateClassifier::Candidate> loadLiveDuplicateCandidates(
         candidate.volume = trimOrEmpty(query.value(5));
         candidate.issue = trimOrEmpty(query.value(6));
         candidate.title = trimOrEmpty(query.value(7));
-        if (!filePathExists(candidate.filePath)) continue;
+        const QString resolvedPath = ComicStoragePaths::resolveStoredArchivePath(
+            dataRoot,
+            candidate.filePath,
+            candidate.filename
+        );
+        if (resolvedPath.isEmpty()) continue;
+        candidate.filePath = resolvedPath;
         candidate.strictFilenameSignature = ComicImportMatching::normalizeFilenameSignatureStrict(candidate.filename);
         candidate.looseFilenameSignature = ComicImportMatching::normalizeFilenameSignatureLoose(candidate.filename);
         candidates.push_back(candidate);
@@ -800,6 +830,7 @@ struct LiveDuplicateCheckResult {
 
 LiveDuplicateCheckResult evaluateLiveDuplicateForImport(
     QSqlDatabase &db,
+    const QString &dataRoot,
     const QString &plannedFilePath,
     const QString &seriesKey,
     const QString &volumeKey,
@@ -816,7 +847,7 @@ LiveDuplicateCheckResult evaluateLiveDuplicateForImport(
     errorText.clear();
 
     int existingId = -1;
-    if (!lookupComicIdByFilePath(db, plannedFilePath, existingId, errorText)) {
+    if (!lookupComicIdByFilePath(db, dataRoot, plannedFilePath, existingId, errorText)) {
         return result;
     }
     if (existingId > 0) {
@@ -828,6 +859,7 @@ LiveDuplicateCheckResult evaluateLiveDuplicateForImport(
 
     const QVector<ImportDuplicateClassifier::Candidate> liveCandidates = loadLiveDuplicateCandidates(
         db,
+        dataRoot,
         seriesKey,
         errorText
     );
@@ -1437,7 +1469,7 @@ int ComicsListModel::countPendingImportDuplicates(const QVariantList &entries) c
 
         int existingId = -1;
         QString duplicateCheckError;
-        if (!lookupComicIdByFilePath(db, predictedPath, existingId, duplicateCheckError)) {
+        if (!lookupComicIdByFilePath(db, m_dataRoot, predictedPath, existingId, duplicateCheckError)) {
             continue;
         }
         if (existingId > 0) {
@@ -1475,7 +1507,7 @@ QVariantMap ComicsListModel::previewPendingImportDuplicate(const QVariantList &e
 
         int existingId = -1;
         QString duplicateCheckError;
-        if (!lookupComicIdByFilePath(db, predictedPath, existingId, duplicateCheckError)) {
+        if (!lookupComicIdByFilePath(db, m_dataRoot, predictedPath, existingId, duplicateCheckError)) {
             continue;
         }
         if (existingId < 1) {
@@ -1688,6 +1720,7 @@ QString ComicsListModel::createComicFromLibrary(
         return QString("File not found in Database/Library: %1").arg(inputRef);
     }
     const QString normalizedFilePath = QDir::toNativeSeparators(QFileInfo(resolvedFilePath).absoluteFilePath());
+    const QString storedFilePath = ComicStoragePaths::persistPathForDataRoot(m_dataRoot, normalizedFilePath);
     const QString resolvedFilename = QFileInfo(normalizedFilePath).fileName().trimmed();
     const PersistedImportSignals importSignals = resolvedImportSignals(
         values,
@@ -1780,7 +1813,7 @@ QString ComicsListModel::createComicFromLibrary(
                     "import_loose_filename_signature = ?, import_source_type = ? "
                     "WHERE id = ?"
                 );
-                restoreQuery.addBindValue(normalizedFilePath);
+                restoreQuery.addBindValue(storedFilePath);
                 restoreQuery.addBindValue(resolvedFilename);
                 restoreQuery.addBindValue(restoredSeries);
                 restoreQuery.addBindValue(restoredSeriesKey);
@@ -1800,7 +1833,7 @@ QString ComicsListModel::createComicFromLibrary(
                     "import_loose_filename_signature = ?, import_source_type = ? "
                     "WHERE id = ?"
                 );
-                restoreQuery.addBindValue(normalizedFilePath);
+                restoreQuery.addBindValue(storedFilePath);
                 restoreQuery.addBindValue(resolvedFilename);
                 restoreQuery.addBindValue(importSignals.originalFilename);
                 restoreQuery.addBindValue(importSignals.strictFilenameSignature);
@@ -1878,9 +1911,12 @@ QString ComicsListModel::createComicFromLibrary(
         };
 
         auto isMissingCandidate = [&](const RestoreCandidate &candidate) -> bool {
-            const QString currentPath = candidate.filePath.trimmed();
-            if (currentPath.isEmpty()) return true;
-            return !filePathExists(currentPath);
+            const QString resolvedPath = ComicStoragePaths::resolveStoredArchivePath(
+                m_dataRoot,
+                candidate.filePath,
+                candidate.filename
+            );
+            return resolvedPath.isEmpty();
         };
 
         if (!allowImportAsNew && hasImportFingerprint) {
@@ -2050,6 +2086,7 @@ QString ComicsListModel::createComicFromLibrary(
         QString liveDuplicateError;
         const LiveDuplicateCheckResult liveDuplicate = evaluateLiveDuplicateForImport(
             db,
+            m_dataRoot,
             normalizedFilePath,
             candidateSeriesKey,
             candidateVolumeKey,
@@ -2089,7 +2126,7 @@ QString ComicsListModel::createComicFromLibrary(
             "import_original_filename, import_strict_filename_signature, import_loose_filename_signature, import_source_type"
             ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
-        insertQuery.addBindValue(normalizedFilePath);
+        insertQuery.addBindValue(storedFilePath);
         insertQuery.addBindValue(resolvedFilename);
         insertQuery.addBindValue(series);
         insertQuery.addBindValue(normalizeSeriesKey(series));
@@ -2346,6 +2383,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         QString liveDuplicateError;
         const LiveDuplicateCheckResult liveDuplicate = evaluateLiveDuplicateForImport(
             duplicateDb,
+            m_dataRoot,
             plannedLibraryFilePath,
             candidateSeriesKey,
             candidateVolumeKey,

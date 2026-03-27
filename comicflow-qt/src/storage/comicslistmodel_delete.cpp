@@ -374,6 +374,7 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
     if (!clearBindings.isEmpty()) {
         const QString applyError = ComicIssueFileOps::applyComicFilePathBindings(
             m_dbPath,
+            m_dataRoot,
             clearBindings,
             QStringLiteral("delete_series_files")
         );
@@ -419,6 +420,7 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
         if (!restoreBindings.isEmpty()) {
             const QString restoreError = ComicIssueFileOps::applyComicFilePathBindings(
                 m_dbPath,
+                m_dataRoot,
                 restoreBindings,
                 QStringLiteral("restore_series_files_after_delete")
             );
@@ -508,7 +510,7 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
 
     QString filePath;
     {
-        const QString loadError = ComicIssueFileOps::loadComicFilePath(m_dbPath, comicId, filePath);
+        const QString loadError = ComicIssueFileOps::loadComicFilePath(m_dbPath, m_dataRoot, comicId, filePath);
         if (!loadError.isEmpty()) {
             return loadError;
         }
@@ -543,6 +545,7 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
 
     const QString applyError = ComicIssueFileOps::applyComicFilePathBindings(
         m_dbPath,
+        m_dataRoot,
         { { comicId, QString() } },
         QStringLiteral("delete_issue_files")
     );
@@ -567,6 +570,7 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
 
         const QString restoreError = ComicIssueFileOps::applyComicFilePathBindings(
             m_dbPath,
+            m_dataRoot,
             { { comicId, stagedDelete.originalPath } },
             QStringLiteral("restore_issue_file_after_delete")
         );
@@ -613,6 +617,7 @@ QString ComicsListModel::detachComicFileKeepMetadata(int comicId)
 
     const QString updateError = ComicIssueFileOps::applyComicFilePathBindings(
         m_dbPath,
+        m_dataRoot,
         { { comicId, QString() } },
         QStringLiteral("detach_issue_file")
     );
@@ -1047,7 +1052,7 @@ QString ComicsListModel::deleteComicHard(int comicId)
     QString filePath;
     QString removedDirPath;
     {
-        const QString deleteError = ComicIssueFileOps::hardDeleteComicRecord(m_dbPath, comicId, filePath);
+        const QString deleteError = ComicIssueFileOps::hardDeleteComicRecord(m_dbPath, m_dataRoot, comicId, filePath);
         if (!deleteError.isEmpty()) {
             return deleteError;
         }

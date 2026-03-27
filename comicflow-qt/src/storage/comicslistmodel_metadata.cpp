@@ -4,6 +4,7 @@
 #include "storage/importmatching.h"
 #include "storage/libraryqueryops.h"
 #include "storage/readercacheutils.h"
+#include "storage/storedpathutils.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -80,34 +81,12 @@ QString monthNameForNumber(int month)
 
 QString resolveStoredSeriesHeaderPath(const QString &dataRoot, const QString &storedPath)
 {
-    const QString trimmedPath = storedPath.trimmed();
-    if (trimmedPath.isEmpty()) return {};
-
-    const QFileInfo rawInfo(trimmedPath);
-    QString absolutePath;
-    if (rawInfo.isAbsolute()) {
-        absolutePath = rawInfo.absoluteFilePath();
-    } else {
-        absolutePath = QDir(dataRoot).filePath(QDir::fromNativeSeparators(trimmedPath));
-    }
-
-    const QFileInfo absoluteInfo(absolutePath);
-    if (!absoluteInfo.exists() || !absoluteInfo.isFile()) {
-        return {};
-    }
-    return QDir::toNativeSeparators(absoluteInfo.absoluteFilePath());
+    return ComicStoragePaths::resolveStoredPathAgainstRoot(dataRoot, storedPath);
 }
 
 QString relativePathWithinDataRoot(const QString &dataRoot, const QString &absolutePath)
 {
-    const QFileInfo dataRootInfo(dataRoot);
-    const QFileInfo absoluteInfo(absolutePath);
-    const QString normalizedDataRoot = QDir::cleanPath(dataRootInfo.absoluteFilePath());
-    const QString normalizedAbsolute = QDir::cleanPath(absoluteInfo.absoluteFilePath());
-    if (!normalizedAbsolute.startsWith(normalizedDataRoot, Qt::CaseInsensitive)) {
-        return QDir::toNativeSeparators(normalizedAbsolute);
-    }
-    return QDir::toNativeSeparators(QDir(normalizedDataRoot).relativeFilePath(normalizedAbsolute));
+    return ComicStoragePaths::persistPathForDataRoot(dataRoot, absolutePath);
 }
 
 QString normalizeInputFilePath(const QString &rawInput)

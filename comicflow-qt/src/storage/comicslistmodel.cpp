@@ -16,6 +16,7 @@
 #include "storage/readerrequestutils.h"
 #include "storage/readersessionops.h"
 #include "storage/startupruntimeutils.h"
+#include "storage/storedpathutils.h"
 #include "common/scopedsqlconnectionremoval.h"
 
 #include <algorithm>
@@ -505,43 +506,8 @@ QString fastResolveStoredFilePath(
     const QString &storedFilename
 )
 {
-    QString candidatePath = normalizeInputFilePath(storedFilePath);
-    if (!candidatePath.isEmpty()) {
-        const QString normalizedStoredPath = QDir::cleanPath(QDir::fromNativeSeparators(candidatePath));
-        const QFileInfo storedPathInfo(normalizedStoredPath);
-        if (!storedPathInfo.isAbsolute()) {
-            const QDir dataRootDir(dataRoot);
-            const QDir libraryDir(libraryPath);
-            if (
-                normalizedStoredPath.compare(QStringLiteral("Library"), Qt::CaseInsensitive) == 0
-                    || normalizedStoredPath.startsWith(QStringLiteral("Library/"), Qt::CaseInsensitive)
-            ) {
-                candidatePath = dataRootDir.absoluteFilePath(normalizedStoredPath);
-            } else {
-                candidatePath = libraryDir.absoluteFilePath(normalizedStoredPath);
-            }
-        }
-    } else {
-        const QString filenameInput = storedFilename.trimmed();
-        if (filenameInput.isEmpty()) return {};
-
-        const QDir libraryDir(libraryPath);
-        const QString normalizedFilename = QDir::fromNativeSeparators(filenameInput);
-        const QFileInfo filenameInfo(normalizedFilename);
-
-        if (filenameInfo.isAbsolute()) {
-            candidatePath = filenameInfo.absoluteFilePath();
-        } else {
-            candidatePath = libraryDir.absoluteFilePath(normalizedFilename);
-        }
-    }
-
-    const QFileInfo candidateInfo(candidatePath);
-    if (!candidateInfo.exists() || !candidateInfo.isFile()) {
-        return {};
-    }
-
-    return QDir::toNativeSeparators(candidateInfo.absoluteFilePath());
+    Q_UNUSED(libraryPath);
+    return ComicStoragePaths::resolveStoredArchivePath(dataRoot, storedFilePath, storedFilename);
 }
 
 ReloadValidationResult validateReloadRowsAsync(
@@ -1677,34 +1643,12 @@ QString buildImageDialogFilter()
 
 QString resolveStoredSeriesHeaderPath(const QString &dataRoot, const QString &storedPath)
 {
-    const QString trimmedPath = storedPath.trimmed();
-    if (trimmedPath.isEmpty()) return {};
-
-    const QFileInfo rawInfo(trimmedPath);
-    QString absolutePath;
-    if (rawInfo.isAbsolute()) {
-        absolutePath = rawInfo.absoluteFilePath();
-    } else {
-        absolutePath = QDir(dataRoot).filePath(QDir::fromNativeSeparators(trimmedPath));
-    }
-
-    const QFileInfo absoluteInfo(absolutePath);
-    if (!absoluteInfo.exists() || !absoluteInfo.isFile()) {
-        return {};
-    }
-    return QDir::toNativeSeparators(absoluteInfo.absoluteFilePath());
+    return ComicStoragePaths::resolveStoredPathAgainstRoot(dataRoot, storedPath);
 }
 
 QString relativePathWithinDataRoot(const QString &dataRoot, const QString &absolutePath)
 {
-    const QFileInfo dataRootInfo(dataRoot);
-    const QFileInfo absoluteInfo(absolutePath);
-    const QString normalizedDataRoot = QDir::cleanPath(dataRootInfo.absoluteFilePath());
-    const QString normalizedAbsolute = QDir::cleanPath(absoluteInfo.absoluteFilePath());
-    if (!normalizedAbsolute.startsWith(normalizedDataRoot, Qt::CaseInsensitive)) {
-        return QDir::toNativeSeparators(normalizedAbsolute);
-    }
-    return QDir::toNativeSeparators(QDir(normalizedDataRoot).relativeFilePath(normalizedAbsolute));
+    return ComicStoragePaths::persistPathForDataRoot(dataRoot, absolutePath);
 }
 
 bool isImportArchiveExtensionSupported(const QString &extension)
@@ -2786,7 +2730,7 @@ QString ComicsListModel::bulkUpdateMetadata(
             moveQuery.prepare("UPDATE comics SET file_path = ?, filename = ? WHERE id = ?");
             for (auto it = movedPathById.constBegin(); it != movedPathById.constEnd(); ++it) {
                 const int id = it.key();
-                moveQuery.bindValue(0, it.value());
+                moveQuery.bindValue(0, ComicStoragePaths::persistPathForDataRoot(m_dataRoot, it.value()));
                 moveQuery.bindValue(1, movedFilenameById.value(id));
                 moveQuery.bindValue(2, id);
                 if (!moveQuery.exec()) {
@@ -3744,6 +3688,7 @@ QString ComicsListModel::relinkComicFileKeepMetadataInternal(
     const QString absoluteFilePath = QDir::toNativeSeparators(pathInfo.absoluteFilePath());
     const QString resultError = ComicIssueFileOps::relinkComicFileKeepMetadata(
         m_dbPath,
+        m_dataRoot,
         {
             comicId,
             absoluteFilePath,
@@ -3926,12 +3871,7 @@ QString ComicsListModel::resolveStoredArchivePathForDataRoot(
     const QString &storedFilename
 )
 {
-    return fastResolveStoredFilePath(
-        dataRoot,
-        QDir(dataRoot).filePath(QStringLiteral("Library")),
-        storedFilePath,
-        storedFilename
-    );
+    return ComicStoragePaths::resolveStoredArchivePath(dataRoot, storedFilePath, storedFilename);
 }
 
 QString ComicsListModel::resolveDataRoot() const

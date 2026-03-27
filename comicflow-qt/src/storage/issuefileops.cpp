@@ -1,6 +1,7 @@
 #include "storage/issuefileops.h"
 
 #include "common/scopedsqlconnectionremoval.h"
+#include "storage/storedpathutils.h"
 
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -35,6 +36,7 @@ namespace ComicIssueFileOps {
 
 QString applyComicFilePathBindings(
     const QString &dbPath,
+    const QString &dataRoot,
     const QVector<ComicFilePathBinding> &bindings,
     const QString &connectionTag
 )
@@ -60,7 +62,10 @@ QString applyComicFilePathBindings(
         QSqlQuery updateQuery(db);
         updateQuery.prepare(QStringLiteral("UPDATE comics SET file_path = ? WHERE id = ?"));
         for (const ComicFilePathBinding &binding : bindings) {
-            updateQuery.bindValue(0, binding.filePath);
+            const QString storedFilePath = binding.filePath.trimmed().isEmpty()
+                ? QString()
+                : ComicStoragePaths::persistPathForDataRoot(dataRoot, binding.filePath);
+            updateQuery.bindValue(0, storedFilePath);
             updateQuery.bindValue(1, binding.comicId);
             if (!updateQuery.exec()) {
                 result = QStringLiteral("Failed to update file binding for id %1: %2")
@@ -88,6 +93,7 @@ QString applyComicFilePathBindings(
 
 QString loadComicFilePath(
     const QString &dbPath,
+    const QString &dataRoot,
     int comicId,
     QString &filePathOut
 )
@@ -106,7 +112,12 @@ QString loadComicFilePath(
     }
 
     QSqlQuery selectQuery(db);
-    selectQuery.prepare(QStringLiteral("SELECT COALESCE(file_path, '') FROM comics WHERE id = ? LIMIT 1"));
+    selectQuery.prepare(
+        QStringLiteral(
+            "SELECT COALESCE(file_path, ''), COALESCE(filename, '') "
+            "FROM comics WHERE id = ? LIMIT 1"
+        )
+    );
     selectQuery.addBindValue(comicId);
     if (!selectQuery.exec()) {
         const QString error = QStringLiteral("Failed to read issue before file delete: %1")
@@ -119,13 +130,18 @@ QString loadComicFilePath(
         return QStringLiteral("Issue id %1 not found.").arg(comicId);
     }
 
-    filePathOut = trimOrEmpty(selectQuery.value(0));
+    filePathOut = ComicStoragePaths::resolveStoredArchivePath(
+        dataRoot,
+        trimOrEmpty(selectQuery.value(0)),
+        trimOrEmpty(selectQuery.value(1))
+    );
     db.close();
     return {};
 }
 
 QString hardDeleteComicRecord(
     const QString &dbPath,
+    const QString &dataRoot,
     int comicId,
     QString &deletedFilePathOut
 )
@@ -144,7 +160,12 @@ QString hardDeleteComicRecord(
     }
 
     QSqlQuery selectQuery(db);
-    selectQuery.prepare(QStringLiteral("SELECT COALESCE(file_path, '') FROM comics WHERE id = ? LIMIT 1"));
+    selectQuery.prepare(
+        QStringLiteral(
+            "SELECT COALESCE(file_path, ''), COALESCE(filename, '') "
+            "FROM comics WHERE id = ? LIMIT 1"
+        )
+    );
     selectQuery.addBindValue(comicId);
     if (!selectQuery.exec()) {
         const QString error = QStringLiteral("Failed to read issue before hard delete: %1")
@@ -156,7 +177,11 @@ QString hardDeleteComicRecord(
         db.close();
         return QStringLiteral("Issue id %1 not found.").arg(comicId);
     }
-    deletedFilePathOut = trimOrEmpty(selectQuery.value(0));
+    deletedFilePathOut = ComicStoragePaths::resolveStoredArchivePath(
+        dataRoot,
+        trimOrEmpty(selectQuery.value(0)),
+        trimOrEmpty(selectQuery.value(1))
+    );
 
     QSqlQuery deleteQuery(db);
     deleteQuery.prepare(QStringLiteral("DELETE FROM comics WHERE id = ?"));
@@ -177,6 +202,7 @@ QString hardDeleteComicRecord(
 
 QString relinkComicFileKeepMetadata(
     const QString &dbPath,
+    const QString &dataRoot,
     const RelinkInput &input
 )
 {
@@ -207,7 +233,7 @@ QString relinkComicFileKeepMetadata(
     } else {
         updateQuery.prepare(QStringLiteral("UPDATE comics SET file_path = ?, filename = ? WHERE id = ?"));
     }
-    updateQuery.addBindValue(input.absoluteFilePath);
+    updateQuery.addBindValue(ComicStoragePaths::persistPathForDataRoot(dataRoot, input.absoluteFilePath));
     updateQuery.addBindValue(input.filename);
     if (input.updateImportSignals) {
         updateQuery.addBindValue(input.importOriginalFilename);

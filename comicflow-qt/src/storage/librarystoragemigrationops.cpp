@@ -3,6 +3,7 @@
 #include "storage/importmatching.h"
 #include "storage/librarylayoututils.h"
 #include "storage/startupruntimeutils.h"
+#include "storage/storedpathutils.h"
 
 #include "common/scopedsqlconnectionremoval.h"
 
@@ -50,18 +51,6 @@ QString normalizeInputFilePath(const QString &rawInput)
 QString normalizeSeriesKeyValue(const QString &value)
 {
     return ComicImportMatching::normalizeSeriesKey(value);
-}
-
-QString relativePathWithinDataRoot(const QString &dataRoot, const QString &absolutePath)
-{
-    const QFileInfo dataRootInfo(dataRoot);
-    const QFileInfo absoluteInfo(absolutePath);
-    const QString normalizedDataRoot = QDir::cleanPath(dataRootInfo.absoluteFilePath());
-    const QString normalizedAbsolute = QDir::cleanPath(absoluteInfo.absoluteFilePath());
-    if (!normalizedAbsolute.startsWith(normalizedDataRoot, Qt::CaseInsensitive)) {
-        return QDir::toNativeSeparators(normalizedAbsolute);
-    }
-    return QDir::toNativeSeparators(QDir(normalizedDataRoot).relativeFilePath(normalizedAbsolute));
 }
 
 bool openDatabaseConnectionForPath(
@@ -355,7 +344,7 @@ QVariantMap runLibraryStorageLayoutMigration(const QString &dataRoot, const QStr
                     != ComicLibraryLayout::normalizedPathForCompare(finalAbsolutePath)
                 || row.filename.trimmed() != filenameValue
                 || row.seriesKey.trimmed() != normalizedSeriesKey;
-            updateQuery.bindValue(0, relativePathWithinDataRoot(dataRoot, finalAbsolutePath));
+            updateQuery.bindValue(0, ComicStoragePaths::persistPathForDataRoot(dataRoot, finalAbsolutePath));
             updateQuery.bindValue(1, filenameValue);
             updateQuery.bindValue(2, normalizedSeriesKey);
             updateQuery.bindValue(3, row.id);
