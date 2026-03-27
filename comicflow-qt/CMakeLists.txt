@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.7.0 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.7.1 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -284,6 +284,18 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/cover-bookmark.png
         assets/ui/cover-read.png
         assets/ui/cover-read-cancel.png
+        assets/ui/grid-backgrounds/4-grid-tile-blueprint-256px.png
+        assets/ui/grid-backgrounds/5-grid-tile-linen-512px.png
+        assets/ui/grid-backgrounds/6-grid-tile-felt-512px.png
+        assets/ui/grid-backgrounds/7-grid-tile-cartographer-1-512px.png
+        assets/ui/grid-backgrounds/8-grid-tile-cradt-2-512px.png
+        assets/ui/grid-backgrounds/9-grid-tile-cradt-1-512px.png
+        assets/ui/grid-backgrounds/10-grid-tile-cork-1-512px.png
+        assets/ui/grid-backgrounds/11-grid-tile-cork-2-512px.png
+        assets/ui/grid-backgrounds/12-grid-tile-ccardbosrd-512px.png
+        assets/ui/grid-backgrounds/13-grid-tile-crosslines-512px.png
+        assets/ui/grid-backgrounds/14-grid-tile-fabtic-512px.png
+        assets/ui/grid-backgrounds/15-grid-tile-strains-512px.png
         assets/ui/logo-after-shock-round.png
         assets/ui/logo-archie-comics-wide.png
         assets/ui/logo-aspen-comics-tall.png

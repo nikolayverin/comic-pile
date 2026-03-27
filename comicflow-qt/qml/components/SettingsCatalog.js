@@ -30,10 +30,117 @@ var appearanceSolidColorOptions = [
     "#000000", "#1F1F1F", "#4A4A4A", "#8A8A8A", "#C3C3C3"
 ]
 var appearanceTextureOptions = [
-    { key: "Dots", label: "Dots", source: "qrc:/qt/qml/ComicPile/assets/ui/grid-tile.png" },
-    { key: "Noise", label: "Noise", source: "qrc:/qt/qml/ComicPile/assets/textures/sidebar_dither_noise.png" }
+    {
+        key: "Blueprint",
+        label: "Blueprint",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/4-grid-tile-blueprint-256px.png",
+        tileSize: 256,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Linen",
+        label: "Linen",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/5-grid-tile-linen-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Felt",
+        label: "Felt",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/6-grid-tile-felt-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Cartographer 01",
+        label: "Cartographer 01",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/7-grid-tile-cartographer-1-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: true
+    },
+    {
+        key: "Craft 02",
+        label: "Craft 02",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/8-grid-tile-cradt-2-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Craft 01",
+        label: "Craft 01",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/9-grid-tile-cradt-1-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Cork 01",
+        label: "Cork 01",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/10-grid-tile-cork-1-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Cork 02",
+        label: "Cork 02",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/11-grid-tile-cork-2-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Cardboard",
+        label: "Cardboard",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/12-grid-tile-ccardbosrd-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Crosslines",
+        label: "Crosslines",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/13-grid-tile-crosslines-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: true
+    },
+    {
+        key: "Fabric",
+        label: "Fabric",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/14-grid-tile-fabtic-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    },
+    {
+        key: "Strains",
+        label: "Strains",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/15-grid-tile-strains-512px.png",
+        tileSize: 512,
+        previewUseDefaultBase: false
+    }
 ]
 var appearanceTexturePresetOptions = optionKeys(appearanceTextureOptions)
+
+function appearanceTextureOption(textureKey) {
+    const key = String(textureKey || "").trim()
+    const options = Array.isArray(appearanceTextureOptions) ? appearanceTextureOptions : []
+    for (let i = 0; i < options.length; i += 1) {
+        const entry = options[i] || {}
+        if (String(entry.key || "") === key) {
+            return entry
+        }
+    }
+    return options[0] || {}
+}
+
+function appearanceTextureSource(textureKey) {
+    return String((appearanceTextureOption(textureKey) || {}).source || "")
+}
+
+function appearanceTextureTilePixelSize(textureKey) {
+    const raw = Number((appearanceTextureOption(textureKey) || {}).tileSize || 64)
+    return raw === 512 ? 512 : raw === 256 ? 256 : 64
+}
+
+function appearanceTextureUsesDefaultBase(textureKey) {
+    return Boolean((appearanceTextureOption(textureKey) || {}).previewUseDefaultBase)
+}
 var appearanceBackgroundImageModeOptions = ["Fit", "Fill", "Stretch", "Tile"]
 var appearanceBackgroundTileSizeOptions = ["64x64px", "256x256px", "512x512px"]
 var settingsSections = [
@@ -177,7 +284,7 @@ var defaultSettingsState = {
     appearance_grid_density: "Default",
     appearance_show_hero_block: true,
     appearance_library_background_solid_color: "#8A8A8A",
-    appearance_library_background_texture: "Dots",
+    appearance_library_background_texture: "Blueprint",
     appearance_library_background_custom_image_path: "",
     appearance_library_background_image_mode: "Fill",
     appearance_library_background_tile_size: "64x64px",

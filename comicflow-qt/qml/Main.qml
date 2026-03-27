@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Window
 import "components"
 import "components/PublisherCatalog.js" as PublisherCatalog
+import "components/SettingsCatalog.js" as SettingsCatalog
 import "controllers"
 
 ApplicationWindow {
@@ -49,7 +50,8 @@ ApplicationWindow {
     readonly property string libraryBackgroundMode: String(appSettingsController.appearanceLibraryBackground || "Default")
     readonly property color libraryBackgroundSolidColor: appSettingsController.appearanceLibraryBackgroundSolidColor
     readonly property string libraryBackgroundTexturePreset: String(
-        appSettingsController.appearanceLibraryBackgroundTexture || "Dots"
+        appSettingsController.appearanceLibraryBackgroundTexture
+            || SettingsCatalog.defaultAppearanceLibraryBackgroundTexture
     )
     readonly property string libraryBackgroundCustomImagePath: String(
         appSettingsController.appearanceLibraryBackgroundCustomImagePath || ""
@@ -73,9 +75,12 @@ ApplicationWindow {
     readonly property bool readerShowBookmarkRibbonOnGridCovers: Boolean(
         appSettingsController.readerShowBookmarkRibbonOnGridCovers
     )
-    readonly property string libraryTextureSource: libraryBackgroundTexturePreset === "Noise"
-        ? uiTokens.sidebarNoiseTexture
-        : uiTokens.gridTile
+    readonly property string libraryTextureSource: SettingsCatalog.appearanceTextureSource(
+        libraryBackgroundTexturePreset
+    )
+    readonly property int libraryTextureTilePixelSize: SettingsCatalog.appearanceTextureTilePixelSize(
+        libraryBackgroundTexturePreset
+    )
     readonly property int libraryBackgroundImageMaxBytes: 8 * 1024 * 1024
     readonly property int libraryBackgroundTileImageMaxBytes: 1 * 1024 * 1024
 

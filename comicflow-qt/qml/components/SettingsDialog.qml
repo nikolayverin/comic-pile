@@ -156,15 +156,15 @@ PopupDialogWindow {
     }
 
     function appearanceTextureSource(textureKey) {
-        const key = String(textureKey || "").trim()
-        const options = Array.isArray(appearanceTextureOptions) ? appearanceTextureOptions : []
-        for (let i = 0; i < options.length; i += 1) {
-            const entry = options[i] || {}
-            if (String(entry.key || "") === key) {
-                return String(entry.source || "")
-            }
-        }
-        return String((options[0] || {}).source || "")
+        return SettingsCatalog.appearanceTextureSource(textureKey)
+    }
+
+    function appearanceTextureTilePixelSize(textureKey) {
+        return SettingsCatalog.appearanceTextureTilePixelSize(textureKey)
+    }
+
+    function appearanceTextureUsesDefaultBase(textureKey) {
+        return SettingsCatalog.appearanceTextureUsesDefaultBase(textureKey)
     }
 
     function appearanceBackgroundSourceIndex(modeKey) {
@@ -186,27 +186,8 @@ PopupDialogWindow {
         return 64
     }
 
-    function appearanceTexturePreviewOptions(slotCount) {
-        const source = Array.isArray(appearanceTextureOptions) ? appearanceTextureOptions : []
-        const targetCount = Math.max(0, Number(slotCount || 0))
-        const preview = []
-        if (source.length < 1 || targetCount < 1) {
-            return preview
-        }
-
-        const occurrences = ({})
-        for (let i = 0; i < targetCount; i += 1) {
-            const entry = source[i % source.length] || {}
-            const actualKey = String(entry.key || "")
-            const occurrence = Number(occurrences[actualKey] || 0)
-            occurrences[actualKey] = occurrence + 1
-            preview.push({
-                actualKey: actualKey,
-                source: String(entry.source || ""),
-                occurrence: occurrence
-            })
-        }
-        return preview
+    function appearanceTexturePreviewOptions() {
+        return Array.isArray(appearanceTextureOptions) ? appearanceTextureOptions : []
     }
 
     Timer {
@@ -715,7 +696,9 @@ PopupDialogWindow {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: 4
-                                        color: themeColors.settingsPreviewTextureColor
+                                        color: dialog.appearanceTextureUsesDefaultBase(appearanceContent.texturePreset)
+                                            ? themeColors.settingsPreviewDefaultColor
+                                            : themeColors.settingsPreviewTextureColor
                                         clip: true
                                         antialiasing: true
                                         visible: modeKey === "Texture"
@@ -724,10 +707,14 @@ PopupDialogWindow {
                                             anchors.fill: parent
                                             source: dialog.appearanceTextureSource(appearanceContent.texturePreset)
                                             fillMode: Image.Tile
-                                            sourceSize.width: appearanceContent.tilePixelSize
-                                            sourceSize.height: appearanceContent.tilePixelSize
+                                            sourceSize.width: dialog.appearanceTextureTilePixelSize(
+                                                appearanceContent.texturePreset
+                                            )
+                                            sourceSize.height: dialog.appearanceTextureTilePixelSize(
+                                                appearanceContent.texturePreset
+                                            )
                                             smooth: true
-                                            opacity: 0.86
+                                            opacity: 1.0
                                         }
                                     },
                                     Rectangle {
@@ -766,7 +753,7 @@ PopupDialogWindow {
                     x: 0
                     y: backgroundSourceCards.y + backgroundSourceCards.height + dialog.appearanceContextGap
                     width: 556
-                    height: 55
+                    height: bodyY + bodyHeight
                     visible: true
 
                     readonly property int arrowWidth: 14
@@ -987,16 +974,16 @@ PopupDialogWindow {
                             spacing: texturePanelContent.tileGap
 
                             Repeater {
-                                model: dialog.appearanceTexturePreviewOptions(texturePanelContent.previewSlotCount)
+                                model: dialog.appearanceTexturePreviewOptions()
 
                                 delegate: Item {
                                     required property var modelData
 
-                                    readonly property string textureKey: String(modelData.actualKey || "")
+                                    readonly property string textureKey: String(modelData.key || "")
                                     readonly property string textureSource: String(modelData.source || "")
-                                    readonly property int occurrence: Number(modelData.occurrence || 0)
+                                    readonly property bool useDefaultBase: Boolean(modelData.previewUseDefaultBase)
+                                    readonly property int textureTileSize: Number(modelData.tileSize || 64)
                                     readonly property bool selected: textureKey === appearanceContent.texturePreset
-                                        && occurrence === 0
                                     readonly property bool hovered: textureTileMouseArea.containsMouse
 
                                     width: texturePanelContent.tileSize
@@ -1009,18 +996,10 @@ PopupDialogWindow {
                                     }
 
                                     Rectangle {
-                                        id: texturePreviewShadow
-                                        anchors.fill: parent
-                                        radius: 4
-                                        color: styleTokens.fieldFillColor
-                                    }
-
-                                    Rectangle {
-                                        id: texturePreview
                                         anchors.fill: parent
                                         anchors.topMargin: 1
                                         radius: 4
-                                        color: textureKey === "Dots"
+                                        color: parent.parent.useDefaultBase
                                             ? themeColors.settingsPreviewDefaultColor
                                             : themeColors.settingsPreviewTextureColor
                                         clip: true
@@ -1029,8 +1008,10 @@ PopupDialogWindow {
                                             anchors.fill: parent
                                             source: parent.parent.textureSource
                                             fillMode: Image.Tile
+                                            sourceSize.width: parent.parent.textureTileSize
+                                            sourceSize.height: parent.parent.textureTileSize
                                             smooth: true
-                                            opacity: textureKey === "Dots" ? 0.42 : 0.86
+                                            opacity: 1.0
                                         }
                                     }
 

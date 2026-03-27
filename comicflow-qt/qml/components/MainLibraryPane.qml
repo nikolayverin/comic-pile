@@ -57,8 +57,6 @@ Rectangle {
         id: gridTileBackground
         anchors.fill: parent
         visible: root.libraryBackgroundMode === "Default"
-            || (root.libraryBackgroundMode === "Texture"
-                && root.libraryBackgroundTexturePreset === "Dots")
             || (root.libraryBackgroundMode === "Custom image"
                 && root.libraryBackgroundCustomImageSource.length < 1)
         source: uiTokens.gridTile
@@ -70,11 +68,11 @@ Rectangle {
     Image {
         anchors.fill: parent
         visible: root.libraryBackgroundMode === "Texture"
-            && root.libraryBackgroundTexturePreset === "Noise"
         source: root.libraryTextureSource
         fillMode: Image.Tile
+        sourceSize: Qt.size(root.libraryTextureTilePixelSize, root.libraryTextureTilePixelSize)
         smooth: false
-        opacity: 0.92
+        opacity: 1.0
     }
 
     Image {

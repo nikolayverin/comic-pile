@@ -118,6 +118,8 @@ int main(int argc, char *argv[])
     }
 
     QApplication app(argc, argv);
+    app.setOrganizationName(QStringLiteral("ComicPile"));
+    app.setApplicationName(QStringLiteral("Comic Pile"));
     app.setApplicationVersion(QStringLiteral(COMICPILE_APP_VERSION));
     deferLaunchLog(QStringLiteral("qapplication_created"));
 
