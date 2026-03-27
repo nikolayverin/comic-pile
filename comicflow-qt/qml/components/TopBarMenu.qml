@@ -452,7 +452,9 @@ Rectangle {
         showArrow: true
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenu, visible)
         menuItems: [
-            { text: uiTokens.aboutSoonLabel, action: "about_soon", enabled: false }
+            { text: "Help", action: "help", enabled: false },
+            { text: "About", action: "about", enabled: false },
+            { text: "What's new", action: "whats_new", enabled: false }
         ]
     }
 
