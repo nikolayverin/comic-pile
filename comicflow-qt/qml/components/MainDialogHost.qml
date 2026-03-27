@@ -171,6 +171,7 @@ Item {
         bookmarkActive: readerSessionController.bookmarkActive
         bookmarkPageIndex: readerSessionController.bookmarkPageIndex
         favoriteActive: readerSessionController.favoriteActive
+        actionNotificationsEnabled: Boolean(appSettingsController.readerShowActionNotifications)
         inputSuspended: settingsDialog.visible
         magnifierSizePreset: appSettingsController.readerMagnifierSize
         onDismissRequested: readerSessionController.closeReader()
@@ -178,16 +179,56 @@ Item {
         onNextPageRequested: readerSessionController.nextReaderPage()
         onPreviousIssueRequested: readerSessionController.previousReaderIssue()
         onNextIssueRequested: readerSessionController.nextReaderIssue()
-        onReadingViewModeChangeRequested: function(mode) { readerSessionController.setReaderViewMode(mode) }
-        onBookmarkRequested: readerSessionController.toggleReaderBookmark()
+        onReadingViewModeChangeRequested: function(mode) {
+            readerSessionController.setReaderViewMode(mode)
+            if (String(mode || "") === "one_page") {
+                readerDialog.showActionToast("One-page mode is enabled")
+                return
+            }
+            if (String(mode || "") === "two_page") {
+                readerDialog.showActionToast("Two-page mode is enabled")
+            }
+        }
+        onBookmarkRequested: {
+            const wasActive = Boolean(readerSessionController.bookmarkActive)
+            readerSessionController.toggleReaderBookmark()
+            const isActive = Boolean(readerSessionController.bookmarkActive)
+            if (wasActive === isActive) return
+            readerDialog.showActionToast(isActive ? "Page bookmarked" : "Bookmark removed")
+        }
         onBookmarkJumpRequested: readerSessionController.jumpToReaderBookmark()
-        onFavoriteRequested: readerSessionController.toggleReaderFavorite()
+        onFavoriteRequested: {
+            const wasActive = Boolean(readerSessionController.favoriteActive)
+            readerSessionController.toggleReaderFavorite()
+            const isActive = Boolean(readerSessionController.favoriteActive)
+            if (wasActive === isActive) return
+            readerDialog.showActionToast(
+                isActive
+                    ? "Issue added to Favorites"
+                    : "Issue removed from Favorites"
+            )
+        }
         onDeletePageRequested: function(pageIndex) {
             root.requestDeleteReaderPageConfirmation(root.readerComicId, pageIndex)
         }
-        onMangaModeToggleRequested: readerSessionController.toggleReaderMangaMode()
+        onMangaModeToggleRequested: {
+            const wasEnabled = Boolean(root.readerMangaModeEnabled)
+            readerSessionController.toggleReaderMangaMode()
+            const isEnabled = Boolean(root.readerMangaModeEnabled)
+            if (wasEnabled === isEnabled) return
+            readerDialog.showActionToast(
+                isEnabled
+                    ? "Manga reading mode is enabled"
+                    : "Manga reading mode is disabled"
+            )
+        }
         onSettingsRequested: root.openSettingsDialog("reader", true)
-        onCopyImageRequested: readerSessionController.copyCurrentReaderImage()
+        onCopyImageRequested: {
+            const copyError = String(readerSessionController.copyCurrentReaderImage() || "").trim()
+            if (copyError.length < 1) {
+                readerDialog.showActionToast("Page image copied")
+            }
+        }
         onMarkAsReadRequested: readerSessionController.markCurrentReaderIssueReadAndAdvance()
         onReadFromStartRequested: readerSessionController.restartFromBeginning()
         onFullscreenToggleRequested: readerSessionController.toggleFullscreenMode()

@@ -34,6 +34,7 @@ Popup {
     property bool fullscreenMode: false
     property bool lightThemeEnabled: false
     property bool favoriteActive: false
+    property bool actionNotificationsEnabled: true
     property bool inputSuspended: false
     property string magnifierSizePreset: "Medium"
     property alias magnifierModeEnabled: popupStateController.magnifierModeEnabled
@@ -153,10 +154,12 @@ Popup {
     readonly property color pageListFillColor: readerTheme.pageListFillColor
     readonly property color toolbarToggleActiveColor: readerTheme.toolbarToggleActiveColor
     readonly property color readingModeActiveColor: readerTheme.readingModeActiveColor
+    readonly property color actionToastTextColor: "#ffffff"
     readonly property int pageAreaLeft: sideButtonOffset + sideButtonWidth + sideButtonImageGap
     readonly property int pageAreaRightInset: sideButtonOffset + sideButtonWidth + sideButtonImageGap
     readonly property int pageAreaTop: toolbarHeight
     readonly property int pageAreaBottomInset: footerBandHeight
+    readonly property int actionToastRightMargin: 14 + Math.round((closeButtonSize - closeIconSize) / 2)
     readonly property string pageCounterText: {
         const total = Math.max(0, Number(pageCount || 0))
         if (total < 1) return ""
@@ -246,10 +249,29 @@ Popup {
 
     function toggleMagnifierMode() {
         popupStateController.toggleMagnifierMode()
+        if (!actionNotificationsEnabled) return
+        showActionToast(
+            popupStateController.magnifierModeEnabled
+                ? "Magnifier is enabled"
+                : "Magnifier is disabled"
+        )
     }
 
     function toggleFullscreenMode() {
         popupStateController.toggleFullscreenMode()
+    }
+
+    function hideActionToast() {
+        actionToastAnimation.stop()
+        actionToast.opacity = 0
+        actionToast.text = ""
+    }
+
+    function showActionToast(messageText) {
+        const text = String(messageText || "").trim()
+        if (!actionNotificationsEnabled || text.length < 1 || !root.visible) return
+        actionToast.text = text
+        actionToastAnimation.restart()
     }
 
     component HoverButton: Item {
@@ -773,6 +795,59 @@ Popup {
             && root.pageCount > 0
             && root.pageIndex > 0
         onActivated: root.readFromStartRequested()
+    }
+
+    Text {
+        id: actionToast
+        visible: opacity > 0
+        opacity: 0
+        z: 20
+        anchors.right: parent.right
+        anchors.rightMargin: root.actionToastRightMargin
+        anchors.verticalCenter: markAsReadButton.verticalCenter
+
+        text: ""
+        color: root.actionToastTextColor
+        font.family: root.uiFontFamily
+        font.pixelSize: 13
+        font.bold: true
+    }
+
+    SequentialAnimation {
+        id: actionToastAnimation
+        running: false
+
+        NumberAnimation {
+            target: actionToast
+            property: "opacity"
+            from: 0
+            to: 0.82
+            duration: 400
+            easing.type: Easing.InOutQuad
+        }
+        PauseAnimation {
+            duration: 1200
+        }
+        NumberAnimation {
+            target: actionToast
+            property: "opacity"
+            from: 0.82
+            to: 0
+            duration: 400
+            easing.type: Easing.InOutQuad
+        }
+    }
+
+    onVisibleChanged: {
+        if (!visible) {
+            hideActionToast()
+        }
+    }
+
+    onActionNotificationsEnabledChanged: {
+        if (!actionNotificationsEnabled) {
+            hideActionToast()
+        }
     }
 
     Overlay.modal: Rectangle {

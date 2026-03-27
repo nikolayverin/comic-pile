@@ -99,6 +99,11 @@ var sectionOptionRows = {
             label: "Auto-open bookmarked page instead of last page",
             controlType: "switch",
             valueKey: "reader_auto_open_bookmarked_page_instead_of_last_page"
+        },
+        {
+            label: "Show action notifications in Reader",
+            controlType: "switch",
+            valueKey: "reader_show_action_notifications"
         }
     ],
     import_archives: [],
@@ -163,6 +168,7 @@ var defaultSettingsState = {
     reader_page_edge_behavior: "Continue",
     reader_show_bookmark_ribbon_on_grid_covers: true,
     reader_auto_open_bookmarked_page_instead_of_last_page: true,
+    reader_show_action_notifications: true,
 
     import_double_click_archive_into_library: false,
     import_treat_image_folders_as_issues: false,
@@ -201,6 +207,7 @@ var defaultReaderMagnifierSize = defaultSettingsState.reader_magnifier_size
 var defaultReaderPageEdgeBehavior = defaultSettingsState.reader_page_edge_behavior
 var defaultReaderShowBookmarkRibbonOnGridCovers = defaultSettingsState.reader_show_bookmark_ribbon_on_grid_covers
 var defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage = defaultSettingsState.reader_auto_open_bookmarked_page_instead_of_last_page
+var defaultReaderShowActionNotifications = defaultSettingsState.reader_show_action_notifications
 var defaultImportDoubleClickArchiveIntoLibrary = defaultSettingsState.import_double_click_archive_into_library
 var defaultImportTreatImageFoldersAsIssues = defaultSettingsState.import_treat_image_folders_as_issues
 var defaultAppearanceLibraryBackground = defaultSettingsState.appearance_library_background

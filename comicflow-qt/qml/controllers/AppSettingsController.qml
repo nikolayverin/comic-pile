@@ -19,6 +19,7 @@ Item {
     readonly property string defaultReaderPageEdgeBehavior: SettingsCatalog.defaultReaderPageEdgeBehavior
     readonly property bool defaultReaderShowBookmarkRibbonOnGridCovers: SettingsCatalog.defaultReaderShowBookmarkRibbonOnGridCovers
     readonly property bool defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage: SettingsCatalog.defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
+    readonly property bool defaultReaderShowActionNotifications: SettingsCatalog.defaultReaderShowActionNotifications
     readonly property bool defaultImportDoubleClickArchiveIntoLibrary: SettingsCatalog.defaultImportDoubleClickArchiveIntoLibrary
     readonly property bool defaultImportTreatImageFoldersAsIssues: SettingsCatalog.defaultImportTreatImageFoldersAsIssues
     readonly property string defaultAppearanceLibraryBackground: SettingsCatalog.defaultAppearanceLibraryBackground
@@ -203,6 +204,9 @@ Item {
         if (key === "reader_auto_open_bookmarked_page_instead_of_last_page") {
             return normalizeBoolean(readerAutoOpenBookmarkedPageInsteadOfLastPage, fallbackValue)
         }
+        if (key === "reader_show_action_notifications") {
+            return normalizeBoolean(readerShowActionNotifications, fallbackValue)
+        }
         if (key === "import_double_click_archive_into_library") {
             return normalizeBoolean(importDoubleClickArchiveIntoLibrary, fallbackValue)
         }
@@ -290,6 +294,13 @@ Item {
             readerAutoOpenBookmarkedPageInsteadOfLastPage = normalizeBoolean(
                 nextValue,
                 defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
+            )
+            return
+        }
+        if (key === "reader_show_action_notifications") {
+            readerShowActionNotifications = normalizeBoolean(
+                nextValue,
+                defaultReaderShowActionNotifications
             )
             return
         }
@@ -394,6 +405,7 @@ Item {
         property string readerPageEdgeBehavior: controller.defaultReaderPageEdgeBehavior
         property bool readerShowBookmarkRibbonOnGridCovers: controller.defaultReaderShowBookmarkRibbonOnGridCovers
         property bool readerAutoOpenBookmarkedPageInsteadOfLastPage: controller.defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
+        property bool readerShowActionNotifications: controller.defaultReaderShowActionNotifications
         property bool importDoubleClickArchiveIntoLibrary: controller.defaultImportDoubleClickArchiveIntoLibrary
         property bool importTreatImageFoldersAsIssues: controller.defaultImportTreatImageFoldersAsIssues
         property string appearanceLibraryBackground: controller.defaultAppearanceLibraryBackground
@@ -439,6 +451,10 @@ Item {
     property bool readerAutoOpenBookmarkedPageInsteadOfLastPage: normalizeBoolean(
         settingsStore.readerAutoOpenBookmarkedPageInsteadOfLastPage,
         defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
+    )
+    property bool readerShowActionNotifications: normalizeBoolean(
+        settingsStore.readerShowActionNotifications,
+        defaultReaderShowActionNotifications
     )
     property bool importDoubleClickArchiveIntoLibrary: normalizeBoolean(
         settingsStore.importDoubleClickArchiveIntoLibrary,
