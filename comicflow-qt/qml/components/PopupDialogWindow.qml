@@ -18,6 +18,7 @@ Popup {
     property real titleTopMargin: -1
     property bool attentionActive: false
     property color attentionColor: themeColors.dialogAttentionColor
+    property int fadeDurationMs: 150
     default property alias bodyData: shell.bodyData
     property alias bodyHost: shell.bodyHost
 
@@ -28,6 +29,26 @@ Popup {
 
     PopupStyle {
         id: popupStyleFallback
+    }
+
+    enter: Transition {
+        NumberAnimation {
+            property: "opacity"
+            from: 0
+            to: 1
+            duration: root.fadeDurationMs
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    exit: Transition {
+        NumberAnimation {
+            property: "opacity"
+            from: 1
+            to: 0
+            duration: root.fadeDurationMs
+            easing.type: Easing.OutCubic
+        }
     }
 
     Overlay.modal: Rectangle {

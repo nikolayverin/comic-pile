@@ -2797,6 +2797,13 @@ ApplicationWindow {
         opacity: root.startupPrimaryContentVisible ? 1.0 : 0.0
         enabled: root.startupPrimaryContentVisible
 
+        Behavior on opacity {
+            NumberAnimation {
+                duration: root.motionSlowMs
+                easing.type: Easing.OutCubic
+            }
+        }
+
         TopBarMenu {
             id: topBarMenu
             Layout.fillWidth: true
@@ -2859,10 +2866,19 @@ ApplicationWindow {
         }
 
         Rectangle {
+            id: dbHealthBanner
             Layout.fillWidth: true
             Layout.preferredHeight: root.startupDbHealthWarningVisible ? 34 : 0
-            visible: root.startupDbHealthWarningVisible
+            visible: root.startupDbHealthWarningVisible || opacity > 0
+            opacity: root.startupDbHealthWarningVisible ? 1 : 0
             color: root.dbHealthBannerBg
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.motionBaseMs
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             Label {
                 anchors.fill: parent

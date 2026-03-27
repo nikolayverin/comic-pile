@@ -25,6 +25,8 @@ Item {
     property int cleanupProcessedCount: 0
     property string cleanupCurrentFileName: ""
     property alias dialogItem: importProgressDialog
+    readonly property bool presented: active && !blockedByModalPopup
+    readonly property int fadeDurationMs: 150
 
     signal cancelRequested()
     signal hidden()
@@ -43,12 +45,20 @@ Item {
         return parts.length > 0 ? String(parts[parts.length - 1] || "") : normalized
     }
 
-    visible: active && !blockedByModalPopup
+    visible: presented || opacity > 0
+    opacity: presented ? 1 : 0
     z: 980
 
     onVisibleChanged: {
         if (!visible) {
             hidden()
+        }
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: root.fadeDurationMs
+            easing.type: Easing.OutCubic
         }
     }
 
@@ -109,6 +119,7 @@ Item {
         anchors.fill: parent
         acceptedButtons: Qt.AllButtons
         hoverEnabled: true
+        enabled: root.presented
         onClicked: function(mouse) {
             const insideDialog = mouse.x >= importProgressDialog.x
                 && mouse.x <= (importProgressDialog.x + importProgressDialog.width)
@@ -126,7 +137,7 @@ Item {
 
     Shortcut {
         sequence: "Escape"
-        enabled: root.visible && !root.cancelFlowActive
+        enabled: root.presented && !root.cancelFlowActive
         onActivated: root.cancelRequested()
     }
 

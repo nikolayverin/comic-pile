@@ -16,6 +16,7 @@ Item {
     property bool presented: false
     property real topBoundaryY: 0
     property bool hideIfOutOfBounds: false
+    readonly property int fadeDurationMs: 120
     readonly property bool interactionActive: root.presented
         && (menuHoverHandler.hovered || editButton.interactionActive || replaceButton.interactionActive || deleteButton.interactionActive)
     readonly property real anchorCenterX: {
@@ -41,16 +42,25 @@ Item {
     readonly property int arrowHeight: 8
     readonly property real desiredY: Math.round(root.anchorTopY - root.height)
     readonly property bool fitsTopBoundary: desiredY >= root.topBoundaryY
-
-    width: root.bodyWidth
-    height: root.bodyHeight + root.arrowHeight
-    visible: root.presented
+    readonly property bool shouldBeVisible: root.presented
         && root.parent !== null
         && root.anchorItem !== null
         && (!root.hideIfOutOfBounds || root.fitsTopBoundary)
+
+    width: root.bodyWidth
+    height: root.bodyHeight + root.arrowHeight
+    visible: shouldBeVisible || opacity > 0
+    opacity: shouldBeVisible ? 1 : 0
     x: Math.round(root.anchorCenterX - (root.width / 2))
     y: Math.max(0, root.desiredY)
     z: 1000
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: root.fadeDurationMs
+            easing.type: Easing.OutCubic
+        }
+    }
 
     Rectangle {
         id: backgroundRect

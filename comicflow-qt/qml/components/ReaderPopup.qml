@@ -105,6 +105,7 @@ Popup {
     readonly property int listScrollThumbMinHeight: 36
     readonly property int listScrollThumbInset: 4
     readonly property int pageListBottomImageGap: 10
+    readonly property int pageListFadeDurationMs: 120
     readonly property int bookmarkDecorationWidth: 33
     readonly property int bookmarkDecorationHeight: 104
     readonly property int bookmarkDecorationRightEdgeOffset: 220
@@ -1735,7 +1736,8 @@ Popup {
 
         Item {
             id: pageListPopup
-            visible: root.pageListVisible && root.pageCount > 0
+            visible: (root.pageListVisible && root.pageCount > 0) || opacity > 0
+            opacity: (root.pageListVisible && root.pageCount > 0) ? 1 : 0
             width: root.listWidth
             height: root.listHeight
             anchors.horizontalCenter: pageCounterButton.horizontalCenter
@@ -1745,6 +1747,13 @@ Popup {
                     ? pageViewport.y + Math.round((pageViewport.height - displayedHeight) / 2) + displayedHeight
                     : pageViewport.y + pageViewport.height
                 return Math.round(imageBottom - root.pageListBottomImageGap - height)
+            }
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.pageListFadeDurationMs
+                    easing.type: Easing.OutCubic
+                }
             }
 
             Rectangle {
@@ -1779,6 +1788,7 @@ Popup {
 
                     property bool hovered: rowMouse.containsMouse
                     property bool selected: index === root.pageIndex
+                    property bool highlightVisible: hovered || selected
 
                     Rectangle {
                         anchors.centerIn: parent
@@ -1786,7 +1796,15 @@ Popup {
                         height: root.listRowHoverHeight
                         radius: height / 2
                         color: root.lightThemeEnabled ? root.panelColor : root.chromeColor
-                        visible: parent.hovered || parent.selected
+                        visible: opacity > 0
+                        opacity: parent.highlightVisible ? 1 : 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: root.pageListFadeDurationMs
+                                easing.type: Easing.OutCubic
+                            }
+                        }
                     }
 
                     Text {

@@ -12,6 +12,7 @@ Item {
     readonly property var root: rootObject
     readonly property var startupController: startupControllerRef
     readonly property var uiTokens: uiTokensRef
+    readonly property int startupFadeDurationMs: 180
 
     PopupStyle { id: startupInventoryOverlayStyle }
 
@@ -24,7 +25,16 @@ Item {
         cache: false
         smooth: true
         fillMode: Image.Stretch
-        visible: root.showStartupPreview && status === Image.Ready && !root.startupPrimaryContentVisible
+        opacity: root.startupPrimaryContentVisible ? 0 : 1
+        visible: root.showStartupPreview
+            && status === Image.Ready
+            && (!root.startupPrimaryContentVisible || opacity > 0)
+        Behavior on opacity {
+            NumberAnimation {
+                duration: startupLayer.startupFadeDurationMs
+                easing.type: Easing.OutCubic
+            }
+        }
         onStatusChanged: {
             if (
                 status === Image.Error
@@ -41,23 +51,43 @@ Item {
     }
 
     Rectangle {
+        id: startupFallbackLayer
         anchors.fill: parent
         z: 9999
-        visible: !root.startupPrimaryContentVisible && !startupPreviewLayer.visible
+        opacity: root.startupPrimaryContentVisible ? 0 : 1
+        visible: !startupPreviewLayer.visible
+            && (!root.startupPrimaryContentVisible || opacity > 0)
         color: root.bgApp
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: startupLayer.startupFadeDurationMs
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
     Rectangle {
+        id: startupInventoryOverlay
         anchors.fill: parent
         z: 11000
-        visible: root.startupInventoryRebuildInProgress
+        opacity: root.startupInventoryRebuildInProgress ? 1 : 0
+        visible: root.startupInventoryRebuildInProgress || opacity > 0
         color: startupInventoryOverlayStyle.overlayColor
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 160
+                easing.type: Easing.OutCubic
+            }
+        }
 
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
             hoverEnabled: true
             preventStealing: true
+            enabled: startupInventoryOverlay.opacity > 0
             onPressed: function(mouse) { mouse.accepted = true }
             onClicked: function(mouse) { mouse.accepted = true }
             onWheel: function(wheel) { wheel.accepted = true }
@@ -80,8 +110,8 @@ Item {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: startupInventoryOverlayText.bottom
             anchors.topMargin: 42
-            running: parent.visible
-            visible: parent.visible
+            running: startupInventoryOverlay.opacity > 0
+            visible: startupInventoryOverlay.opacity > 0
             width: 28
             height: 28
         }

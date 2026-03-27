@@ -396,7 +396,8 @@ Rectangle {
     Rectangle {
         id: statusChip
         z: 3
-        visible: root.showStatusChip && root.statusChipText.length > 0
+        visible: (root.showStatusChip && root.statusChipText.length > 0) || opacity > 0
+        opacity: (root.showStatusChip && root.statusChipText.length > 0) ? 1 : 0
         anchors.verticalCenter: centerTitleBlock.verticalCenter
         anchors.right: root.showWindowControls ? windowControls.left : parent.right
         anchors.rightMargin: 10
@@ -406,6 +407,13 @@ Rectangle {
         radius: 8
         width: Math.max(1, statusText.implicitWidth + 14)
         height: 18
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 160
+                easing.type: Easing.OutCubic
+            }
+        }
 
         Text {
             id: statusText

@@ -25,6 +25,7 @@ Item {
     property int scrollThumbMinHeight: popupMenuStyle.scrollThumbMinHeight
     property color scrollThumbColor: popupMenuStyle.scrollThumbColor
     property int scrollThumbInset: popupMenuStyle.scrollThumbInset
+    property int hoverFadeDurationMs: 110
 
     readonly property var visibleMenuItems: buildVisibleMenuItems()
     readonly property int visibleItemCount: visibleMenuItems.length
@@ -82,6 +83,7 @@ Item {
             readonly property bool lastVisibleRow: index === root.visibleItemCount - 1
             readonly property bool singleVisibleRow: root.visibleItemCount === 1
             readonly property bool itemHighlighted: modelData.highlighted === true
+            readonly property bool hoverPresented: itemMouseArea.containsMouse || menuRow.itemHighlighted
 
             width: listView.width
             height: root.rowHeight
@@ -89,7 +91,16 @@ Item {
 
             Canvas {
                 anchors.fill: parent
-                visible: itemMouseArea.containsMouse || menuRow.itemHighlighted
+                visible: opacity > 0
+                opacity: menuRow.hoverPresented ? 1 : 0
+
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: root.hoverFadeDurationMs
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
                 onPaint: {
                     const ctx = getContext("2d")
                     const inset = Math.max(0, root.highlightInset)

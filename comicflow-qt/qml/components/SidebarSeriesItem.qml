@@ -32,7 +32,9 @@ Item {
     property color menuPopupHoverColor: popupMenuStyle.hoverColor
     property color menuPopupTextColor: popupMenuStyle.textColor
     property color menuPopupDisabledTextColor: popupMenuStyle.disabledTextColor
+    readonly property int utilityFadeDurationMs: 110
     readonly property var menuItems: buildMenuItems()
+    readonly property bool utilityVisible: rowMouseArea.containsMouse || root.selected
 
     signal seriesSelectionRequested(int modifiers)
     signal addFilesRequested()
@@ -150,7 +152,15 @@ Item {
             font.family: root.uiFontFamily
             font.pixelSize: root.uiFontPixelSize
             font.weight: Font.Normal
-            visible: rowMouseArea.containsMouse || root.selected
+            visible: root.utilityVisible || opacity > 0
+            opacity: root.utilityVisible ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.utilityFadeDurationMs
+                    easing.type: Easing.OutCubic
+                }
+            }
         }
 
         Item {
@@ -161,7 +171,15 @@ Item {
             width: hoverRect.height
             height: hoverRect.height
             z: 1
-            visible: rowMouseArea.containsMouse || root.selected
+            visible: root.utilityVisible || opacity > 0
+            opacity: root.utilityVisible ? 1 : 0
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: root.utilityFadeDurationMs
+                    easing.type: Easing.OutCubic
+                }
+            }
 
             Image {
                 anchors.centerIn: parent
@@ -174,6 +192,7 @@ Item {
 
             MouseArea {
                 anchors.fill: parent
+                enabled: root.utilityVisible
                 cursorShape: Qt.PointingHandCursor
                 onClicked: function(mouse) {
                     root.dismissMenusRequested()
