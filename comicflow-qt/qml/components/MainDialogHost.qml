@@ -68,7 +68,11 @@ Item {
         processedCount: root.importProcessed
         totalBytes: root.importTotalBytes
         processedBytes: root.importProcessedBytes
-        cancelInProgress: root.importCancelRequested
+        cancelPending: root.importCancelRequested
+        cleanupActive: root.importCleanupActive
+        cleanupTotalCount: root.importCleanupTotalCount
+        cleanupProcessedCount: root.importCleanupProcessedCount
+        cleanupCurrentFileName: root.importCleanupCurrentFileName
         onCancelRequested: importController.cancelImportBatch()
         onHidden: popupController.clearCriticalPopupAttention(importModalOverlay.dialogItem)
     }

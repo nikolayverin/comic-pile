@@ -15,20 +15,24 @@ ColumnLayout {
     property int totalCount: 0
     property int processedCount: 0
     property real progressFraction: 0
+    property string statusTextOverride: ""
+    property bool forceIndeterminate: false
 
     readonly property real clampedFraction: Math.max(0, Math.min(1, progressFraction))
     readonly property int progressPercent: Math.round(clampedFraction * 100)
     readonly property int rightInfoWidth: popupStyle.importProgressRightInfoWidth
     readonly property bool singleItemMode: active && totalCount === 1
-    readonly property bool indeterminate: active && totalCount <= 1
+    readonly property bool indeterminate: forceIndeterminate || (active && totalCount <= 1)
     readonly property string fileCounterText: active && !indeterminate && totalCount > 0
         ? String(Math.max(0, Math.min(totalCount, processedCount))) + " / " + String(Math.max(0, totalCount))
         : ""
     readonly property string rightStatusText: !active
         ? ""
-        : (indeterminate
+        : (statusTextOverride.length > 0
+            ? statusTextOverride
+            : (indeterminate
             ? (singleItemMode ? "Importing..." : "Working...")
-            : (String(progressPercent) + "%"))
+            : (String(progressPercent) + "%")))
 
     visible: reserveSpace || active
     spacing: popupStyle.dialogPlainTextSpacing

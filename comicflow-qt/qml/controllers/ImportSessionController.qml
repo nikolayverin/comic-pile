@@ -21,6 +21,7 @@ Item {
     property int importImportedCount: 0
     property int importErrorCount: 0
     property bool importCancelRequested: false
+    property string importLifecycleState: "idle"
     property string importCurrentPath: ""
     property string importCurrentFileName: ""
     property bool importPausedForConflict: false
@@ -50,6 +51,12 @@ Item {
     property var importPendingOldFileDeletes: []
     property int importArchiveNormalizationRequestId: -1
     property var importPendingStepContext: ({})
+    property var importCleanupQueue: []
+    property int importCleanupTotalCount: 0
+    property int importCleanupProcessedCount: 0
+    property string importCleanupCurrentFileName: ""
+
+    readonly property bool importCleanupActive: importLifecycleState === "cleanup"
 
     function root() {
         return rootObject
@@ -197,6 +204,222 @@ Item {
         libraryModelRef.deleteFileAtPath(normalizedPath)
     }
 
+    function resetImportConflictState(closeDialog) {
+        importPausedForConflict = false
+        importConflictContext = ({})
+        importConflictNextContext = ({})
+        importConflictIncomingLabel = ""
+        importConflictExistingLabel = ""
+        importConflictNextIncomingLabel = ""
+        importConflictNextExistingLabel = ""
+        importConflictBatchAction = ""
+        importConflictBatchDuplicateCount = 0
+        importConflictOperationActive = false
+        importConflictPendingAction = ""
+        importConflictProgressCurrentFileName = ""
+        importConflictProgressProcessedCount = 0
+        importConflictProgressTotalCount = 0
+        if (closeDialog === true && importConflictDialogRef && typeof importConflictDialogRef.close === "function") {
+            importConflictDialogRef.close()
+        }
+    }
+
+    function resetImportCleanupState() {
+        importCleanupQueue = []
+        importCleanupTotalCount = 0
+        importCleanupProcessedCount = 0
+        importCleanupCurrentFileName = ""
+    }
+
+    function rollbackDisplayName(op) {
+        const entry = op || ({})
+        const explicitLabel = String(entry.label || "").trim()
+        if (explicitLabel.length > 0) return explicitLabel
+
+        const oldFilename = String(entry.oldFilename || "").trim()
+        if (oldFilename.length > 0) return oldFilename
+
+        const newFileName = fileNameFromPath(String(entry.newFilePath || ""))
+        if (newFileName.length > 0) return newFileName
+
+        const oldFileName = fileNameFromPath(String(entry.oldFilePath || ""))
+        if (oldFileName.length > 0) return oldFileName
+
+        const comicId = Number(entry.comicId || 0)
+        return comicId > 0 ? ("Issue #" + String(comicId)) : "Imported item"
+    }
+
+    function buildImportCleanupQueue() {
+        const queue = []
+        for (let i = importBatchRollbackOps.length - 1; i >= 0; i -= 1) {
+            queue.push(importBatchRollbackOps[i] || ({}))
+        }
+        return queue
+    }
+
+    function rollbackSingleImportOp(op) {
+        const entry = op || ({})
+        const type = String(entry.type || "")
+        const comicId = Number(entry.comicId || 0)
+        if (comicId < 1 || !libraryModelRef) return
+
+        const oldImportSignals = cloneVariantMap(entry.oldImportSignals)
+        let rollbackError = ""
+
+        if (type === "replace") {
+            const backupFilePath = String(entry.backupFilePath || "")
+            const oldFilePath = String(entry.oldFilePath || "")
+            const oldFilename = String(entry.oldFilename || "")
+            if (backupFilePath.length > 0) {
+                rollbackError = String(
+                    libraryModelRef.restoreReplacedComicFileFromBackupEx(
+                        comicId,
+                        backupFilePath,
+                        oldFilePath,
+                        oldFilename,
+                        oldImportSignals
+                    ) || ""
+                )
+            } else {
+                rollbackError = String(libraryModelRef.detachComicFileKeepMetadata(comicId) || "")
+                if (rollbackError.length < 1) {
+                    const newFilePath = String(entry.newFilePath || "")
+                    if (newFilePath.length > 0) {
+                        const deleteNewError = String(libraryModelRef.deleteFileAtPath(newFilePath) || "")
+                        if (deleteNewError.length > 0) {
+                            rollbackError = deleteNewError
+                        }
+                    }
+                }
+                if (rollbackError.length < 1) {
+                    rollbackError = String(
+                        libraryModelRef.relinkComicFileKeepMetadataEx(
+                            comicId,
+                            oldFilePath,
+                            oldFilename,
+                            oldImportSignals
+                        ) || ""
+                    )
+                }
+            }
+        } else if (type === "restored") {
+            rollbackError = String(libraryModelRef.detachComicFileKeepMetadata(comicId) || "")
+            if (rollbackError.length < 1) {
+                const restoredFilePath = String(entry.newFilePath || "")
+                if (restoredFilePath.length > 0) {
+                    rollbackError = String(libraryModelRef.deleteFileAtPath(restoredFilePath) || "")
+                }
+            }
+        } else {
+            rollbackError = String(libraryModelRef.deleteComicHard(comicId) || "")
+        }
+
+        if (rollbackError.length > 0) {
+            pushImportFailure(
+                "[rollback] issue " + String(comicId),
+                "Rollback failed: " + rollbackError,
+                "runtime_error"
+            )
+        }
+
+        const fingerprintHistoryIds = Array.isArray(entry.fingerprintHistoryIds)
+            ? entry.fingerprintHistoryIds.slice(0)
+            : []
+        if (fingerprintHistoryIds.length > 0) {
+            const fingerprintCleanupError = String(
+                libraryModelRef.deleteFileFingerprintHistoryEntries(fingerprintHistoryIds) || ""
+            )
+            if (fingerprintCleanupError.length > 0) {
+                pushImportFailure(
+                    "[rollback-history] issue " + String(comicId),
+                    "Fingerprint history cleanup failed: " + fingerprintCleanupError,
+                    "runtime_error"
+                )
+            }
+        }
+    }
+
+    function finalizeImportBatch(cancelled) {
+        importBatchTimer.stop()
+        importConflictActionTimer.stop()
+        importCleanupTimer.stop()
+        clearPendingImportStepContext()
+        resetImportConflictState(true)
+
+        importInProgress = false
+        importCancelRequested = false
+        importLifecycleState = "idle"
+        importCurrentPath = ""
+        importCurrentFileName = ""
+
+        if (!cancelled) {
+            commitPendingReplaceDeletes()
+        }
+
+        const shouldReloadLibrary = importImportedCount > 0 || cancelled === true
+        if (shouldReloadLibrary && libraryModelRef) {
+            if (!cancelled && importImportedCount > 0) {
+                requestImportNewSeriesFocusAfterReload()
+            } else {
+                clearImportSeriesFocusState()
+            }
+            libraryModelRef.reload()
+        } else {
+            clearImportSeriesFocusState()
+        }
+
+        lastFailedImportPaths = importFailedPaths.slice(0)
+        lastFailedImportErrors = importErrors.slice(0)
+        rebuildFailedImportItemsModel()
+
+        importBatchRollbackOps = []
+        importPendingOldFileDeletes = []
+        importQueue = []
+        resetImportCleanupState()
+
+        if (cancelled === true) {
+            if (lastFailedImportPaths.length > 0) {
+                openExclusivePopup(failedImportsDialogRef)
+            }
+            return
+        }
+
+        if (importErrorCount === 0) return
+        openExclusivePopup(failedImportsDialogRef)
+    }
+
+    function beginImportCleanup() {
+        if (!importInProgress || importCleanupActive) return
+
+        importBatchTimer.stop()
+        importConflictActionTimer.stop()
+        importQueue = []
+        resetImportConflictState(true)
+
+        importLifecycleState = "cleanup"
+        importCleanupQueue = buildImportCleanupQueue()
+        importCleanupTotalCount = importCleanupQueue.length
+        importCleanupProcessedCount = 0
+        importCleanupCurrentFileName = importCleanupQueue.length > 0
+            ? rollbackDisplayName(importCleanupQueue[0])
+            : ""
+
+        if (importCleanupQueue.length < 1) {
+            finalizeImportBatch(true)
+            return
+        }
+
+        importCleanupTimer.start()
+    }
+
+    function finishImportBatch(cancelled) {
+        if (cancelled === true) {
+            beginImportCleanup()
+            return
+        }
+        finalizeImportBatch(false)
+    }
+
     function finalizeImportStepResult(sourcePath, queuedFileSizeBytes, result, cleanupPath, cleanupIsTemporary, stepContext) {
         const effectiveResult = result || ({})
         const context = stepContext || ({})
@@ -278,6 +501,7 @@ Item {
         const op = {
             type: opType,
             comicId: comicId,
+            label: String((importResult || {}).filename || "").trim(),
             fingerprintHistoryIds: Array.isArray((importResult || {}).fingerprintHistoryIds)
                 ? (importResult || {}).fingerprintHistoryIds.slice(0)
                 : []
@@ -293,85 +517,6 @@ Item {
 
     function commitPendingReplaceDeletes() {
         importPendingOldFileDeletes = []
-    }
-
-    function rollbackCurrentImportBatch() {
-        if (!importBatchRollbackOps || importBatchRollbackOps.length < 1 || !libraryModelRef) return
-
-        for (let i = importBatchRollbackOps.length - 1; i >= 0; i -= 1) {
-            const op = importBatchRollbackOps[i] || {}
-            const type = String(op.type || "")
-            const comicId = Number(op.comicId || 0)
-            if (comicId < 1) continue
-            const oldImportSignals = cloneVariantMap(op.oldImportSignals)
-
-            let rollbackError = ""
-            if (type === "replace") {
-                const backupFilePath = String(op.backupFilePath || "")
-                const oldFilePath = String(op.oldFilePath || "")
-                const oldFilename = String(op.oldFilename || "")
-                if (backupFilePath.length > 0) {
-                    rollbackError = String(
-                        libraryModelRef.restoreReplacedComicFileFromBackupEx(
-                            comicId,
-                            backupFilePath,
-                            oldFilePath,
-                            oldFilename,
-                            oldImportSignals
-                        ) || ""
-                    )
-                } else {
-                    rollbackError = String(libraryModelRef.detachComicFileKeepMetadata(comicId) || "")
-                    if (rollbackError.length < 1) {
-                        const newFilePath = String(op.newFilePath || "")
-                        if (newFilePath.length > 0) {
-                            const deleteNewError = String(libraryModelRef.deleteFileAtPath(newFilePath) || "")
-                            if (deleteNewError.length > 0) {
-                                rollbackError = deleteNewError
-                            }
-                        }
-                    }
-                    if (rollbackError.length < 1) {
-                        rollbackError = String(
-                            libraryModelRef.relinkComicFileKeepMetadataEx(
-                                comicId,
-                                oldFilePath,
-                                oldFilename,
-                                oldImportSignals
-                            ) || ""
-                        )
-                    }
-                }
-            } else if (type === "restored") {
-                rollbackError = String(libraryModelRef.detachComicFileKeepMetadata(comicId) || "")
-                if (rollbackError.length < 1) {
-                    const restoredFilePath = String(op.newFilePath || "")
-                    if (restoredFilePath.length > 0) {
-                        rollbackError = String(libraryModelRef.deleteFileAtPath(restoredFilePath) || "")
-                    }
-                }
-            } else {
-                rollbackError = String(libraryModelRef.deleteComicHard(comicId) || "")
-            }
-
-            if (rollbackError.length > 0) {
-                pushImportFailure("[rollback] issue " + String(comicId), "Rollback failed: " + rollbackError, "runtime_error")
-            }
-
-            const fingerprintHistoryIds = Array.isArray(op.fingerprintHistoryIds) ? op.fingerprintHistoryIds.slice(0) : []
-            if (fingerprintHistoryIds.length > 0) {
-                const fingerprintCleanupError = String(
-                    libraryModelRef.deleteFileFingerprintHistoryEntries(fingerprintHistoryIds) || ""
-                )
-                if (fingerprintCleanupError.length > 0) {
-                    pushImportFailure(
-                        "[rollback-history] issue " + String(comicId),
-                        "Fingerprint history cleanup failed: " + fingerprintCleanupError,
-                        "runtime_error"
-                    )
-                }
-            }
-        }
     }
 
     function buildImportConflictExistingLabel(meta, fallbackExistingId) {
@@ -991,6 +1136,7 @@ Item {
         resetLastImportSessionState()
         captureImportSeriesFocusBaseline()
         importInProgress = true
+        importLifecycleState = "running"
         importConflictActionTimer.stop()
         importQueue = queue
         importTotal = queue.length
@@ -1011,20 +1157,8 @@ Item {
         importCurrentFileName = fileNameFromPath(importCurrentPath)
         importBatchRollbackOps = []
         importPendingOldFileDeletes = []
-        importPausedForConflict = false
-        importConflictContext = ({})
-        importConflictNextContext = ({})
-        importConflictIncomingLabel = ""
-        importConflictExistingLabel = ""
-        importConflictNextIncomingLabel = ""
-        importConflictNextExistingLabel = ""
-        importConflictBatchAction = ""
-        importConflictBatchDuplicateCount = 0
-        importConflictOperationActive = false
-        importConflictPendingAction = ""
-        importConflictProgressCurrentFileName = ""
-        importConflictProgressProcessedCount = 0
-        importConflictProgressTotalCount = 0
+        resetImportConflictState(false)
+        resetImportCleanupState()
         importErrors = []
         importFailedPaths = []
         clearPendingImportStepContext()
@@ -1047,69 +1181,6 @@ Item {
         }
     }
 
-    function finishImportBatch(cancelled) {
-        importBatchTimer.stop()
-        importConflictActionTimer.stop()
-        if (importConflictDialogRef && typeof importConflictDialogRef.close === "function") {
-            importConflictDialogRef.close()
-        }
-        importInProgress = false
-        importCancelRequested = false
-        importCurrentPath = ""
-        importCurrentFileName = ""
-        importPausedForConflict = false
-        importConflictContext = ({})
-        importConflictNextContext = ({})
-        importConflictIncomingLabel = ""
-        importConflictExistingLabel = ""
-        importConflictNextIncomingLabel = ""
-        importConflictNextExistingLabel = ""
-        importConflictBatchAction = ""
-        importConflictBatchDuplicateCount = 0
-        importConflictOperationActive = false
-        importConflictPendingAction = ""
-        importConflictProgressCurrentFileName = ""
-        importConflictProgressProcessedCount = 0
-        importConflictProgressTotalCount = 0
-        clearPendingImportStepContext()
-
-        if (cancelled === true) {
-            rollbackCurrentImportBatch()
-            importPendingOldFileDeletes = []
-        } else {
-            commitPendingReplaceDeletes()
-        }
-
-        const shouldReloadLibrary = importImportedCount > 0 || cancelled === true
-        if (shouldReloadLibrary && libraryModelRef) {
-            if (!cancelled && importImportedCount > 0) {
-                requestImportNewSeriesFocusAfterReload()
-            } else {
-                clearImportSeriesFocusState()
-            }
-            libraryModelRef.reload()
-        } else {
-            clearImportSeriesFocusState()
-        }
-
-        lastFailedImportPaths = importFailedPaths.slice(0)
-        lastFailedImportErrors = importErrors.slice(0)
-        rebuildFailedImportItemsModel()
-        importBatchRollbackOps = []
-        importPendingOldFileDeletes = []
-        importQueue = []
-
-        if (cancelled === true) {
-            if (lastFailedImportPaths.length > 0) {
-                openExclusivePopup(failedImportsDialogRef)
-            }
-            return
-        }
-
-        if (importErrorCount === 0) return
-        openExclusivePopup(failedImportsDialogRef)
-    }
-
     function processImportBatchStep() {
         try {
             if (!importInProgress) {
@@ -1122,7 +1193,7 @@ Item {
             }
             if (importCancelRequested) {
                 importQueue = []
-                finishImportBatch(true)
+                beginImportCleanup()
                 return
             }
             if (importQueue.length < 1) {
@@ -1221,10 +1292,11 @@ Item {
     }
 
     function cancelImportBatch() {
-        if (!importInProgress) return
+        if (!importInProgress || importCancelRequested || importCleanupActive) return
         importCancelRequested = true
+        importLifecycleState = "cancelling"
         if (importPausedForConflict) {
-            finishImportBatch(true)
+            beginImportCleanup()
         }
     }
 
@@ -1333,7 +1405,7 @@ Item {
 
             if (importCancelRequested) {
                 cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
-                finishImportBatch(true)
+                beginImportCleanup()
                 return
             }
 
@@ -1400,5 +1472,37 @@ Item {
         repeat: false
         running: false
         onTriggered: controller.executePendingImportConflictAction()
+    }
+
+    Timer {
+        id: importCleanupTimer
+        interval: 0
+        repeat: false
+        running: false
+        onTriggered: {
+            if (!controller.importCleanupActive) return
+
+            if (!controller.importCleanupQueue || controller.importCleanupQueue.length < 1) {
+                controller.finalizeImportBatch(true)
+                return
+            }
+
+            const nextQueue = controller.importCleanupQueue.slice(0)
+            const op = nextQueue.shift() || ({})
+            controller.importCleanupQueue = nextQueue
+            controller.importCleanupCurrentFileName = controller.rollbackDisplayName(op)
+            controller.rollbackSingleImportOp(op)
+            controller.importCleanupProcessedCount += 1
+
+            if (controller.importCleanupQueue.length < 1) {
+                controller.finalizeImportBatch(true)
+                return
+            }
+
+            controller.importCleanupCurrentFileName = controller.rollbackDisplayName(
+                controller.importCleanupQueue[0] || ({})
+            )
+            importCleanupTimer.restart()
+        }
     }
 }

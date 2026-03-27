@@ -21,8 +21,13 @@ Item {
     property alias importImportedCount: session.importImportedCount
     property alias importErrorCount: session.importErrorCount
     property alias importCancelRequested: session.importCancelRequested
+    property alias importLifecycleState: session.importLifecycleState
     property alias importCurrentPath: session.importCurrentPath
     property alias importCurrentFileName: session.importCurrentFileName
+    readonly property bool importCleanupActive: session.importCleanupActive
+    property alias importCleanupTotalCount: session.importCleanupTotalCount
+    property alias importCleanupProcessedCount: session.importCleanupProcessedCount
+    property alias importCleanupCurrentFileName: session.importCleanupCurrentFileName
     property alias importPausedForConflict: session.importPausedForConflict
     property alias importConflictContext: session.importConflictContext
     property alias importConflictNextContext: session.importConflictNextContext

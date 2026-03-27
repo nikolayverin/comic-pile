@@ -19,7 +19,11 @@ Item {
     property int processedCount: 0
     property double totalBytes: 0
     property double processedBytes: 0
-    property bool cancelInProgress: false
+    property bool cancelPending: false
+    property bool cleanupActive: false
+    property int cleanupTotalCount: 0
+    property int cleanupProcessedCount: 0
+    property string cleanupCurrentFileName: ""
     property alias dialogItem: importProgressDialog
 
     signal cancelRequested()
@@ -62,11 +66,35 @@ Item {
         ? Math.max(0, Math.min(totalCount, processedCount))
         : 0
     readonly property string fileCounterText: String(processedCounterValue) + " / " + String(Math.max(0, totalCount))
+    readonly property bool cancelFlowActive: cancelPending || cleanupActive
+    readonly property real cleanupProgressFraction: cleanupTotalCount > 0
+        ? Math.max(0, Math.min(1, cleanupProcessedCount / cleanupTotalCount))
+        : 0
     readonly property int rightInfoWidth: popupStyle.importProgressRightInfoWidth
     readonly property string queuedPreviewFileName: {
         if (!importQueue || importQueue.length < 1) return ""
         return fileNameFromPath(queueEntryPath(importQueue[0]))
     }
+    readonly property string dialogTitle: cancelFlowActive ? "Cancelling Import" : "Import In Progress"
+    readonly property string progressTitleText: cleanupActive ? "Cleanup progress" : "Current file"
+    readonly property string effectiveCurrentFileName: cleanupActive
+        ? (cleanupCurrentFileName.length > 0 ? cleanupCurrentFileName : "Cleaning up imported items...")
+        : (cancelPending
+            ? (currentFileName.length > 0 ? currentFileName : "Waiting for a safe stop...")
+            : (currentFileName.length > 0
+                ? currentFileName
+                : (queuedPreviewFileName.length > 0
+                    ? queuedPreviewFileName
+                    : (importQueue.length > 0 ? "Preparing import..." : "Finalizing..."))))
+    readonly property int effectiveTotalCount: cleanupActive ? Math.max(0, cleanupTotalCount) : totalCount
+    readonly property int effectiveProcessedCount: cleanupActive
+        ? Math.max(0, Math.min(cleanupTotalCount, cleanupProcessedCount))
+        : processedCounterValue
+    readonly property real effectiveProgressFraction: cleanupActive ? cleanupProgressFraction : progressFraction
+    readonly property string progressStatusText: cleanupActive
+        ? "Cleaning up..."
+        : (cancelPending ? "Cancelling..." : "")
+    readonly property bool progressForceIndeterminate: cancelPending && !cleanupActive
 
     PopupStyle {
         id: popupStyle
@@ -86,7 +114,7 @@ Item {
                 && mouse.x <= (importProgressDialog.x + importProgressDialog.width)
                 && mouse.y >= importProgressDialog.y
                 && mouse.y <= (importProgressDialog.y + importProgressDialog.height)
-            if (!insideDialog) {
+            if (!insideDialog && !root.cancelFlowActive) {
                 root.cancelRequested()
             }
             mouse.accepted = true
@@ -98,7 +126,7 @@ Item {
 
     Shortcut {
         sequence: "Escape"
-        enabled: root.visible
+        enabled: root.visible && !root.cancelFlowActive
         onActivated: root.cancelRequested()
     }
 
@@ -126,8 +154,12 @@ Item {
         PopupDialogShell {
             anchors.fill: parent
             popupStyle: popupStyle
-            title: "Import In Progress"
-            onCloseRequested: root.cancelRequested()
+            title: root.dialogTitle
+            onCloseRequested: {
+                if (!root.cancelFlowActive) {
+                    root.cancelRequested()
+                }
+            }
 
             PopupBodyColumn {
                 id: importProgressBody
@@ -139,14 +171,13 @@ Item {
                     popupStyle: popupStyle
                     active: true
                     reserveSpace: true
-                    currentFileName: root.currentFileName.length > 0
-                        ? root.currentFileName
-                        : (root.queuedPreviewFileName.length > 0
-                            ? root.queuedPreviewFileName
-                            : (root.importQueue.length > 0 ? "Preparing import..." : "Finalizing..."))
-                    totalCount: root.totalCount
-                    processedCount: root.processedCounterValue
-                    progressFraction: root.progressFraction
+                    titleText: root.progressTitleText
+                    currentFileName: root.effectiveCurrentFileName
+                    totalCount: root.effectiveTotalCount
+                    processedCount: root.effectiveProcessedCount
+                    progressFraction: root.effectiveProgressFraction
+                    statusTextOverride: root.progressStatusText
+                    forceIndeterminate: root.progressForceIndeterminate
                 }
 
                 PopupFooterRow {
@@ -164,8 +195,8 @@ Item {
                         hoverColor: popupStyle.footerButtonHoverColor
                         textColor: popupStyle.textColor
                         textPixelSize: popupStyle.footerButtonTextSize
-                        text: root.cancelInProgress ? "Cancelling..." : "Cancel"
-                        enabled: !root.cancelInProgress
+                        text: root.cleanupActive ? "Cleaning up..." : (root.cancelPending ? "Cancelling..." : "Cancel")
+                        enabled: !root.cancelFlowActive
                         onClicked: root.cancelRequested()
                     }
                 }

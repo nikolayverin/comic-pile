@@ -399,8 +399,13 @@ ApplicationWindow {
     property alias importImportedCount: importController.importImportedCount
     property alias importErrorCount: importController.importErrorCount
     property alias importCancelRequested: importController.importCancelRequested
+    property alias importLifecycleState: importController.importLifecycleState
     property alias importCurrentPath: importController.importCurrentPath
     property alias importCurrentFileName: importController.importCurrentFileName
+    readonly property bool importCleanupActive: importController.importCleanupActive
+    property alias importCleanupTotalCount: importController.importCleanupTotalCount
+    property alias importCleanupProcessedCount: importController.importCleanupProcessedCount
+    property alias importCleanupCurrentFileName: importController.importCleanupCurrentFileName
     property alias importPausedForConflict: importController.importPausedForConflict
     property alias importConflictContext: importController.importConflictContext
     property alias importConflictNextContext: importController.importConflictNextContext
