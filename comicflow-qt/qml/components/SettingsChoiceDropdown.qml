@@ -149,7 +149,6 @@ Item {
 
         onItemTriggered: function(index, action) {
             const selectedText = String(action || "")
-            root.currentText = selectedText
             root.activated(index, selectedText)
         }
     }

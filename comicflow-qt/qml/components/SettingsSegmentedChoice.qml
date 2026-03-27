@@ -159,11 +159,7 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.currentIndex = index
-                    root.currentText = parent.modelData
-                    root.activated(index, parent.modelData)
-                }
+                onClicked: root.activated(index, parent.modelData)
             }
         }
     }
