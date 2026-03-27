@@ -1,6 +1,7 @@
 #include "storage/comicinfoops.h"
 
 #include "storage/comicinfoarchive.h"
+#include "storage/sqliteconnectionutils.h"
 
 #include "common/scopedsqlconnectionremoval.h"
 
@@ -15,21 +16,6 @@ namespace {
 QString trimOrEmpty(const QVariant &value)
 {
     return value.toString().trimmed();
-}
-
-bool openDatabaseConnectionForPath(
-    QSqlDatabase &db,
-    const QString &dbPath,
-    const QString &connectionName,
-    QString &errorText
-)
-{
-    db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (db.open()) return true;
-
-    errorText = QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
-    return false;
 }
 
 } // namespace
@@ -52,7 +38,7 @@ QVariantMap exportComicInfoXml(const QString &dbPath, int comicId, const QString
 
     {
         QSqlDatabase db;
-        if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+        if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
             return {
                 { QStringLiteral("error"), openError }
             };
@@ -189,7 +175,7 @@ QVariantMap buildComicInfoImportPatch(
     QString openError;
     {
         QSqlDatabase db;
-        if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+        if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
             return {
                 { QStringLiteral("error"), openError }
             };

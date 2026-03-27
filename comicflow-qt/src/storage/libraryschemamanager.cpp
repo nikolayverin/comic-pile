@@ -1,5 +1,6 @@
 #include "storage/libraryschemamanager.h"
 #include "storage/importmatching.h"
+#include "storage/sqliteconnectionutils.h"
 #include "common/scopedsqlconnectionremoval.h"
 
 #include <QDir>
@@ -207,16 +208,6 @@ QString detachedRestoreCleanupGroupKey(const DetachedRestoreCleanupRow &row)
         .arg(seriesKey, volumeKey, issueKey, normalizeImportSourceTypeForSchema(row.importSourceType), identityKey);
 }
 
-bool openDatabaseConnection(QSqlDatabase &db, const QString &connectionName, const QString &dbPath, QString &errorText)
-{
-    db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (db.open()) return true;
-
-    errorText = QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
-    return false;
-}
-
 QString comicsCreateTableV1Sql()
 {
     return QStringLiteral(
@@ -343,7 +334,7 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
     QString openError;
     {
         QSqlDatabase db;
-        if (!openDatabaseConnection(db, connectionName, m_dbPath, openError)) {
+        if (!ComicStorageSqlite::openDatabaseConnection(db, m_dbPath, connectionName, openError)) {
             return openError;
         }
 

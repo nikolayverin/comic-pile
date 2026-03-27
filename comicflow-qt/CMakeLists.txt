@@ -50,6 +50,8 @@ set(_comicpile_core_sources
     src/storage/comicslistmodel_metadata.cpp
     src/storage/comicslistmodel_reader.cpp
     src/storage/comicslistmodel_startup.cpp
+    src/storage/datarootsettingsutils.cpp
+    src/storage/datarootsettingsutils.h
     src/storage/datarootrelocationbootstrap.cpp
     src/storage/datarootrelocationbootstrap.h
     src/storage/deletestagingops.cpp
@@ -80,6 +82,8 @@ set(_comicpile_core_sources
     src/storage/readerrequestutils.h
     src/storage/readersessionops.cpp
     src/storage/readersessionops.h
+    src/storage/sqliteconnectionutils.cpp
+    src/storage/sqliteconnectionutils.h
     src/storage/storedpathutils.cpp
     src/storage/storedpathutils.h
     src/storage/startupinventoryops.cpp

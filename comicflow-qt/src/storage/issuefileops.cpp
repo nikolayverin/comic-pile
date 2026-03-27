@@ -1,6 +1,7 @@
 #include "storage/issuefileops.h"
 
 #include "common/scopedsqlconnectionremoval.h"
+#include "storage/sqliteconnectionutils.h"
 #include "storage/storedpathutils.h"
 
 #include <QSqlDatabase>
@@ -13,21 +14,6 @@ namespace {
 QString trimOrEmpty(const QVariant &value)
 {
     return value.toString().trimmed();
-}
-
-bool openDatabaseConnectionForPath(
-    QSqlDatabase &db,
-    const QString &dbPath,
-    const QString &connectionName,
-    QString &errorText
-)
-{
-    db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (db.open()) return true;
-
-    errorText = QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
-    return false;
 }
 
 } // namespace
@@ -52,7 +38,7 @@ QString applyComicFilePathBindings(
     QString result;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
 
@@ -107,7 +93,7 @@ QString loadComicFilePath(
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
 
@@ -155,7 +141,7 @@ QString hardDeleteComicRecord(
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
 
@@ -215,7 +201,7 @@ QString relinkComicFileKeepMetadata(
     QString resultError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
 

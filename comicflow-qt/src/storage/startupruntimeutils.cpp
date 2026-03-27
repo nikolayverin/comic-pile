@@ -1,5 +1,6 @@
 #include "storage/startupruntimeutils.h"
 
+#include "storage/sqliteconnectionutils.h"
 #include "common/scopedsqlconnectionremoval.h"
 
 #include <algorithm>
@@ -258,11 +259,11 @@ QVariantMap runDatabaseHealthCheck(const QString &dbPath)
 
     const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
     {
-        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-        db.setDatabaseName(dbPath);
-        if (!db.open()) {
+        QSqlDatabase db;
+        QString openError;
+        if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
             result.insert(QStringLiteral("code"), QStringLiteral("open_failed"));
-            result.insert(QStringLiteral("message"), QStringLiteral("Failed to open DB: %1").arg(db.lastError().text()));
+            result.insert(QStringLiteral("message"), openError);
             db.close();
         } else {
             bool quickCheckOk = false;

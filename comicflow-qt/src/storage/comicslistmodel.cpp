@@ -15,6 +15,8 @@
 #include "storage/readerpayloadutils.h"
 #include "storage/readerrequestutils.h"
 #include "storage/readersessionops.h"
+#include "storage/datarootsettingsutils.h"
+#include "storage/sqliteconnectionutils.h"
 #include "storage/startupruntimeutils.h"
 #include "storage/storedpathutils.h"
 #include "common/scopedsqlconnectionremoval.h"
@@ -50,7 +52,6 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSaveFile>
-#include <QSettings>
 #include <QStandardPaths>
 #include <QStringList>
 #include <QTimer>
@@ -245,36 +246,6 @@ QString formatDeleteFailureText(const DeleteFailureInfo &info)
 QString sevenZipMissingMessage()
 {
     return QStringLiteral("Archive support component (7z) is missing. Reinstall/repair Comic Pile or set a custom 7z path.");
-}
-
-QString dataRootOverrideSettingsKey()
-{
-    return QStringLiteral("AppSettings/libraryDataRootPath");
-}
-
-QSettings relocationSettingsStore()
-{
-    return QSettings(
-        QSettings::IniFormat,
-        QSettings::UserScope,
-        QStringLiteral("ComicPile"),
-        QStringLiteral("ComicPile")
-    );
-}
-
-QString normalizedFolderPath(const QString &rawPath)
-{
-    const QString normalized = normalizeInputFilePath(rawPath);
-    if (normalized.isEmpty()) {
-        return {};
-    }
-    return QDir::cleanPath(QDir::fromNativeSeparators(normalized));
-}
-
-QString configuredDataRootOverridePath()
-{
-    QSettings settings = relocationSettingsStore();
-    return normalizedFolderPath(settings.value(dataRootOverrideSettingsKey()).toString());
 }
 
 bool tryRemoveFileWithDetails(
@@ -3753,12 +3724,7 @@ QString ComicsListModel::importComicInfoFromArchive(int comicId, const QString &
 
 bool ComicsListModel::openDatabaseConnection(QSqlDatabase &db, const QString &connectionName, QString &errorText) const
 {
-    db = QSqlDatabase::addDatabase("QSQLITE", connectionName);
-    db.setDatabaseName(m_dbPath);
-    if (db.open()) return true;
-
-    errorText = QString("Failed to open DB: %1").arg(db.lastError().text());
-    return false;
+    return ComicStorageSqlite::openDatabaseConnection(db, m_dbPath, connectionName, errorText);
 }
 
 QString ComicsListModel::normalizeSeriesKey(const QString &value)
@@ -3885,7 +3851,7 @@ QString ComicsListModel::resolveDataRoot() const
     if (!envValueLegacy.isEmpty()) {
         return QDir(envValueLegacy).absolutePath();
     }
-    const QString configuredOverride = configuredDataRootOverridePath();
+    const QString configuredOverride = ComicDataRootSettings::configuredDataRootOverridePath();
     if (!configuredOverride.isEmpty()) {
         return QDir(configuredOverride).absolutePath();
     }

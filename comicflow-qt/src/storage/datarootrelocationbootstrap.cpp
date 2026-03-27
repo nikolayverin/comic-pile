@@ -1,5 +1,6 @@
 #include "storage/datarootrelocationbootstrap.h"
 
+#include "storage/datarootsettingsutils.h"
 #include "storage/startupruntimeutils.h"
 
 #include <QCoreApplication>
@@ -9,7 +10,6 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QSettings>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QWindow>
@@ -99,72 +99,6 @@ QString absolutePathIfExists(const QString &candidate)
     return info.absoluteFilePath();
 }
 
-QString dataRootOverrideSettingsKey()
-{
-    return QStringLiteral("AppSettings/libraryDataRootPath");
-}
-
-QSettings relocationSettingsStore()
-{
-    return QSettings(
-        QSettings::IniFormat,
-        QSettings::UserScope,
-        QStringLiteral("ComicPile"),
-        QStringLiteral("ComicPile")
-    );
-}
-
-QString pendingDataRootRelocationSettingsKey()
-{
-    return QStringLiteral("AppSettings/libraryDataRelocationPendingPath");
-}
-
-QString normalizedFolderPath(const QString &rawPath)
-{
-    const QString trimmed = rawPath.trimmed();
-    if (trimmed.isEmpty()) {
-        return {};
-    }
-    return QDir::cleanPath(QDir::fromNativeSeparators(trimmed));
-}
-
-QString persistedFolderPathForDisplay(const QString &rawPath)
-{
-    const QString normalized = normalizedFolderPath(rawPath);
-    if (normalized.isEmpty()) {
-        return {};
-    }
-    return QDir::toNativeSeparators(normalized);
-}
-
-QString configuredDataRootOverridePath()
-{
-    QSettings settings = relocationSettingsStore();
-    return normalizedFolderPath(settings.value(dataRootOverrideSettingsKey()).toString());
-}
-
-QString pendingDataRootRelocationPath()
-{
-    QSettings settings = relocationSettingsStore();
-    return normalizedFolderPath(settings.value(pendingDataRootRelocationSettingsKey()).toString());
-}
-
-bool writeConfiguredDataRootOverridePath(const QString &rawPath)
-{
-    QSettings settings = relocationSettingsStore();
-    settings.setValue(dataRootOverrideSettingsKey(), persistedFolderPathForDisplay(rawPath));
-    settings.sync();
-    return settings.status() == QSettings::NoError;
-}
-
-bool clearPendingDataRootRelocationPath()
-{
-    QSettings settings = relocationSettingsStore();
-    settings.remove(pendingDataRootRelocationSettingsKey());
-    settings.sync();
-    return settings.status() == QSettings::NoError;
-}
-
 void clearCopiedLibraryStorageMigrationMarker(const QString &dataRoot)
 {
     const QString markerPath = ComicStartupRuntime::libraryStorageMigrationMarkerPath(dataRoot);
@@ -178,26 +112,6 @@ void clearCopiedLibraryStorageMigrationMarker(const QString &dataRoot)
     }
 
     QFile::remove(markerInfo.absoluteFilePath());
-}
-
-bool hasExternalDataRootOverride()
-{
-    return !qEnvironmentVariable("COMIC_PILE_DATA_DIR").trimmed().isEmpty()
-        || !qEnvironmentVariable("COMICFLOW_DATA_DIR").trimmed().isEmpty();
-}
-
-bool isSameOrNestedFolderPath(const QString &leftPath, const QString &rightPath)
-{
-    const QString left = normalizedFolderPath(leftPath);
-    const QString right = normalizedFolderPath(rightPath);
-    if (left.isEmpty() || right.isEmpty()) {
-        return false;
-    }
-    if (left.compare(right, Qt::CaseInsensitive) == 0) {
-        return true;
-    }
-    return right.startsWith(left + QLatin1Char('/'), Qt::CaseInsensitive)
-        || left.startsWith(right + QLatin1Char('/'), Qt::CaseInsensitive);
 }
 
 bool ensureEmptyDirectoryTarget(const QString &targetRoot, QString &errorText)
@@ -427,7 +341,7 @@ bool removeSourceDirectoryAfterRelocation(
     QString &errorText
 )
 {
-    const QString normalizedSourceRoot = normalizedFolderPath(sourceRoot);
+    const QString normalizedSourceRoot = ComicDataRootSettings::normalizedFolderPath(sourceRoot);
     if (normalizedSourceRoot.isEmpty()) {
         errorText = QStringLiteral("Original library data location is unavailable.");
         return false;
@@ -464,7 +378,7 @@ QString resolveLaunchDataRootCandidate()
         return QDir(envValueLegacy).absolutePath();
     }
 
-    const QString configuredOverride = configuredDataRootOverridePath();
+    const QString configuredOverride = ComicDataRootSettings::configuredDataRootOverridePath();
     if (!configuredOverride.isEmpty()) {
         return QDir(configuredOverride).absolutePath();
     }
@@ -497,16 +411,16 @@ namespace ComicDataRootRelocationBootstrap {
 
 void processPendingDataRootRelocation()
 {
-    if (hasExternalDataRootOverride()) {
+    if (ComicDataRootSettings::hasExternalDataRootOverride()) {
         return;
     }
 
-    const QString pendingTarget = pendingDataRootRelocationPath();
+    const QString pendingTarget = ComicDataRootSettings::pendingDataRootRelocationPath();
     if (pendingTarget.isEmpty()) {
         return;
     }
 
-    const QString currentRoot = normalizedFolderPath(resolveLaunchDataRootCandidate());
+    const QString currentRoot = ComicDataRootSettings::normalizedFolderPath(resolveLaunchDataRootCandidate());
     if (currentRoot.isEmpty()) {
         return;
     }
@@ -516,17 +430,17 @@ void processPendingDataRootRelocation()
         return;
     }
 
-    const QString normalizedTarget = normalizedFolderPath(pendingTarget);
+    const QString normalizedTarget = ComicDataRootSettings::normalizedFolderPath(pendingTarget);
     if (normalizedTarget.isEmpty()) {
         return;
     }
 
     if (currentRoot.compare(normalizedTarget, Qt::CaseInsensitive) == 0) {
-        clearPendingDataRootRelocationPath();
+        ComicDataRootSettings::clearPendingDataRootRelocationPath();
         return;
     }
 
-    if (isSameOrNestedFolderPath(currentRoot, normalizedTarget)) {
+    if (ComicDataRootSettings::isSameOrNestedFolderPath(currentRoot, normalizedTarget)) {
         return;
     }
 
@@ -552,7 +466,7 @@ void processPendingDataRootRelocation()
         return;
     }
     clearCopiedLibraryStorageMigrationMarker(normalizedTarget);
-    if (!writeConfiguredDataRootOverridePath(normalizedTarget)) {
+    if (!ComicDataRootSettings::writeConfiguredDataRootOverridePath(normalizedTarget)) {
         if (migrationWindowVisible) {
             closeDataMigrationWindow(migrationEngine);
         }
@@ -568,7 +482,7 @@ void processPendingDataRootRelocation()
         }
         return;
     }
-    clearPendingDataRootRelocationPath();
+    ComicDataRootSettings::clearPendingDataRootRelocationPath();
     if (migrationWindowVisible) {
         closeDataMigrationWindow(migrationEngine);
     }

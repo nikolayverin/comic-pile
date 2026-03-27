@@ -2,6 +2,7 @@
 
 #include "storage/importmatching.h"
 #include "storage/libraryschemamanager.h"
+#include "storage/sqliteconnectionutils.h"
 #include "common/scopedsqlconnectionremoval.h"
 
 #include <QSqlDatabase>
@@ -19,21 +20,6 @@ QString trimOrEmpty(const QVariant &value)
 QString valueFromMap(const QVariantMap &map, const QString &key)
 {
     return map.value(key).toString().trimmed();
-}
-
-bool openDatabaseConnectionForPath(
-    QSqlDatabase &db,
-    const QString &dbPath,
-    const QString &connectionName,
-    QString &errorText
-)
-{
-    db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (db.open()) return true;
-
-    errorText = QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
-    return false;
 }
 
 struct SeriesMetadataRecord {
@@ -252,7 +238,7 @@ bool loadComicRecords(const QString &dbPath, QVector<ComicRecord> &rowsOut, QStr
     const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, errorText)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, errorText)) {
         return false;
     }
 
@@ -330,7 +316,7 @@ QVariantMap loadComicMetadata(const QString &dbPath, int comicId)
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return {
             { QStringLiteral("error"), openError }
         };
@@ -435,7 +421,7 @@ QVariantMap seriesMetadataForKey(const QString &dbPath, const QString &seriesKey
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return {
             { QStringLiteral("seriesTitle"), QString() },
             { QStringLiteral("summary"), QString() },
@@ -513,7 +499,7 @@ QVariantList seriesMetadataCandidates(const QString &dbPath, const QString &seri
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return rows;
     }
 
@@ -601,7 +587,7 @@ QString setSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey,
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
 
@@ -693,7 +679,7 @@ QVariantList issueMetadataKnowledgeCandidates(
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return rows;
     }
 
@@ -821,7 +807,7 @@ QString setIssueMetadataKnowledge(const QString &dbPath, const QVariantMap &valu
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
 
@@ -883,7 +869,7 @@ QString removeSeriesMetadataForKey(const QString &dbPath, const QString &seriesK
     QString openError;
 
     QSqlDatabase db;
-    if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
 

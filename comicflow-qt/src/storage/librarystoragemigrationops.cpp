@@ -1,6 +1,7 @@
 #include "storage/librarystoragemigrationops.h"
 
 #include "storage/importmatching.h"
+#include "storage/sqliteconnectionutils.h"
 #include "storage/librarylayoututils.h"
 #include "storage/startupruntimeutils.h"
 #include "storage/storedpathutils.h"
@@ -51,21 +52,6 @@ QString normalizeInputFilePath(const QString &rawInput)
 QString normalizeSeriesKeyValue(const QString &value)
 {
     return ComicImportMatching::normalizeSeriesKey(value);
-}
-
-bool openDatabaseConnectionForPath(
-    QSqlDatabase &db,
-    const QString &dbPath,
-    const QString &connectionName,
-    QString &errorText
-)
-{
-    db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (db.open()) return true;
-
-    errorText = QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
-    return false;
 }
 
 void cleanupEmptyLibraryDirs(const QString &libraryRootPath, const QStringList &candidateDirs)
@@ -194,7 +180,7 @@ QVariantMap runLibraryStorageLayoutMigration(const QString &dataRoot, const QStr
 
     {
         QSqlDatabase db;
-        if (!openDatabaseConnectionForPath(db, dbPath, connectionName, openError)) {
+        if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
             result.insert(QStringLiteral("error"), openError);
             return result;
         }

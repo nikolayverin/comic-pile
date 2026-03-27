@@ -1,126 +1,25 @@
 #include "storage/comicslistmodel.h"
 
+#include "storage/datarootsettingsutils.h"
 #include "storage/startupinventoryops.h"
 #include "storage/startupruntimeutils.h"
 
 #include <QDir>
 #include <QFileInfo>
-#include <QSettings>
-#include <QUrl>
-#include <QtGlobal>
 
 namespace {
-
-QSettings relocationSettingsStore()
-{
-    return QSettings(
-        QSettings::IniFormat,
-        QSettings::UserScope,
-        QStringLiteral("ComicPile"),
-        QStringLiteral("ComicPile")
-    );
-}
-
-QString pendingDataRootRelocationSettingsKey()
-{
-    return QStringLiteral("AppSettings/libraryDataRelocationPendingPath");
-}
-
-QString normalizeStartupPathInput(const QString &rawInput)
-{
-    QString input = rawInput.trimmed();
-    if (input.isEmpty()) return {};
-
-    if ((input.startsWith('"') && input.endsWith('"')) || (input.startsWith('\'') && input.endsWith('\''))) {
-        input = input.mid(1, input.length() - 2).trimmed();
-    }
-
-    const QUrl url = QUrl::fromUserInput(input);
-    if (url.isValid() && url.isLocalFile()) {
-        return QDir::toNativeSeparators(url.toLocalFile());
-    }
-
-    return QDir::toNativeSeparators(input);
-}
-
-QString normalizedFolderPath(const QString &rawPath)
-{
-    const QString normalized = normalizeStartupPathInput(rawPath);
-    if (normalized.isEmpty()) {
-        return {};
-    }
-    return QDir::cleanPath(QDir::fromNativeSeparators(normalized));
-}
-
-QString pendingDataRootRelocationPathFromSettings()
-{
-    QSettings settings = relocationSettingsStore();
-    return normalizedFolderPath(settings.value(pendingDataRootRelocationSettingsKey()).toString());
-}
-
-QString persistedFolderPathForDisplay(const QString &rawPath)
-{
-    const QString normalized = normalizedFolderPath(rawPath);
-    if (normalized.isEmpty()) {
-        return {};
-    }
-    return QDir::toNativeSeparators(normalized);
-}
-
-bool writePendingDataRootRelocationPath(const QString &rawPath, QString &errorText)
-{
-    QSettings settings = relocationSettingsStore();
-    settings.setValue(
-        pendingDataRootRelocationSettingsKey(),
-        persistedFolderPathForDisplay(rawPath)
-    );
-    settings.sync();
-    if (settings.status() != QSettings::NoError) {
-        if (settings.status() == QSettings::AccessError) {
-            errorText = QStringLiteral(
-                "Could not schedule the new library data location because the app could not write its transfer request to settings storage."
-            );
-        } else {
-            errorText = QStringLiteral(
-                "Could not schedule the new library data location because the app could not update its settings storage."
-            );
-        }
-        return false;
-    }
-    return true;
-}
-
-bool hasExternalDataRootOverride()
-{
-    return !qEnvironmentVariable("COMIC_PILE_DATA_DIR").trimmed().isEmpty()
-        || !qEnvironmentVariable("COMICFLOW_DATA_DIR").trimmed().isEmpty();
-}
-
-bool isSameOrNestedFolderPath(const QString &leftPath, const QString &rightPath)
-{
-    const QString left = normalizedFolderPath(leftPath);
-    const QString right = normalizedFolderPath(rightPath);
-    if (left.isEmpty() || right.isEmpty()) {
-        return false;
-    }
-    if (left.compare(right, Qt::CaseInsensitive) == 0) {
-        return true;
-    }
-    return right.startsWith(left + QLatin1Char('/'), Qt::CaseInsensitive)
-        || left.startsWith(right + QLatin1Char('/'), Qt::CaseInsensitive);
-}
 
 QString validateScheduledDataRootRelocationTarget(
     const QString &currentDataRoot,
     const QString &targetPath
 )
 {
-    if (hasExternalDataRootOverride()) {
+    if (ComicDataRootSettings::hasExternalDataRootOverride()) {
         return QStringLiteral("Library data location is currently forced by an external launch override. Remove that override before changing it here.");
     }
 
-    const QString normalizedCurrent = normalizedFolderPath(currentDataRoot);
-    const QString normalizedTarget = normalizedFolderPath(targetPath);
+    const QString normalizedCurrent = ComicDataRootSettings::normalizedFolderPath(currentDataRoot);
+    const QString normalizedTarget = ComicDataRootSettings::normalizedFolderPath(targetPath);
     if (normalizedTarget.isEmpty()) {
         return QStringLiteral("Choose a new folder for library data.");
     }
@@ -130,7 +29,7 @@ QString validateScheduledDataRootRelocationTarget(
     if (normalizedCurrent.compare(normalizedTarget, Qt::CaseInsensitive) == 0) {
         return QStringLiteral("Choose a different folder for library data.");
     }
-    if (isSameOrNestedFolderPath(normalizedCurrent, normalizedTarget)) {
+    if (ComicDataRootSettings::isSameOrNestedFolderPath(normalizedCurrent, normalizedTarget)) {
         return QStringLiteral("Choose a folder outside the current library data location.");
     }
 
@@ -191,7 +90,9 @@ int ComicsListModel::requestLibraryStorageMigrationAsync()
 
 QString ComicsListModel::pendingDataRootRelocationPath() const
 {
-    return persistedFolderPathForDisplay(pendingDataRootRelocationPathFromSettings());
+    return ComicDataRootSettings::persistedFolderPathForDisplay(
+        ComicDataRootSettings::pendingDataRootRelocationPath()
+    );
 }
 
 QVariantMap ComicsListModel::scheduleDataRootRelocation(const QString &targetPath)
@@ -209,13 +110,16 @@ QVariantMap ComicsListModel::scheduleDataRootRelocation(const QString &targetPat
     }
 
     QString persistError;
-    if (!writePendingDataRootRelocationPath(targetPath, persistError)) {
+    if (!ComicDataRootSettings::writePendingDataRootRelocationPath(targetPath, persistError)) {
         result.insert(QStringLiteral("error"), persistError);
         return result;
     }
 
     result.insert(QStringLiteral("ok"), true);
-    result.insert(QStringLiteral("pendingPath"), persistedFolderPathForDisplay(targetPath));
+    result.insert(
+        QStringLiteral("pendingPath"),
+        ComicDataRootSettings::persistedFolderPathForDisplay(targetPath)
+    );
     result.insert(QStringLiteral("restartRequired"), true);
     return result;
 }
