@@ -66,6 +66,10 @@ Item {
         computedTextWidth = maxWidth
     }
 
+    function positionViewAtIndex(index, mode) {
+        listView.positionViewAtIndex(index, mode)
+    }
+
     ListView {
         id: listView
         anchors.fill: parent
@@ -90,9 +94,21 @@ Item {
             color: "transparent"
 
             Canvas {
+                id: hoverHighlightCanvas
                 anchors.fill: parent
                 visible: opacity > 0
                 opacity: menuRow.hoverPresented ? 1 : 0
+                onVisibleChanged: if (visible) requestPaint()
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+                onOpacityChanged: if (opacity > 0) requestPaint()
+                Component.onCompleted: requestPaint()
+                Connections {
+                    target: root
+                    function onHoverColorChanged() { hoverHighlightCanvas.requestPaint() }
+                    function onBodyRadiusChanged() { hoverHighlightCanvas.requestPaint() }
+                    function onHighlightInsetChanged() { hoverHighlightCanvas.requestPaint() }
+                }
 
                 Behavior on opacity {
                     NumberAnimation {

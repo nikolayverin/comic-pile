@@ -7,6 +7,7 @@ Popup {
 
     UiTokens { id: uiTokens }
     PopupStyle { id: popupStyle }
+    PopupMenuStyle { id: pageListMenuStyle }
 
     modal: true
     focus: true
@@ -156,6 +157,16 @@ Popup {
     readonly property color toolbarToggleActiveColor: readerTheme.toolbarToggleActiveColor
     readonly property color readingModeActiveColor: readerTheme.readingModeActiveColor
     readonly property color actionToastTextColor: "#ffffff"
+    readonly property color pageListMenuFillColor: root.lightThemeEnabled
+        ? root.pageListFillColor
+        : pageListMenuStyle.backgroundColor
+    readonly property color pageListMenuBorderColor: root.lightThemeEnabled
+        ? root.panelColor
+        : pageListMenuStyle.borderColor
+    readonly property color pageListMenuHoverColor: root.lightThemeEnabled
+        ? root.panelColor
+        : pageListMenuStyle.hoverColor
+    readonly property color pageListMenuScrollThumbColor: pageListMenuStyle.scrollThumbColor
     readonly property int pageAreaLeft: sideButtonOffset + sideButtonWidth + sideButtonImageGap
     readonly property int pageAreaRightInset: sideButtonOffset + sideButtonWidth + sideButtonImageGap
     readonly property int pageAreaTop: toolbarHeight
@@ -186,6 +197,18 @@ Popup {
         }
 
         return String(pageIndex + 1) + "/" + String(total)
+    }
+    readonly property var pageListMenuItems: {
+        const total = Math.max(0, Number(pageCount || 0))
+        const items = []
+        for (let i = 0; i < total; i += 1) {
+            items.push({
+                text: String(i + 1),
+                pageIndex: i,
+                highlighted: i === root.pageIndex
+            })
+        }
+        return items
     }
     readonly property bool hasDisplayContent: {
         const pages = Array.isArray(displayPages) ? displayPages : []
@@ -262,6 +285,12 @@ Popup {
         popupStateController.toggleFullscreenMode()
     }
 
+    function dismissPageList() {
+        if (pageListVisible) {
+            pageListVisible = false
+        }
+    }
+
     function hideActionToast() {
         actionToastAnimation.stop()
         actionToast.opacity = 0
@@ -309,7 +338,10 @@ Popup {
             enabled: button.enabled
             hoverEnabled: true
             cursorShape: button.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-            onClicked: button.clicked()
+            onClicked: {
+                root.dismissPageList()
+                button.clicked()
+            }
         }
     }
 
@@ -354,6 +386,12 @@ Popup {
         HoverHandler {
             acceptedDevices: PointerDevice.Mouse
             cursorShape: button.clickEnabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+        }
+
+        onPressedChanged: {
+            if (pressed) {
+                root.dismissPageList()
+            }
         }
     }
 
@@ -506,9 +544,13 @@ Popup {
 
     component PageListNotch: Canvas {
         property color fillColor: root.pageListFillColor
+        property color borderColor: "transparent"
+        property int borderWidth: 0
 
         contextType: "2d"
         onFillColorChanged: requestPaint()
+        onBorderColorChanged: requestPaint()
+        onBorderWidthChanged: requestPaint()
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
 
@@ -522,6 +564,11 @@ Popup {
             ctx.lineTo(width, 0)
             ctx.closePath()
             ctx.fill()
+            if (borderWidth > 0 && borderColor !== "transparent") {
+                ctx.strokeStyle = borderColor
+                ctx.lineWidth = borderWidth
+                ctx.stroke()
+            }
         }
     }
 
@@ -864,6 +911,21 @@ Popup {
         width: root.width
         height: root.height
         clip: false
+
+        TapHandler {
+            enabled: root.pageListVisible && root.pageCount > 0
+            onTapped: function(eventPoint) {
+                const pointX = Number(eventPoint.position.x || 0)
+                const pointY = Number(eventPoint.position.y || 0)
+                const insidePopup = pointX >= pageListPopup.x
+                    && pointX <= (pageListPopup.x + pageListPopup.width)
+                    && pointY >= pageListPopup.y
+                    && pointY <= (pageListPopup.y + pageListPopup.height)
+                if (!insidePopup) {
+                    root.pageListVisible = false
+                }
+            }
+        }
 
         Item {
             id: toolbar
@@ -1763,88 +1825,39 @@ Popup {
                 anchors.top: parent.top
                 height: root.listBodyHeight
                 radius: root.listRadius
-                color: root.pageListFillColor
+                color: root.pageListMenuFillColor
+                border.width: 1
+                border.color: root.pageListMenuBorderColor
             }
 
-            ListView {
+            PopupMenuListView {
                 id: pageListView
                 anchors.left: pageListBody.left
                 anchors.right: pageListBody.right
-                anchors.rightMargin: pageListScrollLayer.visible ? root.listScrollGutterWidth : 0
                 anchors.top: pageListBody.top
                 anchors.bottom: pageListBody.bottom
-                anchors.topMargin: 9
-                anchors.bottomMargin: 9
-                clip: true
-                model: root.pageCount
-                spacing: 0
-                boundsBehavior: Flickable.StopAtBounds
+                uiFontFamily: root.uiFontFamily
+                uiFontPixelSize: root.listFontPx
+                hoverColor: root.pageListMenuHoverColor
+                textColor: root.textColor
+                disabledTextColor: root.disabledColor
+                rowHeight: pageListMenuStyle.rowHeight
+                bodyRadius: root.listRadius
+                centerText: true
+                reserveScrollGutter: true
+                scrollGutterWidth: root.listScrollGutterWidth
+                scrollThumbWidth: root.listScrollThumbWidth
+                scrollThumbMinHeight: root.listScrollThumbMinHeight
+                scrollThumbInset: root.listScrollThumbInset
+                scrollThumbColor: root.pageListMenuScrollThumbColor
+                hoverFadeDurationMs: root.pageListFadeDurationMs
+                menuItems: root.pageListMenuItems
 
-                delegate: Item {
-                    required property int index
-
-                    width: pageListView.width
-                    height: root.listRowHoverHeight
-
-                    property bool hovered: rowMouse.containsMouse
-                    property bool selected: index === root.pageIndex
-                    property bool highlightVisible: hovered || selected
-
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: root.listRowHoverWidth
-                        height: root.listRowHoverHeight
-                        radius: height / 2
-                        color: root.lightThemeEnabled ? root.panelColor : root.chromeColor
-                        visible: opacity > 0
-                        opacity: parent.highlightVisible ? 1 : 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: root.pageListFadeDurationMs
-                                easing.type: Easing.OutCubic
-                            }
-                        }
-                    }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: String(index + 1)
-                        color: root.textColor
-                        font.family: root.uiFontFamily
-                        font.pixelSize: root.listFontPx
-                        font.bold: parent.selected
-                    }
-
-                    MouseArea {
-                        id: rowMouse
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            root.pageSelected(index)
-                            root.pageListVisible = false
-                        }
-                    }
+                onItemTriggered: function(index, item) {
+                    const targetPageIndex = Number((item || {}).pageIndex || 0)
+                    root.pageSelected(targetPageIndex)
+                    root.pageListVisible = false
                 }
-            }
-
-            VerticalScrollThumb {
-                id: pageListScrollLayer
-                anchors.top: pageListBody.top
-                anchors.bottom: pageListBody.bottom
-                anchors.right: pageListBody.right
-                anchors.topMargin: root.listScrollThumbInset
-                anchors.bottomMargin: root.listScrollThumbInset
-                anchors.rightMargin: root.listScrollThumbInset
-                width: root.listScrollGutterWidth
-                visible: pageListView.contentHeight > pageListView.height + 0.5
-                z: 2
-                flickable: pageListView
-                thumbWidth: root.listScrollThumbWidth
-                thumbMinHeight: root.listScrollThumbMinHeight
-                thumbInset: root.listScrollThumbInset
-                thumbColor: root.lightThemeEnabled ? root.panelColor : root.textColor
             }
 
             PageListNotch {
@@ -1852,7 +1865,9 @@ Popup {
                 height: root.listNotchHeight
                 anchors.horizontalCenter: pageListBody.horizontalCenter
                 anchors.top: pageListBody.bottom
-                fillColor: root.pageListFillColor
+                fillColor: root.pageListMenuFillColor
+                borderColor: root.pageListMenuBorderColor
+                borderWidth: 1
             }
         }
     }
