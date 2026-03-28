@@ -1,4 +1,5 @@
 #include "storage/archivepacking.h"
+#include "storage/archiveprocessutils.h"
 #include "storage/comicinfoarchive.h"
 
 #include <algorithm>
@@ -7,13 +8,10 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QDirIterator>
-#include <QElapsedTimer>
-#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 #include <QImage>
 #include <QPainter>
-#include <QProcess>
 #include <QRegularExpression>
 #include <QSet>
 #include <QStringList>
@@ -42,92 +40,6 @@ int compareNaturalText(const QString &left, const QString &right)
 bool ensureDirForFile(const QString &filePath)
 {
     return QDir().mkpath(QFileInfo(filePath).absolutePath());
-}
-
-QString quotePowerShellLiteral(const QString &value)
-{
-    QString escaped = value;
-    escaped.replace(QLatin1Char('\''), QStringLiteral("''"));
-    return escaped;
-}
-
-bool waitForProcessWithUiPumping(
-    QProcess &process,
-    int timeoutMs,
-    QString &errorText,
-    const QString &timeoutMessage
-)
-{
-    QElapsedTimer timer;
-    timer.start();
-
-    while (process.state() != QProcess::NotRunning) {
-        const int remainingMs = timeoutMs - static_cast<int>(timer.elapsed());
-        if (remainingMs <= 0) {
-            process.kill();
-            process.waitForFinished(5000);
-            errorText = timeoutMessage;
-            return false;
-        }
-
-        const int waitSliceMs = std::min(50, remainingMs);
-        if (process.waitForFinished(waitSliceMs)) {
-            break;
-        }
-
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, waitSliceMs);
-    }
-
-    return true;
-}
-
-bool runPowerShellScript(
-    const QString &script,
-    QString &stdOut,
-    QString &stdErr,
-    QString &errorText
-)
-{
-    stdOut.clear();
-    stdErr.clear();
-    errorText.clear();
-
-    QProcess process;
-    process.setProgram(QStringLiteral("powershell.exe"));
-    process.setArguments({
-        QStringLiteral("-NoProfile"),
-        QStringLiteral("-NonInteractive"),
-        QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
-        QStringLiteral("-Command"), script
-    });
-
-    process.start();
-    if (!process.waitForStarted(15000)) {
-        errorText = QStringLiteral("Failed to start PowerShell process.");
-        return false;
-    }
-
-    if (!waitForProcessWithUiPumping(
-            process,
-            120000,
-            errorText,
-            QStringLiteral("PowerShell operation timed out."))) {
-        return false;
-    }
-
-    stdOut = QString::fromUtf8(process.readAllStandardOutput());
-    stdErr = QString::fromUtf8(process.readAllStandardError());
-
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        errorText = QStringLiteral("PowerShell exited with code %1.").arg(process.exitCode());
-        const QString trimmedErr = stdErr.trimmed();
-        if (!trimmedErr.isEmpty()) {
-            errorText += QStringLiteral(" %1").arg(trimmedErr);
-        }
-        return false;
-    }
-
-    return true;
 }
 
 QString normalizeArchiveExtension(const QString &pathOrExtension)
@@ -302,52 +214,6 @@ QString djvuMissingMessage()
     return QStringLiteral("DJVU import component (ddjvu) is missing. Reinstall/repair Comic Pile or set a custom DjVuLibre path.");
 }
 
-bool runExternalProcess(
-    const QString &program,
-    const QStringList &arguments,
-    QByteArray &stdOut,
-    QByteArray &stdErr,
-    QString &errorText,
-    int timeoutMs = 120000
-)
-{
-    stdOut.clear();
-    stdErr.clear();
-    errorText.clear();
-
-    QProcess process;
-    process.setProgram(program);
-    process.setArguments(arguments);
-    process.start();
-
-    if (!process.waitForStarted(15000)) {
-        errorText = QStringLiteral("Failed to start process: %1").arg(program);
-        return false;
-    }
-
-    if (!waitForProcessWithUiPumping(
-            process,
-            timeoutMs,
-            errorText,
-            QStringLiteral("Process timed out: %1").arg(program))) {
-        return false;
-    }
-
-    stdOut = process.readAllStandardOutput();
-    stdErr = process.readAllStandardError();
-
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        errorText = QStringLiteral("Process failed (%1), exit code %2.").arg(program).arg(process.exitCode());
-        const QString trimmedErr = QString::fromUtf8(stdErr).trimmed();
-        if (!trimmedErr.isEmpty()) {
-            errorText += QStringLiteral(" %1").arg(trimmedErr);
-        }
-        return false;
-    }
-
-    return true;
-}
-
 QString resolve7ZipExecutable()
 {
     const QStringList envCandidates = {
@@ -506,13 +372,14 @@ QSet<QString> resolvedSevenZipArchiveExtensions()
     QByteArray stdOutBytes;
     QByteArray stdErrBytes;
     QString errorText;
-    if (!runExternalProcess(
+    if (!ComicArchiveProcess::runExternalProcess(
             executable,
             { QStringLiteral("i") },
             stdOutBytes,
             stdErrBytes,
             errorText,
-            15000
+            15000,
+            true
         )) {
         return cachedExtensions;
     }
@@ -692,13 +559,13 @@ bool extractZipLikeArchiveToDirectory(
         "  exit 2\n"
         "}\n"
     ).arg(
-        quotePowerShellLiteral(QDir::toNativeSeparators(sourceArchivePath)),
-        quotePowerShellLiteral(QDir::toNativeSeparators(targetDirPath))
+        ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(sourceArchivePath)),
+        ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(targetDirPath))
     );
 
     QString stdOut;
     QString stdErr;
-    return runPowerShellScript(script, stdOut, stdErr, errorText);
+    return ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText);
 }
 
 bool stageExtractedArchiveForCbz(
@@ -914,7 +781,7 @@ bool convertDjvuToCbz(
     QByteArray stdOutBytes;
     QByteArray stdErrBytes;
     const QString outputPattern = QDir(rawPagesPath).filePath(QStringLiteral("page%06d.ppm"));
-    if (!runExternalProcess(
+    if (!ComicArchiveProcess::runExternalProcess(
             ddjvu,
             {
                 QStringLiteral("-format=ppm"),
@@ -926,7 +793,8 @@ bool convertDjvuToCbz(
             stdOutBytes,
             stdErrBytes,
             errorText,
-            600000
+            600000,
+            true
         )) {
         cleanupTemp();
         return false;
@@ -1006,7 +874,7 @@ bool convertArchiveVia7ZipToCbz(
 
     QByteArray stdOutBytes;
     QByteArray stdErrBytes;
-    if (!runExternalProcess(
+    if (!ComicArchiveProcess::runExternalProcess(
             sevenZip,
             {
                 QStringLiteral("x"),
@@ -1020,7 +888,9 @@ bool convertArchiveVia7ZipToCbz(
             },
             stdOutBytes,
             stdErrBytes,
-            errorText
+            errorText,
+            120000,
+            true
         )) {
         cleanupTemp();
         return false;
@@ -1221,13 +1091,13 @@ bool createCbzFromDirectory(
         "  exit 2\n"
         "}\n"
     ).arg(
-        quotePowerShellLiteral(QDir::toNativeSeparators(sourceInfo.absoluteFilePath())),
-        quotePowerShellLiteral(QDir::toNativeSeparators(targetCbzPath))
+        ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(sourceInfo.absoluteFilePath())),
+        ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(targetCbzPath))
     );
 
     QString stdOut;
     QString stdErr;
-    if (!runPowerShellScript(script, stdOut, stdErr, errorText)) {
+    if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
         return false;
     }
 

@@ -1,15 +1,13 @@
 #include "storage/comicinfoarchive.h"
+#include "storage/archiveprocessutils.h"
 
 #include <algorithm>
 
 #include <QCoreApplication>
 #include <QDir>
-#include <QElapsedTimer>
-#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
 #include <QImageReader>
-#include <QProcess>
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QVector>
@@ -71,92 +69,6 @@ QString escapeXml(const QString &value)
     escaped.replace(QLatin1Char('"'), QStringLiteral("&quot;"));
     escaped.replace(QLatin1Char('\''), QStringLiteral("&apos;"));
     return escaped;
-}
-
-QString quotePowerShellLiteral(const QString &value)
-{
-    QString escaped = value;
-    escaped.replace(QLatin1Char('\''), QStringLiteral("''"));
-    return escaped;
-}
-
-bool waitForProcessWithUiPumping(
-    QProcess &process,
-    int timeoutMs,
-    QString &errorText,
-    const QString &timeoutMessage
-)
-{
-    QElapsedTimer timer;
-    timer.start();
-
-    while (process.state() != QProcess::NotRunning) {
-        const int remainingMs = timeoutMs - static_cast<int>(timer.elapsed());
-        if (remainingMs <= 0) {
-            process.kill();
-            process.waitForFinished(5000);
-            errorText = timeoutMessage;
-            return false;
-        }
-
-        const int waitSliceMs = std::min(50, remainingMs);
-        if (process.waitForFinished(waitSliceMs)) {
-            break;
-        }
-
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, waitSliceMs);
-    }
-
-    return true;
-}
-
-bool runPowerShellScript(
-    const QString &script,
-    QString &stdOut,
-    QString &stdErr,
-    QString &errorText
-)
-{
-    stdOut.clear();
-    stdErr.clear();
-    errorText.clear();
-
-    QProcess process;
-    process.setProgram(QStringLiteral("powershell.exe"));
-    process.setArguments({
-        QStringLiteral("-NoProfile"),
-        QStringLiteral("-NonInteractive"),
-        QStringLiteral("-ExecutionPolicy"), QStringLiteral("Bypass"),
-        QStringLiteral("-Command"), script
-    });
-
-    process.start();
-    if (!process.waitForStarted(15000)) {
-        errorText = QStringLiteral("Failed to start PowerShell process.");
-        return false;
-    }
-
-    if (!waitForProcessWithUiPumping(
-            process,
-            120000,
-            errorText,
-            QStringLiteral("PowerShell operation timed out."))) {
-        return false;
-    }
-
-    stdOut = QString::fromUtf8(process.readAllStandardOutput());
-    stdErr = QString::fromUtf8(process.readAllStandardError());
-
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        errorText = QStringLiteral("PowerShell exited with code %1.").arg(process.exitCode());
-        const QString trimmedErr = stdErr.trimmed();
-        if (!trimmedErr.isEmpty()) {
-            errorText += QStringLiteral(" %1").arg(trimmedErr);
-        }
-        return false;
-    }
-
-    return true;
 }
 
 QString resolve7ZipExecutableFromHint(const QString &hintPath)
@@ -254,52 +166,6 @@ QString sevenZipMissingMessage()
     return QStringLiteral("Archive support component (7z) is missing. Reinstall/repair Comic Pile or set a custom 7z path.");
 }
 
-bool runExternalProcess(
-    const QString &program,
-    const QStringList &arguments,
-    QByteArray &stdOut,
-    QByteArray &stdErr,
-    QString &errorText,
-    int timeoutMs = 120000
-)
-{
-    stdOut.clear();
-    stdErr.clear();
-    errorText.clear();
-
-    QProcess process;
-    process.setProgram(program);
-    process.setArguments(arguments);
-    process.start();
-
-    if (!process.waitForStarted(15000)) {
-        errorText = QStringLiteral("Failed to start process: %1").arg(program);
-        return false;
-    }
-
-    if (!waitForProcessWithUiPumping(
-            process,
-            timeoutMs,
-            errorText,
-            QStringLiteral("Process timed out: %1").arg(program))) {
-        return false;
-    }
-
-    stdOut = process.readAllStandardOutput();
-    stdErr = process.readAllStandardError();
-
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        errorText = QStringLiteral("Process failed (%1), exit code %2.").arg(program).arg(process.exitCode());
-        const QString trimmedErr = QString::fromUtf8(stdErr).trimmed();
-        if (!trimmedErr.isEmpty()) {
-            errorText += QStringLiteral(" %1").arg(trimmedErr);
-        }
-        return false;
-    }
-
-    return true;
-}
-
 int compareText(const QString &left, const QString &right)
 {
     return QString::localeAwareCompare(left, right);
@@ -379,11 +245,11 @@ bool readComicInfoXmlFromArchive(
         "  [Console]::Error.WriteLine($_.Exception.Message)\n"
         "  exit 2\n"
         "}\n"
-    ).arg(quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)));
+    ).arg(ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)));
 
     QString stdOut;
     QString stdErr;
-    if (!runPowerShellScript(script, stdOut, stdErr, errorText)) {
+    if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
         if (errorText.contains(QStringLiteral("code 4"), Qt::CaseInsensitive)) {
             errorText = QStringLiteral("ComicInfo.xml not found in archive.");
         }
@@ -455,13 +321,13 @@ bool writeComicInfoXmlToArchive(
         "  exit 2\n"
         "}\n"
     ).arg(
-        quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)),
-        quotePowerShellLiteral(xmlBase64)
+        ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)),
+        ComicArchiveProcess::quotePowerShellLiteral(xmlBase64)
     );
 
     QString stdOut;
     QString stdErr;
-    return runPowerShellScript(script, stdOut, stdErr, errorText);
+    return ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText);
 }
 
 bool listImageEntriesInArchive(
@@ -505,11 +371,11 @@ bool listImageEntriesInArchive(
             "  [Console]::Error.WriteLine($_.Exception.Message)\n"
             "  exit 2\n"
             "}\n"
-        ).arg(quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)));
+        ).arg(ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)));
 
         QString stdOut;
         QString stdErr;
-        if (!runPowerShellScript(script, stdOut, stdErr, errorText)) {
+        if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
             return false;
         }
 
@@ -526,7 +392,7 @@ bool listImageEntriesInArchive(
 
         QByteArray stdOutBytes;
         QByteArray stdErrBytes;
-        if (!runExternalProcess(
+        if (!ComicArchiveProcess::runExternalProcess(
                 sevenZip,
                 {
                     QStringLiteral("l"),
@@ -538,7 +404,9 @@ bool listImageEntriesInArchive(
                 },
                 stdOutBytes,
                 stdErrBytes,
-                errorText
+                errorText,
+                120000,
+                true
             )) {
             return false;
         }
@@ -642,14 +510,14 @@ bool extractArchiveEntryToFile(
             "  exit 2\n"
             "}\n"
         ).arg(
-            quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)),
-            quotePowerShellLiteral(entryName),
-            quotePowerShellLiteral(QDir::toNativeSeparators(outputFilePath))
+            ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)),
+            ComicArchiveProcess::quotePowerShellLiteral(entryName),
+            ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(outputFilePath))
         );
 
         QString stdOut;
         QString stdErr;
-        if (!runPowerShellScript(script, stdOut, stdErr, errorText)) {
+        if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
             if (errorText.contains(QStringLiteral("code 4"), Qt::CaseInsensitive)) {
                 errorText = QStringLiteral("Page entry not found in archive.");
             }
@@ -676,7 +544,7 @@ bool extractArchiveEntryToFile(
 
         QByteArray stdOutBytes;
         QByteArray stdErrBytes;
-        if (!runExternalProcess(
+        if (!ComicArchiveProcess::runExternalProcess(
                 sevenZip,
                 {
                     QStringLiteral("e"),
@@ -691,7 +559,9 @@ bool extractArchiveEntryToFile(
                 },
                 stdOutBytes,
                 stdErrBytes,
-                errorText
+                errorText,
+                120000,
+                true
             )) {
             QDir(tempDirPath).removeRecursively();
             return false;
@@ -784,11 +654,11 @@ bool listImageEntryMetricsInArchive(
             "  [Console]::Error.WriteLine($_.Exception.Message)\n"
             "  exit 2\n"
             "}\n"
-        ).arg(quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)));
+        ).arg(ComicArchiveProcess::quotePowerShellLiteral(QDir::toNativeSeparators(archivePath)));
 
         QString stdOut;
         QString stdErr;
-        if (!runPowerShellScript(script, stdOut, stdErr, errorText)) {
+        if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
             return false;
         }
 

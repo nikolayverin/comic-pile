@@ -38,6 +38,8 @@ set(_comicpile_core_sources
     src/common/startuplaunchbootstrap.h
     src/storage/archivepacking.cpp
     src/storage/archivepacking.h
+    src/storage/archiveprocessutils.cpp
+    src/storage/archiveprocessutils.h
     src/storage/comicinfoarchive.cpp
     src/storage/comicinfoarchive.h
     src/storage/comicinfoops.cpp

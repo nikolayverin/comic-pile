@@ -1,5 +1,6 @@
 #include "storage/comicslistmodel.h"
 #include "storage/archivepacking.h"
+#include "storage/archiveprocessutils.h"
 #include "storage/comicinfoarchive.h"
 #include "storage/comicinfoops.h"
 #include "storage/libraryschemamanager.h"
@@ -33,7 +34,6 @@
 #include <QDir>
 #include <QDirIterator>
 #include <QElapsedTimer>
-#include <QEventLoop>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -44,7 +44,6 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QProcess>
 #include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QSet>
@@ -1732,51 +1731,6 @@ QString resolve7ZipExecutable()
     return {};
 }
 
-bool runExternalProcess(
-    const QString &program,
-    const QStringList &arguments,
-    QByteArray &stdOut,
-    QByteArray &stdErr,
-    QString &errorText,
-    int timeoutMs = 120000
-)
-{
-    stdOut.clear();
-    stdErr.clear();
-    errorText.clear();
-
-    QProcess process;
-    process.setProgram(program);
-    process.setArguments(arguments);
-    process.start();
-
-    if (!process.waitForStarted(15000)) {
-        errorText = QString("Failed to start process: %1").arg(program);
-        return false;
-    }
-
-    if (!process.waitForFinished(timeoutMs)) {
-        process.kill();
-        process.waitForFinished(5000);
-        errorText = QString("Process timed out: %1").arg(program);
-        return false;
-    }
-
-    stdOut = process.readAllStandardOutput();
-    stdErr = process.readAllStandardError();
-
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        errorText = QString("Process failed (%1), exit code %2.").arg(program).arg(process.exitCode());
-        const QString trimmedErr = QString::fromUtf8(stdErr).trimmed();
-        if (!trimmedErr.isEmpty()) {
-            errorText += QString(" %1").arg(trimmedErr);
-        }
-        return false;
-    }
-
-    return true;
-}
-
 QString readTrimmedTextFile(const QString &filePath)
 {
     QFile file(filePath);
@@ -1913,7 +1867,14 @@ QSet<QString> resolvedSevenZipArchiveExtensions()
     QByteArray stdOutBytes;
     QByteArray stdErrBytes;
     QString errorText;
-    if (!runExternalProcess(executable, { QStringLiteral("i") }, stdOutBytes, stdErrBytes, errorText, 15000)) {
+    if (!ComicArchiveProcess::runExternalProcess(
+            executable,
+            { QStringLiteral("i") },
+            stdOutBytes,
+            stdErrBytes,
+            errorText,
+            15000
+        )) {
         return cachedExtensions;
     }
 
