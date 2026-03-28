@@ -15,6 +15,21 @@ Popup {
     height: popupStyle.issueMetadataHeight
     padding: 0
 
+    Overlay.modal: Rectangle {
+        color: popupStyle.overlayColor
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                const closeOnOutside = Boolean(metadataDialog.closePolicy & Popup.CloseOnPressOutside)
+                    || Boolean(metadataDialog.closePolicy & Popup.CloseOnPressOutsideParent)
+                if (closeOnOutside) {
+                    metadataDialog.close()
+                }
+            }
+        }
+    }
+
     property real hostWidth: 0
     property real hostHeight: 0
     property color dangerColor: themeColors.dangerColor

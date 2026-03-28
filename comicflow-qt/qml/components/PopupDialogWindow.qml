@@ -53,6 +53,17 @@ Popup {
 
     Overlay.modal: Rectangle {
         color: root.popupStyle.overlayColor
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                const closeOnOutside = Boolean(root.closePolicy & Popup.CloseOnPressOutside)
+                    || Boolean(root.closePolicy & Popup.CloseOnPressOutsideParent)
+                if (closeOnOutside) {
+                    root.closeRequested()
+                }
+            }
+        }
     }
 
     background: PopupSurface {
