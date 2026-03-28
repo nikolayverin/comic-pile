@@ -53,6 +53,24 @@ QList<int> takePendingImageRequestIds(
     return requestIds;
 }
 
+QList<int> takePendingImageRequestIdsForComic(
+    QHash<QString, QList<int>> &pendingRequestIdsByKey,
+    int comicId
+)
+{
+    QList<int> requestIds;
+    const QStringList pendingKeys = pendingRequestIdsByKey.keys();
+    for (const QString &key : pendingKeys) {
+        if (!matchesComicPendingImageKey(key, comicId)) {
+            continue;
+        }
+
+        requestIds.append(pendingRequestIdsByKey.value(key));
+        pendingRequestIdsByKey.remove(key);
+    }
+    return requestIds;
+}
+
 bool hasPendingImageRequest(
     const QHash<QString, QList<int>> &pendingRequestIdsByKey,
     const QString &pendingKey

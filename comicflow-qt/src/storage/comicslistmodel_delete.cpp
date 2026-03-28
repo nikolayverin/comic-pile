@@ -500,15 +500,8 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
 
         for (int id : finalRemovedIds) {
             ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, id);
-            m_readerArchivePathById.remove(id);
-            m_readerImageEntriesById.remove(id);
-            m_readerPageMetricsById.remove(id);
         }
-
-        ComicReaderRequests::clearPendingImageRequestsForComics(
-            m_pendingImageRequestIdsByKey,
-            finalRemovedIds
-        );
+        clearReaderRuntimeStateForComics(finalRemovedIds);
 
         m_lastMutationKind = QString("delete_series_files_keep_records");
         emit statusChanged();
@@ -624,10 +617,7 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
     const QString ghostCleanupError = pruneEquivalentDetachedGhostRowsForComic(comicId);
     ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
     purgeSeriesHeroCacheForKey(seriesKey);
-    m_readerArchivePathById.remove(comicId);
-    m_readerImageEntriesById.remove(comicId);
-    m_readerPageMetricsById.remove(comicId);
-    ComicReaderRequests::clearPendingImageRequestsForComic(m_pendingImageRequestIdsByKey, comicId);
+    clearReaderRuntimeStateForComic(comicId);
 
     m_lastMutationKind = QString("delete_issue_files_keep_record");
     emit statusChanged();
@@ -675,6 +665,7 @@ QString ComicsListModel::detachComicFileKeepMetadata(int comicId)
     const QString ghostCleanupError = pruneEquivalentDetachedGhostRowsForComic(comicId);
     ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
     purgeSeriesHeroCacheForKey(seriesKey);
+    clearReaderRuntimeStateForComic(comicId);
 
     int removeIndex = -1;
     for (int rowIndex = 0; rowIndex < m_rows.size(); rowIndex += 1) {
@@ -688,12 +679,6 @@ QString ComicsListModel::detachComicFileKeepMetadata(int comicId)
         m_rows.removeAt(removeIndex);
         endRemoveRows();
     }
-
-    m_readerArchivePathById.remove(comicId);
-    m_readerImageEntriesById.remove(comicId);
-    m_readerPageMetricsById.remove(comicId);
-    ComicReaderRequests::clearPendingImageRequestsForComic(m_pendingImageRequestIdsByKey, comicId);
-
     m_lastMutationKind = QString("detach_issue_file_keep_metadata");
     emit statusChanged();
     if (!ghostCleanupError.isEmpty()) {
@@ -927,14 +912,8 @@ QString ComicsListModel::pruneEquivalentDetachedGhostRowsForComic(int comicId)
 
     for (int id : duplicateIds) {
         ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, id);
-        m_readerArchivePathById.remove(id);
-        m_readerImageEntriesById.remove(id);
-        m_readerPageMetricsById.remove(id);
     }
-    ComicReaderRequests::clearPendingImageRequestsForComics(
-        m_pendingImageRequestIdsByKey,
-        duplicateIds
-    );
+    clearReaderRuntimeStateForComics(duplicateIds);
 
     return {};
 }
@@ -1197,6 +1176,7 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
 
     ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
     purgeSeriesHeroCacheForKey(seriesKey);
+    clearReaderRuntimeStateForComic(comicId);
 
     int removeIndex = -1;
     for (int rowIndex = 0; rowIndex < m_rows.size(); rowIndex += 1) {
@@ -1210,12 +1190,6 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
         m_rows.removeAt(removeIndex);
         endRemoveRows();
     }
-
-    m_readerArchivePathById.remove(comicId);
-    m_readerImageEntriesById.remove(comicId);
-    m_readerPageMetricsById.remove(comicId);
-    ComicReaderRequests::clearPendingImageRequestsForComic(m_pendingImageRequestIdsByKey, comicId);
-
     m_lastMutationKind = QString("delete_comic_hard");
     emit statusChanged();
 

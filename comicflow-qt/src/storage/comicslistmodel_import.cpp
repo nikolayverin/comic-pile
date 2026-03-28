@@ -1860,9 +1860,7 @@ QString ComicsListModel::createComicFromLibrary(
 
             db.close();
             ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, candidate.id);
-            m_readerArchivePathById.insert(candidate.id, normalizedFilePath);
-            m_readerImageEntriesById.remove(candidate.id);
-            m_readerPageMetricsById.remove(candidate.id);
+            setReaderArchivePathForComic(candidate.id, normalizedFilePath);
             requestIssueThumbnailAsync(candidate.id);
             if (!deferReload) {
                 reload();
@@ -2181,9 +2179,7 @@ QString ComicsListModel::createComicFromLibrary(
     }
     if (m_lastImportComicId > 0) {
         ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, m_lastImportComicId);
-        m_readerArchivePathById.insert(m_lastImportComicId, normalizedFilePath);
-        m_readerImageEntriesById.remove(m_lastImportComicId);
-        m_readerPageMetricsById.remove(m_lastImportComicId);
+        setReaderArchivePathForComic(m_lastImportComicId, normalizedFilePath);
         requestIssueThumbnailAsync(m_lastImportComicId);
     }
     return {};
@@ -2540,9 +2536,10 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
 
     if (importedComicId > 0) {
         ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, importedComicId);
-        m_readerArchivePathById.insert(importedComicId, QDir::toNativeSeparators(QFileInfo(finalFilePath).absoluteFilePath()));
-        m_readerImageEntriesById.remove(importedComicId);
-        m_readerPageMetricsById.remove(importedComicId);
+        setReaderArchivePathForComic(
+            importedComicId,
+            QDir::toNativeSeparators(QFileInfo(finalFilePath).absoluteFilePath())
+        );
         if (!deferReload) {
             requestIssueThumbnailAsync(importedComicId);
         }

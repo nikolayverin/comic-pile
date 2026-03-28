@@ -421,6 +421,10 @@ private:
     QString preserveRetainedSeriesMetadata(const QString &seriesKey);
     QString preserveRetainedIssueMetadata(int comicId);
     void resetLastImportOutcome();
+    void invalidateAllReaderAsyncState();
+    void clearReaderRuntimeStateForComic(int comicId);
+    void clearReaderRuntimeStateForComics(const QVector<int> &comicIds);
+    void setReaderArchivePathForComic(int comicId, const QString &archivePath);
 
     QString m_dataRoot;
     QString m_dbPath;
@@ -432,6 +436,7 @@ private:
     QHash<int, QVariantList> m_readerPageMetricsById;
     QHash<QString, QString> m_deferredImportFolderBySeriesKey;
     QHash<int, QList<int>> m_pendingReaderSessionRequestIdsByComicId;
+    QHash<int, QList<int>> m_pendingReaderPageRequestIdsByComicId;
     QHash<int, QList<int>> m_pendingReaderPageMetricsRequestIdsByComicId;
     QHash<QString, QList<int>> m_pendingImageRequestIdsByKey;
     QHash<QString, QList<int>> m_pendingSeriesHeroRequestIdsByKey;
@@ -440,6 +445,7 @@ private:
     int m_activeCoverGenerationCount = 0;
     int m_activeSeriesHeroGenerationCount = 0;
     int m_nextAsyncRequestId = 1;
+    int m_readerAsyncEpoch = 0;
     int m_reloadValidationGeneration = 0;
     QString m_sortMode = QString("series_issue");
     QString m_lastImportAction;
@@ -448,4 +454,5 @@ private:
     QString m_lastImportDuplicateTier;
     int m_lastImportRestoreCandidateCount = 0;
     int m_lastImportRestoreCandidateId = -1;
+    QHash<int, int> m_readerAsyncRevisionByComicId;
 };

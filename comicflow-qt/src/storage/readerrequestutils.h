@@ -21,6 +21,11 @@ QList<int> takePendingImageRequestIds(
     const QString &pendingKey
 );
 
+QList<int> takePendingImageRequestIdsForComic(
+    QHash<QString, QList<int>> &pendingRequestIdsByKey,
+    int comicId
+);
+
 bool hasPendingImageRequest(
     const QHash<QString, QList<int>> &pendingRequestIdsByKey,
     const QString &pendingKey

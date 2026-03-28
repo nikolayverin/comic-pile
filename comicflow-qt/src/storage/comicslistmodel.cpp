@@ -2092,12 +2092,7 @@ void ComicsListModel::reload()
     m_readerImageEntriesById.clear();
     m_readerPageMetricsById.clear();
     m_deferredImportFolderBySeriesKey.clear();
-    m_pendingImageRequestIdsByKey.clear();
-    m_pendingSeriesHeroRequestIdsByKey.clear();
-    m_coverGenerationQueue.clear();
-    m_seriesHeroGenerationQueue.clear();
-    m_activeCoverGenerationCount = 0;
-    m_activeSeriesHeroGenerationCount = 0;
+    invalidateAllReaderAsyncState();
 
     const QFileInfo dbInfo(m_dbPath);
     if (!dbInfo.exists() || !dbInfo.isFile()) {
@@ -2224,6 +2219,7 @@ void ComicsListModel::reload()
         m_readerArchivePathById.clear();
         m_readerImageEntriesById.clear();
         m_readerPageMetricsById.clear();
+        invalidateAllReaderAsyncState();
         endResetModel();
         emit statusChanged();
     });
@@ -3663,10 +3659,7 @@ QString ComicsListModel::relinkComicFileKeepMetadataInternal(
 
     ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
     purgeSeriesHeroCacheForKey(seriesKey);
-    m_readerArchivePathById.insert(comicId, absoluteFilePath);
-    m_readerImageEntriesById.remove(comicId);
-    m_readerPageMetricsById.remove(comicId);
-    ComicReaderRequests::clearPendingImageRequestsForComic(m_pendingImageRequestIdsByKey, comicId);
+    setReaderArchivePathForComic(comicId, absoluteFilePath);
     requestIssueThumbnailAsync(comicId);
 
     m_lastMutationKind = QString("relink_issue_file_keep_metadata");
