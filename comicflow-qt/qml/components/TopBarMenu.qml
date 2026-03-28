@@ -393,6 +393,14 @@ Rectangle {
         }
     }
 
+    function dismissOpenMenus() {
+        if (root.activeTopMenuPopup && root.activeTopMenuPopup.visible) {
+            root.activeTopMenuPopup.close()
+        }
+        root.activeTopMenuPopup = null
+        root.topMenuSessionActive = false
+    }
+
     Rectangle {
         id: statusChip
         z: 3

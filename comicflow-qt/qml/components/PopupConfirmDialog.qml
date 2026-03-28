@@ -25,7 +25,7 @@ PopupDialogWindow {
     signal primaryRequested()
     signal secondaryRequested()
 
-    closePolicy: Popup.NoAutoClose
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: Math.max(dialogWidth, confirmFooter.requiredDialogWidth)
     height: Math.min(
         availableDialogHeight,

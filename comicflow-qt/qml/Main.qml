@@ -401,6 +401,8 @@ ApplicationWindow {
     property alias importInProgress: importController.importInProgress
     readonly property bool anyManagedModalPopupVisible: popupController.anyManagedModalPopupVisible
     readonly property bool anyCriticalPopupVisible: popupController.anyCriticalPopupVisible
+    readonly property bool backgroundModalLockActive: anyManagedModalPopupVisible
+    readonly property bool backgroundUiInteractive: !backgroundModalLockActive
     property alias importTotal: importController.importTotal
     property alias importProcessed: importController.importProcessed
     property alias importTotalBytes: importController.importTotalBytes
@@ -2712,6 +2714,20 @@ ApplicationWindow {
         gridOverlayMenuResumeTimer.restart()
     }
 
+    function dismissBackgroundTransientUi() {
+        if (typeof topBarMenu !== "undefined" && topBarMenu
+            && typeof topBarMenu.dismissOpenMenus === "function") {
+            topBarMenu.dismissOpenMenus()
+        }
+        seriesMenuDismissToken += 1
+    }
+
+    onBackgroundModalLockActiveChanged: {
+        if (backgroundModalLockActive) {
+            dismissBackgroundTransientUi()
+        }
+    }
+
     function markIssueUnread(comicId) {
         if (comicId < 1) return
         const preservedSplitScroll = typeof mainLibraryPane !== "undefined" && mainLibraryPane
@@ -2847,7 +2863,7 @@ ApplicationWindow {
         anchors.fill: parent
         spacing: 0
         opacity: root.startupPrimaryContentVisible ? 1.0 : 0.0
-        enabled: root.startupPrimaryContentVisible
+        enabled: root.startupPrimaryContentVisible && root.backgroundUiInteractive
 
         Behavior on opacity {
             NumberAnimation {
@@ -2996,6 +3012,7 @@ ApplicationWindow {
         anchors.fill: parent
         hostWindow: root
         enabledWhenWindowed: windowDisplayController.enableWindowResizeHandles
+            && root.backgroundUiInteractive
         edgeSize: 4
         cornerSize: 10
         z: 1000

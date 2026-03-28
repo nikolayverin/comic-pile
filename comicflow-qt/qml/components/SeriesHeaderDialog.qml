@@ -28,7 +28,7 @@ PopupDialogWindow {
 
     popupStyle: styleTokens
     title: "Series Header"
-    closePolicy: Popup.CloseOnEscape
+    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: styleTokens.seriesHeaderWidth
     height: styleTokens.seriesHeaderHeight
 
