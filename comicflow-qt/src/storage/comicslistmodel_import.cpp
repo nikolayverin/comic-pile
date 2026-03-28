@@ -994,6 +994,13 @@ QString ComicsListModel::createComicFromLibrary(
         QStringLiteral("archive")
     );
     const QString candidateSeriesKey = normalizeSeriesKey(series);
+    auto purgeSeriesHeroCacheKeys = [this](const QSet<QString> &seriesKeys) {
+        for (const QString &seriesKey : seriesKeys) {
+            if (!seriesKey.trimmed().isEmpty()) {
+                purgeSeriesHeroCacheForKey(seriesKey);
+            }
+        }
+    };
     const bool allowMetadataRestore = ComicImportWorkflow::shouldAllowMetadataRestoreForImport(values, candidateSeriesKey);
     const bool relaxWeakLiveDuplicateChecks = ComicImportWorkflow::hasNarrowImportSeriesContext(values, candidateSeriesKey);
     const QString candidateVolumeKey = normalizeVolumeKey(volume);
@@ -1116,8 +1123,20 @@ QString ComicsListModel::createComicFromLibrary(
             m_importState.lastAction = QString("restored");
             m_importState.lastComicId = candidate.id;
 
+            QSet<QString> seriesHeroKeysToPurge;
+            const QString existingSeriesKey = candidate.seriesKey.trimmed().isEmpty()
+                ? normalizeSeriesKey(candidate.series)
+                : candidate.seriesKey.trimmed();
+            if (!existingSeriesKey.isEmpty()) {
+                seriesHeroKeysToPurge.insert(existingSeriesKey);
+            }
+            if (!candidateSeriesKey.isEmpty()) {
+                seriesHeroKeysToPurge.insert(candidateSeriesKey);
+            }
+
             db.close();
             ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, candidate.id);
+            purgeSeriesHeroCacheKeys(seriesHeroKeysToPurge);
             setReaderArchivePathForComic(candidate.id, normalizedFilePath);
             requestIssueThumbnailAsync(candidate.id);
             if (!deferReload) {
@@ -1395,6 +1414,7 @@ QString ComicsListModel::createComicFromLibrary(
     }
     if (m_importState.lastComicId > 0) {
         ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, m_importState.lastComicId);
+        purgeSeriesHeroCacheForKey(candidateSeriesKey);
         setReaderArchivePathForComic(m_importState.lastComicId, normalizedFilePath);
         requestIssueThumbnailAsync(m_importState.lastComicId);
     }
