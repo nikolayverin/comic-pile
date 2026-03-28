@@ -16,6 +16,9 @@ PopupDialogWindow {
     property string libraryDataPendingMovePath: ""
     property string libraryFolderPath: ""
     property string libraryRuntimeFolderPath: ""
+    property string storageAccessCheckState: "idle"
+    property string storageAccessResultText: ""
+    property string storageAccessHintText: ""
     property string sevenZipVerifyState: "idle"
     property string sevenZipVerifyInlineMessage: ""
     property bool sevenZipVerifyPendingSuccess: false
@@ -83,6 +86,9 @@ PopupDialogWindow {
     onOpened: {
         const requested = String(requestedSection || "").trim()
         selectedSection = requested.length > 0 ? requested : "general"
+        storageAccessCheckState = "idle"
+        storageAccessResultText = ""
+        storageAccessHintText = ""
     }
     onCloseRequested: close()
 
@@ -94,6 +100,7 @@ PopupDialogWindow {
     signal openLibraryDataFolderRequested()
     signal openLibraryFolderRequested()
     signal openLibraryRuntimeFolderRequested()
+    signal checkStorageAccessRequested()
     signal reloadLibraryRequested()
     signal resetSettingsRequested()
 
@@ -1471,7 +1478,11 @@ PopupDialogWindow {
                 width: parent.width
                 height: parent.height - y
                 readonly property bool hasPendingMove: String(dialog.libraryDataPendingMovePath || "").trim().length > 0
-                readonly property int relocationBlockTop: dialog.optionRowPitch * 3 + 14
+                readonly property bool storageAccessHintVisible: dialog.storageAccessCheckState === "failure"
+                    && String(dialog.storageAccessHintText || "").trim().length > 0
+                readonly property int storageAccessDividerY: dialog.optionRowPitch * 4
+                    + (storageAccessHintVisible ? 28 : 10)
+                readonly property int relocationBlockTop: storageAccessDividerY + 4
 
                 PopupActionButton {
                     id: openDataFolderButton
@@ -1628,9 +1639,147 @@ PopupDialogWindow {
                     elide: Text.ElideMiddle
                 }
 
+                PopupActionButton {
+                    id: checkStorageAccessButton
+                    anchors.right: parent.right
+                    anchors.rightMargin: dialog.optionControlRightMargin
+                    y: dialog.optionRowPitch * 3
+                        + Math.round((dialog.optionRowPitch - height) / 2)
+                    text: "Check"
+                    textPixelSize: 13
+                    cornerRadius: Math.round(height / 2)
+                    minimumWidth: 92
+                    enabled: dialog.storageAccessCheckState !== "running"
+                    idleColor: styleTokens.footerButtonIdleColor
+                    hoverColor: styleTokens.footerButtonHoverColor
+                    textColor: dialog.storageAccessCheckState === "running"
+                        ? styleTokens.subtleTextColor
+                        : styleTokens.textColor
+                    hoverEdgeColor: dialog.actionHoverEdgeColor
+                    pressedEffectEnabled: true
+                    pressedColor: dialog.actionPressedColor
+                    pressedEdgeColor: dialog.actionPressedEdgeColor
+                    onClicked: {
+                        dialog.storageAccessCheckState = "running"
+                        dialog.storageAccessResultText = "Checking..."
+                        dialog.storageAccessHintText = ""
+                        dialog.checkStorageAccessRequested()
+                    }
+                }
+
+                Item {
+                    id: storageAccessStatusIndicator
+                    anchors.right: checkStorageAccessButton.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: checkStorageAccessButton.verticalCenter
+                    width: visible ? 24 : 0
+                    height: 24
+                    visible: dialog.storageAccessCheckState !== "idle"
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: styleTokens.footerButtonIdleColor
+                    }
+
+                    ShuffleBusySpinner {
+                        anchors.centerIn: parent
+                        width: 14
+                        height: 14
+                        running: dialog.storageAccessCheckState === "running"
+                        visible: running
+                    }
+
+                    Canvas {
+                        anchors.centerIn: parent
+                        width: 14
+                        height: 14
+                        visible: dialog.storageAccessCheckState === "success"
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            ctx.clearRect(0, 0, width, height)
+                            ctx.beginPath()
+                            ctx.lineCap = "round"
+                            ctx.lineJoin = "round"
+                            ctx.lineWidth = 2.6
+                            ctx.strokeStyle = themeColors.popupSuccessColor
+                            ctx.moveTo(width * 0.18, height * 0.56)
+                            ctx.lineTo(width * 0.42, height * 0.8)
+                            ctx.lineTo(width * 0.84, height * 0.2)
+                            ctx.stroke()
+                        }
+                    }
+
+                    Canvas {
+                        anchors.centerIn: parent
+                        width: 14
+                        height: 14
+                        visible: dialog.storageAccessCheckState === "failure"
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            ctx.clearRect(0, 0, width, height)
+                            ctx.beginPath()
+                            ctx.lineCap = "round"
+                            ctx.lineWidth = 2.8
+                            ctx.strokeStyle = themeColors.popupFailureColor
+                            ctx.moveTo(width * 0.5, height * 0.14)
+                            ctx.lineTo(width * 0.5, height * 0.68)
+                            ctx.stroke()
+
+                            ctx.beginPath()
+                            ctx.fillStyle = themeColors.popupFailureColor
+                            ctx.arc(width * 0.5, height * 0.88, width * 0.08, 0, Math.PI * 2)
+                            ctx.fill()
+                        }
+                    }
+                }
+
+                Text {
+                    x: 0
+                    y: dialog.optionRowPitch * 3
+                        + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
+                    text: "Check storage access"
+                    color: styleTokens.textColor
+                    font.family: Qt.application.font.family
+                    font.pixelSize: dialog.optionTextSize
+                }
+
+                Text {
+                    visible: String(dialog.storageAccessResultText || "").trim().length > 0
+                    anchors.right: storageAccessStatusIndicator.left
+                    anchors.rightMargin: 10
+                    y: dialog.optionRowPitch * 3
+                        + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
+                    width: 150
+                    text: dialog.storageAccessResultText
+                    color: dialog.storageAccessCheckState === "running"
+                        ? styleTokens.subtleTextColor
+                        : styleTokens.textColor
+                    font.family: Qt.application.font.family
+                    font.pixelSize: 11
+                    horizontalAlignment: Text.AlignRight
+                    elide: Text.ElideRight
+                }
+
+                Text {
+                    visible: libraryDataContent.storageAccessHintVisible
+                    x: 0
+                    y: dialog.optionRowPitch * 4 + 4
+                    width: parent.width - dialog.optionControlRightMargin
+                    text: dialog.storageAccessHintText
+                    color: styleTokens.subtleTextColor
+                    font.family: Qt.application.font.family
+                    font.pixelSize: 11
+                    lineHeight: 1.15
+                    lineHeightMode: Text.ProportionalHeight
+                    wrapMode: Text.WordWrap
+                }
+
                 Rectangle {
                     x: 0
-                    y: dialog.optionRowPitch * 3 + 10
+                    y: libraryDataContent.storageAccessDividerY
                     width: parent.width - dialog.optionControlRightMargin
                     height: 1
                     color: styleTokens.sectionBorderColor

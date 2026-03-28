@@ -334,6 +334,7 @@ Item {
         onOpenLibraryDataFolderRequested: root.openExactFolderPath(String(root.libraryDataRootPath || ""))
         onOpenLibraryFolderRequested: root.openExactFolderPath(String(root.libraryFolderPath || ""))
         onOpenLibraryRuntimeFolderRequested: root.openExactFolderPath(String(root.libraryRuntimeFolderPath || ""))
+        onCheckStorageAccessRequested: root.checkStorageAccessFromSettings()
         onReloadLibraryRequested: root.reloadLibraryFromSettings()
         onResetSettingsRequested: root.resetSettingsToDefaults()
     }

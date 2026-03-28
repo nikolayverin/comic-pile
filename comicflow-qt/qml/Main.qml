@@ -1054,6 +1054,18 @@ ApplicationWindow {
         refreshCbrSupportState()
     }
 
+    function checkStorageAccessFromSettings() {
+        const result = libraryModel.checkStorageAccess()
+        const ok = Boolean((result || {}).ok)
+        settingsDialog.storageAccessCheckState = ok ? "success" : "failure"
+        settingsDialog.storageAccessResultText = String(
+            (result || {}).statusText || (ok ? "All good" : "Needs attention")
+        )
+        settingsDialog.storageAccessHintText = ok
+            ? ""
+            : String((result || {}).hintText || "")
+    }
+
     function resetSettingsToDefaults() {
         if (appSettingsController && typeof appSettingsController.resetAllSettingsToDefaults === "function") {
             appSettingsController.resetAllSettingsToDefaults()

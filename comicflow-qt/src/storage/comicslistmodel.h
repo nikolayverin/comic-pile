@@ -72,6 +72,7 @@ public:
     int totalCount() const;
 
     Q_INVOKABLE void reload();
+    Q_INVOKABLE QVariantMap checkStorageAccess() const;
     Q_INVOKABLE QVariantMap checkDatabaseHealth() const;
     Q_INVOKABLE int requestDatabaseHealthCheckAsync();
     Q_INVOKABLE bool isLibraryStorageMigrationPending() const;
