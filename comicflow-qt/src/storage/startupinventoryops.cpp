@@ -1,6 +1,7 @@
 #include "storage/startupinventoryops.h"
 
 #include "storage/librarystoragemigrationops.h"
+#include "storage/librarystoragemigrationstate.h"
 #include "storage/startupruntimeutils.h"
 
 #include <QFutureWatcher>
@@ -40,7 +41,7 @@ QVariantMap checkDatabaseHealth(const QString &dbPath)
 
 bool isLibraryStorageMigrationPending(const QString &dataRoot)
 {
-    return !ComicStartupRuntime::hasLibraryStorageMigrationMarker(dataRoot);
+    return !ComicLibraryStorageMigrationState::hasCompletedLayoutMigration(dataRoot);
 }
 
 QVariantMap currentStartupInventorySignature(const QString &dataRoot, const QString &dbPath)

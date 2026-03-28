@@ -1,6 +1,8 @@
 #include "storage/datarootrelocationbootstrap.h"
 
+#include "storage/datarootrelocationops.h"
 #include "storage/datarootsettingsutils.h"
+#include "storage/librarystoragemigrationstate.h"
 #include "storage/startupruntimeutils.h"
 
 #include <QCoreApplication>
@@ -89,45 +91,6 @@ private:
     int m_processedCount = 0;
     bool m_active = false;
 };
-
-void clearCopiedLibraryStorageMigrationMarker(const QString &dataRoot)
-{
-    const QString markerPath = ComicStartupRuntime::libraryStorageMigrationMarkerPath(dataRoot);
-    if (markerPath.trimmed().isEmpty()) {
-        return;
-    }
-
-    const QFileInfo markerInfo(markerPath);
-    if (!markerInfo.exists() || !markerInfo.isFile()) {
-        return;
-    }
-
-    QFile::remove(markerInfo.absoluteFilePath());
-}
-
-bool ensureEmptyDirectoryTarget(const QString &targetRoot, QString &errorText)
-{
-    const QFileInfo info(QDir::toNativeSeparators(targetRoot));
-    if (info.exists() && !info.isDir()) {
-        errorText = QStringLiteral("The scheduled library data location is not a folder.");
-        return false;
-    }
-
-    if (info.exists()) {
-        const QDir dir(info.absoluteFilePath());
-        if (!dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System).isEmpty()) {
-            errorText = QStringLiteral("The scheduled library data location is not empty.");
-            return false;
-        }
-        return true;
-    }
-
-    if (!QDir().mkpath(QDir::toNativeSeparators(targetRoot))) {
-        errorText = QStringLiteral("Failed to create the scheduled library data folder.");
-        return false;
-    }
-    return true;
-}
 
 struct DataRootCopyPlan {
     QStringList relativeDirectories;
@@ -407,7 +370,7 @@ void processPendingDataRootRelocation()
         progressState,
         migrationPlacement
     );
-    if (!ensureEmptyDirectoryTarget(normalizedTarget, errorText)) {
+    if (!ComicDataRootRelocationOps::ensureEmptyTarget(normalizedTarget, errorText)) {
         if (migrationWindowVisible) {
             closeDataMigrationWindow(migrationEngine);
         }
@@ -419,7 +382,7 @@ void processPendingDataRootRelocation()
         }
         return;
     }
-    clearCopiedLibraryStorageMigrationMarker(normalizedTarget);
+    ComicLibraryStorageMigrationState::clearCompletedLayoutMigrationMarker(normalizedTarget);
     if (!ComicDataRootSettings::writeConfiguredDataRootOverridePath(normalizedTarget)) {
         if (migrationWindowVisible) {
             closeDataMigrationWindow(migrationEngine);

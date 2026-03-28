@@ -21,10 +21,6 @@ bool writeStartupSnapshot(const QString &dataRoot, const QString &payload);
 QString readStartupPreviewMeta(const QString &dataRoot);
 bool writeStartupPreviewMeta(const QString &dataRoot, const QString &payload);
 
-QString libraryStorageMigrationMarkerPath(const QString &dataRoot);
-bool hasLibraryStorageMigrationMarker(const QString &dataRoot);
-bool writeLibraryStorageMigrationMarker(const QString &dataRoot);
-
 void appendLaunchTimelineEventForDataRoot(const QString &dataRoot, const QString &message);
 
 QVariantMap runDatabaseHealthCheck(const QString &dbPath);

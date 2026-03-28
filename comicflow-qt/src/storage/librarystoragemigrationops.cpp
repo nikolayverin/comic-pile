@@ -1,9 +1,9 @@
 #include "storage/librarystoragemigrationops.h"
 
 #include "storage/importmatching.h"
+#include "storage/librarystoragemigrationstate.h"
 #include "storage/sqliteconnectionutils.h"
 #include "storage/librarylayoututils.h"
-#include "storage/startupruntimeutils.h"
 #include "storage/storedpathutils.h"
 
 #include "common/scopedsqlconnectionremoval.h"
@@ -28,11 +28,6 @@ namespace {
 QString trimOrEmpty(const QVariant &value)
 {
     return value.toString().trimmed();
-}
-
-QString normalizeSeriesKeyValue(const QString &value)
-{
-    return ComicImportMatching::normalizeSeriesKey(value);
 }
 
 void cleanupEmptyLibraryDirs(const QString &libraryRootPath, const QStringList &candidateDirs)
@@ -103,7 +98,7 @@ QVariantMap runLibraryStorageLayoutMigration(const QString &dataRoot, const QStr
         return result;
     }
 
-    if (ComicStartupRuntime::hasLibraryStorageMigrationMarker(dataRoot)) {
+    if (ComicLibraryStorageMigrationState::hasCompletedLayoutMigration(dataRoot)) {
         result.insert(QStringLiteral("completed"), true);
         result.insert(QStringLiteral("skipped"), true);
         result.insert(QStringLiteral("skipReason"), QStringLiteral("already_completed"));
@@ -234,7 +229,7 @@ QVariantMap runLibraryStorageLayoutMigration(const QString &dataRoot, const QStr
             if (existingPath.isEmpty()) continue;
 
             const QString normalizedSeriesKey = row.seriesKey.trimmed().isEmpty()
-                ? normalizeSeriesKeyValue(row.series)
+                ? ComicImportMatching::normalizeSeriesKey(row.series)
                 : row.seriesKey.trimmed();
 
             const QString relativeDir = ComicLibraryLayout::relativeDirUnderRoot(libraryPath, existingPath);
@@ -265,7 +260,7 @@ QVariantMap runLibraryStorageLayoutMigration(const QString &dataRoot, const QStr
                 ? QFileInfo(row.filename).completeBaseName()
                 : row.series.trimmed();
             const QString normalizedSeriesKey = row.seriesKey.trimmed().isEmpty()
-                ? normalizeSeriesKeyValue(seriesName)
+                ? ComicImportMatching::normalizeSeriesKey(seriesName)
                 : row.seriesKey.trimmed();
             const QString targetFolderName = ComicLibraryLayout::assignSeriesFolderName(
                 folderState,
@@ -357,7 +352,7 @@ QVariantMap runLibraryStorageLayoutMigration(const QString &dataRoot, const QStr
         return result;
     }
 
-    if (!ComicStartupRuntime::writeLibraryStorageMigrationMarker(dataRoot)) {
+    if (!ComicLibraryStorageMigrationState::writeCompletedLayoutMigrationMarker(dataRoot)) {
         result.insert(
             QStringLiteral("warning"),
             QStringLiteral("Library migration completed, but marker file could not be written.")

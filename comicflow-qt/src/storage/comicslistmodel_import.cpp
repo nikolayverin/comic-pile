@@ -81,15 +81,6 @@ QString sevenZipMissingMessage()
     return ComicArchiveSupport::sevenZipMissingMessage();
 }
 
-QString normalizeImportSourceTypeValue(const QString &value)
-{
-    const QString normalized = value.trimmed().toLower();
-    if (normalized == QStringLiteral("archive") || normalized == QStringLiteral("image_folder")) {
-        return normalized;
-    }
-    return {};
-}
-
 QString validateArchiveImageEntries(const QString &archivePath)
 {
     QStringList entries;
@@ -129,11 +120,11 @@ PersistedImportSignals resolvedImportSignals(
         resolvedSignals.originalFilename = fallbackOriginalFilename.trimmed();
     }
 
-    resolvedSignals.sourceType = normalizeImportSourceTypeValue(
+    resolvedSignals.sourceType = ComicImportMatching::normalizeImportSourceType(
         valueFromMap(values, QStringLiteral("importSourceType"))
     );
     if (resolvedSignals.sourceType.isEmpty()) {
-        resolvedSignals.sourceType = normalizeImportSourceTypeValue(fallbackSourceType);
+        resolvedSignals.sourceType = ComicImportMatching::normalizeImportSourceType(fallbackSourceType);
     }
     if (resolvedSignals.sourceType.isEmpty()) {
         resolvedSignals.sourceType = QStringLiteral("archive");

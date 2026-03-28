@@ -1,59 +1,9 @@
 #include "storage/comicslistmodel.h"
 
+#include "storage/datarootrelocationops.h"
 #include "storage/datarootsettingsutils.h"
 #include "storage/startupinventoryops.h"
 #include "storage/startupruntimeutils.h"
-
-#include <QDir>
-#include <QFileInfo>
-
-namespace {
-
-QString validateScheduledDataRootRelocationTarget(
-    const QString &currentDataRoot,
-    const QString &targetPath
-)
-{
-    if (ComicDataRootSettings::hasExternalDataRootOverride()) {
-        return QStringLiteral("Library data location is currently forced by an external launch override. Remove that override before changing it here.");
-    }
-
-    const QString normalizedCurrent = ComicDataRootSettings::normalizedFolderPath(currentDataRoot);
-    const QString normalizedTarget = ComicDataRootSettings::normalizedFolderPath(targetPath);
-    if (normalizedTarget.isEmpty()) {
-        return QStringLiteral("Choose a new folder for library data.");
-    }
-    if (normalizedCurrent.isEmpty()) {
-        return QStringLiteral("Current library data location is unavailable.");
-    }
-    if (normalizedCurrent.compare(normalizedTarget, Qt::CaseInsensitive) == 0) {
-        return QStringLiteral("Choose a different folder for library data.");
-    }
-    if (ComicDataRootSettings::isSameOrNestedFolderPath(normalizedCurrent, normalizedTarget)) {
-        return QStringLiteral("Choose a folder outside the current library data location.");
-    }
-
-    const QFileInfo targetInfo(QDir::toNativeSeparators(normalizedTarget));
-    if (targetInfo.exists() && !targetInfo.isDir()) {
-        return QStringLiteral("The selected library data location is not a folder.");
-    }
-
-    if (targetInfo.exists()) {
-        const QDir targetDir(targetInfo.absoluteFilePath());
-        if (!targetDir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System).isEmpty()) {
-            return QStringLiteral("Choose an empty folder for the new library data location.");
-        }
-    }
-
-    const QFileInfo currentInfo(QDir::toNativeSeparators(normalizedCurrent));
-    if (!currentInfo.exists() || !currentInfo.isDir()) {
-        return QStringLiteral("Current library data location is unavailable.");
-    }
-
-    return {};
-}
-
-} // namespace
 
 QVariantMap ComicsListModel::checkDatabaseHealth() const
 {
@@ -103,7 +53,7 @@ QVariantMap ComicsListModel::scheduleDataRootRelocation(const QString &targetPat
     result.insert(QStringLiteral("pendingPath"), QString());
     result.insert(QStringLiteral("restartRequired"), false);
 
-    const QString validationError = validateScheduledDataRootRelocationTarget(m_dataRoot, targetPath);
+    const QString validationError = ComicDataRootRelocationOps::validateScheduledTarget(m_dataRoot, targetPath);
     if (!validationError.isEmpty()) {
         result.insert(QStringLiteral("error"), validationError);
         return result;

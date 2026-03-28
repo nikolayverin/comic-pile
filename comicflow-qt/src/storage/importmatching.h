@@ -51,6 +51,7 @@ struct ImportIdentityPassport {
 
 QString normalizeSeriesKey(const QString &value);
 QString normalizeVolumeKey(const QString &value);
+QString normalizeImportSourceType(const QString &value);
 
 QString guessIssueNumberFromFilename(const QString &filename);
 QString guessSeriesFromFilename(const QString &filename);

@@ -128,6 +128,15 @@ QString normalizeVolumeKey(const QString &value)
     return key;
 }
 
+QString normalizeImportSourceType(const QString &value)
+{
+    const QString normalized = value.trimmed().toLower();
+    if (normalized == QStringLiteral("archive") || normalized == QStringLiteral("image_folder")) {
+        return normalized;
+    }
+    return {};
+}
+
 QString guessIssueNumberFromFilename(const QString &filename)
 {
     QString baseName = QFileInfo(filename).completeBaseName().trimmed();

@@ -54,6 +54,8 @@ set(_comicpile_core_sources
     src/storage/comicslistmodel_metadata.cpp
     src/storage/comicslistmodel_reader.cpp
     src/storage/comicslistmodel_startup.cpp
+    src/storage/datarootrelocationops.cpp
+    src/storage/datarootrelocationops.h
     src/storage/datarootsettingsutils.cpp
     src/storage/datarootsettingsutils.h
     src/storage/datarootrelocationbootstrap.cpp
@@ -72,10 +74,14 @@ set(_comicpile_core_sources
     src/storage/issuefileops.h
     src/storage/librarylayoututils.cpp
     src/storage/librarylayoututils.h
+    src/storage/librarydatarepairops.cpp
+    src/storage/librarydatarepairops.h
     src/storage/librarymutationops.cpp
     src/storage/librarymutationops.h
     src/storage/librarystoragemigrationops.cpp
     src/storage/librarystoragemigrationops.h
+    src/storage/librarystoragemigrationstate.cpp
+    src/storage/librarystoragemigrationstate.h
     src/storage/libraryqueryops.cpp
     src/storage/libraryqueryops.h
     src/storage/libraryschemamanager.cpp

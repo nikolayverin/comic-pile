@@ -180,32 +180,6 @@ bool writeStartupPreviewMeta(const QString &dataRoot, const QString &payload)
     );
 }
 
-QString libraryStorageMigrationMarkerPath(const QString &dataRoot)
-{
-    return QDir(startupRuntimeDirPath(dataRoot)).filePath(QStringLiteral("library-storage-layout-migration-v1.done"));
-}
-
-bool hasLibraryStorageMigrationMarker(const QString &dataRoot)
-{
-    return QFileInfo::exists(libraryStorageMigrationMarkerPath(dataRoot));
-}
-
-bool writeLibraryStorageMigrationMarker(const QString &dataRoot)
-{
-    QSaveFile file(libraryStorageMigrationMarkerPath(dataRoot));
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-        return false;
-    }
-
-    const QByteArray payload = QByteArrayLiteral("{\"version\":1}\n");
-    if (file.write(payload) < 0) {
-        file.cancelWriting();
-        return false;
-    }
-
-    return file.commit();
-}
-
 void appendLaunchTimelineEventForDataRoot(const QString &dataRoot, const QString &message)
 {
     if (dataRoot.isEmpty()) {

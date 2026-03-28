@@ -59,11 +59,6 @@
 
 namespace {
 
-QString libraryStorageMigrationMarkerPath(const QString &dataRoot)
-{
-    return ComicStartupRuntime::libraryStorageMigrationMarkerPath(dataRoot);
-}
-
 QString buildSeriesGroupKey(const QString &series, const QString &volume)
 {
     const QString normalizedSeriesKey = ComicImportMatching::normalizeSeriesKey(series);
@@ -72,16 +67,6 @@ QString buildSeriesGroupKey(const QString &series, const QString &volume)
         return normalizedSeriesKey;
     }
     return QStringLiteral("%1::vol::%2").arg(normalizedSeriesKey, volumeGroupKey);
-}
-
-bool hasLibraryStorageMigrationMarker(const QString &dataRoot)
-{
-    return ComicStartupRuntime::hasLibraryStorageMigrationMarker(dataRoot);
-}
-
-bool writeLibraryStorageMigrationMarker(const QString &dataRoot)
-{
-    return ComicStartupRuntime::writeLibraryStorageMigrationMarker(dataRoot);
 }
 
 void appendLaunchTimelineEventForDataRoot(const QString &dataRoot, const QString &message)
@@ -116,15 +101,6 @@ QString valueFromMap(const QVariantMap &map, const QString &primary, const QStri
     const QString primaryValue = valueFromMap(map, primary);
     if (!primaryValue.isEmpty()) return primaryValue;
     return valueFromMap(map, fallback);
-}
-
-QString normalizeImportSourceTypeValue(const QString &value)
-{
-    const QString normalized = value.trimmed().toLower();
-    if (normalized == QStringLiteral("archive") || normalized == QStringLiteral("image_folder")) {
-        return normalized;
-    }
-    return {};
 }
 
 QString validateArchiveImageEntries(const QString &archivePath)
@@ -166,11 +142,11 @@ PersistedImportSignals resolvedImportSignals(
         resolvedSignals.originalFilename = fallbackOriginalFilename.trimmed();
     }
 
-    resolvedSignals.sourceType = normalizeImportSourceTypeValue(
+    resolvedSignals.sourceType = ComicImportMatching::normalizeImportSourceType(
         valueFromMap(values, QStringLiteral("importSourceType"))
     );
     if (resolvedSignals.sourceType.isEmpty()) {
-        resolvedSignals.sourceType = normalizeImportSourceTypeValue(fallbackSourceType);
+        resolvedSignals.sourceType = ComicImportMatching::normalizeImportSourceType(fallbackSourceType);
     }
     if (resolvedSignals.sourceType.isEmpty()) {
         resolvedSignals.sourceType = QStringLiteral("archive");

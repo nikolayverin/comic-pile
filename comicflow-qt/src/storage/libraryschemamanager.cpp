@@ -1,16 +1,11 @@
 #include "storage/libraryschemamanager.h"
-#include "storage/importmatching.h"
+#include "storage/librarydatarepairops.h"
 #include "storage/sqliteconnectionutils.h"
 #include "common/scopedsqlconnectionremoval.h"
 
-#include <QDir>
 #include <QFileInfo>
-#include <QHash>
-#include <QRegularExpression>
-#include <QSet>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QVector>
 #include <QUuid>
 
 namespace {
@@ -61,152 +56,6 @@ const ComicsColumnSpec kComicsSchemaV3Columns[] = {
     { "import_loose_filename_signature", "TEXT DEFAULT ''" },
     { "import_source_type", "TEXT DEFAULT ''" },
 };
-
-QString trimOrEmpty(const QVariant &value)
-{
-    return value.toString().trimmed();
-}
-
-QString normalizeSeriesKeyForSchema(const QString &value)
-{
-    return ComicImportMatching::normalizeSeriesKey(value);
-}
-
-QString normalizeImportSourceTypeForSchema(const QString &value)
-{
-    const QString normalized = value.trimmed().toLower();
-    if (normalized == QStringLiteral("archive") || normalized == QStringLiteral("image_folder")) {
-        return normalized;
-    }
-    return {};
-}
-
-struct DetachedRestoreCleanupRow {
-    int id = 0;
-    QString filename;
-    QString importOriginalFilename;
-    QString importStrictFilenameSignature;
-    QString importLooseFilenameSignature;
-    QString series;
-    QString seriesKey;
-    QString volume;
-    QString title;
-    QString issue;
-    QString publisher;
-    QString year;
-    QString month;
-    QString writer;
-    QString penciller;
-    QString inker;
-    QString colorist;
-    QString letterer;
-    QString coverArtist;
-    QString editor;
-    QString storyArc;
-    QString summary;
-    QString characters;
-    QString genres;
-    QString ageRating;
-    QString readStatus;
-    QString currentPage;
-    QString importSourceType;
-};
-
-QString detachedRestoreEffectiveLabel(const DetachedRestoreCleanupRow &row)
-{
-    const QString original = row.importOriginalFilename.trimmed();
-    if (!original.isEmpty()) {
-        return original;
-    }
-    return row.filename.trimmed();
-}
-
-QString detachedRestoreEffectiveStrictSignature(const DetachedRestoreCleanupRow &row)
-{
-    const QString stored = row.importStrictFilenameSignature.trimmed().toLower();
-    if (!stored.isEmpty()) {
-        return stored;
-    }
-    const QString label = detachedRestoreEffectiveLabel(row);
-    if (label.isEmpty()) {
-        return {};
-    }
-    return ComicImportMatching::normalizeFilenameSignatureStrict(label);
-}
-
-QString detachedRestoreEffectiveLooseSignature(const DetachedRestoreCleanupRow &row)
-{
-    const QString stored = row.importLooseFilenameSignature.trimmed().toLower();
-    if (!stored.isEmpty()) {
-        return stored;
-    }
-    const QString label = detachedRestoreEffectiveLabel(row);
-    if (label.isEmpty()) {
-        return {};
-    }
-    return ComicImportMatching::normalizeFilenameSignatureLoose(label);
-}
-
-QString detachedRestoreSnapshotKey(const DetachedRestoreCleanupRow &row)
-{
-    const QStringList parts = {
-        row.filename.trimmed(),
-        row.importOriginalFilename.trimmed(),
-        row.importStrictFilenameSignature.trimmed().toLower(),
-        row.importLooseFilenameSignature.trimmed().toLower(),
-        row.series.trimmed(),
-        row.seriesKey.trimmed().toLower(),
-        row.volume.trimmed(),
-        row.title.trimmed(),
-        row.issue.trimmed(),
-        row.publisher.trimmed(),
-        row.year.trimmed(),
-        row.month.trimmed(),
-        row.writer.trimmed(),
-        row.penciller.trimmed(),
-        row.inker.trimmed(),
-        row.colorist.trimmed(),
-        row.letterer.trimmed(),
-        row.coverArtist.trimmed(),
-        row.editor.trimmed(),
-        row.storyArc.trimmed(),
-        row.summary.trimmed(),
-        row.characters.trimmed(),
-        row.genres.trimmed(),
-        row.ageRating.trimmed(),
-        row.readStatus.trimmed().toLower(),
-        row.currentPage.trimmed(),
-        normalizeImportSourceTypeForSchema(row.importSourceType)
-    };
-    return parts.join(QStringLiteral("\x1f"));
-}
-
-QString detachedRestoreCleanupGroupKey(const DetachedRestoreCleanupRow &row)
-{
-    const QString seriesKey = row.seriesKey.trimmed().toLower();
-    const QString issueKey = ComicImportMatching::normalizeIssueKey(row.issue);
-    if (seriesKey.isEmpty() || issueKey.isEmpty()) {
-        return {};
-    }
-
-    const QString volumeKey = ComicImportMatching::normalizeVolumeKey(row.volume);
-    const QString strictSignature = detachedRestoreEffectiveStrictSignature(row);
-    const QString looseSignature = detachedRestoreEffectiveLooseSignature(row);
-
-    QString identityKey;
-    if (!strictSignature.isEmpty() && !looseSignature.isEmpty()) {
-        identityKey = QStringLiteral("sig:%1|%2").arg(strictSignature, looseSignature);
-    } else {
-        const QString label = detachedRestoreEffectiveLabel(row).trimmed().toLower();
-        if (label.isEmpty()) {
-            return {};
-        }
-        identityKey = QStringLiteral("name:%1").arg(label);
-    }
-
-    return QStringLiteral("%1|%2|%3|%4|%5")
-        .arg(seriesKey, volumeKey, issueKey, normalizeImportSourceTypeForSchema(row.importSourceType), identityKey);
-}
 
 QString comicsCreateTableV1Sql()
 {
@@ -320,6 +169,11 @@ LibrarySchemaManager::LibrarySchemaManager(QString dbPath)
 {
 }
 
+int LibrarySchemaManager::currentSchemaVersion()
+{
+    return kCurrentLibrarySchemaVersion;
+}
+
 QString LibrarySchemaManager::ensureSchemaUpToDate() const
 {
     const QFileInfo dbInfo(m_dbPath);
@@ -345,14 +199,15 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
             return schemaError;
         }
 
-        if (userVersion > kCurrentLibrarySchemaVersion) {
+        const int supportedSchemaVersion = currentSchemaVersion();
+        if (userVersion > supportedSchemaVersion) {
             db.close();
             return QStringLiteral(
                 "Database schema version %1 is newer than this build supports (%2)."
-            ).arg(userVersion).arg(kCurrentLibrarySchemaVersion);
+            ).arg(userVersion).arg(supportedSchemaVersion);
         }
 
-        if (userVersion < kCurrentLibrarySchemaVersion) {
+        if (userVersion < supportedSchemaVersion) {
             if (!db.transaction()) {
                 const QString error = QStringLiteral("Failed to start schema migration transaction: %1")
                     .arg(db.lastError().text());
@@ -360,7 +215,7 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
                 return error;
             }
 
-            for (int nextVersion = userVersion + 1; nextVersion <= kCurrentLibrarySchemaVersion; nextVersion += 1) {
+            for (int nextVersion = userVersion + 1; nextVersion <= supportedSchemaVersion; nextVersion += 1) {
                 bool migrated = false;
                 switch (nextVersion) {
                 case 1:
@@ -723,7 +578,7 @@ bool LibrarySchemaManager::migrateSchemaToVersion1(QSqlDatabase &db, QString &er
         }
     }
 
-    if (!backfillNormalizedSeriesKeys(db, errorText)) {
+    if (!ComicLibraryDataRepair::backfillNormalizedSeriesKeys(db, errorText)) {
         return false;
     }
 
@@ -754,7 +609,7 @@ bool LibrarySchemaManager::migrateSchemaToVersion3(QSqlDatabase &db, QString &er
         }
     }
 
-    return backfillImportSignals(db, errorText);
+    return ComicLibraryDataRepair::backfillImportSignals(db, errorText);
 }
 
 bool LibrarySchemaManager::migrateSchemaToVersion4(QSqlDatabase &db, QString &errorText) const
@@ -766,7 +621,7 @@ bool LibrarySchemaManager::migrateSchemaToVersion4(QSqlDatabase &db, QString &er
 
 bool LibrarySchemaManager::migrateSchemaToVersion5(QSqlDatabase &db, QString &errorText) const
 {
-    return pruneObviousDetachedRestoreDuplicates(db, errorText);
+    return ComicLibraryDataRepair::pruneObviousDetachedRestoreDuplicates(db, errorText);
 }
 
 bool LibrarySchemaManager::migrateSchemaToVersion6(QSqlDatabase &db, QString &errorText) const
@@ -859,243 +714,4 @@ bool LibrarySchemaManager::migrateSchemaToVersion8(QSqlDatabase &db, QString &er
         return false;
     }
     return ensureIssueMetadataKnowledgeTable(db, errorText);
-}
-
-bool LibrarySchemaManager::backfillNormalizedSeriesKeys(QSqlDatabase &db, QString &errorText) const
-{
-    QSqlQuery selectQuery(db);
-    selectQuery.prepare(
-        QStringLiteral(
-            "SELECT id, COALESCE(series, ''), COALESCE(series_key, '') "
-            "FROM comics "
-            "ORDER BY id"
-        )
-    );
-    if (!selectQuery.exec()) {
-        errorText = QStringLiteral("Failed to scan series keys for migration: %1")
-            .arg(selectQuery.lastError().text());
-        return false;
-    }
-
-    QSqlQuery updateQuery(db);
-    updateQuery.prepare(
-        QStringLiteral(
-            "UPDATE comics "
-            "SET series_key = ? "
-            "WHERE id = ?"
-        )
-    );
-
-    while (selectQuery.next()) {
-        const int comicId = selectQuery.value(0).toInt();
-        const QString series = trimOrEmpty(selectQuery.value(1));
-        const QString existingSeriesKey = trimOrEmpty(selectQuery.value(2));
-        if (!existingSeriesKey.isEmpty()) continue;
-
-        const QString normalizedSeries = normalizeSeriesKeyForSchema(series);
-        updateQuery.bindValue(0, normalizedSeries);
-        updateQuery.bindValue(1, comicId);
-        if (!updateQuery.exec()) {
-            errorText = QStringLiteral("Failed to backfill series_key for comic %1: %2")
-                .arg(comicId)
-                .arg(updateQuery.lastError().text());
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool LibrarySchemaManager::backfillImportSignals(QSqlDatabase &db, QString &errorText) const
-{
-    QSqlQuery selectQuery(db);
-    selectQuery.prepare(
-        QStringLiteral(
-            "SELECT id, "
-            "COALESCE(import_original_filename, ''), COALESCE(filename, ''), COALESCE(file_path, ''), "
-            "COALESCE(import_strict_filename_signature, ''), COALESCE(import_loose_filename_signature, ''), "
-            "COALESCE(import_source_type, '') "
-            "FROM comics "
-            "ORDER BY id"
-        )
-    );
-    if (!selectQuery.exec()) {
-        errorText = QStringLiteral("Failed to scan import signals for migration: %1")
-            .arg(selectQuery.lastError().text());
-        return false;
-    }
-
-    QSqlQuery updateQuery(db);
-    updateQuery.prepare(
-        QStringLiteral(
-            "UPDATE comics "
-            "SET import_original_filename = ?, "
-            "import_strict_filename_signature = ?, "
-            "import_loose_filename_signature = ?, "
-            "import_source_type = ? "
-            "WHERE id = ?"
-        )
-    );
-
-    while (selectQuery.next()) {
-        const int comicId = selectQuery.value(0).toInt();
-        QString importOriginalFilename = trimOrEmpty(selectQuery.value(1));
-        const QString filename = trimOrEmpty(selectQuery.value(2));
-        const QString filePath = trimOrEmpty(selectQuery.value(3));
-        QString strictSignature = trimOrEmpty(selectQuery.value(4));
-        QString looseSignature = trimOrEmpty(selectQuery.value(5));
-        QString sourceType = normalizeImportSourceTypeForSchema(trimOrEmpty(selectQuery.value(6)));
-
-        if (importOriginalFilename.isEmpty()) {
-            importOriginalFilename = filename;
-        }
-        if (importOriginalFilename.isEmpty() && !filePath.isEmpty()) {
-            importOriginalFilename = QFileInfo(filePath).fileName().trimmed();
-        }
-        if (strictSignature.isEmpty()) {
-            strictSignature = ComicImportMatching::normalizeFilenameSignatureStrict(importOriginalFilename);
-        }
-        if (looseSignature.isEmpty()) {
-            looseSignature = ComicImportMatching::normalizeFilenameSignatureLoose(importOriginalFilename);
-        }
-        if (sourceType.isEmpty()
-            && (!importOriginalFilename.isEmpty() || !filename.isEmpty() || !filePath.isEmpty())) {
-            sourceType = QStringLiteral("archive");
-        }
-
-        updateQuery.bindValue(0, importOriginalFilename);
-        updateQuery.bindValue(1, strictSignature);
-        updateQuery.bindValue(2, looseSignature);
-        updateQuery.bindValue(3, sourceType);
-        updateQuery.bindValue(4, comicId);
-        if (!updateQuery.exec()) {
-            errorText = QStringLiteral("Failed to backfill import signals for comic %1: %2")
-                .arg(comicId)
-                .arg(updateQuery.lastError().text());
-            return false;
-        }
-        updateQuery.finish();
-    }
-
-    return true;
-}
-
-bool LibrarySchemaManager::pruneObviousDetachedRestoreDuplicates(QSqlDatabase &db, QString &errorText) const
-{
-    QSqlQuery selectQuery(db);
-    selectQuery.prepare(
-        QStringLiteral(
-            "SELECT "
-            "id, "
-            "COALESCE(filename, ''), "
-            "COALESCE(import_original_filename, ''), "
-            "COALESCE(import_strict_filename_signature, ''), "
-            "COALESCE(import_loose_filename_signature, ''), "
-            "COALESCE(series, ''), "
-            "COALESCE(series_key, ''), "
-            "COALESCE(volume, ''), "
-            "COALESCE(title, ''), "
-            "COALESCE(issue_number, issue, ''), "
-            "COALESCE(publisher, ''), "
-            "CASE WHEN year IS NULL THEN '' ELSE CAST(year AS TEXT) END, "
-            "CASE WHEN month IS NULL THEN '' ELSE CAST(month AS TEXT) END, "
-            "COALESCE(writer, ''), "
-            "COALESCE(penciller, ''), "
-            "COALESCE(inker, ''), "
-            "COALESCE(colorist, ''), "
-            "COALESCE(letterer, ''), "
-            "COALESCE(cover_artist, ''), "
-            "COALESCE(editor, ''), "
-            "COALESCE(story_arc, ''), "
-            "COALESCE(summary, ''), "
-            "COALESCE(characters, ''), "
-            "COALESCE(genres, ''), "
-            "COALESCE(age_rating, ''), "
-            "COALESCE(read_status, ''), "
-            "CASE WHEN current_page IS NULL THEN '' ELSE CAST(current_page AS TEXT) END, "
-            "COALESCE(import_source_type, '') "
-            "FROM comics "
-            "WHERE COALESCE(file_path, '') = '' "
-            "ORDER BY id"
-        )
-    );
-    if (!selectQuery.exec()) {
-        errorText = QStringLiteral("Failed to scan detached restore rows for cleanup: %1")
-            .arg(selectQuery.lastError().text());
-        return false;
-    }
-
-    QHash<QString, int> canonicalIdByGroupAndSnapshot;
-    QVector<int> duplicateIds;
-    while (selectQuery.next()) {
-        DetachedRestoreCleanupRow row;
-        row.id = selectQuery.value(0).toInt();
-        row.filename = trimOrEmpty(selectQuery.value(1));
-        row.importOriginalFilename = trimOrEmpty(selectQuery.value(2));
-        row.importStrictFilenameSignature = trimOrEmpty(selectQuery.value(3));
-        row.importLooseFilenameSignature = trimOrEmpty(selectQuery.value(4));
-        row.series = trimOrEmpty(selectQuery.value(5));
-        row.seriesKey = trimOrEmpty(selectQuery.value(6));
-        row.volume = trimOrEmpty(selectQuery.value(7));
-        row.title = trimOrEmpty(selectQuery.value(8));
-        row.issue = trimOrEmpty(selectQuery.value(9));
-        row.publisher = trimOrEmpty(selectQuery.value(10));
-        row.year = trimOrEmpty(selectQuery.value(11));
-        row.month = trimOrEmpty(selectQuery.value(12));
-        row.writer = trimOrEmpty(selectQuery.value(13));
-        row.penciller = trimOrEmpty(selectQuery.value(14));
-        row.inker = trimOrEmpty(selectQuery.value(15));
-        row.colorist = trimOrEmpty(selectQuery.value(16));
-        row.letterer = trimOrEmpty(selectQuery.value(17));
-        row.coverArtist = trimOrEmpty(selectQuery.value(18));
-        row.editor = trimOrEmpty(selectQuery.value(19));
-        row.storyArc = trimOrEmpty(selectQuery.value(20));
-        row.summary = trimOrEmpty(selectQuery.value(21));
-        row.characters = trimOrEmpty(selectQuery.value(22));
-        row.genres = trimOrEmpty(selectQuery.value(23));
-        row.ageRating = trimOrEmpty(selectQuery.value(24));
-        row.readStatus = trimOrEmpty(selectQuery.value(25));
-        row.currentPage = trimOrEmpty(selectQuery.value(26));
-        row.importSourceType = trimOrEmpty(selectQuery.value(27));
-
-        const QString groupKey = detachedRestoreCleanupGroupKey(row);
-        if (groupKey.isEmpty()) {
-            continue;
-        }
-
-        const QString snapshotKey = detachedRestoreSnapshotKey(row);
-        const QString dedupeKey = QStringLiteral("%1|%2").arg(groupKey, snapshotKey);
-        if (canonicalIdByGroupAndSnapshot.contains(dedupeKey)) {
-            duplicateIds.push_back(row.id);
-            continue;
-        }
-
-        canonicalIdByGroupAndSnapshot.insert(dedupeKey, row.id);
-    }
-
-    if (duplicateIds.isEmpty()) {
-        return true;
-    }
-
-    QStringList placeholders;
-    placeholders.reserve(duplicateIds.size());
-    for (int i = 0; i < duplicateIds.size(); i += 1) {
-        placeholders.push_back(QStringLiteral("?"));
-    }
-
-    QSqlQuery deleteComicsQuery(db);
-    deleteComicsQuery.prepare(
-        QStringLiteral("DELETE FROM comics WHERE id IN (%1)")
-            .arg(placeholders.join(QStringLiteral(", ")))
-    );
-    for (int duplicateId : duplicateIds) {
-        deleteComicsQuery.addBindValue(duplicateId);
-    }
-    if (!deleteComicsQuery.exec()) {
-        errorText = QStringLiteral("Failed to remove stale restore duplicates during migration: %1")
-            .arg(deleteComicsQuery.lastError().text());
-        return false;
-    }
-
-    return true;
 }
