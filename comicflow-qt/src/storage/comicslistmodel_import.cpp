@@ -2159,17 +2159,6 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     const int importedComicId = m_lastImportComicId;
     setOutSuccess(action, importedComicId, finalFilename, finalFilePath, createdArchiveFile, normalizedSourcePath);
 
-    if (importedComicId > 0) {
-        ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, importedComicId);
-        setReaderArchivePathForComic(
-            importedComicId,
-            QDir::toNativeSeparators(QFileInfo(finalFilePath).absoluteFilePath())
-        );
-        if (!deferReload) {
-            requestIssueThumbnailAsync(importedComicId);
-        }
-    }
-
     return {};
 }
 

@@ -219,6 +219,34 @@ Item {
         root.coverByComicId = next
     }
 
+    function clearCoverSourcesForComicIds(comicIds) {
+        const root = rootObject
+        if (!root) return
+
+        const ids = Array.isArray(comicIds) ? comicIds : []
+        if (ids.length < 1) return
+
+        const current = root.coverByComicId && typeof root.coverByComicId === "object"
+            ? root.coverByComicId
+            : {}
+        const next = Object.assign({}, current)
+        let changed = false
+
+        for (let i = 0; i < ids.length; i += 1) {
+            const comicId = Number(ids[i] || 0)
+            if (comicId < 1) continue
+
+            const key = String(comicId)
+            if (!Object.prototype.hasOwnProperty.call(next, key)) continue
+            delete next[key]
+            changed = true
+        }
+
+        if (changed) {
+            root.coverByComicId = next
+        }
+    }
+
     function stripSourceRevision(source) {
         return String(source || "").trim().replace(/[?#].*$/, "")
     }

@@ -1697,12 +1697,14 @@ ApplicationWindow {
             return
         }
 
+        const previousIssues = Array.isArray(issuesGridData) ? issuesGridData.slice(0) : []
         const liveIssues = libraryModel.issuesForSeries(
             selectedSeriesKey,
             selectedVolumeKey,
             libraryReadStatusFilter,
             librarySearchText
         )
+        const liveIssueListChanged = !startupController.issueListsEquivalentByIdAndOrder(previousIssues, liveIssues)
         if (
             startupSnapshotApplied
                 && !startupHydrationInProgress
@@ -1726,6 +1728,18 @@ ApplicationWindow {
             }
         } else {
             issuesGridData = liveIssues
+        }
+        if (liveIssueListChanged) {
+            const resetComicIds = []
+            for (let i = 0; i < previousIssues.length; i += 1) {
+                const previousId = Number((previousIssues[i] || {}).id || 0)
+                if (previousId > 0) resetComicIds.push(previousId)
+            }
+            for (let i = 0; i < liveIssues.length; i += 1) {
+                const liveId = Number((liveIssues[i] || {}).id || 0)
+                if (liveId > 0) resetComicIds.push(liveId)
+            }
+            readerCoverController.clearCoverSourcesForComicIds(resetComicIds)
         }
         primeVisibleIssueCoverSourcesFromCache()
         if (startupReconcileCompleted || !startupSnapshotApplied) {
