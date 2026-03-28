@@ -413,6 +413,14 @@ private:
         const QString &filename,
         const QVariantMap &importSignalValues
     );
+    QString restoreComicFileBindingsAfterRecovery(
+        const QHash<int, QString> &bindingsByComicId,
+        const QString &connectionTag
+    );
+    QString restoreBackupFileAfterRecovery(
+        const QString &backupPath,
+        const QString &targetPath
+    );
     bool deleteComicHardInternal(int comicId, QString &messageOut);
     QString deleteFileFingerprintHistoryForComicIds(const QVector<int> &comicIds);
     QString pruneEquivalentDetachedGhostRowsForComic(int comicId);

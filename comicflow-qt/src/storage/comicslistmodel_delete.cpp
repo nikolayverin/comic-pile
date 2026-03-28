@@ -252,7 +252,7 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
 
     QVector<int> finalRemovedIds = idsToMarkMissing;
     if (!stagedDeletes.isEmpty()) {
-        QVector<ComicIssueFileOps::ComicFilePathBinding> restoreBindings;
+        QHash<int, QString> restoreBindingsByComicId;
         QSet<int> restoredIds;
         QStringList recoveryWarnings;
 
@@ -275,16 +275,14 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
             }
 
             if (!stagedDelete.originalPath.trimmed().isEmpty()) {
-                restoreBindings.push_back({ stagedDelete.comicId, stagedDelete.originalPath });
+                restoreBindingsByComicId.insert(stagedDelete.comicId, stagedDelete.originalPath);
             }
             restoredIds.insert(stagedDelete.comicId);
         }
 
-        if (!restoreBindings.isEmpty()) {
-            const QString restoreError = ComicIssueFileOps::applyComicFilePathBindings(
-                m_dbPath,
-                m_dataRoot,
-                restoreBindings,
+        if (!restoreBindingsByComicId.isEmpty()) {
+            const QString restoreError = restoreComicFileBindingsAfterRecovery(
+                restoreBindingsByComicId,
                 QStringLiteral("restore_series_files_after_delete")
             );
             if (!restoreError.isEmpty()) {
@@ -456,10 +454,10 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
                 .arg(formatDeleteFailureText(finalizeFailure), formatDeleteFailureText(rollbackFailure));
         }
 
-        const QString restoreError = ComicIssueFileOps::applyComicFilePathBindings(
-            m_dbPath,
-            m_dataRoot,
-            { { comicId, stagedDelete.originalPath } },
+        QHash<int, QString> restoreBindingByComicId;
+        restoreBindingByComicId.insert(comicId, stagedDelete.originalPath);
+        const QString restoreError = restoreComicFileBindingsAfterRecovery(
+            restoreBindingByComicId,
             QStringLiteral("restore_issue_file_after_delete")
         );
         if (!restoreError.isEmpty()) {

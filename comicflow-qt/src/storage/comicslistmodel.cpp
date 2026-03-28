@@ -3399,16 +3399,17 @@ QString ComicsListModel::restoreReplacedComicFileFromBackupEx(
         return QStringLiteral("Restore backup file not found: %1").arg(backupPath.trimmed());
     }
 
-    QFile::remove(normalizedTargetPath);
-
-    QString moveError;
-    if (!moveFileWithFallback(normalizedBackupPath, normalizedTargetPath, moveError)) {
-        return moveError;
+    const QString restoreFileError = restoreBackupFileAfterRecovery(normalizedBackupPath, normalizedTargetPath);
+    if (!restoreFileError.isEmpty()) {
+        return restoreFileError;
     }
 
-    ComicDeleteOps::forgetPendingStagedDelete(m_dataRoot, normalizedBackupPath);
+    const QString relinkError = relinkComicFileKeepMetadataInternal(comicId, normalizedTargetPath, filename, importSignalValues);
+    if (!relinkError.isEmpty()) {
+        return QStringLiteral("Backup archive was restored on disk, but DB relink failed: %1").arg(relinkError);
+    }
 
-    return relinkComicFileKeepMetadataInternal(comicId, normalizedTargetPath, filename, importSignalValues);
+    return {};
 }
 
 QString ComicsListModel::relinkComicFileKeepMetadata(int comicId, const QString &filePath, const QString &filename)
@@ -3489,6 +3490,71 @@ QString ComicsListModel::relinkComicFileKeepMetadataInternal(
 
     m_lastMutationKind = QString("relink_issue_file_keep_metadata");
     emit statusChanged();
+    return {};
+}
+
+QString ComicsListModel::restoreComicFileBindingsAfterRecovery(
+    const QHash<int, QString> &bindingsByComicId,
+    const QString &connectionTag
+)
+{
+    if (bindingsByComicId.isEmpty()) {
+        return {};
+    }
+
+    QVector<int> comicIds;
+    comicIds.reserve(bindingsByComicId.size());
+    for (auto it = bindingsByComicId.constBegin(); it != bindingsByComicId.constEnd(); ++it) {
+        comicIds.push_back(it.key());
+    }
+    std::sort(comicIds.begin(), comicIds.end());
+
+    QVector<ComicIssueFileOps::ComicFilePathBinding> bindings;
+    bindings.reserve(comicIds.size());
+    for (int comicId : comicIds) {
+        bindings.push_back({ comicId, bindingsByComicId.value(comicId) });
+    }
+
+    return ComicIssueFileOps::applyComicFilePathBindings(
+        m_dbPath,
+        m_dataRoot,
+        bindings,
+        connectionTag
+    );
+}
+
+QString ComicsListModel::restoreBackupFileAfterRecovery(
+    const QString &backupPath,
+    const QString &targetPath
+)
+{
+    const QString normalizedBackupPath = normalizeInputFilePath(backupPath);
+    const QString normalizedTargetPath = normalizeInputFilePath(targetPath);
+    if (normalizedTargetPath.isEmpty()) {
+        return QStringLiteral("Restore target path is required.");
+    }
+    if (normalizedBackupPath.isEmpty()) {
+        return QStringLiteral("Restore backup path is required.");
+    }
+
+    const QFileInfo backupInfo(normalizedBackupPath);
+    if (!backupInfo.exists() || !backupInfo.isFile()) {
+        return QStringLiteral("Restore backup file not found: %1").arg(backupPath.trimmed());
+    }
+
+    QString removedDirPath;
+    DeleteFailureInfo removeFailure;
+    if (!ComicDeleteOps::tryRemoveFileWithDetails(normalizedTargetPath, removedDirPath, removeFailure)) {
+        return QStringLiteral("Failed to clear the current archive before rollback.\n%1")
+            .arg(ComicDeleteOps::formatDeleteFailureLine(removeFailure));
+    }
+
+    QString moveError;
+    if (!moveFileWithFallback(normalizedBackupPath, normalizedTargetPath, moveError)) {
+        return moveError;
+    }
+
+    ComicDeleteOps::forgetPendingStagedDelete(m_dataRoot, normalizedBackupPath);
     return {};
 }
 
