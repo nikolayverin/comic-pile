@@ -516,6 +516,24 @@ Item {
     }
 
     function commitPendingReplaceDeletes() {
+        if (!libraryModelRef || importPendingOldFileDeletes.length < 1) {
+            importPendingOldFileDeletes = []
+            return
+        }
+
+        const seen = ({})
+        for (let i = 0; i < importPendingOldFileDeletes.length; i += 1) {
+            const rawPath = String(importPendingOldFileDeletes[i] || "")
+            const normalizedPath = normalizeImportPath(rawPath)
+            if (normalizedPath.length < 1) continue
+
+            const dedupeKey = normalizedPath.toLowerCase()
+            if (seen[dedupeKey] === true) continue
+            seen[dedupeKey] = true
+
+            libraryModelRef.deleteFileAtPath(normalizedPath)
+        }
+
         importPendingOldFileDeletes = []
     }
 
@@ -955,6 +973,7 @@ Item {
 
             const replaceValues = {
                 deferReload: true,
+                keepBackupForRollback: true,
                 series: existingSeries,
                 volume: existingVolume,
                 issueNumber: existingIssue

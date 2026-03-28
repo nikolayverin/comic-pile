@@ -3330,6 +3330,7 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         importSourceLabel,
         normalizedSourceType
     );
+    const bool keepBackupForRollback = values.value(QStringLiteral("keepBackupForRollback")).toBool();
     result.insert(QStringLiteral("sourcePath"), normalizedSourcePath);
     result.insert(QStringLiteral("sourceType"), normalizedSourceType);
     result.insert(QStringLiteral("previousImportSignals"), importSignalsToVariantMap(previousImportSignals));
@@ -3472,8 +3473,6 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
     result.insert(QStringLiteral("code"), QStringLiteral("replaced"));
     result.insert(QStringLiteral("filePath"), QDir::toNativeSeparators(QFileInfo(existingFilePath).absoluteFilePath()));
     result.insert(QStringLiteral("filename"), existingFilename);
-    result.insert(QStringLiteral("backupPath"), stagedDelete.stagedPath);
-    ComicDeleteOps::rememberPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
 
     FingerprintSnapshot sourceFingerprint;
     QString sourceFingerprintError;
@@ -3510,6 +3509,32 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
     if (!fingerprintHistoryIds.isEmpty()) {
         result.insert(QStringLiteral("fingerprintHistoryIds"), fingerprintHistoryIds);
     }
+
+    if (keepBackupForRollback) {
+        result.insert(QStringLiteral("backupPath"), stagedDelete.stagedPath);
+        ComicDeleteOps::rememberPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
+        return result;
+    }
+
+    QString cleanupDirPath;
+    DeleteFailureInfo finalizeFailure;
+    if (!performFinalizeStagedArchiveDelete(stagedDelete, cleanupDirPath, finalizeFailure)) {
+        ComicDeleteOps::rememberPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
+        result.insert(
+            QStringLiteral("cleanupWarning"),
+            QStringLiteral("Old archive backup cleanup failed: %1").arg(formatDeleteFailureText(finalizeFailure))
+        );
+        return result;
+    }
+
+    ComicDeleteOps::forgetPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
+    if (!cleanupDirPath.isEmpty()) {
+        cleanupEmptyLibraryDirs(
+            QDir(m_dataRoot).filePath(QStringLiteral("Library")),
+            { cleanupDirPath }
+        );
+    }
+
     return result;
 }
 
