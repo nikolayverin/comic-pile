@@ -15,6 +15,8 @@ PopupDialogWindow {
     readonly property int availableDialogHeight: hostHeight > 0
         ? hostHeight - 80
         : minimumDialogHeight
+    property bool busy: false
+    property string busyText: ""
     property string primaryButtonText: "OK"
     property string secondaryButtonText: "Cancel"
     property var criticalAttentionTarget: null
@@ -32,11 +34,15 @@ PopupDialogWindow {
     attentionActive: criticalAttentionTarget === dialog && dialog.visible
     attentionColor: criticalAttentionColor
 
-    onCloseRequested: secondaryRequested()
+    onCloseRequested: {
+        if (!dialog.busy) {
+            secondaryRequested()
+        }
+    }
 
     Shortcut {
         sequences: [StandardKey.Cancel]
-        enabled: dialog.visible
+        enabled: dialog.visible && !dialog.busy
         onActivated: dialog.secondaryRequested()
     }
 
@@ -57,6 +63,27 @@ PopupDialogWindow {
             font.pixelSize: dialog.popupStyle ? dialog.popupStyle.dialogBodyFontSize : 13
         }
 
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            visible: dialog.busy
+            spacing: 10
+
+            BusyIndicator {
+                running: dialog.busy
+                visible: dialog.busy
+                implicitWidth: 20
+                implicitHeight: 20
+            }
+
+            Text {
+                text: dialog.busyText.length > 0 ? dialog.busyText : "Working..."
+                color: dialog.popupStyle ? dialog.popupStyle.subtleTextColor : themeColors.subtleTextColor
+                font.pixelSize: dialog.popupStyle ? dialog.popupStyle.dialogBodyFontSize : 13
+                wrapMode: Text.WordWrap
+            }
+        }
+
         PopupFooterRow {
             id: confirmFooter
             Layout.fillWidth: true
@@ -73,6 +100,7 @@ PopupDialogWindow {
                 textColor: dialog.popupStyle ? dialog.popupStyle.textColor : themeColors.textPrimary
                 textPixelSize: dialog.popupStyle ? dialog.popupStyle.footerButtonTextSize : 13
                 text: dialog.secondaryButtonText
+                enabled: !dialog.busy
                 onClicked: dialog.secondaryRequested()
             }
 
@@ -86,6 +114,7 @@ PopupDialogWindow {
                 textColor: dialog.popupStyle ? dialog.popupStyle.textColor : themeColors.textPrimary
                 textPixelSize: dialog.popupStyle ? dialog.popupStyle.footerButtonTextSize : 13
                 text: dialog.primaryButtonText
+                enabled: !dialog.busy
                 onClicked: dialog.primaryRequested()
             }
         }

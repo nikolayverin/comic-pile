@@ -3238,6 +3238,11 @@ QString ComicsListModel::archivePathForComicId(int comicId) const
     return {};
 }
 
+QString ComicsListModel::archivePathForComic(int comicId) const
+{
+    return archivePathForComicId(comicId);
+}
+
 QString ComicsListModel::seriesGroupKeyForComicId(int comicId) const
 {
     if (comicId < 1) return {};
@@ -3290,13 +3295,16 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
     }
     const QString seriesKey = seriesGroupKeyForComicId(comicId);
 
-    const QString existingFilePath = normalizeInputFilePath(metadata.value(QStringLiteral("filePath")).toString());
+    QString existingFilename = metadata.value(QStringLiteral("filename")).toString().trimmed();
+    const QString existingFilePath = resolveStoredArchivePathForDataRoot(
+        m_dataRoot,
+        metadata.value(QStringLiteral("filePath")).toString(),
+        existingFilename
+    );
     if (existingFilePath.isEmpty()) {
         result.insert(QStringLiteral("error"), QStringLiteral("Replace failed: existing archive path is missing."));
         return result;
     }
-
-    QString existingFilename = metadata.value(QStringLiteral("filename")).toString().trimmed();
     if (existingFilename.isEmpty()) {
         existingFilename = QFileInfo(existingFilePath).fileName().trimmed();
     }

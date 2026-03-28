@@ -12,6 +12,7 @@ Database/
 Library/
 library.db*
 _build/
+_tmp/
 AGENTS.md
 PROJECT_BIBLE.md
 PROJECT_BIBLE_RU.md

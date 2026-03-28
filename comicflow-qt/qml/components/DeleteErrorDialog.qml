@@ -10,6 +10,8 @@ PopupDialogWindow {
     property string detailsText: ""
     property string systemText: ""
     property string primaryPath: ""
+    property bool retryActive: false
+    property string retryStatusText: ""
     readonly property int textColumnMinWidth: 120
     readonly property int textColumnMaxWidth: 420
     readonly property int footerTopGap: 16
@@ -54,7 +56,11 @@ PopupDialogWindow {
         Math.max(styleTokens.deleteErrorMinHeight, deleteErrorLayout.implicitHeight)
     )
 
-    onCloseRequested: close()
+    onCloseRequested: {
+        if (!dialog.retryActive) {
+            close()
+        }
+    }
 
     PopupBodyColumn {
         id: deleteErrorLayout
@@ -115,6 +121,31 @@ PopupDialogWindow {
             Layout.preferredHeight: dialog.footerTopGap
         }
 
+        RowLayout {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.fillWidth: true
+            visible: dialog.retryActive
+            spacing: 10
+
+            BusyIndicator {
+                running: dialog.retryActive
+                visible: dialog.retryActive
+                implicitWidth: 20
+                implicitHeight: 20
+            }
+
+            Text {
+                text: dialog.retryStatusText.length > 0 ? dialog.retryStatusText : "Retrying delete..."
+                color: styleTokens.subtleTextColor
+                font.pixelSize: 12
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: dialog.retryActive ? 12 : 0
+        }
+
         PopupFooterRow {
             id: deleteErrorFooter
             Layout.fillWidth: true
@@ -130,7 +161,8 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Retry"
+                text: dialog.retryActive ? "Retrying..." : "Retry"
+                enabled: !dialog.retryActive
                 onClicked: dialog.retryRequested()
             }
 
@@ -144,7 +176,7 @@ PopupDialogWindow {
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
                 text: "Open folder"
-                enabled: dialog.primaryPath.length > 0
+                enabled: dialog.primaryPath.length > 0 && !dialog.retryActive
                 onClicked: dialog.openFolderRequested()
             }
 
@@ -158,6 +190,7 @@ PopupDialogWindow {
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
                 text: "Close"
+                enabled: !dialog.retryActive
                 onClicked: dialog.close()
             }
         }

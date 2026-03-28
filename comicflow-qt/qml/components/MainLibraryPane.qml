@@ -990,6 +990,8 @@ Item {
             IssueCard {
                 anchors.fill: parent
                 hoverUiEnabled: !metadataDialog.visible
+                    && !root.anyManagedModalPopupVisible
+                    && !root.replaceArchiveOperationActive
                 actionMenuSuppressed: root.gridOverlayMenusSuppressed
                 uiFontFamily: root.uiFontFamily
                 uiFontPixelSize: root.fontPxUiBase

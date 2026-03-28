@@ -109,6 +109,7 @@ Rectangle {
     function refreshActionMenuHold() {
         if (!root.hoverUiEnabled || root.actionMenuSuppressed) {
             actionMenuHoldTimer.stop()
+            root.actionMenuDismissed = false
             return
         }
 

@@ -209,6 +209,7 @@ public:
     Q_INVOKABLE QString syncComicInfoToArchive(int comicId);
     Q_INVOKABLE QString importComicInfoFromArchive(int comicId, const QString &mode);
     Q_INVOKABLE QVariantMap loadComicMetadata(int comicId) const;
+    Q_INVOKABLE QString archivePathForComic(int comicId) const;
     Q_INVOKABLE QString deleteComic(int comicId);
     Q_INVOKABLE QString deleteComicHard(int comicId);
     Q_INVOKABLE QString normalizeSeriesKeyForLookup(const QString &value) const;
@@ -421,6 +422,7 @@ private:
     QString preserveRetainedSeriesMetadata(const QString &seriesKey);
     QString preserveRetainedIssueMetadata(int comicId);
     void resetLastImportOutcome();
+    QString deleteSeriesKeyForComic(int comicId) const;
     void invalidateAllReaderAsyncState();
     void clearReaderRuntimeStateForComic(int comicId);
     void clearReaderRuntimeStateForComics(const QVector<int> &comicIds);

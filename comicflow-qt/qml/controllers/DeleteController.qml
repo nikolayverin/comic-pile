@@ -26,6 +26,8 @@ Item {
     property string deleteRetryMode: ""
     property int deleteRetryComicId: -1
     property var deleteRetrySeriesKeys: []
+    property bool deleteRetryInProgress: false
+    property string deleteRetryStatusText: ""
     property string pendingSeriesKey: ""
     property string pendingSeriesTitle: ""
     property var pendingSeriesKeys: []
@@ -230,6 +232,7 @@ Item {
     }
 
     function clearDeleteFailureContext() {
+        deleteRetryTimer.stop()
         deleteErrorHeadline = ""
         deleteErrorReasonText = ""
         deleteErrorDetailsText = ""
@@ -240,6 +243,23 @@ Item {
         deleteRetryMode = ""
         deleteRetryComicId = -1
         deleteRetrySeriesKeys = []
+        deleteRetryInProgress = false
+        deleteRetryStatusText = ""
+    }
+
+    function isDeleteWarningMessage(rawMessage) {
+        const lower = String(rawMessage || "").trim().toLowerCase()
+        return lower.indexOf("issue was removed") === 0
+            || lower.indexOf("issues were removed") === 0
+            || lower.indexOf("archive file was removed") === 0
+            || lower.indexOf("files were removed") === 0
+            || lower.indexOf("issue file was detached") === 0
+    }
+
+    function showDeleteWarningResult(rawMessage) {
+        const text = String(rawMessage || "").trim()
+        if (text.length < 1) return
+        showActionResult(text, true)
     }
 
     function openDeleteFailureDialog(rawErrorText, retryContext) {
@@ -264,17 +284,37 @@ Item {
     }
 
     function retryDeleteFailure() {
-        if (!libraryModelRef) return
+        if (deleteRetryInProgress) return
+        deleteRetryInProgress = true
+        deleteRetryStatusText = "Retrying delete..."
+        deleteRetryTimer.start()
+    }
+
+    function executeRetryDeleteFailure() {
+        if (!libraryModelRef) {
+            deleteRetryInProgress = false
+            deleteRetryStatusText = ""
+            return
+        }
 
         if (deleteRetryMode === "issue") {
             const issueId = Number(deleteRetryComicId || 0)
             if (issueId < 1) {
+                deleteRetryInProgress = false
+                deleteRetryStatusText = ""
                 if (deleteErrorDialogRef) deleteErrorDialogRef.close()
                 return
             }
 
             const retryResult = String(libraryModelRef.deleteComic(issueId) || "")
+            deleteRetryInProgress = false
+            deleteRetryStatusText = ""
             if (retryResult.length > 0) {
+                if (isDeleteWarningMessage(retryResult)) {
+                    if (deleteErrorDialogRef) deleteErrorDialogRef.close()
+                    showDeleteWarningResult(retryResult)
+                    return
+                }
                 openDeleteFailureDialog(retryResult, { mode: "issue", comicId: issueId })
                 return
             }
@@ -285,28 +325,42 @@ Item {
         if (deleteRetryMode === "series") {
             const keys = Array.isArray(deleteRetrySeriesKeys) ? deleteRetrySeriesKeys.slice(0) : []
             if (keys.length < 1) {
+                deleteRetryInProgress = false
+                deleteRetryStatusText = ""
                 if (deleteErrorDialogRef) deleteErrorDialogRef.close()
                 return
             }
 
             const errors = []
+            const warnings = []
             for (let i = 0; i < keys.length; i += 1) {
                 const key = String(keys[i] || "").trim()
                 if (key.length < 1) continue
                 const result = String(libraryModelRef.deleteSeriesFiles(key) || "")
                 if (result.length > 0) {
-                    errors.push(result)
+                    if (isDeleteWarningMessage(result)) {
+                        warnings.push(result)
+                    } else {
+                        errors.push(result)
+                    }
                 }
             }
 
+            deleteRetryInProgress = false
+            deleteRetryStatusText = ""
             if (errors.length > 0) {
                 openDeleteFailureDialog(errors.join("\n"), { mode: "series", seriesKeys: keys })
                 return
             }
             if (deleteErrorDialogRef) deleteErrorDialogRef.close()
+            if (warnings.length > 0) {
+                showDeleteWarningResult(warnings.join("\n\n"))
+            }
             return
         }
 
+        deleteRetryInProgress = false
+        deleteRetryStatusText = ""
         if (deleteErrorDialogRef) deleteErrorDialogRef.close()
     }
 
@@ -377,12 +431,17 @@ Item {
         if (keys.length < 1) return
 
         const errors = []
+        const warnings = []
         for (let i = 0; i < keys.length; i += 1) {
             const key = String(keys[i] || "")
             if (key.length < 1) continue
             const result = String(libraryModelRef.deleteSeriesFiles(key) || "")
             if (result.length > 0) {
-                errors.push(result)
+                if (isDeleteWarningMessage(result)) {
+                    warnings.push(result)
+                } else {
+                    errors.push(result)
+                }
             }
         }
 
@@ -391,6 +450,8 @@ Item {
                 mode: "series",
                 seriesKeys: keys
             })
+        } else if (warnings.length > 0) {
+            showDeleteWarningResult(warnings.join("\n\n"))
         }
 
         pendingSeriesKeys = []
@@ -421,12 +482,24 @@ Item {
         const targetComicId = Number(pendingDeleteId || -1)
         const result = String(libraryModelRef.deleteComic(targetComicId) || "")
         if (result.length > 0) {
-            openDeleteFailureDialog(result, {
-                mode: "issue",
-                comicId: targetComicId
-            })
+            if (isDeleteWarningMessage(result)) {
+                showDeleteWarningResult(result)
+            } else {
+                openDeleteFailureDialog(result, {
+                    mode: "issue",
+                    comicId: targetComicId
+                })
+            }
         }
         pendingDeleteId = -1
         clearSelection()
+    }
+
+    Timer {
+        id: deleteRetryTimer
+        interval: 0
+        repeat: false
+        running: false
+        onTriggered: controller.executeRetryDeleteFailure()
     }
 }

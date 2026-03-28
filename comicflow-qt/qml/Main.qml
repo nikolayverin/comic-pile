@@ -169,6 +169,8 @@ ApplicationWindow {
     property alias deleteRetryMode: deleteController.deleteRetryMode
     property alias deleteRetryComicId: deleteController.deleteRetryComicId
     property alias deleteRetrySeriesKeys: deleteController.deleteRetrySeriesKeys
+    property alias deleteRetryInProgress: deleteController.deleteRetryInProgress
+    property alias deleteRetryStatusText: deleteController.deleteRetryStatusText
     property string editingSeriesKey: ""
     property var editingSeriesKeys: []
     property string editingSeriesTitle: ""
@@ -227,6 +229,8 @@ ApplicationWindow {
     property int pendingDeleteReaderPageIndex: -1
     property int pendingReplaceArchiveComicId: -1
     property string pendingReplaceArchiveSourcePath: ""
+    property bool replaceArchiveOperationActive: false
+    property string replaceArchiveOperationStatusText: "Replacing archive..."
     property string readerViewMode: "one_page"
     property bool readerMangaModeEnabled: false
     property bool readerMangaSpreadOffsetEnabled: false
@@ -1157,6 +1161,9 @@ ApplicationWindow {
     }
 
     function cancelReplaceIssueArchiveConfirmation() {
+        if (replaceArchiveOperationActive) {
+            return
+        }
         pendingReplaceArchiveComicId = -1
         pendingReplaceArchiveSourcePath = ""
         if (replaceArchiveConfirmDialog && replaceArchiveConfirmDialog.visible) {
@@ -1165,10 +1172,21 @@ ApplicationWindow {
     }
 
     function confirmReplaceIssueArchive() {
+        if (replaceArchiveOperationActive) {
+            return false
+        }
+
         const comicId = Number(pendingReplaceArchiveComicId || 0)
         const selectedPath = String(pendingReplaceArchiveSourcePath || "")
-        cancelReplaceIssueArchiveConfirmation()
-        return performReplaceIssueArchive(comicId, selectedPath)
+        if (comicId < 1 || selectedPath.length < 1) {
+            cancelReplaceIssueArchiveConfirmation()
+            return false
+        }
+
+        replaceArchiveOperationStatusText = "Replacing archive..."
+        replaceArchiveOperationActive = true
+        replaceArchiveActionTimer.start()
+        return true
     }
 
     function replaceIssueArchive(comicId) {
@@ -1202,6 +1220,35 @@ ApplicationWindow {
         pendingReplaceArchiveSourcePath = selectedPath
         if (replaceArchiveConfirmDialog && !replaceArchiveConfirmDialog.visible) {
             popupController.openExclusivePopup(replaceArchiveConfirmDialog)
+        }
+    }
+
+    Timer {
+        id: replaceArchiveActionTimer
+        interval: 0
+        repeat: false
+        running: false
+        onTriggered: {
+            const comicId = Number(root.pendingReplaceArchiveComicId || 0)
+            const selectedPath = String(root.pendingReplaceArchiveSourcePath || "")
+
+            if (comicId < 1 || selectedPath.length < 1) {
+                root.replaceArchiveOperationActive = false
+                root.pendingReplaceArchiveComicId = -1
+                root.pendingReplaceArchiveSourcePath = ""
+                if (root.replaceArchiveConfirmDialog && root.replaceArchiveConfirmDialog.visible) {
+                    root.replaceArchiveConfirmDialog.close()
+                }
+                return
+            }
+
+            root.performReplaceIssueArchive(comicId, selectedPath)
+            root.replaceArchiveOperationActive = false
+            root.pendingReplaceArchiveComicId = -1
+            root.pendingReplaceArchiveSourcePath = ""
+            if (root.replaceArchiveConfirmDialog && root.replaceArchiveConfirmDialog.visible) {
+                root.replaceArchiveConfirmDialog.close()
+            }
         }
     }
 

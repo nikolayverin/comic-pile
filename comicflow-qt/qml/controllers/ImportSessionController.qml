@@ -557,6 +557,10 @@ Item {
         const duplicateTier = String((importResult || {}).duplicateTier || "").trim().toLowerCase() || "exact"
         const existingId = Number((importResult || {}).existingId || 0)
         const meta = existingId > 0 && libraryModelRef ? libraryModelRef.loadComicMetadata(existingId) : ({})
+        const storedOldFilePath = String(meta.filePath || "").trim()
+        const resolvedOldFilePath = existingId > 0 && libraryModelRef
+            ? String(libraryModelRef.archivePathForComic(existingId) || "").trim()
+            : ""
 
         return {
             conflictCode: conflictCode,
@@ -570,7 +574,7 @@ Item {
             existingId: existingId,
             existingFilename: String(meta.filename || "").trim(),
             existingVolume: String(meta.volume || "").trim(),
-            oldFilePath: String(meta.filePath || "").trim(),
+            oldFilePath: resolvedOldFilePath.length > 0 ? resolvedOldFilePath : storedOldFilePath,
             existingSeries: String(meta.series || "").trim(),
             existingIssue: String(meta.issueNumber || "").trim(),
             existingTitle: String(meta.title || "").trim(),
@@ -675,6 +679,10 @@ Item {
         const duplicateTier = String(preview.duplicateTier || "exact").trim().toLowerCase() || "exact"
         const existingId = Number(preview.existingId || 0)
         const meta = existingId > 0 && libraryModelRef ? libraryModelRef.loadComicMetadata(existingId) : ({})
+        const storedOldFilePath = String(meta.filePath || "").trim()
+        const resolvedOldFilePath = existingId > 0 && libraryModelRef
+            ? String(libraryModelRef.archivePathForComic(existingId) || "").trim()
+            : ""
         const sourcePath = String(preview.path || queued.path || "")
         const sourceType = String(preview.sourceType || queued.sourceType || "archive")
         const filenameHint = String(preview.filenameHint || queued.filenameHint || "")
@@ -691,7 +699,7 @@ Item {
             existingId: existingId,
             existingFilename: String(meta.filename || "").trim(),
             existingVolume: String(meta.volume || "").trim(),
-            oldFilePath: String(meta.filePath || "").trim(),
+            oldFilePath: resolvedOldFilePath.length > 0 ? resolvedOldFilePath : storedOldFilePath,
             existingSeries: String(meta.series || "").trim(),
             existingIssue: String(meta.issueNumber || "").trim(),
             existingTitle: String(meta.title || "").trim(),

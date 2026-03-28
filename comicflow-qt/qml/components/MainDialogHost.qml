@@ -285,6 +285,8 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         messageText: "Replace the current archive with the selected file?"
+        busy: root.replaceArchiveOperationActive
+        busyText: root.replaceArchiveOperationStatusText
         primaryButtonText: "Replace"
         secondaryButtonText: "Cancel"
         onPrimaryRequested: root.confirmReplaceIssueArchive()
@@ -377,6 +379,8 @@ Item {
         detailsText: root.deleteErrorDetailsText
         systemText: root.deleteErrorSystemText
         primaryPath: root.deleteErrorPrimaryPath
+        retryActive: root.deleteRetryInProgress
+        retryStatusText: root.deleteRetryStatusText
         onClosed: popupController.handleDeleteErrorDialogClosed()
         onRetryRequested: deleteController.retryDeleteFailure()
         onOpenFolderRequested: {

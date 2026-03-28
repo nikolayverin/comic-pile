@@ -532,11 +532,31 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
     return {};
 }
 
+QString ComicsListModel::deleteSeriesKeyForComic(int comicId) const
+{
+    const QString liveSeriesKey = seriesGroupKeyForComicId(comicId);
+    if (!liveSeriesKey.isEmpty()) {
+        return liveSeriesKey;
+    }
+
+    const QVariantMap metadata = loadComicMetadata(comicId);
+    if (!trimOrEmpty(metadata.value(QStringLiteral("error"))).isEmpty()) {
+        return {};
+    }
+
+    const QString series = trimOrEmpty(metadata.value(QStringLiteral("series")));
+    if (series.isEmpty()) {
+        return {};
+    }
+
+    return ComicImportMatching::normalizeSeriesKey(series);
+}
+
 QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
 {
     if (comicId < 1) return QString("Invalid issue id.");
 
-    const QString seriesKey = seriesGroupKeyForComicId(comicId);
+    const QString seriesKey = deleteSeriesKeyForComic(comicId);
 
     QString filePath;
     {
@@ -650,7 +670,7 @@ QString ComicsListModel::detachComicFileKeepMetadata(int comicId)
 {
     if (comicId < 1) return QString("Invalid issue id.");
 
-    const QString seriesKey = seriesGroupKeyForComicId(comicId);
+    const QString seriesKey = deleteSeriesKeyForComic(comicId);
 
     const QString updateError = ComicIssueFileOps::applyComicFilePathBindings(
         m_dbPath,
@@ -1054,7 +1074,7 @@ QString ComicsListModel::deleteComic(int comicId)
 {
     if (comicId < 1) return QStringLiteral("Invalid issue id.");
 
-    const QString seriesKey = seriesGroupKeyForComicId(comicId);
+    const QString seriesKey = deleteSeriesKeyForComic(comicId);
     const bool deletingLastIssueInSeries = !seriesKey.isEmpty() && liveIssueCountForSeries(seriesKey) <= 1;
     if (deletingLastIssueInSeries) {
         const QString preserveError = preserveRetainedSeriesMetadata(seriesKey);
@@ -1118,7 +1138,7 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
         return false;
     }
 
-    const QString seriesKey = seriesGroupKeyForComicId(comicId);
+    const QString seriesKey = deleteSeriesKeyForComic(comicId);
 
     QString filePath;
     {
