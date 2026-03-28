@@ -54,26 +54,6 @@ const QSet<QString> &documentImportExtensions()
     return ComicArchiveSupport::documentImportExtensions();
 }
 
-QString sevenZipMissingMessage()
-{
-    return ComicArchiveSupport::sevenZipMissingMessage();
-}
-
-QString djvuMissingMessage()
-{
-    return ComicArchiveSupport::djvuMissingMessage();
-}
-
-QString resolve7ZipExecutable()
-{
-    return ComicArchiveSupport::resolve7ZipExecutable();
-}
-
-QString resolveDjVuExecutable()
-{
-    return ComicArchiveSupport::resolveDjVuExecutable();
-}
-
 QSet<QString> resolvedSevenZipArchiveExtensions()
 {
     return ComicArchiveSupport::resolvedSevenZipArchiveExtensions();
@@ -252,7 +232,14 @@ bool extractZipLikeArchiveToDirectory(
 
     QString stdOut;
     QString stdErr;
-    return ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText);
+    return ComicArchiveProcess::runPowerShellScript(
+        script,
+        stdOut,
+        stdErr,
+        errorText,
+        120000,
+        QStringLiteral("Archive extraction")
+    );
 }
 
 bool stageExtractedArchiveForCbz(
@@ -445,12 +432,6 @@ bool convertDjvuToCbz(
 {
     errorText.clear();
 
-    const QString ddjvu = resolveDjVuExecutable();
-    if (ddjvu.isEmpty()) {
-        errorText = djvuMissingMessage();
-        return false;
-    }
-
     const QString tempRootPath = QDir(QDir::tempPath()).filePath(
         QStringLiteral("comicpile-djvu-stage-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces))
     );
@@ -468,8 +449,7 @@ bool convertDjvuToCbz(
     QByteArray stdOutBytes;
     QByteArray stdErrBytes;
     const QString outputPattern = QDir(rawPagesPath).filePath(QStringLiteral("page%06d.ppm"));
-    if (!ComicArchiveProcess::runExternalProcess(
-            ddjvu,
+    if (!ComicArchiveSupport::runDjVuProcess(
             {
                 QStringLiteral("-format=ppm"),
                 QStringLiteral("-size=%1x%2").arg(kTargetImportedPageWidth).arg(kTargetImportedPageHeight),
@@ -481,7 +461,8 @@ bool convertDjvuToCbz(
             stdErrBytes,
             errorText,
             600000,
-            true
+            true,
+            QStringLiteral("DJVU page rendering")
         )) {
         cleanupTemp();
         return false;
@@ -540,12 +521,6 @@ bool convertArchiveVia7ZipToCbz(
 {
     errorText.clear();
 
-    const QString sevenZip = resolve7ZipExecutable();
-    if (sevenZip.isEmpty()) {
-        errorText = sevenZipMissingMessage();
-        return false;
-    }
-
     const QString tempRootPath = QDir(QDir::tempPath()).filePath(
         QStringLiteral("comicpile-normalize-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces))
     );
@@ -561,8 +536,7 @@ bool convertArchiveVia7ZipToCbz(
 
     QByteArray stdOutBytes;
     QByteArray stdErrBytes;
-    if (!ComicArchiveProcess::runExternalProcess(
-            sevenZip,
+    if (!ComicArchiveSupport::runSevenZipProcess(
             {
                 QStringLiteral("x"),
                 QStringLiteral("-y"),
@@ -577,7 +551,8 @@ bool convertArchiveVia7ZipToCbz(
             stdErrBytes,
             errorText,
             120000,
-            true
+            true,
+            QStringLiteral("7-Zip archive extraction")
         )) {
         cleanupTemp();
         return false;
@@ -784,7 +759,14 @@ bool createCbzFromDirectory(
 
     QString stdOut;
     QString stdErr;
-    if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
+    if (!ComicArchiveProcess::runPowerShellScript(
+            script,
+            stdOut,
+            stdErr,
+            errorText,
+            120000,
+            QStringLiteral("Archive packaging")
+        )) {
         return false;
     }
 

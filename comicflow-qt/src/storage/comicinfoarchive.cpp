@@ -152,8 +152,17 @@ bool readComicInfoXmlFromArchive(
 
     QString stdOut;
     QString stdErr;
-    if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
-        if (errorText.contains(QStringLiteral("code 4"), Qt::CaseInsensitive)) {
+    int exitCode = 0;
+    if (!ComicArchiveProcess::runPowerShellScript(
+            script,
+            stdOut,
+            stdErr,
+            errorText,
+            120000,
+            QStringLiteral("ComicInfo read"),
+            &exitCode
+        )) {
+        if (exitCode == 4) {
             errorText = QStringLiteral("ComicInfo.xml not found in archive.");
         }
         return false;
@@ -230,7 +239,14 @@ bool writeComicInfoXmlToArchive(
 
     QString stdOut;
     QString stdErr;
-    return ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText);
+    return ComicArchiveProcess::runPowerShellScript(
+        script,
+        stdOut,
+        stdErr,
+        errorText,
+        120000,
+        QStringLiteral("ComicInfo update")
+    );
 }
 
 bool listImageEntriesInArchive(
@@ -278,7 +294,14 @@ bool listImageEntriesInArchive(
 
         QString stdOut;
         QString stdErr;
-        if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
+        if (!ComicArchiveProcess::runPowerShellScript(
+                script,
+                stdOut,
+                stdErr,
+                errorText,
+                120000,
+                QStringLiteral("Archive page listing")
+            )) {
             return false;
         }
 
@@ -287,16 +310,9 @@ bool listImageEntriesInArchive(
     }
 
     if (usesSevenZipArchiveBackend(extension)) {
-        const QString sevenZip = ComicArchiveSupport::resolve7ZipExecutable();
-        if (sevenZip.isEmpty()) {
-            errorText = ComicArchiveSupport::sevenZipMissingMessage();
-            return false;
-        }
-
         QByteArray stdOutBytes;
         QByteArray stdErrBytes;
-        if (!ComicArchiveProcess::runExternalProcess(
-                sevenZip,
+        if (!ComicArchiveSupport::runSevenZipProcess(
                 {
                     QStringLiteral("l"),
                     QStringLiteral("-slt"),
@@ -309,7 +325,8 @@ bool listImageEntriesInArchive(
                 stdErrBytes,
                 errorText,
                 120000,
-                true
+                true,
+                QStringLiteral("7-Zip page listing")
             )) {
             return false;
         }
@@ -420,8 +437,17 @@ bool extractArchiveEntryToFile(
 
         QString stdOut;
         QString stdErr;
-        if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
-            if (errorText.contains(QStringLiteral("code 4"), Qt::CaseInsensitive)) {
+        int exitCode = 0;
+        if (!ComicArchiveProcess::runPowerShellScript(
+                script,
+                stdOut,
+                stdErr,
+                errorText,
+                120000,
+                QStringLiteral("Archive entry extraction"),
+                &exitCode
+            )) {
+            if (exitCode == 4) {
                 errorText = QStringLiteral("Page entry not found in archive.");
             }
             return false;
@@ -431,12 +457,6 @@ bool extractArchiveEntryToFile(
     }
 
     if (usesSevenZipArchiveBackend(extension)) {
-        const QString sevenZip = ComicArchiveSupport::resolve7ZipExecutable();
-        if (sevenZip.isEmpty()) {
-            errorText = ComicArchiveSupport::sevenZipMissingMessage();
-            return false;
-        }
-
         const QString tempDirPath = QDir(outputDir).filePath(
             QStringLiteral("extract-%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces))
         );
@@ -447,8 +467,7 @@ bool extractArchiveEntryToFile(
 
         QByteArray stdOutBytes;
         QByteArray stdErrBytes;
-        if (!ComicArchiveProcess::runExternalProcess(
-                sevenZip,
+        if (!ComicArchiveSupport::runSevenZipProcess(
                 {
                     QStringLiteral("e"),
                     QStringLiteral("-y"),
@@ -464,7 +483,8 @@ bool extractArchiveEntryToFile(
                 stdErrBytes,
                 errorText,
                 120000,
-                true
+                true,
+                QStringLiteral("7-Zip entry extraction")
             )) {
             QDir(tempDirPath).removeRecursively();
             return false;
@@ -561,7 +581,14 @@ bool listImageEntryMetricsInArchive(
 
         QString stdOut;
         QString stdErr;
-        if (!ComicArchiveProcess::runPowerShellScript(script, stdOut, stdErr, errorText)) {
+        if (!ComicArchiveProcess::runPowerShellScript(
+                script,
+                stdOut,
+                stdErr,
+                errorText,
+                120000,
+                QStringLiteral("Archive page metrics")
+            )) {
             return false;
         }
 

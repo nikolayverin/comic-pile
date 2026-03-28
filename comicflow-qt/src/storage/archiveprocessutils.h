@@ -13,7 +13,9 @@ bool runPowerShellScript(
     QString &stdOut,
     QString &stdErr,
     QString &errorText,
-    int timeoutMs = 120000
+    int timeoutMs = 120000,
+    const QString &operationLabel = QString(),
+    int *exitCodeOut = nullptr
 );
 
 bool runExternalProcess(
@@ -23,7 +25,9 @@ bool runExternalProcess(
     QByteArray &stdErr,
     QString &errorText,
     int timeoutMs = 120000,
-    bool pumpUiEvents = false
+    bool pumpUiEvents = false,
+    const QString &operationLabel = QString(),
+    int *exitCodeOut = nullptr
 );
 
 } // namespace ComicArchiveProcess

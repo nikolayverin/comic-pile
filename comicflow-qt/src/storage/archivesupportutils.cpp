@@ -261,6 +261,82 @@ QString resolveDjVuExecutable()
     );
 }
 
+bool runSevenZipProcess(
+    const QStringList &arguments,
+    QByteArray &stdOut,
+    QByteArray &stdErr,
+    QString &errorText,
+    int timeoutMs,
+    bool pumpUiEvents,
+    const QString &operationLabel,
+    int *exitCodeOut
+)
+{
+    const QString sevenZip = resolve7ZipExecutable();
+    if (sevenZip.isEmpty()) {
+        if (exitCodeOut) {
+            *exitCodeOut = 0;
+        }
+        errorText = sevenZipMissingMessage();
+        stdOut.clear();
+        stdErr.clear();
+        return false;
+    }
+
+    const QString label = operationLabel.trimmed().isEmpty()
+        ? QStringLiteral("7-Zip operation")
+        : operationLabel.trimmed();
+    return ComicArchiveProcess::runExternalProcess(
+        sevenZip,
+        arguments,
+        stdOut,
+        stdErr,
+        errorText,
+        timeoutMs,
+        pumpUiEvents,
+        label,
+        exitCodeOut
+    );
+}
+
+bool runDjVuProcess(
+    const QStringList &arguments,
+    QByteArray &stdOut,
+    QByteArray &stdErr,
+    QString &errorText,
+    int timeoutMs,
+    bool pumpUiEvents,
+    const QString &operationLabel,
+    int *exitCodeOut
+)
+{
+    const QString ddjvu = resolveDjVuExecutable();
+    if (ddjvu.isEmpty()) {
+        if (exitCodeOut) {
+            *exitCodeOut = 0;
+        }
+        errorText = djvuMissingMessage();
+        stdOut.clear();
+        stdErr.clear();
+        return false;
+    }
+
+    const QString label = operationLabel.trimmed().isEmpty()
+        ? QStringLiteral("DJVU operation")
+        : operationLabel.trimmed();
+    return ComicArchiveProcess::runExternalProcess(
+        ddjvu,
+        arguments,
+        stdOut,
+        stdErr,
+        errorText,
+        timeoutMs,
+        pumpUiEvents,
+        label,
+        exitCodeOut
+    );
+}
+
 const QSet<QString> &nativeImportArchiveExtensions()
 {
     static const QSet<QString> extensions = {
@@ -379,13 +455,14 @@ QSet<QString> resolvedSevenZipArchiveExtensions()
     QByteArray stdOutBytes;
     QByteArray stdErrBytes;
     QString errorText;
-    if (!ComicArchiveProcess::runExternalProcess(
-            executable,
+    if (!runSevenZipProcess(
             { QStringLiteral("i") },
             stdOutBytes,
             stdErrBytes,
             errorText,
-            15000)) {
+            15000,
+            false,
+            QStringLiteral("7-Zip support scan"))) {
         return cachedExtensions;
     }
 

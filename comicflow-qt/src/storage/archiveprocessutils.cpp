@@ -3,10 +3,35 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QEventLoop>
+#include <QFileInfo>
 #include <QProcess>
 #include <QtGlobal>
 
 namespace {
+
+QString normalizedProcessDetail(const QString &detail)
+{
+    QString normalized = detail.trimmed();
+    normalized.replace(QLatin1Char('\r'), QLatin1Char(' '));
+    normalized.replace(QLatin1Char('\n'), QLatin1Char(' '));
+    return normalized.trimmed();
+}
+
+QString appendProcessDetail(const QString &baseMessage, const QString &detail)
+{
+    const QString normalizedDetail = normalizedProcessDetail(detail);
+    if (normalizedDetail.isEmpty()) {
+        return baseMessage;
+    }
+
+    return QStringLiteral("%1 %2").arg(baseMessage, normalizedDetail);
+}
+
+QString resolvedOperationLabel(const QString &operationLabel, const QString &fallbackLabel)
+{
+    const QString trimmedLabel = operationLabel.trimmed();
+    return trimmedLabel.isEmpty() ? fallbackLabel : trimmedLabel;
+}
 
 bool waitForProcessWithUiPumping(
     QProcess &process,
@@ -76,12 +101,22 @@ bool runPowerShellScript(
     QString &stdOut,
     QString &stdErr,
     QString &errorText,
-    int timeoutMs
+    int timeoutMs,
+    const QString &operationLabel,
+    int *exitCodeOut
 )
 {
     stdOut.clear();
     stdErr.clear();
     errorText.clear();
+    if (exitCodeOut) {
+        *exitCodeOut = 0;
+    }
+
+    const QString label = resolvedOperationLabel(
+        operationLabel,
+        QStringLiteral("PowerShell operation")
+    );
 
     QProcess process;
     process.setProgram(QStringLiteral("powershell.exe"));
@@ -94,7 +129,7 @@ bool runPowerShellScript(
 
     process.start();
     if (!process.waitForStarted(15000)) {
-        errorText = QStringLiteral("Failed to start PowerShell process.");
+        errorText = QStringLiteral("%1 failed to start.").arg(label);
         return false;
     }
 
@@ -103,19 +138,29 @@ bool runPowerShellScript(
             timeoutMs,
             true,
             errorText,
-            QStringLiteral("PowerShell operation timed out."))) {
+            QStringLiteral("%1 timed out.").arg(label))) {
         return false;
     }
 
     stdOut = QString::fromUtf8(process.readAllStandardOutput());
     stdErr = QString::fromUtf8(process.readAllStandardError());
+    if (exitCodeOut) {
+        *exitCodeOut = process.exitCode();
+    }
 
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        errorText = QStringLiteral("PowerShell exited with code %1.").arg(process.exitCode());
-        const QString trimmedErr = stdErr.trimmed();
-        if (!trimmedErr.isEmpty()) {
-            errorText += QStringLiteral(" %1").arg(trimmedErr);
-        }
+    if (process.exitStatus() != QProcess::NormalExit) {
+        errorText = appendProcessDetail(
+            QStringLiteral("%1 ended unexpectedly.").arg(label),
+            stdErr
+        );
+        return false;
+    }
+
+    if (process.exitCode() != 0) {
+        errorText = appendProcessDetail(
+            QStringLiteral("%1 failed with exit code %2.").arg(label).arg(process.exitCode()),
+            stdErr
+        );
         return false;
     }
 
@@ -129,12 +174,23 @@ bool runExternalProcess(
     QByteArray &stdErr,
     QString &errorText,
     int timeoutMs,
-    bool pumpUiEvents
+    bool pumpUiEvents,
+    const QString &operationLabel,
+    int *exitCodeOut
 )
 {
     stdOut.clear();
     stdErr.clear();
     errorText.clear();
+    if (exitCodeOut) {
+        *exitCodeOut = 0;
+    }
+
+    QString fallbackLabel = QFileInfo(program).fileName().trimmed();
+    if (fallbackLabel.isEmpty()) {
+        fallbackLabel = QStringLiteral("External process");
+    }
+    const QString label = resolvedOperationLabel(operationLabel, fallbackLabel);
 
     QProcess process;
     process.setProgram(program);
@@ -142,7 +198,7 @@ bool runExternalProcess(
     process.start();
 
     if (!process.waitForStarted(15000)) {
-        errorText = QStringLiteral("Failed to start process: %1").arg(program);
+        errorText = QStringLiteral("%1 failed to start.").arg(label);
         return false;
     }
 
@@ -151,19 +207,30 @@ bool runExternalProcess(
             timeoutMs,
             pumpUiEvents,
             errorText,
-            QStringLiteral("Process timed out: %1").arg(program))) {
+            QStringLiteral("%1 timed out.").arg(label))) {
         return false;
     }
 
     stdOut = process.readAllStandardOutput();
     stdErr = process.readAllStandardError();
+    if (exitCodeOut) {
+        *exitCodeOut = process.exitCode();
+    }
 
-    if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0) {
-        errorText = QStringLiteral("Process failed (%1), exit code %2.").arg(program).arg(process.exitCode());
-        const QString trimmedErr = QString::fromUtf8(stdErr).trimmed();
-        if (!trimmedErr.isEmpty()) {
-            errorText += QStringLiteral(" %1").arg(trimmedErr);
-        }
+    const QString stdErrText = QString::fromUtf8(stdErr);
+    if (process.exitStatus() != QProcess::NormalExit) {
+        errorText = appendProcessDetail(
+            QStringLiteral("%1 ended unexpectedly.").arg(label),
+            stdErrText
+        );
+        return false;
+    }
+
+    if (process.exitCode() != 0) {
+        errorText = appendProcessDetail(
+            QStringLiteral("%1 failed with exit code %2.").arg(label).arg(process.exitCode()),
+            stdErrText
+        );
         return false;
     }
 

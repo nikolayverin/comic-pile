@@ -15,6 +15,26 @@ QString resolve7ZipExecutableFromHint(const QString &hintPath);
 QString resolve7ZipExecutable();
 QString resolveDjVuExecutableFromHint(const QString &hintPath);
 QString resolveDjVuExecutable();
+bool runSevenZipProcess(
+    const QStringList &arguments,
+    QByteArray &stdOut,
+    QByteArray &stdErr,
+    QString &errorText,
+    int timeoutMs = 120000,
+    bool pumpUiEvents = false,
+    const QString &operationLabel = QString(),
+    int *exitCodeOut = nullptr
+);
+bool runDjVuProcess(
+    const QStringList &arguments,
+    QByteArray &stdOut,
+    QByteArray &stdErr,
+    QString &errorText,
+    int timeoutMs = 120000,
+    bool pumpUiEvents = false,
+    const QString &operationLabel = QString(),
+    int *exitCodeOut = nullptr
+);
 
 const QSet<QString> &nativeImportArchiveExtensions();
 const QSet<QString> &documentImportExtensions();
