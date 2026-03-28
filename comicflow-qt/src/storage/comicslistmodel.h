@@ -309,6 +309,36 @@ private:
         QStringList candidateArchivePaths;
     };
 
+    struct ReaderRuntimeState {
+        QHash<int, QString> archivePathById;
+        QHash<int, QStringList> imageEntriesById;
+        QHash<int, QVariantList> pageMetricsById;
+        QHash<int, QList<int>> pendingSessionRequestIdsByComicId;
+        QHash<int, QList<int>> pendingPageRequestIdsByComicId;
+        QHash<int, QList<int>> pendingPageMetricsRequestIdsByComicId;
+        QHash<int, int> asyncRevisionByComicId;
+        int asyncEpoch = 0;
+    };
+
+    struct ImportWorkflowState {
+        QHash<QString, QString> deferredFolderBySeriesKey;
+        QString lastAction;
+        int lastComicId = -1;
+        int lastDuplicateId = -1;
+        QString lastDuplicateTier;
+        int lastRestoreCandidateCount = 0;
+        int lastRestoreCandidateId = -1;
+    };
+
+    struct ArtworkRuntimeState {
+        QHash<QString, QList<int>> pendingImageRequestIdsByKey;
+        QHash<QString, QList<int>> pendingSeriesHeroRequestIdsByKey;
+        QVector<QueuedCoverGeneration> coverGenerationQueue;
+        QVector<QueuedSeriesHeroGeneration> seriesHeroGenerationQueue;
+        int activeCoverGenerationCount = 0;
+        int activeSeriesHeroGenerationCount = 0;
+    };
+
     bool openDatabaseConnection(QSqlDatabase &db, const QString &connectionName, QString &errorText) const;
     static QVariantMap loadReaderSessionPayload(
         const QString &dbPath,
@@ -448,28 +478,10 @@ private:
     QString m_lastError;
     QString m_lastMutationKind;
     QVector<ComicRow> m_rows;
-    QHash<int, QString> m_readerArchivePathById;
-    QHash<int, QStringList> m_readerImageEntriesById;
-    QHash<int, QVariantList> m_readerPageMetricsById;
-    QHash<QString, QString> m_deferredImportFolderBySeriesKey;
-    QHash<int, QList<int>> m_pendingReaderSessionRequestIdsByComicId;
-    QHash<int, QList<int>> m_pendingReaderPageRequestIdsByComicId;
-    QHash<int, QList<int>> m_pendingReaderPageMetricsRequestIdsByComicId;
-    QHash<QString, QList<int>> m_pendingImageRequestIdsByKey;
-    QHash<QString, QList<int>> m_pendingSeriesHeroRequestIdsByKey;
-    QVector<QueuedCoverGeneration> m_coverGenerationQueue;
-    QVector<QueuedSeriesHeroGeneration> m_seriesHeroGenerationQueue;
-    int m_activeCoverGenerationCount = 0;
-    int m_activeSeriesHeroGenerationCount = 0;
+    ReaderRuntimeState m_readerState;
+    ImportWorkflowState m_importState;
+    ArtworkRuntimeState m_artworkState;
     int m_nextAsyncRequestId = 1;
-    int m_readerAsyncEpoch = 0;
     int m_reloadValidationGeneration = 0;
     QString m_sortMode = QString("series_issue");
-    QString m_lastImportAction;
-    int m_lastImportComicId = -1;
-    int m_lastImportDuplicateId = -1;
-    QString m_lastImportDuplicateTier;
-    int m_lastImportRestoreCandidateCount = 0;
-    int m_lastImportRestoreCandidateId = -1;
-    QHash<int, int> m_readerAsyncRevisionByComicId;
 };

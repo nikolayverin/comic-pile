@@ -1,7 +1,10 @@
+#include <algorithm>
+
 #include "storage/comicslistmodel.h"
 
 #include "storage/imagepreparationops.h"
 #include "storage/importmatching.h"
+#include "storage/librarymutationops.h"
 #include "storage/libraryqueryops.h"
 #include "storage/readercacheutils.h"
 #include "storage/storedpathutils.h"
@@ -9,6 +12,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QImage>
+#include <QRegularExpression>
 #include <QSet>
 #include <QUrl>
 
@@ -24,6 +28,11 @@ QString valueFromMap(const QVariantMap &map, const QString &primary, const QStri
     const QString primaryValue = valueFromMap(map, primary);
     if (!primaryValue.isEmpty()) return primaryValue;
     return valueFromMap(map, fallback);
+}
+
+bool boolFromMap(const QVariantMap &map, const QString &key)
+{
+    return map.value(key).toBool();
 }
 
 bool isWeakSeriesName(const QString &seriesName)
@@ -94,7 +103,332 @@ QString normalizeInputFilePath(const QString &rawInput)
     return ComicStoragePaths::normalizePathInput(rawInput);
 }
 
+QString formatSeriesGroupTitle(const QString &series, const QString &volume)
+{
+    const QString baseTitle = series.trimmed().isEmpty()
+        ? QStringLiteral("Unknown Series")
+        : series.trimmed();
+
+    QString volumeText = volume.trimmed();
+    if (volumeText.isEmpty()) return baseTitle;
+
+    volumeText.remove(QRegularExpression(
+        QStringLiteral("^vol(?:ume)?\\.?\\s*"),
+        QRegularExpression::CaseInsensitiveOption
+    ));
+    volumeText = volumeText.trimmed();
+    if (volumeText.isEmpty()) {
+        volumeText = volume.trimmed();
+    }
+
+    return QStringLiteral("%1 - Vol. %2").arg(baseTitle, volumeText);
+}
+
+int parseOptionalBoundedInt(const QString &input, int minValue, int maxValue, bool &ok, bool &isNull)
+{
+    const QString trimmed = input.trimmed();
+    if (trimmed.isEmpty()) {
+        ok = true;
+        isNull = true;
+        return 0;
+    }
+
+    const int value = trimmed.toInt(&ok);
+    if (!ok || value < minValue || value > maxValue) {
+        ok = false;
+        isNull = false;
+        return 0;
+    }
+
+    isNull = false;
+    return value;
+}
+
+int parseOptionalYear(const QString &input, bool &ok, bool &isNull)
+{
+    return parseOptionalBoundedInt(input, 0, 9999, ok, isNull);
+}
+
+int parseOptionalMonth(const QString &input, bool &ok, bool &isNull)
+{
+    return parseOptionalBoundedInt(input, 1, 12, ok, isNull);
+}
+
+int parseOptionalCurrentPage(const QString &input, bool &ok, bool &isNull)
+{
+    return parseOptionalBoundedInt(input, 0, 1000000, ok, isNull);
+}
+
+QVector<int> normalizeIdList(const QVariantList &raw)
+{
+    QVector<int> ids;
+    ids.reserve(raw.size());
+
+    QSet<int> seen;
+    for (const QVariant &item : raw) {
+        bool ok = false;
+        const int id = item.toInt(&ok);
+        if (!ok || id < 1 || seen.contains(id)) continue;
+        seen.insert(id);
+        ids.push_back(id);
+    }
+
+    return ids;
+}
+
 } // namespace
+
+QString ComicsListModel::updateComicMetadata(
+    int comicId,
+    const QVariantMap &values
+)
+{
+    if (comicId < 1) return QStringLiteral("Invalid issue id.");
+
+    QVariantMap normalizedValues;
+    QVariantMap applyMap;
+
+    auto applyDirect = [&](const QString &key) {
+        if (!values.contains(key)) return;
+        applyMap.insert(key, true);
+        normalizedValues.insert(key, values.value(key));
+    };
+
+    auto applyAlias = [&](const QString &canonical, const QString &alias) {
+        const bool hasCanonical = values.contains(canonical);
+        const bool hasAlias = values.contains(alias);
+        if (!hasCanonical && !hasAlias) return;
+        applyMap.insert(canonical, true);
+        normalizedValues.insert(canonical, hasCanonical ? values.value(canonical) : values.value(alias));
+    };
+
+    applyDirect(QStringLiteral("series"));
+    applyDirect(QStringLiteral("volume"));
+    applyDirect(QStringLiteral("title"));
+    applyAlias(QStringLiteral("issueNumber"), QStringLiteral("issue"));
+    applyDirect(QStringLiteral("publisher"));
+    applyDirect(QStringLiteral("year"));
+    applyDirect(QStringLiteral("month"));
+    applyDirect(QStringLiteral("writer"));
+    applyDirect(QStringLiteral("penciller"));
+    applyDirect(QStringLiteral("inker"));
+    applyDirect(QStringLiteral("colorist"));
+    applyDirect(QStringLiteral("letterer"));
+    applyAlias(QStringLiteral("coverArtist"), QStringLiteral("cover_artist"));
+    applyDirect(QStringLiteral("editor"));
+    applyAlias(QStringLiteral("storyArc"), QStringLiteral("story_arc"));
+    applyDirect(QStringLiteral("summary"));
+    applyDirect(QStringLiteral("characters"));
+    applyDirect(QStringLiteral("genres"));
+    applyAlias(QStringLiteral("ageRating"), QStringLiteral("age_rating"));
+    applyAlias(QStringLiteral("readStatus"), QStringLiteral("read_status"));
+    applyAlias(QStringLiteral("currentPage"), QStringLiteral("current_page"));
+
+    if (applyMap.isEmpty()) {
+        return QStringLiteral("No metadata fields to update.");
+    }
+
+    QVariantList ids;
+    ids.push_back(comicId);
+    return bulkUpdateMetadata(ids, normalizedValues, applyMap);
+}
+
+QString ComicsListModel::bulkUpdateMetadata(
+    const QVariantList &comicIds,
+    const QVariantMap &values,
+    const QVariantMap &applyMap
+)
+{
+    const QVector<int> ids = normalizeIdList(comicIds);
+    if (ids.isEmpty()) return QStringLiteral("No issues selected.");
+
+    ComicLibraryMutationOps::BulkMetadataUpdatePlan plan;
+    plan.ids = ids;
+    plan.applySeries = boolFromMap(applyMap, QStringLiteral("series"));
+    plan.applyVolume = boolFromMap(applyMap, QStringLiteral("volume"));
+    plan.applyTitle = boolFromMap(applyMap, QStringLiteral("title"));
+    plan.applyIssueNumber =
+        boolFromMap(applyMap, QStringLiteral("issueNumber"))
+        || boolFromMap(applyMap, QStringLiteral("issue"));
+    plan.applyPublisher = boolFromMap(applyMap, QStringLiteral("publisher"));
+    plan.applyYear = boolFromMap(applyMap, QStringLiteral("year"));
+    plan.applyMonth = boolFromMap(applyMap, QStringLiteral("month"));
+    plan.applyWriter = boolFromMap(applyMap, QStringLiteral("writer"));
+    plan.applyPenciller = boolFromMap(applyMap, QStringLiteral("penciller"));
+    plan.applyInker = boolFromMap(applyMap, QStringLiteral("inker"));
+    plan.applyColorist = boolFromMap(applyMap, QStringLiteral("colorist"));
+    plan.applyLetterer = boolFromMap(applyMap, QStringLiteral("letterer"));
+    plan.applyCoverArtist =
+        boolFromMap(applyMap, QStringLiteral("coverArtist"))
+        || boolFromMap(applyMap, QStringLiteral("cover_artist"));
+    plan.applyEditor = boolFromMap(applyMap, QStringLiteral("editor"));
+    plan.applyStoryArc =
+        boolFromMap(applyMap, QStringLiteral("storyArc"))
+        || boolFromMap(applyMap, QStringLiteral("story_arc"));
+    plan.applySummary = boolFromMap(applyMap, QStringLiteral("summary"));
+    plan.applyCharacters = boolFromMap(applyMap, QStringLiteral("characters"));
+    plan.applyGenres = boolFromMap(applyMap, QStringLiteral("genres"));
+    plan.applyAgeRating =
+        boolFromMap(applyMap, QStringLiteral("ageRating"))
+        || boolFromMap(applyMap, QStringLiteral("age_rating"));
+    plan.applyReadStatus =
+        boolFromMap(applyMap, QStringLiteral("readStatus"))
+        || boolFromMap(applyMap, QStringLiteral("read_status"));
+    plan.applyCurrentPage =
+        boolFromMap(applyMap, QStringLiteral("currentPage"))
+        || boolFromMap(applyMap, QStringLiteral("current_page"));
+
+    plan.series = valueFromMap(values, QStringLiteral("series"));
+    plan.volume = valueFromMap(values, QStringLiteral("volume"));
+    plan.title = valueFromMap(values, QStringLiteral("title"));
+    plan.issueNumber = valueFromMap(values, QStringLiteral("issueNumber"), QStringLiteral("issue"));
+    plan.publisher = valueFromMap(values, QStringLiteral("publisher"));
+    plan.writer = valueFromMap(values, QStringLiteral("writer"));
+    plan.penciller = valueFromMap(values, QStringLiteral("penciller"));
+    plan.inker = valueFromMap(values, QStringLiteral("inker"));
+    plan.colorist = valueFromMap(values, QStringLiteral("colorist"));
+    plan.letterer = valueFromMap(values, QStringLiteral("letterer"));
+    plan.coverArtist = valueFromMap(values, QStringLiteral("coverArtist"), QStringLiteral("cover_artist"));
+    plan.editor = valueFromMap(values, QStringLiteral("editor"));
+    plan.storyArc = valueFromMap(values, QStringLiteral("storyArc"), QStringLiteral("story_arc"));
+    plan.summary = valueFromMap(values, QStringLiteral("summary"));
+    plan.characters = valueFromMap(values, QStringLiteral("characters"));
+    plan.genres = valueFromMap(values, QStringLiteral("genres"));
+    plan.ageRating = valueFromMap(values, QStringLiteral("ageRating"), QStringLiteral("age_rating"));
+
+    const QString yearInput = valueFromMap(values, QStringLiteral("year"));
+    bool yearOk = false;
+    plan.parsedYear = parseOptionalYear(yearInput, yearOk, plan.yearIsNull);
+    if (plan.applyYear && !yearOk) {
+        return QStringLiteral("Year must be empty or an integer between 0 and 9999.");
+    }
+
+    const QString monthInput = valueFromMap(values, QStringLiteral("month"));
+    bool monthOk = false;
+    plan.parsedMonth = parseOptionalMonth(monthInput, monthOk, plan.monthIsNull);
+    if (plan.applyMonth && !monthOk) {
+        return QStringLiteral("Month must be empty or an integer between 1 and 12.");
+    }
+
+    const QString readStatusInput = valueFromMap(values, QStringLiteral("readStatus"), QStringLiteral("read_status"));
+    plan.readStatus = normalizeReadStatus(readStatusInput);
+    if (plan.applyReadStatus && !readStatusInput.isEmpty() && plan.readStatus.isEmpty()) {
+        return QStringLiteral("Read status must be one of: unread, in_progress, read.");
+    }
+
+    const QString currentPageInput = valueFromMap(values, QStringLiteral("currentPage"), QStringLiteral("current_page"));
+    bool currentPageOk = false;
+    plan.parsedCurrentPage = parseOptionalCurrentPage(currentPageInput, currentPageOk, plan.currentPageIsNull);
+    if (plan.applyCurrentPage && !currentPageOk) {
+        return QStringLiteral("Current page must be empty or an integer between 0 and 1000000.");
+    }
+
+    QVector<ComicLibraryMutationOps::BulkMetadataRuntimeRow> runtimeRows;
+    runtimeRows.reserve(m_rows.size());
+    for (const ComicRow &row : m_rows) {
+        runtimeRows.push_back({ row.id, row.filePath, row.series });
+    }
+
+    const ComicLibraryMutationOps::BulkMetadataUpdateOutcome outcome =
+        ComicLibraryMutationOps::applyBulkMetadataUpdate(
+            m_dbPath,
+            m_dataRoot,
+            runtimeRows,
+            plan
+        );
+    if (!outcome.ok()) {
+        return outcome.error;
+    }
+
+    for (const QString &seriesKey : outcome.seriesHeroKeysToPurge) {
+        purgeSeriesHeroCacheForKey(seriesKey);
+    }
+
+    bool updatedInMemory = false;
+    QVector<int> updatedIndices;
+    updatedIndices.reserve(ids.size());
+    QSet<int> idSet;
+    idSet.reserve(ids.size());
+    for (int id : ids) {
+        idSet.insert(id);
+    }
+
+    const bool sortSensitiveFieldsChanged =
+        plan.applySeries
+        || plan.applyVolume
+        || plan.applyIssueNumber
+        || plan.applyTitle
+        || (m_sortMode == QStringLiteral("year_desc") && (plan.applyYear || plan.applyMonth));
+
+    for (int rowIndex = 0; rowIndex < m_rows.size(); rowIndex += 1) {
+        ComicRow &row = m_rows[rowIndex];
+        if (!idSet.contains(row.id)) continue;
+
+        if (plan.applySeries) {
+            row.series = plan.series;
+        }
+        if (outcome.movedPathById.contains(row.id)) {
+            row.filePath = outcome.movedPathById.value(row.id);
+            const QString movedFilename = outcome.movedFilenameById.value(row.id);
+            if (!movedFilename.isEmpty()) {
+                row.filename = movedFilename;
+            }
+        }
+        if (plan.applyVolume) {
+            row.volume = plan.volume;
+            row.volumeGroupKey = normalizeVolumeKey(row.volume);
+        }
+        if (plan.applySeries || plan.applyVolume) {
+            const QString normalizedSeriesKey = normalizeSeriesKey(row.series);
+            if (row.volumeGroupKey == QStringLiteral("__no_volume__")) {
+                row.seriesGroupKey = normalizedSeriesKey;
+            } else {
+                row.seriesGroupKey = QStringLiteral("%1::vol::%2").arg(normalizedSeriesKey, row.volumeGroupKey);
+            }
+            row.seriesGroupTitle = formatSeriesGroupTitle(row.series, row.volume);
+        }
+        if (plan.applyTitle) row.title = plan.title;
+        if (plan.applyIssueNumber) row.issueNumber = plan.issueNumber;
+        if (plan.applyPublisher) row.publisher = plan.publisher;
+        if (plan.applyYear) row.year = plan.yearIsNull ? 0 : plan.parsedYear;
+        if (plan.applyMonth) row.month = plan.monthIsNull ? 0 : plan.parsedMonth;
+        if (plan.applyWriter) row.writer = plan.writer;
+        if (plan.applyPenciller) row.penciller = plan.penciller;
+        if (plan.applyInker) row.inker = plan.inker;
+        if (plan.applyColorist) row.colorist = plan.colorist;
+        if (plan.applyLetterer) row.letterer = plan.letterer;
+        if (plan.applyCoverArtist) row.coverArtist = plan.coverArtist;
+        if (plan.applyEditor) row.editor = plan.editor;
+        if (plan.applyStoryArc) row.storyArc = plan.storyArc;
+        if (plan.applySummary) row.summary = plan.summary;
+        if (plan.applyCharacters) row.characters = plan.characters;
+        if (plan.applyGenres) row.genres = plan.genres;
+        if (plan.applyAgeRating) row.ageRating = plan.ageRating;
+        if (plan.applyReadStatus) row.readStatus = plan.readStatus.isEmpty() ? QStringLiteral("unread") : plan.readStatus;
+        if (plan.applyCurrentPage) row.currentPage = plan.currentPageIsNull ? 0 : plan.parsedCurrentPage;
+        updatedInMemory = true;
+        updatedIndices.push_back(rowIndex);
+    }
+
+    if (updatedInMemory) {
+        if (sortSensitiveFieldsChanged) {
+            beginResetModel();
+            std::sort(m_rows.begin(), m_rows.end(), [this](const ComicRow &left, const ComicRow &right) {
+                return compareRows(left, right) < 0;
+            });
+            endResetModel();
+        } else {
+            for (int rowIndex : updatedIndices) {
+                const QModelIndex index = this->index(rowIndex, 0);
+                emit dataChanged(index, index);
+            }
+        }
+    }
+
+    m_lastMutationKind = QStringLiteral("bulk_update_metadata");
+    emit statusChanged();
+    return {};
+}
 
 QVariantMap ComicsListModel::buildRetainedSeriesMetadata(const QString &seriesKey) const
 {

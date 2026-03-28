@@ -22,6 +22,7 @@ THEME_AUDIT.md
 HELP.md
 TODO.md
 REFACTORING_ROUTE_2.md
+ASYNC_FLOW_RACE_AUDIT_TASKS.md
 assets-UI/
 tools/djvulibre/source/
 tools/djvulibre/*.tar

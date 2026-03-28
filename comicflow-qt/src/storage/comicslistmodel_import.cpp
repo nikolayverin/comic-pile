@@ -960,7 +960,7 @@ int ComicsListModel::countPendingImportDuplicates(const QVariantList &entries) c
 {
     if (entries.isEmpty()) return 0;
 
-    QHash<QString, QString> simulatedDeferredImportFolders = m_deferredImportFolderBySeriesKey;
+    QHash<QString, QString> simulatedDeferredImportFolders = m_importState.deferredFolderBySeriesKey;
 
     const QString connectionName = QStringLiteral("comic_pile_duplicate_count_%1")
         .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
@@ -997,7 +997,7 @@ QVariantMap ComicsListModel::previewPendingImportDuplicate(const QVariantList &e
 {
     if (entries.isEmpty()) return {};
 
-    QHash<QString, QString> simulatedDeferredImportFolders = m_deferredImportFolderBySeriesKey;
+    QHash<QString, QString> simulatedDeferredImportFolders = m_importState.deferredFolderBySeriesKey;
 
     const QString connectionName = QStringLiteral("comic_pile_duplicate_preview_%1")
         .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
@@ -1359,8 +1359,8 @@ QString ComicsListModel::createComicFromLibrary(
                 return restoreError;
             }
 
-            m_lastImportAction = QString("restored");
-            m_lastImportComicId = candidate.id;
+            m_importState.lastAction = QString("restored");
+            m_importState.lastComicId = candidate.id;
 
             db.close();
             ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, candidate.id);
@@ -1380,14 +1380,14 @@ QString ComicsListModel::createComicFromLibrary(
                 }
             }
 
-            m_lastImportAction = QStringLiteral("restore_conflict");
-            m_lastImportRestoreCandidateCount = uniqueCandidateIds.size();
-            m_lastImportRestoreCandidateId = -1;
+            m_importState.lastAction = QStringLiteral("restore_conflict");
+            m_importState.lastRestoreCandidateCount = uniqueCandidateIds.size();
+            m_importState.lastRestoreCandidateId = -1;
             db.close();
 
             return QStringLiteral(
                 "Import is blocked because %1 deleted issue records match this archive. The app cannot safely restore it automatically."
-            ).arg(QString::number(m_lastImportRestoreCandidateCount));
+            ).arg(QString::number(m_importState.lastRestoreCandidateCount));
         };
 
         auto failWeakMetadataRestore = [&](const QVector<RestoreCandidate> &candidates) -> QString {
@@ -1402,9 +1402,9 @@ QString ComicsListModel::createComicFromLibrary(
                 }
             }
 
-            m_lastImportAction = QStringLiteral("restore_review_required");
-            m_lastImportRestoreCandidateCount = std::max(1, static_cast<int>(uniqueCandidateIds.size()));
-            m_lastImportRestoreCandidateId = candidateId;
+            m_importState.lastAction = QStringLiteral("restore_review_required");
+            m_importState.lastRestoreCandidateCount = std::max(1, static_cast<int>(uniqueCandidateIds.size()));
+            m_importState.lastRestoreCandidateId = candidateId;
             db.close();
 
             return QStringLiteral(
@@ -1563,9 +1563,9 @@ QString ComicsListModel::createComicFromLibrary(
             return liveDuplicateError;
         }
         if (liveDuplicate.hasMatch() && (!allowImportAsNew || liveDuplicate.tier == ImportDuplicateClassifier::Tier::Exact)) {
-            m_lastImportAction = QStringLiteral("duplicate");
-            m_lastImportDuplicateId = liveDuplicate.candidate.id;
-            m_lastImportDuplicateTier = ImportDuplicateClassifier::tierKey(liveDuplicate.tier);
+            m_importState.lastAction = QStringLiteral("duplicate");
+            m_importState.lastDuplicateId = liveDuplicate.candidate.id;
+            m_importState.lastDuplicateTier = ImportDuplicateClassifier::tierKey(liveDuplicate.tier);
             db.close();
 
             if (liveDuplicate.tier == ImportDuplicateClassifier::Tier::VeryLikely) {
@@ -1630,8 +1630,8 @@ QString ComicsListModel::createComicFromLibrary(
             return error;
         }
 
-        m_lastImportAction = QString("created");
-        m_lastImportComicId = insertQuery.lastInsertId().toInt();
+        m_importState.lastAction = QString("created");
+        m_importState.lastComicId = insertQuery.lastInsertId().toInt();
 
         db.close();
     }
@@ -1639,10 +1639,10 @@ QString ComicsListModel::createComicFromLibrary(
     if (!deferReload) {
         reload();
     }
-    if (m_lastImportComicId > 0) {
-        ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, m_lastImportComicId);
-        setReaderArchivePathForComic(m_lastImportComicId, normalizedFilePath);
-        requestIssueThumbnailAsync(m_lastImportComicId);
+    if (m_importState.lastComicId > 0) {
+        ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, m_importState.lastComicId);
+        setReaderArchivePathForComic(m_importState.lastComicId, normalizedFilePath);
+        requestIssueThumbnailAsync(m_importState.lastComicId);
     }
     return {};
 }
@@ -1746,7 +1746,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     const QString effectiveSeries = valueFromMap(createValues, "series");
     const QString effectiveSeriesKey = normalizeSeriesKey(effectiveSeries);
     if (!deferReload) {
-        m_deferredImportFolderBySeriesKey.clear();
+        m_importState.deferredFolderBySeriesKey.clear();
     }
     QString folderSeriesName = effectiveSeries;
     const QString inferredFolderSeriesName = ComicImportMatching::guessSeriesFromFilename(effectiveSeries);
@@ -1761,12 +1761,12 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         if (relativeDir.isEmpty()) continue;
         ComicLibraryLayout::registerSeriesFolderAssignment(folderState, normalizeSeriesKey(row.series), relativeDir);
     }
-    for (auto it = m_deferredImportFolderBySeriesKey.constBegin(); it != m_deferredImportFolderBySeriesKey.constEnd(); ++it) {
+    for (auto it = m_importState.deferredFolderBySeriesKey.constBegin(); it != m_importState.deferredFolderBySeriesKey.constEnd(); ++it) {
         ComicLibraryLayout::registerSeriesFolderAssignment(folderState, it.key(), it.value());
     }
     const QString seriesFolderName = ComicLibraryLayout::assignSeriesFolderName(folderState, effectiveSeriesKey, folderSeriesName);
     if (deferReload && !seriesFolderName.trimmed().isEmpty()) {
-        m_deferredImportFolderBySeriesKey.insert(effectiveSeriesKey, seriesFolderName);
+        m_importState.deferredFolderBySeriesKey.insert(effectiveSeriesKey, seriesFolderName);
     }
     const QString seriesFolderPath = libraryDir.filePath(seriesFolderName);
     QDir seriesDir(seriesFolderPath);
@@ -1840,9 +1840,9 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
             return liveDuplicateError;
         }
         if (liveDuplicate.hasMatch() && (!allowImportAsNew || liveDuplicate.tier == ImportDuplicateClassifier::Tier::Exact)) {
-            m_lastImportAction = QStringLiteral("duplicate");
-            m_lastImportDuplicateId = liveDuplicate.candidate.id;
-            m_lastImportDuplicateTier = ImportDuplicateClassifier::tierKey(liveDuplicate.tier);
+            m_importState.lastAction = QStringLiteral("duplicate");
+            m_importState.lastDuplicateId = liveDuplicate.candidate.id;
+            m_importState.lastDuplicateTier = ImportDuplicateClassifier::tierKey(liveDuplicate.tier);
             QString duplicateError = QStringLiteral("Issue already exists in DB (id %1). Use replace instead.").arg(liveDuplicate.candidate.id);
             if (liveDuplicate.tier == ImportDuplicateClassifier::Tier::VeryLikely) {
                 duplicateError = QStringLiteral("Likely duplicate issue found in DB (id %1).").arg(liveDuplicate.candidate.id);
@@ -1880,34 +1880,34 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
             ComicDeleteOps::cleanupEmptyLibraryDirs(libraryPath, { QFileInfo(finalFilePath).absolutePath() });
         }
 
-        if (m_lastImportAction == QString("duplicate") && m_lastImportDuplicateId > 0) {
+        if (m_importState.lastAction == QString("duplicate") && m_importState.lastDuplicateId > 0) {
             if (outResult) {
                 outResult->clear();
                 outResult->insert("ok", false);
                 outResult->insert("code", "duplicate");
                 outResult->insert("error", createError);
-                outResult->insert("existingId", m_lastImportDuplicateId);
-                outResult->insert("duplicateTier", m_lastImportDuplicateTier);
+                outResult->insert("existingId", m_importState.lastDuplicateId);
+                outResult->insert("duplicateTier", m_importState.lastDuplicateTier);
                 outResult->insert("sourcePath", normalizedSourcePath);
             }
-        } else if (m_lastImportAction == QStringLiteral("restore_conflict")) {
+        } else if (m_importState.lastAction == QStringLiteral("restore_conflict")) {
             if (outResult) {
                 outResult->clear();
                 outResult->insert("ok", false);
                 outResult->insert("code", "restore_conflict");
                 outResult->insert("error", createError);
-                outResult->insert("restoreCandidateCount", m_lastImportRestoreCandidateCount);
+                outResult->insert("restoreCandidateCount", m_importState.lastRestoreCandidateCount);
                 outResult->insert("sourcePath", normalizedSourcePath);
             }
-        } else if (m_lastImportAction == QStringLiteral("restore_review_required")) {
+        } else if (m_importState.lastAction == QStringLiteral("restore_review_required")) {
             if (outResult) {
                 outResult->clear();
                 outResult->insert("ok", false);
                 outResult->insert("code", "restore_review_required");
                 outResult->insert("error", createError);
-                outResult->insert("restoreCandidateCount", m_lastImportRestoreCandidateCount);
-                if (m_lastImportRestoreCandidateId > 0) {
-                    outResult->insert("existingId", m_lastImportRestoreCandidateId);
+                outResult->insert("restoreCandidateCount", m_importState.lastRestoreCandidateCount);
+                if (m_importState.lastRestoreCandidateId > 0) {
+                    outResult->insert("existingId", m_importState.lastRestoreCandidateId);
                 }
                 outResult->insert("sourcePath", normalizedSourcePath);
             }
@@ -1917,10 +1917,10 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         return createError;
     }
 
-    const QString action = m_lastImportAction.trimmed().isEmpty()
+    const QString action = m_importState.lastAction.trimmed().isEmpty()
         ? QString("created")
-        : m_lastImportAction;
-    const int importedComicId = m_lastImportComicId;
+        : m_importState.lastAction;
+    const int importedComicId = m_importState.lastComicId;
     setOutSuccess(action, importedComicId, finalFilename, finalFilePath, createdArchiveFile, normalizedSourcePath);
 
     return {};

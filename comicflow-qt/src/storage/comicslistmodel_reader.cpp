@@ -211,8 +211,8 @@ void ComicsListModel::cacheReaderSession(const QVariantMap &session)
         return;
     }
 
-    m_readerArchivePathById.insert(comicId, archivePath);
-    m_readerImageEntriesById.insert(comicId, entries);
+    m_readerState.archivePathById.insert(comicId, archivePath);
+    m_readerState.imageEntriesById.insert(comicId, entries);
 }
 
 void ComicsListModel::cacheReaderPageMetrics(int comicId, const QVariantList &pageMetrics)
@@ -220,30 +220,30 @@ void ComicsListModel::cacheReaderPageMetrics(int comicId, const QVariantList &pa
     if (comicId < 1 || pageMetrics.isEmpty()) {
         return;
     }
-    m_readerPageMetricsById.insert(comicId, pageMetrics);
+    m_readerState.pageMetricsById.insert(comicId, pageMetrics);
 }
 
 void ComicsListModel::invalidateAllReaderAsyncState()
 {
-    const QHash<int, QList<int>> pendingSessionRequestIdsByComicId = m_pendingReaderSessionRequestIdsByComicId;
-    const QHash<int, QList<int>> pendingPageRequestIdsByComicId = m_pendingReaderPageRequestIdsByComicId;
-    const QHash<int, QList<int>> pendingPageMetricsRequestIdsByComicId = m_pendingReaderPageMetricsRequestIdsByComicId;
+    const QHash<int, QList<int>> pendingSessionRequestIdsByComicId = m_readerState.pendingSessionRequestIdsByComicId;
+    const QHash<int, QList<int>> pendingPageRequestIdsByComicId = m_readerState.pendingPageRequestIdsByComicId;
+    const QHash<int, QList<int>> pendingPageMetricsRequestIdsByComicId = m_readerState.pendingPageMetricsRequestIdsByComicId;
     QList<int> pendingImageRequestIds;
-    for (auto it = m_pendingImageRequestIdsByKey.cbegin(); it != m_pendingImageRequestIdsByKey.cend(); ++it) {
+    for (auto it = m_artworkState.pendingImageRequestIdsByKey.cbegin(); it != m_artworkState.pendingImageRequestIdsByKey.cend(); ++it) {
         pendingImageRequestIds.append(it.value());
     }
 
-    m_readerAsyncEpoch += 1;
-    m_readerAsyncRevisionByComicId.clear();
-    m_pendingReaderSessionRequestIdsByComicId.clear();
-    m_pendingReaderPageRequestIdsByComicId.clear();
-    m_pendingReaderPageMetricsRequestIdsByComicId.clear();
-    m_pendingImageRequestIdsByKey.clear();
-    m_pendingSeriesHeroRequestIdsByKey.clear();
-    m_coverGenerationQueue.clear();
-    m_seriesHeroGenerationQueue.clear();
-    m_activeCoverGenerationCount = 0;
-    m_activeSeriesHeroGenerationCount = 0;
+    m_readerState.asyncEpoch += 1;
+    m_readerState.asyncRevisionByComicId.clear();
+    m_readerState.pendingSessionRequestIdsByComicId.clear();
+    m_readerState.pendingPageRequestIdsByComicId.clear();
+    m_readerState.pendingPageMetricsRequestIdsByComicId.clear();
+    m_artworkState.pendingImageRequestIdsByKey.clear();
+    m_artworkState.pendingSeriesHeroRequestIdsByKey.clear();
+    m_artworkState.coverGenerationQueue.clear();
+    m_artworkState.seriesHeroGenerationQueue.clear();
+    m_artworkState.activeCoverGenerationCount = 0;
+    m_artworkState.activeSeriesHeroGenerationCount = 0;
 
     const QVariantMap canceledResult = makeCanceledReaderAsyncResult();
     for (auto it = pendingSessionRequestIdsByComicId.cbegin(); it != pendingSessionRequestIdsByComicId.cend(); ++it) {
@@ -295,17 +295,17 @@ void ComicsListModel::clearReaderRuntimeStateForComic(int comicId)
         return;
     }
 
-    const QList<int> pendingSessionRequestIds = m_pendingReaderSessionRequestIdsByComicId.take(comicId);
-    const QList<int> pendingPageRequestIds = m_pendingReaderPageRequestIdsByComicId.take(comicId);
-    const QList<int> pendingPageMetricsRequestIds = m_pendingReaderPageMetricsRequestIdsByComicId.take(comicId);
+    const QList<int> pendingSessionRequestIds = m_readerState.pendingSessionRequestIdsByComicId.take(comicId);
+    const QList<int> pendingPageRequestIds = m_readerState.pendingPageRequestIdsByComicId.take(comicId);
+    const QList<int> pendingPageMetricsRequestIds = m_readerState.pendingPageMetricsRequestIdsByComicId.take(comicId);
     const QList<int> pendingImageRequestIds = ComicReaderRequests::takePendingImageRequestIdsForComic(
-        m_pendingImageRequestIdsByKey,
+        m_artworkState.pendingImageRequestIdsByKey,
         comicId
     );
-    m_readerAsyncRevisionByComicId.insert(comicId, m_readerAsyncRevisionByComicId.value(comicId) + 1);
-    m_readerArchivePathById.remove(comicId);
-    m_readerImageEntriesById.remove(comicId);
-    m_readerPageMetricsById.remove(comicId);
+    m_readerState.asyncRevisionByComicId.insert(comicId, m_readerState.asyncRevisionByComicId.value(comicId) + 1);
+    m_readerState.archivePathById.remove(comicId);
+    m_readerState.imageEntriesById.remove(comicId);
+    m_readerState.pageMetricsById.remove(comicId);
 
     const QVariantMap canceledResult = makeCanceledReaderAsyncResult();
     emitReaderSessionReadyForRequestIds(pendingSessionRequestIds, canceledResult);
@@ -351,7 +351,7 @@ void ComicsListModel::setReaderArchivePathForComic(int comicId, const QString &a
     clearReaderRuntimeStateForComic(comicId);
     const QString normalizedArchivePath = archivePath.trimmed();
     if (!normalizedArchivePath.isEmpty()) {
-        m_readerArchivePathById.insert(comicId, normalizedArchivePath);
+        m_readerState.archivePathById.insert(comicId, normalizedArchivePath);
     }
 }
 
@@ -361,8 +361,8 @@ QVariantMap ComicsListModel::cachedReaderSessionPayload(int comicId) const
         return {};
     }
 
-    const QString archivePath = m_readerArchivePathById.value(comicId).trimmed();
-    const QStringList entries = m_readerImageEntriesById.value(comicId);
+    const QString archivePath = m_readerState.archivePathById.value(comicId).trimmed();
+    const QStringList entries = m_readerState.imageEntriesById.value(comicId);
     if (archivePath.isEmpty() || entries.isEmpty()) {
         return {};
     }
@@ -399,7 +399,7 @@ QVariantList ComicsListModel::cachedReaderPageMetrics(int comicId) const
     if (comicId < 1) {
         return {};
     }
-    return m_readerPageMetricsById.value(comicId);
+    return m_readerState.pageMetricsById.value(comicId);
 }
 
 void ComicsListModel::emitReaderSessionReadyForRequestIds(
@@ -456,17 +456,17 @@ int ComicsListModel::requestReaderPageMetricsAsync(int comicId)
         return requestId;
     }
 
-    m_pendingReaderPageMetricsRequestIdsByComicId[comicId].push_back(requestId);
-    if (m_pendingReaderPageMetricsRequestIdsByComicId.value(comicId).size() > 1) {
+    m_readerState.pendingPageMetricsRequestIdsByComicId[comicId].push_back(requestId);
+    if (m_readerState.pendingPageMetricsRequestIdsByComicId.value(comicId).size() > 1) {
         return requestId;
     }
 
-    const int asyncEpoch = m_readerAsyncEpoch;
-    const int comicAsyncRevision = m_readerAsyncRevisionByComicId.value(comicId);
+    const int asyncEpoch = m_readerState.asyncEpoch;
+    const int comicAsyncRevision = m_readerState.asyncRevisionByComicId.value(comicId);
     auto *watcher = new QFutureWatcher<QVariantMap>(this);
     connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, comicId, asyncEpoch, comicAsyncRevision]() {
-        if (asyncEpoch != m_readerAsyncEpoch
-            || comicAsyncRevision != m_readerAsyncRevisionByComicId.value(comicId)) {
+        if (asyncEpoch != m_readerState.asyncEpoch
+            || comicAsyncRevision != m_readerState.asyncRevisionByComicId.value(comicId)) {
             watcher->deleteLater();
             return;
         }
@@ -481,7 +481,7 @@ int ComicsListModel::requestReaderPageMetricsAsync(int comicId)
             cacheReaderSession(rebuiltSession);
         }
 
-        const QList<int> requestIds = m_pendingReaderPageMetricsRequestIdsByComicId.take(comicId);
+        const QList<int> requestIds = m_readerState.pendingPageMetricsRequestIdsByComicId.take(comicId);
         for (int requestId : requestIds) {
             emit readerPageMetricsReady(requestId, comicId, result);
         }
@@ -540,24 +540,24 @@ int ComicsListModel::requestReaderSessionAsync(int comicId)
         return requestId;
     }
 
-    m_pendingReaderSessionRequestIdsByComicId[comicId].push_back(requestId);
-    if (m_pendingReaderSessionRequestIdsByComicId.value(comicId).size() > 1) {
+    m_readerState.pendingSessionRequestIdsByComicId[comicId].push_back(requestId);
+    if (m_readerState.pendingSessionRequestIdsByComicId.value(comicId).size() > 1) {
         return requestId;
     }
 
-    const int asyncEpoch = m_readerAsyncEpoch;
-    const int comicAsyncRevision = m_readerAsyncRevisionByComicId.value(comicId);
+    const int asyncEpoch = m_readerState.asyncEpoch;
+    const int comicAsyncRevision = m_readerState.asyncRevisionByComicId.value(comicId);
     auto *watcher = new QFutureWatcher<QVariantMap>(this);
     connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, comicId, asyncEpoch, comicAsyncRevision]() {
-        if (asyncEpoch != m_readerAsyncEpoch
-            || comicAsyncRevision != m_readerAsyncRevisionByComicId.value(comicId)) {
+        if (asyncEpoch != m_readerState.asyncEpoch
+            || comicAsyncRevision != m_readerState.asyncRevisionByComicId.value(comicId)) {
             watcher->deleteLater();
             return;
         }
 
         const QVariantMap session = watcher->result();
         cacheReaderSession(session);
-        const QList<int> requestIds = m_pendingReaderSessionRequestIdsByComicId.take(comicId);
+        const QList<int> requestIds = m_readerState.pendingSessionRequestIdsByComicId.take(comicId);
         emitReaderSessionReadyForRequestIds(requestIds, session);
         watcher->deleteLater();
     });
@@ -570,8 +570,8 @@ int ComicsListModel::requestReaderSessionAsync(int comicId)
 
 QVariantMap ComicsListModel::loadReaderPage(int comicId, int pageIndex)
 {
-    const QString cachedArchivePath = m_readerArchivePathById.value(comicId);
-    const QStringList cachedEntries = m_readerImageEntriesById.value(comicId);
+    const QString cachedArchivePath = m_readerState.archivePathById.value(comicId);
+    const QStringList cachedEntries = m_readerState.imageEntriesById.value(comicId);
     QVariantMap rebuiltSession;
     if (cachedArchivePath.trimmed().isEmpty() || cachedEntries.isEmpty()) {
         rebuiltSession = loadReaderSessionPayload(m_dbPath, m_dataRoot, comicId);
@@ -617,25 +617,25 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
         return requestId;
     }
 
-    const QString cachedArchivePath = m_readerArchivePathById.value(comicId);
-    const QStringList cachedEntries = m_readerImageEntriesById.value(comicId);
+    const QString cachedArchivePath = m_readerState.archivePathById.value(comicId);
+    const QStringList cachedEntries = m_readerState.imageEntriesById.value(comicId);
     const bool needsSessionRebuild = cachedArchivePath.trimmed().isEmpty() || cachedEntries.isEmpty();
     if (needsSessionRebuild) {
-        const int asyncEpoch = m_readerAsyncEpoch;
-        const int comicAsyncRevision = m_readerAsyncRevisionByComicId.value(comicId);
-        m_pendingReaderPageRequestIdsByComicId[comicId].push_back(requestId);
+        const int asyncEpoch = m_readerState.asyncEpoch;
+        const int comicAsyncRevision = m_readerState.asyncRevisionByComicId.value(comicId);
+        m_readerState.pendingPageRequestIdsByComicId[comicId].push_back(requestId);
         auto *watcher = new QFutureWatcher<QVariantMap>(this);
         connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, requestId, comicId, pageIndex, asyncEpoch, comicAsyncRevision]() {
-            QList<int> pendingPageRequestIds = m_pendingReaderPageRequestIdsByComicId.value(comicId);
+            QList<int> pendingPageRequestIds = m_readerState.pendingPageRequestIdsByComicId.value(comicId);
             pendingPageRequestIds.removeAll(requestId);
             if (pendingPageRequestIds.isEmpty()) {
-                m_pendingReaderPageRequestIdsByComicId.remove(comicId);
+                m_readerState.pendingPageRequestIdsByComicId.remove(comicId);
             } else {
-                m_pendingReaderPageRequestIdsByComicId.insert(comicId, pendingPageRequestIds);
+                m_readerState.pendingPageRequestIdsByComicId.insert(comicId, pendingPageRequestIds);
             }
 
-            if (asyncEpoch != m_readerAsyncEpoch
-                || comicAsyncRevision != m_readerAsyncRevisionByComicId.value(comicId)) {
+            if (asyncEpoch != m_readerState.asyncEpoch
+                || comicAsyncRevision != m_readerState.asyncRevisionByComicId.value(comicId)) {
                 watcher->deleteLater();
                 return;
             }
@@ -730,7 +730,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
     }
 
     const QString pendingKey = ComicReaderRequests::pagePendingKey(comicId, cacheStamp, state.resolvedPageIndex);
-    if (!ComicReaderRequests::beginPendingImageRequest(m_pendingImageRequestIdsByKey, pendingKey, requestId)) {
+    if (!ComicReaderRequests::beginPendingImageRequest(m_artworkState.pendingImageRequestIdsByKey, pendingKey, requestId)) {
         return requestId;
     }
 
@@ -738,7 +738,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
     connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, pendingKey, comicId, pageIndex]() {
         const QVariantMap result = watcher->result();
         const QList<int> requestIds = ComicReaderRequests::takePendingImageRequestIds(
-            m_pendingImageRequestIdsByKey,
+            m_artworkState.pendingImageRequestIdsByKey,
             pendingKey
         );
         const int resolvedPageIndex = result.contains(QStringLiteral("pageIndex"))
@@ -774,7 +774,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
 
 void ComicsListModel::startQueuedCoverGeneration(const QueuedCoverGeneration &job)
 {
-    m_activeCoverGenerationCount += 1;
+    m_artworkState.activeCoverGenerationCount += 1;
 
     auto *watcher = new QFutureWatcher<QVariantMap>(this);
     connect(
@@ -784,10 +784,10 @@ void ComicsListModel::startQueuedCoverGeneration(const QueuedCoverGeneration &jo
         [this, watcher, pendingKey = job.pendingKey, comicId = job.comicId, coverPath = job.coverPath]() {
             const QVariantMap result = watcher->result();
             const QList<int> requestIds = ComicReaderRequests::takePendingImageRequestIds(
-                m_pendingImageRequestIdsByKey,
+                m_artworkState.pendingImageRequestIdsByKey,
                 pendingKey
             );
-            m_activeCoverGenerationCount = std::max(0, m_activeCoverGenerationCount - 1);
+            m_artworkState.activeCoverGenerationCount = std::max(0, m_artworkState.activeCoverGenerationCount - 1);
 
             const QString currentArchivePath = archivePathForComicId(comicId);
             const QString currentPendingKey = currentArchivePath.trimmed().isEmpty()
@@ -876,9 +876,9 @@ void ComicsListModel::pumpQueuedCoverGeneration()
 {
     constexpr int kMaxQueuedCoverGenerationCount = 3;
 
-    while (m_activeCoverGenerationCount < kMaxQueuedCoverGenerationCount && !m_coverGenerationQueue.isEmpty()) {
-        const QueuedCoverGeneration job = m_coverGenerationQueue.takeFirst();
-        if (!ComicReaderRequests::hasPendingImageRequest(m_pendingImageRequestIdsByKey, job.pendingKey)) {
+    while (m_artworkState.activeCoverGenerationCount < kMaxQueuedCoverGenerationCount && !m_artworkState.coverGenerationQueue.isEmpty()) {
+        const QueuedCoverGeneration job = m_artworkState.coverGenerationQueue.takeFirst();
+        if (!ComicReaderRequests::hasPendingImageRequest(m_artworkState.pendingImageRequestIdsByKey, job.pendingKey)) {
             continue;
         }
         startQueuedCoverGeneration(job);
@@ -918,7 +918,7 @@ int ComicsListModel::requestIssueThumbnailAsync(int comicId)
     }
 
     const QString pendingKey = ComicReaderRequests::thumbnailPendingKey(comicId, cacheStamp);
-    if (!ComicReaderRequests::beginPendingImageRequest(m_pendingImageRequestIdsByKey, pendingKey, requestId)) {
+    if (!ComicReaderRequests::beginPendingImageRequest(m_artworkState.pendingImageRequestIdsByKey, pendingKey, requestId)) {
         return requestId;
     }
 
@@ -932,10 +932,10 @@ int ComicsListModel::requestIssueThumbnailAsync(int comicId)
     };
 
     constexpr int kMaxQueuedCoverGenerationCount = 3;
-    if (m_activeCoverGenerationCount < kMaxQueuedCoverGenerationCount) {
+    if (m_artworkState.activeCoverGenerationCount < kMaxQueuedCoverGenerationCount) {
         startQueuedCoverGeneration(job);
     } else {
-        m_coverGenerationQueue.push_back(job);
+        m_artworkState.coverGenerationQueue.push_back(job);
     }
     return requestId;
 }
@@ -979,7 +979,7 @@ QString ComicsListModel::saveReaderProgress(int comicId, int currentPage)
         return QStringLiteral("Current page must be between 0 and 1000000.");
     }
 
-    const int pageCount = m_readerImageEntriesById.value(comicId).size();
+    const int pageCount = m_readerState.imageEntriesById.value(comicId).size();
     QString readStatus = QStringLiteral("unread");
     if (currentPage > 0) {
         if (pageCount > 0 && currentPage >= pageCount) {

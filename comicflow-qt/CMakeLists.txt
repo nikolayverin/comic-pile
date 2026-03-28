@@ -72,6 +72,8 @@ set(_comicpile_core_sources
     src/storage/issuefileops.h
     src/storage/librarylayoututils.cpp
     src/storage/librarylayoututils.h
+    src/storage/librarymutationops.cpp
+    src/storage/librarymutationops.h
     src/storage/librarystoragemigrationops.cpp
     src/storage/librarystoragemigrationops.h
     src/storage/libraryqueryops.cpp

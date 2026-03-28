@@ -132,7 +132,7 @@ int ComicsListModel::requestSeriesHeroAsync(const QString &seriesKey)
     }
 
     const QString pendingKey = seriesHeroPendingKey(requestedSeriesKey);
-    if (!ComicReaderRequests::beginPendingImageRequest(m_pendingSeriesHeroRequestIdsByKey, pendingKey, requestId)) {
+    if (!ComicReaderRequests::beginPendingImageRequest(m_artworkState.pendingSeriesHeroRequestIdsByKey, pendingKey, requestId)) {
         return requestId;
     }
 
@@ -146,10 +146,10 @@ int ComicsListModel::requestSeriesHeroAsync(const QString &seriesKey)
     };
 
     constexpr int kMaxQueuedSeriesHeroGenerationCount = 1;
-    if (m_activeSeriesHeroGenerationCount < kMaxQueuedSeriesHeroGenerationCount) {
+    if (m_artworkState.activeSeriesHeroGenerationCount < kMaxQueuedSeriesHeroGenerationCount) {
         startQueuedSeriesHeroGeneration(job);
     } else {
-        m_seriesHeroGenerationQueue.push_back(job);
+        m_artworkState.seriesHeroGenerationQueue.push_back(job);
     }
 
     return requestId;
@@ -192,7 +192,7 @@ int ComicsListModel::requestRandomSeriesHeroAsync(const QString &seriesKey)
     ComicReaderCache::purgeSeriesHeroForKey(m_dataRoot, requestKey);
 
     const QString pendingKey = seriesHeroPendingKey(requestKey);
-    if (!ComicReaderRequests::beginPendingImageRequest(m_pendingSeriesHeroRequestIdsByKey, pendingKey, requestId)) {
+    if (!ComicReaderRequests::beginPendingImageRequest(m_artworkState.pendingSeriesHeroRequestIdsByKey, pendingKey, requestId)) {
         return requestId;
     }
 
@@ -209,10 +209,10 @@ int ComicsListModel::requestRandomSeriesHeroAsync(const QString &seriesKey)
     };
 
     constexpr int kMaxQueuedSeriesHeroGenerationCount = 1;
-    if (m_activeSeriesHeroGenerationCount < kMaxQueuedSeriesHeroGenerationCount) {
+    if (m_artworkState.activeSeriesHeroGenerationCount < kMaxQueuedSeriesHeroGenerationCount) {
         startQueuedSeriesHeroGeneration(job);
     } else {
-        m_seriesHeroGenerationQueue.push_back(job);
+        m_artworkState.seriesHeroGenerationQueue.push_back(job);
     }
 
     return requestId;
@@ -220,7 +220,7 @@ int ComicsListModel::requestRandomSeriesHeroAsync(const QString &seriesKey)
 
 void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGeneration &job)
 {
-    m_activeSeriesHeroGenerationCount += 1;
+    m_artworkState.activeSeriesHeroGenerationCount += 1;
 
     auto *watcher = new QFutureWatcher<QVariantMap>(this);
     connect(
@@ -230,10 +230,10 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
         [this, watcher, pendingKey = job.pendingKey, seriesKey = job.seriesKey]() {
             const QVariantMap result = watcher->result();
             const QList<int> requestIds = ComicReaderRequests::takePendingImageRequestIds(
-                m_pendingSeriesHeroRequestIdsByKey,
+                m_artworkState.pendingSeriesHeroRequestIdsByKey,
                 pendingKey
             );
-            m_activeSeriesHeroGenerationCount = std::max(0, m_activeSeriesHeroGenerationCount - 1);
+            m_artworkState.activeSeriesHeroGenerationCount = std::max(0, m_artworkState.activeSeriesHeroGenerationCount - 1);
 
             const QString imageSource = result.value(QStringLiteral("imageSource")).toString();
             const QString localFilePath = result.value(QStringLiteral("localFilePath")).toString();
@@ -422,9 +422,10 @@ void ComicsListModel::pumpQueuedSeriesHeroGeneration()
 {
     constexpr int kMaxQueuedSeriesHeroGenerationCount = 1;
 
-    while (m_activeSeriesHeroGenerationCount < kMaxQueuedSeriesHeroGenerationCount && !m_seriesHeroGenerationQueue.isEmpty()) {
-        const QueuedSeriesHeroGeneration job = m_seriesHeroGenerationQueue.takeFirst();
-        if (!ComicReaderRequests::hasPendingImageRequest(m_pendingSeriesHeroRequestIdsByKey, job.pendingKey)) {
+    while (m_artworkState.activeSeriesHeroGenerationCount < kMaxQueuedSeriesHeroGenerationCount
+           && !m_artworkState.seriesHeroGenerationQueue.isEmpty()) {
+        const QueuedSeriesHeroGeneration job = m_artworkState.seriesHeroGenerationQueue.takeFirst();
+        if (!ComicReaderRequests::hasPendingImageRequest(m_artworkState.pendingSeriesHeroRequestIdsByKey, job.pendingKey)) {
             continue;
         }
         startQueuedSeriesHeroGeneration(job);
@@ -459,16 +460,16 @@ void ComicsListModel::purgeSeriesHeroCacheForKey(const QString &seriesKey)
     ComicReaderCache::purgeSeriesHeroForKey(m_dataRoot, normalizedKey);
 
     const QString pendingKey = seriesHeroPendingKey(normalizedKey);
-    m_pendingSeriesHeroRequestIdsByKey.remove(pendingKey);
+    m_artworkState.pendingSeriesHeroRequestIdsByKey.remove(pendingKey);
 
-    m_seriesHeroGenerationQueue.erase(
+    m_artworkState.seriesHeroGenerationQueue.erase(
         std::remove_if(
-            m_seriesHeroGenerationQueue.begin(),
-            m_seriesHeroGenerationQueue.end(),
+            m_artworkState.seriesHeroGenerationQueue.begin(),
+            m_artworkState.seriesHeroGenerationQueue.end(),
             [normalizedKey](const QueuedSeriesHeroGeneration &job) {
                 return job.seriesKey == normalizedKey;
             }
         ),
-        m_seriesHeroGenerationQueue.end()
+        m_artworkState.seriesHeroGenerationQueue.end()
     );
 }
