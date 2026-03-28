@@ -411,7 +411,11 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
 
         if (!ensureSeriesMetadataTable(db, schemaError)
             || !ensureIssueMetadataKnowledgeTable(db, schemaError)
-            || !ensureFileFingerprintHistoryTable(db, schemaError)) {
+            || !execSqlStatement(
+                db,
+                QStringLiteral("DROP TABLE IF EXISTS file_fingerprint_history"),
+                QStringLiteral("Failed to remove obsolete fingerprint history table"),
+                schemaError)) {
             db.close();
             return schemaError;
         }
@@ -630,52 +634,6 @@ bool LibrarySchemaManager::ensureIssueMetadataKnowledgeTable(QSqlDatabase &db, Q
     return true;
 }
 
-bool LibrarySchemaManager::ensureFileFingerprintHistoryTable(QSqlDatabase &db, QString &errorText)
-{
-    if (!execSqlStatement(
-            db,
-            QStringLiteral(
-                "CREATE TABLE IF NOT EXISTS file_fingerprint_history ("
-                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                "comic_id INTEGER DEFAULT 0, "
-                "series_key TEXT NOT NULL DEFAULT '', "
-                "event_type TEXT NOT NULL DEFAULT '', "
-                "source_type TEXT NOT NULL DEFAULT '', "
-                "fingerprint_origin TEXT NOT NULL DEFAULT '', "
-                "fingerprint_sha1 TEXT NOT NULL DEFAULT '', "
-                "fingerprint_size_bytes INTEGER NOT NULL DEFAULT 0, "
-                "entry_label TEXT NOT NULL DEFAULT '', "
-                "recorded_at TEXT NOT NULL DEFAULT (datetime('now'))"
-                ")"
-            ),
-            QStringLiteral("Failed to ensure file_fingerprint_history table"),
-            errorText)) {
-        return false;
-    }
-
-    const QStringList indexSql = {
-        QStringLiteral(
-            "CREATE INDEX IF NOT EXISTS idx_file_fingerprint_history_lookup "
-            "ON file_fingerprint_history (fingerprint_origin, fingerprint_sha1, fingerprint_size_bytes)"
-        ),
-        QStringLiteral(
-            "CREATE INDEX IF NOT EXISTS idx_file_fingerprint_history_comic "
-            "ON file_fingerprint_history (comic_id, recorded_at)"
-        )
-    };
-    for (const QString &sql : indexSql) {
-        if (!execSqlStatement(
-                db,
-                sql,
-                QStringLiteral("Failed to ensure file_fingerprint_history index"),
-                errorText)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 bool LibrarySchemaManager::migrateSchemaToVersion1(QSqlDatabase &db, QString &errorText) const
 {
     if (!execSqlStatement(
@@ -801,14 +759,13 @@ bool LibrarySchemaManager::migrateSchemaToVersion3(QSqlDatabase &db, QString &er
 
 bool LibrarySchemaManager::migrateSchemaToVersion4(QSqlDatabase &db, QString &errorText) const
 {
-    return ensureFileFingerprintHistoryTable(db, errorText);
+    Q_UNUSED(db);
+    Q_UNUSED(errorText);
+    return true;
 }
 
 bool LibrarySchemaManager::migrateSchemaToVersion5(QSqlDatabase &db, QString &errorText) const
 {
-    if (!ensureFileFingerprintHistoryTable(db, errorText)) {
-        return false;
-    }
     return pruneObviousDetachedRestoreDuplicates(db, errorText);
 }
 
@@ -1124,20 +1081,6 @@ bool LibrarySchemaManager::pruneObviousDetachedRestoreDuplicates(QSqlDatabase &d
     placeholders.reserve(duplicateIds.size());
     for (int i = 0; i < duplicateIds.size(); i += 1) {
         placeholders.push_back(QStringLiteral("?"));
-    }
-
-    QSqlQuery deleteHistoryQuery(db);
-    deleteHistoryQuery.prepare(
-        QStringLiteral("DELETE FROM file_fingerprint_history WHERE comic_id IN (%1)")
-            .arg(placeholders.join(QStringLiteral(", ")))
-    );
-    for (int duplicateId : duplicateIds) {
-        deleteHistoryQuery.addBindValue(duplicateId);
-    }
-    if (!deleteHistoryQuery.exec()) {
-        errorText = QStringLiteral("Failed to remove fingerprint history for stale restore duplicates: %1")
-            .arg(deleteHistoryQuery.lastError().text());
-        return false;
     }
 
     QSqlQuery deleteComicsQuery(db);

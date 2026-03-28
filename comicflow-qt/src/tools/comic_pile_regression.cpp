@@ -348,50 +348,6 @@ bool tableHasColumnForDb(
     return true;
 }
 
-int countFingerprintHistoryEntriesForComic(
-    const QString &dbPath,
-    int comicId,
-    const QString &eventType,
-    const QString &fingerprintOrigin,
-    QString &error)
-{
-    error.clear();
-    const QString connectionName = QStringLiteral("comic_pile_regression_fingerprint_count_%1")
-        .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
-    const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
-    {
-        QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-        db.setDatabaseName(dbPath);
-        if (!db.open()) {
-            error = QString("Failed to open DB for fingerprint history inspect: %1").arg(db.lastError().text());
-            return -1;
-        }
-
-        QSqlQuery query(db);
-        query.prepare(
-            QStringLiteral(
-                "SELECT COUNT(*) "
-                "FROM file_fingerprint_history "
-                "WHERE comic_id = ? "
-                "AND event_type = ? "
-                "AND fingerprint_origin = ?"
-            )
-        );
-        query.addBindValue(comicId);
-        query.addBindValue(eventType);
-        query.addBindValue(fingerprintOrigin);
-        if (!query.exec() || !query.next()) {
-            error = QString("Failed to inspect fingerprint history: %1").arg(query.lastError().text());
-            db.close();
-            return -1;
-        }
-
-        const int count = query.value(0).toInt();
-        db.close();
-        return count;
-    }
-}
-
 int countDetachedRestoreRowsWithTitle(
     const QString &dbPath,
     const QString &title,
@@ -743,17 +699,6 @@ int main(int argc, char *argv[])
         );
         return 1;
     }
-    if (!tableExistsForDb(dbPath, QStringLiteral("file_fingerprint_history"), tableExists, setupError) || !tableExists) {
-        printStepResult(
-            QStringLiteral("Schema migration"),
-            false,
-            !setupError.isEmpty()
-                ? setupError
-                : QStringLiteral("file_fingerprint_history table missing after migration.")
-        );
-        return 1;
-    }
-
     bool seriesTitleColumnExists = false;
     if (!tableHasColumnForDb(dbPath, QStringLiteral("series_metadata"), QStringLiteral("series_title"), seriesTitleColumnExists, setupError) || !seriesTitleColumnExists) {
         printStepResult(
@@ -1048,17 +993,6 @@ int main(int argc, char *argv[])
             QStringLiteral("ImportEx code=created"),
             false,
             QStringLiteral("Created issue did not persist import source signals.")
-        );
-        return 1;
-    }
-    if (countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("import_created"), QStringLiteral("source"), error) != 1
-        || countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("import_created"), QStringLiteral("library"), error) != 1) {
-        printStepResult(
-            QStringLiteral("ImportEx code=created"),
-            false,
-            error.isEmpty()
-                ? QStringLiteral("Created import did not record both source and library fingerprints.")
-                : error
         );
         return 1;
     }
@@ -1957,78 +1891,7 @@ int main(int argc, char *argv[])
         );
         return 1;
     }
-    if (countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("delete_keep_record"), QStringLiteral("library"), error) != 1
-        || countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("import_restored"), QStringLiteral("source"), error) != 1
-        || countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("import_restored"), QStringLiteral("library"), error) != 1) {
-        printStepResult(
-            QStringLiteral("ImportEx code=restored"),
-            false,
-            error.isEmpty()
-                ? QStringLiteral("Restore path did not persist expected fingerprint history entries.")
-                : error
-        );
-        return 1;
-    }
     printStepResult(QStringLiteral("ImportEx code=restored"), true);
-
-    // 4b) exact known-file restore must reuse the same hidden issue even from global add.
-    const QString strongFingerprintDeleteError = model.deleteComicFilesKeepRecord(createdComicId);
-    if (!strongFingerprintDeleteError.isEmpty()) {
-        printStepResult(QStringLiteral("Strong fingerprint restore setup"), false, strongFingerprintDeleteError);
-        return 1;
-    }
-    const int liveCountBeforeStrongFingerprintRestore = model.totalCount();
-    const QVariantMap strongFingerprintRestoreValues = {
-        { QStringLiteral("series"), QStringLiteral("Regression Series") },
-        { QStringLiteral("title"), QStringLiteral("Incoming Better Scan Name") },
-        { QStringLiteral("publisher"), QStringLiteral("Regression Publisher") },
-        { QStringLiteral("importIntent"), QStringLiteral("global_add") },
-        { QStringLiteral("deferReload"), true },
-    };
-    const QVariantMap strongFingerprintRestoreResult = model.importArchiveAndCreateIssueEx(
-        incomingB,
-        QStringLiteral("regression-fingerprint-restore.cbz"),
-        strongFingerprintRestoreValues
-    );
-    if (!ensureImportSuccess(strongFingerprintRestoreResult, QStringLiteral("restored"), error)) {
-        printStepResult(QStringLiteral("Strong fingerprint restore"), false, error);
-        return 1;
-    }
-    if (strongFingerprintRestoreResult.value(QStringLiteral("comicId")).toInt() != createdComicId) {
-        printStepResult(
-            QStringLiteral("Strong fingerprint restore"),
-            false,
-            QStringLiteral("Known-file restore must reconnect the original issue row instead of creating a new one.")
-        );
-        return 1;
-    }
-    if (model.totalCount() != liveCountBeforeStrongFingerprintRestore) {
-        printStepResult(
-            QStringLiteral("Strong fingerprint restore"),
-            false,
-            QStringLiteral("Known-file restore must not grow the live issue count.")
-        );
-        return 1;
-    }
-    const QVariantMap strongFingerprintRestoreMeta = model.loadComicMetadata(createdComicId);
-    if (strongFingerprintRestoreMeta.value(QStringLiteral("title")).toString() != QStringLiteral("Regression Issue #1")) {
-        printStepResult(
-            QStringLiteral("Strong fingerprint restore"),
-            false,
-            QStringLiteral("Known-file restore must preserve the curated issue metadata.")
-        );
-        return 1;
-    }
-    const QString activeRestoreFilename = strongFingerprintRestoreMeta.value(QStringLiteral("filename")).toString();
-    if (activeRestoreFilename.isEmpty()) {
-        printStepResult(
-            QStringLiteral("Strong fingerprint restore"),
-            false,
-            QStringLiteral("Known-file restore did not leave an active library filename on the issue.")
-        );
-        return 1;
-    }
-    printStepResult(QStringLiteral("Strong fingerprint restore"), true);
 
     // 4c) delete keep-record should not multiply detached restore ghosts for the same issue.
     int duplicateDetachedGhostId = 0;
@@ -2040,10 +1903,10 @@ int main(int argc, char *argv[])
         QStringLiteral("1"),
         QStringLiteral("1"),
         QStringLiteral("Ghost Cleanup Row"),
-        strongFingerprintRestoreMeta.value(QStringLiteral("importOriginalFilename")).toString(),
-        strongFingerprintRestoreMeta.value(QStringLiteral("importStrictFilenameSignature")).toString(),
-        strongFingerprintRestoreMeta.value(QStringLiteral("importLooseFilenameSignature")).toString(),
-        strongFingerprintRestoreMeta.value(QStringLiteral("importSourceType")).toString()
+        restoredMeta.value(QStringLiteral("importOriginalFilename")).toString(),
+        restoredMeta.value(QStringLiteral("importStrictFilenameSignature")).toString(),
+        restoredMeta.value(QStringLiteral("importLooseFilenameSignature")).toString(),
+        restoredMeta.value(QStringLiteral("importSourceType")).toString()
     };
     if (!insertDirtyRestoreRowEx(dbPath, duplicateDetachedGhostSeed, duplicateDetachedGhostId, error)) {
         printStepResult(QStringLiteral("Restore ghost cleanup setup"), false, error);
@@ -2136,19 +1999,6 @@ int main(int argc, char *argv[])
         printStepResult(QStringLiteral("Replace action"), false, QStringLiteral("New file path missing after replace."));
         return 1;
     }
-    if (countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("replace_outgoing"), QStringLiteral("library"), error) != 1
-        || countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("replace_incoming"), QStringLiteral("source"), error) != 1
-        || countFingerprintHistoryEntriesForComic(dbPath, createdComicId, QStringLiteral("replace_incoming"), QStringLiteral("library"), error) != 1) {
-        printStepResult(
-            QStringLiteral("Replace action"),
-            false,
-            error.isEmpty()
-                ? QStringLiteral("Replace path did not persist expected fingerprint history entries.")
-                : error
-        );
-        return 1;
-    }
-
     // Rollback primitives for current replace.
     const QString rollbackDetach = model.detachComicFileKeepMetadata(createdComicId);
     const QString rollbackDelete = model.deleteFileAtPath(newFilePath);

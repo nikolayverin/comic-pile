@@ -321,22 +321,6 @@ Item {
                 "runtime_error"
             )
         }
-
-        const fingerprintHistoryIds = Array.isArray(entry.fingerprintHistoryIds)
-            ? entry.fingerprintHistoryIds.slice(0)
-            : []
-        if (fingerprintHistoryIds.length > 0) {
-            const fingerprintCleanupError = String(
-                libraryModelRef.deleteFileFingerprintHistoryEntries(fingerprintHistoryIds) || ""
-            )
-            if (fingerprintCleanupError.length > 0) {
-                pushImportFailure(
-                    "[rollback-history] issue " + String(comicId),
-                    "Fingerprint history cleanup failed: " + fingerprintCleanupError,
-                    "runtime_error"
-                )
-            }
-        }
     }
 
     function finalizeImportBatch(cancelled) {
@@ -501,10 +485,7 @@ Item {
         const op = {
             type: opType,
             comicId: comicId,
-            label: String((importResult || {}).filename || "").trim(),
-            fingerprintHistoryIds: Array.isArray((importResult || {}).fingerprintHistoryIds)
-                ? (importResult || {}).fingerprintHistoryIds.slice(0)
-                : []
+            label: String((importResult || {}).filename || "").trim()
         }
         if (extra && typeof extra === "object") {
             const keys = Object.keys(extra)
@@ -1465,7 +1446,6 @@ Item {
                 : String(normalizationResult.filenameHint || fileNameFromPath(sourcePath))
             const importValues = cloneVariantMap(context.importValues)
             importValues.importHistorySourcePath = sourcePath
-            importValues.importHistorySourceType = String(context.sourceType || "archive")
             importValues.importHistorySourceLabel = fileNameFromPath(sourcePath)
 
             const importResult = libraryModelRef.importSourceAndCreateIssueEx(

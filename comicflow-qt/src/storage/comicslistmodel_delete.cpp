@@ -2,14 +2,11 @@
 
 #include "common/scopedsqlconnectionremoval.h"
 #include "storage/deletestagingops.h"
-#include "storage/fingerprinthistoryutils.h"
 #include "storage/importmatching.h"
 #include "storage/issuefileops.h"
-#include "storage/libraryschemamanager.h"
 #include "storage/readercacheutils.h"
 #include "storage/readerrequestutils.h"
 
-#include <QCryptographicHash>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -46,11 +43,6 @@ QString normalizeInputFilePath(const QString &rawInput)
 
 using DeleteFailureInfo = ComicDeleteOps::DeleteFailureInfo;
 using StagedArchiveDeleteOp = ComicDeleteOps::StagedArchiveDeleteOp;
-using FingerprintHistoryEntrySpec = ComicFingerprintHistory::FingerprintHistoryEntrySpec;
-using FingerprintSnapshot = ComicFingerprintHistory::FingerprintSnapshot;
-using ComicFingerprintHistory::appendFingerprintHistoryEntry;
-using ComicFingerprintHistory::computeFileFingerprint;
-using ComicFingerprintHistory::insertFingerprintHistoryEntries;
 
 DeleteFailureInfo makeDeleteFailureInfo(
     const QString &rawPath,
@@ -115,10 +107,8 @@ QString ComicsListModel::deleteSeriesFiles(const QString &seriesKey)
     if (normalizedKey.isEmpty()) return QStringLiteral("Series key is required.");
 
     QVector<int> idsToDelete;
-    QVector<int> deletedComicIds;
     QStringList warnings;
     idsToDelete.reserve(m_rows.size());
-    deletedComicIds.reserve(m_rows.size());
     for (const ComicRow &row : m_rows) {
         if (row.seriesGroupKey == normalizedKey) {
             idsToDelete.push_back(row.id);
@@ -145,9 +135,6 @@ QString ComicsListModel::deleteSeriesFiles(const QString &seriesKey)
         }
         QString deleteMessage;
         const bool removed = deleteComicHardInternal(comicId, deleteMessage);
-        if (removed) {
-            deletedComicIds.push_back(comicId);
-        }
         if (!deleteMessage.isEmpty()) {
             const QString detail = QStringLiteral("Issue %1: %2").arg(comicId).arg(deleteMessage);
             if (removed) {
@@ -156,11 +143,6 @@ QString ComicsListModel::deleteSeriesFiles(const QString &seriesKey)
                 errors.push_back(detail);
             }
         }
-    }
-
-    const QString historyCleanupError = deleteFileFingerprintHistoryForComicIds(deletedComicIds);
-    if (!historyCleanupError.isEmpty()) {
-        warnings.push_back(QStringLiteral("Fingerprint history cleanup failed: %1").arg(historyCleanupError));
     }
 
     if (!errors.isEmpty()) {
@@ -186,8 +168,6 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
     QVector<StagedArchiveDeleteOp> stagedDeletes;
     QVector<ComicIssueFileOps::ComicFilePathBinding> clearBindings;
     QStringList dirsToCleanup;
-    QStringList followUpWarnings;
-    QHash<int, FingerprintHistoryEntrySpec> deleteFingerprintEntriesById;
 
     for (const ComicRow &row : m_rows) {
         if (row.seriesGroupKey != normalizedKey) continue;
@@ -197,25 +177,6 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
         const QString archivePath = archivePathForComicId(row.id);
         bool markMissing = true;
         if (!archivePath.isEmpty()) {
-            FingerprintSnapshot deleteFingerprint;
-            QString deleteFingerprintError;
-            if (computeFileFingerprint(archivePath, deleteFingerprint, deleteFingerprintError)) {
-                QVector<FingerprintHistoryEntrySpec> historyEntries;
-                appendFingerprintHistoryEntry(
-                    historyEntries,
-                    row.id,
-                    row.seriesGroupKey,
-                    QStringLiteral("delete_keep_record"),
-                    QStringLiteral("archive"),
-                    QStringLiteral("library"),
-                    deleteFingerprint,
-                    row.filename
-                );
-                if (!historyEntries.isEmpty()) {
-                    deleteFingerprintEntriesById.insert(row.id, historyEntries.first());
-                }
-            }
-
             DeleteFailureInfo failure;
             if (!performStageArchiveDelete(archivePath, stagedDelete, failure)) {
                 markMissing = false;
@@ -320,18 +281,6 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
     }
 
     if (!finalRemovedIds.isEmpty()) {
-        QVector<FingerprintHistoryEntrySpec> fingerprintEntries;
-        for (int id : finalRemovedIds) {
-            const auto found = deleteFingerprintEntriesById.constFind(id);
-            if (found != deleteFingerprintEntriesById.constEnd()) {
-                fingerprintEntries.push_back(found.value());
-            }
-        }
-        const QString fingerprintHistoryError = insertFingerprintHistoryEntries(m_dbPath, fingerprintEntries, nullptr);
-        if (!fingerprintHistoryError.isEmpty()) {
-            appendWarningLine(followUpWarnings, QStringLiteral("Restore history update failed: %1").arg(fingerprintHistoryError));
-        }
-
         purgeSeriesHeroCacheForKey(normalizedKey);
 
         for (int id : finalRemovedIds) {
@@ -349,20 +298,11 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
             reload();
         }
         QStringList lines;
-        lines.reserve(failedFiles.size() + followUpWarnings.size());
+        lines.reserve(failedFiles.size());
         for (const DeleteFailureInfo &info : failedFiles) {
             lines.push_back(formatDeleteFailureText(info));
         }
-        for (const QString &warning : followUpWarnings) {
-            lines.push_back(QStringLiteral("Follow-up: %1").arg(warning));
-        }
         return QString("Some files could not be removed:\n%1").arg(lines.join('\n'));
-    }
-
-    if (!followUpWarnings.isEmpty()) {
-        return QStringLiteral(
-            "Files were removed, but follow-up cleanup was incomplete.\n%1"
-        ).arg(followUpWarnings.join('\n'));
     }
 
     return {};
@@ -399,24 +339,6 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
         const QString loadError = ComicIssueFileOps::loadComicFilePath(m_dbPath, m_dataRoot, comicId, filePath);
         if (!loadError.isEmpty()) {
             return loadError;
-        }
-    }
-
-    QVector<FingerprintHistoryEntrySpec> fingerprintEntries;
-    if (!filePath.isEmpty()) {
-        FingerprintSnapshot deleteFingerprint;
-        QString deleteFingerprintError;
-        if (computeFileFingerprint(filePath, deleteFingerprint, deleteFingerprintError)) {
-            appendFingerprintHistoryEntry(
-                fingerprintEntries,
-                comicId,
-                seriesKey,
-                QStringLiteral("delete_keep_record"),
-                QStringLiteral("archive"),
-                QStringLiteral("library"),
-                deleteFingerprint,
-                QFileInfo(filePath).fileName().trimmed()
-            );
         }
     }
 
@@ -469,7 +391,6 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
         return QString("Could not remove archive file.\n%1").arg(formatDeleteFailureText(finalizeFailure));
     }
 
-    const QString fingerprintHistoryError = insertFingerprintHistoryEntries(m_dbPath, fingerprintEntries, nullptr);
     const QString ghostCleanupError = pruneEquivalentDetachedGhostRowsForComic(comicId);
     ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
     purgeSeriesHeroCacheForKey(seriesKey);
@@ -484,20 +405,10 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
         );
     }
     reload();
-    if (!ghostCleanupError.isEmpty() && fingerprintHistoryError.isEmpty()) {
+    if (!ghostCleanupError.isEmpty()) {
         return QStringLiteral(
             "Archive file was removed, but cleanup of older restore duplicates failed.\n%1"
         ).arg(ghostCleanupError);
-    }
-    if (ghostCleanupError.isEmpty() && !fingerprintHistoryError.isEmpty()) {
-        return QStringLiteral(
-            "Archive file was removed, but restore history update failed.\n%1"
-        ).arg(fingerprintHistoryError);
-    }
-    if (!ghostCleanupError.isEmpty() && !fingerprintHistoryError.isEmpty()) {
-        return QStringLiteral(
-            "Archive file was removed, but follow-up cleanup was incomplete.\nCleanup of older restore duplicates failed: %1\nRestore history update failed: %2"
-        ).arg(ghostCleanupError, fingerprintHistoryError);
     }
     return {};
 }
@@ -736,21 +647,6 @@ QString ComicsListModel::pruneEquivalentDetachedGhostRowsForComic(int comicId)
         placeholders.push_back(QStringLiteral("?"));
     }
 
-    QSqlQuery deleteHistoryQuery(db);
-    deleteHistoryQuery.prepare(
-        QStringLiteral("DELETE FROM file_fingerprint_history WHERE comic_id IN (%1)")
-            .arg(placeholders.join(QStringLiteral(", ")))
-    );
-    for (int id : duplicateIds) {
-        deleteHistoryQuery.addBindValue(id);
-    }
-    if (!deleteHistoryQuery.exec()) {
-        const QString error = QStringLiteral("Failed to remove fingerprint history for stale restore duplicates: %1")
-            .arg(deleteHistoryQuery.lastError().text());
-        db.close();
-        return error;
-    }
-
     QSqlQuery deleteQuery(db);
     deleteQuery.prepare(
         QStringLiteral("DELETE FROM comics WHERE id IN (%1)").arg(placeholders.join(QStringLiteral(", ")))
@@ -799,113 +695,6 @@ QString ComicsListModel::deleteFileAtPath(const QString &filePath)
     return {};
 }
 
-QString ComicsListModel::deleteFileFingerprintHistoryEntries(const QVariantList &entryIds)
-{
-    QVector<int> ids;
-    ids.reserve(entryIds.size());
-    for (const QVariant &value : entryIds) {
-        const int id = value.toInt();
-        if (id > 0) {
-            ids.push_back(id);
-        }
-    }
-    if (ids.isEmpty()) {
-        return {};
-    }
-
-    const QString connectionName = QStringLiteral("comic_pile_delete_fingerprint_history_%1")
-        .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
-    const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
-
-    QString openError;
-    QSqlDatabase db;
-    if (!openDatabaseConnection(db, connectionName, openError)) {
-        return openError;
-    }
-
-    QString schemaError;
-    if (!LibrarySchemaManager::ensureFileFingerprintHistoryTable(db, schemaError)) {
-        db.close();
-        return schemaError;
-    }
-
-    QStringList placeholders;
-    placeholders.reserve(ids.size());
-    for (int i = 0; i < ids.size(); i += 1) {
-        placeholders.push_back(QStringLiteral("?"));
-    }
-
-    QSqlQuery query(db);
-    query.prepare(
-        QStringLiteral("DELETE FROM file_fingerprint_history WHERE id IN (%1)")
-            .arg(placeholders.join(QStringLiteral(", ")))
-    );
-    for (int id : ids) {
-        query.addBindValue(id);
-    }
-    if (!query.exec()) {
-        const QString error = QStringLiteral("Failed to remove fingerprint history: %1").arg(query.lastError().text());
-        db.close();
-        return error;
-    }
-
-    db.close();
-    return {};
-}
-
-QString ComicsListModel::deleteFileFingerprintHistoryForComicIds(const QVector<int> &comicIds)
-{
-    QVector<int> ids;
-    ids.reserve(comicIds.size());
-    for (int comicId : comicIds) {
-        if (comicId > 0 && !ids.contains(comicId)) {
-            ids.push_back(comicId);
-        }
-    }
-    if (ids.isEmpty()) {
-        return {};
-    }
-
-    const QString connectionName = QStringLiteral("comic_pile_delete_fingerprint_history_by_comic_%1")
-        .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
-    const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
-
-    QString openError;
-    QSqlDatabase db;
-    if (!openDatabaseConnection(db, connectionName, openError)) {
-        return openError;
-    }
-
-    QString schemaError;
-    if (!LibrarySchemaManager::ensureFileFingerprintHistoryTable(db, schemaError)) {
-        db.close();
-        return schemaError;
-    }
-
-    QStringList placeholders;
-    placeholders.reserve(ids.size());
-    for (int i = 0; i < ids.size(); i += 1) {
-        placeholders.push_back(QStringLiteral("?"));
-    }
-
-    QSqlQuery query(db);
-    query.prepare(
-        QStringLiteral("DELETE FROM file_fingerprint_history WHERE comic_id IN (%1)")
-            .arg(placeholders.join(QStringLiteral(", ")))
-    );
-    for (int id : ids) {
-        query.addBindValue(id);
-    }
-    if (!query.exec()) {
-        const QString error = QStringLiteral("Failed to remove fingerprint history: %1").arg(query.lastError().text());
-        db.close();
-        return error;
-    }
-
-    db.close();
-    return {};
-}
-
 QString ComicsListModel::deleteComic(int comicId)
 {
     if (comicId < 1) return QStringLiteral("Invalid issue id.");
@@ -933,24 +722,11 @@ QString ComicsListModel::deleteComic(int comicId)
 
     QStringList warnings;
     appendWarningLine(warnings, deleteMessage);
-    QString historyCleanupError;
-    if (deletingLastIssueInSeries) {
-        historyCleanupError = deleteFileFingerprintHistoryForComicIds({ comicId });
-        if (!historyCleanupError.isEmpty()) {
-            appendWarningLine(
-                warnings,
-                QStringLiteral("Fingerprint history cleanup failed: %1").arg(historyCleanupError)
-            );
-        }
-    }
 
     if (!warnings.isEmpty()) {
         if (warnings.size() == 1) {
-            if (!deleteMessage.isEmpty() && historyCleanupError.isEmpty()) {
+            if (!deleteMessage.isEmpty()) {
                 return deleteMessage;
-            }
-            if (deleteMessage.isEmpty() && !historyCleanupError.isEmpty()) {
-                return QStringLiteral("Issue was removed, but %1").arg(warnings.first());
             }
         }
         return QStringLiteral("Issue was removed with warnings:\n%1").arg(warnings.join('\n'));
@@ -982,24 +758,6 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
         if (!loadError.isEmpty()) {
             messageOut = loadError;
             return false;
-        }
-    }
-
-    QVector<FingerprintHistoryEntrySpec> fingerprintEntries;
-    if (!filePath.isEmpty()) {
-        FingerprintSnapshot deleteFingerprint;
-        QString deleteFingerprintError;
-        if (computeFileFingerprint(filePath, deleteFingerprint, deleteFingerprintError)) {
-            appendFingerprintHistoryEntry(
-                fingerprintEntries,
-                comicId,
-                seriesKey,
-                QStringLiteral("delete_hard"),
-                QStringLiteral("archive"),
-                QStringLiteral("library"),
-                deleteFingerprint,
-                QFileInfo(filePath).fileName().trimmed()
-            );
         }
     }
 
@@ -1069,14 +827,6 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
                 );
             }
         }
-    }
-
-    const QString fingerprintHistoryError = insertFingerprintHistoryEntries(m_dbPath, fingerprintEntries, nullptr);
-    if (!fingerprintHistoryError.isEmpty()) {
-        appendWarningLine(
-            warnings,
-            QStringLiteral("Restore history update failed: %1").arg(fingerprintHistoryError)
-        );
     }
 
     if (!warnings.isEmpty()) {

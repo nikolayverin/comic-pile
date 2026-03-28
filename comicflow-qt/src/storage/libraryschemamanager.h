@@ -12,7 +12,6 @@ public:
 
     static bool ensureSeriesMetadataTable(QSqlDatabase &db, QString &errorText);
     static bool ensureIssueMetadataKnowledgeTable(QSqlDatabase &db, QString &errorText);
-    static bool ensureFileFingerprintHistoryTable(QSqlDatabase &db, QString &errorText);
 
 private:
     bool migrateSchemaToVersion1(QSqlDatabase &db, QString &errorText) const;

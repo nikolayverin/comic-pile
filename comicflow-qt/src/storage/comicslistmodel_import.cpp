@@ -7,7 +7,6 @@
 #include "storage/comicinfoarchive.h"
 #include "storage/deletestagingops.h"
 #include "storage/duplicaterestoreresolver.h"
-#include "storage/fingerprinthistoryutils.h"
 #include "storage/importduplicateclassifier.h"
 #include "storage/importmatching.h"
 #include "storage/libraryschemamanager.h"
@@ -17,7 +16,6 @@
 
 #include <QCollator>
 #include <QCoreApplication>
-#include <QCryptographicHash>
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
@@ -962,74 +960,6 @@ QStringList listSupportedImageFilesInFolder(const QString &folderPath)
     return paths;
 }
 
-using FingerprintHistoryEntrySpec = ComicFingerprintHistory::FingerprintHistoryEntrySpec;
-using FingerprintSnapshot = ComicFingerprintHistory::FingerprintSnapshot;
-using ComicFingerprintHistory::appendFingerprintHistoryEntry;
-using ComicFingerprintHistory::computeFileFingerprint;
-using ComicFingerprintHistory::insertFingerprintHistoryEntries;
-using ComicFingerprintHistory::loadFingerprintSnapshotFromValues;
-
-bool computeImageFolderFingerprint(const QString &folderPath, FingerprintSnapshot &fingerprintOut, QString &errorText)
-{
-    fingerprintOut = {};
-    errorText.clear();
-
-    const QString normalizedFolderPath = normalizeInputFilePath(folderPath);
-    if (normalizedFolderPath.isEmpty()) {
-        errorText = QStringLiteral("Fingerprint folder path is empty.");
-        return false;
-    }
-
-    const QStringList imagePaths = listSupportedImageFilesInFolder(normalizedFolderPath);
-    if (imagePaths.isEmpty()) {
-        errorText = QStringLiteral("No supported images found for folder fingerprint.");
-        return false;
-    }
-
-    QCryptographicHash manifestHash(QCryptographicHash::Sha1);
-    qint64 totalBytes = 0;
-    const QDir rootDir(normalizedFolderPath);
-    for (const QString &imagePath : imagePaths) {
-        FingerprintSnapshot fileFingerprint;
-        QString fingerprintError;
-        if (!computeFileFingerprint(imagePath, fileFingerprint, fingerprintError)) {
-            errorText = fingerprintError;
-            return false;
-        }
-
-        const QString relativePath = rootDir.relativeFilePath(imagePath).replace('\\', '/').trimmed().toLower();
-        const QByteArray manifestLine = QStringLiteral("%1|%2|%3\n")
-            .arg(relativePath)
-            .arg(QString::number(fileFingerprint.sizeBytes))
-            .arg(fileFingerprint.sha1)
-            .toUtf8();
-        manifestHash.addData(manifestLine);
-        totalBytes += fileFingerprint.sizeBytes;
-    }
-
-    if (totalBytes < 1) {
-        errorText = QStringLiteral("Folder fingerprint source is empty.");
-        return false;
-    }
-
-    fingerprintOut.sha1 = QString::fromLatin1(manifestHash.result().toHex());
-    fingerprintOut.sizeBytes = totalBytes;
-    return true;
-}
-
-bool computeImportSourceFingerprint(
-    const QString &sourcePath,
-    const QString &sourceType,
-    FingerprintSnapshot &fingerprintOut,
-    QString &errorText)
-{
-    const QString normalizedSourceType = sourceType.trimmed().toLower();
-    if (normalizedSourceType == QStringLiteral("image_folder")) {
-        return computeImageFolderFingerprint(sourcePath, fingerprintOut, errorText);
-    }
-    return computeFileFingerprint(sourcePath, fingerprintOut, errorText);
-}
-
 QVariantMap makeImportSourceEntry(const QString &path, const QString &sourceType)
 {
     QVariantMap entry;
@@ -1556,14 +1486,6 @@ QString ComicsListModel::createComicFromLibrary(
     const QString candidateIssueKey = ComicImportMatching::normalizeIssueKey(candidateIssueValue);
     const QString strictInputSignature = ComicImportMatching::normalizeFilenameSignatureStrict(resolvedFilename);
     const QString looseInputSignature = ComicImportMatching::normalizeFilenameSignatureLoose(resolvedFilename);
-    FingerprintSnapshot importFingerprint;
-    const bool hasImportFingerprint = loadFingerprintSnapshotFromValues(
-        values,
-        QStringLiteral("importFingerprintSha1"),
-        QStringLiteral("importFingerprintSizeBytes"),
-        importFingerprint
-    );
-
     const QString connectionName = QString("comic_pile_create_%1").arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
     QString openError;
@@ -1734,48 +1656,6 @@ QString ComicsListModel::createComicFromLibrary(
             );
             return resolvedPath.isEmpty();
         };
-
-        if (!allowImportAsNew && hasImportFingerprint) {
-            QVector<RestoreCandidate> fingerprintCandidates;
-            QSet<int> seenCandidateIds;
-            QSqlQuery fingerprintQuery(db);
-            fingerprintQuery.prepare(
-                "SELECT c.id, COALESCE(c.filename, ''), COALESCE(c.file_path, ''), "
-                "COALESCE(c.series, ''), COALESCE(c.series_key, ''), COALESCE(c.volume, ''), COALESCE(c.issue_number, c.issue, '') "
-                "FROM file_fingerprint_history fh "
-                "JOIN comics c ON c.id = fh.comic_id "
-                "WHERE fh.comic_id > 0 "
-                "AND fh.fingerprint_sha1 = ? "
-                "AND fh.fingerprint_size_bytes = ?"
-            );
-            fingerprintQuery.addBindValue(importFingerprint.sha1);
-            fingerprintQuery.addBindValue(importFingerprint.sizeBytes);
-            if (!fingerprintQuery.exec()) {
-                const QString error = QString("Failed to check file fingerprint history: %1").arg(fingerprintQuery.lastError().text());
-                db.close();
-                return error;
-            }
-            while (fingerprintQuery.next()) {
-                RestoreCandidate candidate;
-                candidate.id = fingerprintQuery.value(0).toInt();
-                if (candidate.id < 1 || seenCandidateIds.contains(candidate.id)) continue;
-                candidate.filename = trimOrEmpty(fingerprintQuery.value(1));
-                candidate.filePath = trimOrEmpty(fingerprintQuery.value(2));
-                candidate.series = trimOrEmpty(fingerprintQuery.value(3));
-                candidate.seriesKey = trimOrEmpty(fingerprintQuery.value(4));
-                candidate.volume = trimOrEmpty(fingerprintQuery.value(5));
-                candidate.issue = trimOrEmpty(fingerprintQuery.value(6));
-                if (!isMissingCandidate(candidate)) continue;
-                seenCandidateIds.insert(candidate.id);
-                fingerprintCandidates.push_back(candidate);
-            }
-            if (fingerprintCandidates.size() == 1) {
-                return finishRestore(fingerprintCandidates.first());
-            }
-            if (fingerprintCandidates.size() > 1) {
-                return failAmbiguousRestore(fingerprintCandidates);
-            }
-        }
 
         QVector<RestoreCandidate> filenameCandidates;
         QSqlQuery filenameQuery(db);
@@ -2139,25 +2019,6 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         return error;
     }
 
-    createValues.remove(QStringLiteral("importFingerprintSha1"));
-    createValues.remove(QStringLiteral("importFingerprintSizeBytes"));
-    const QString historySourcePath = valueFromMap(createValues, QStringLiteral("importHistorySourcePath")).isEmpty()
-        ? normalizedSourcePath
-        : valueFromMap(createValues, QStringLiteral("importHistorySourcePath"));
-    const QString historySourceType = valueFromMap(createValues, QStringLiteral("importHistorySourceType")).isEmpty()
-        ? QStringLiteral("archive")
-        : valueFromMap(createValues, QStringLiteral("importHistorySourceType"));
-    FingerprintSnapshot importSourceFingerprint;
-    QString importSourceFingerprintError;
-    if (computeImportSourceFingerprint(
-            historySourcePath,
-            historySourceType,
-            importSourceFingerprint,
-            importSourceFingerprintError)) {
-        createValues.insert(QStringLiteral("importFingerprintSha1"), importSourceFingerprint.sha1);
-        createValues.insert(QStringLiteral("importFingerprintSizeBytes"), importSourceFingerprint.sizeBytes);
-    }
-
     QString finalFilename = targetFilename;
     QString finalFilePath = seriesDir.filePath(finalFilename);
     bool createdArchiveFile = false;
@@ -2298,60 +2159,6 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     const int importedComicId = m_lastImportComicId;
     setOutSuccess(action, importedComicId, finalFilename, finalFilePath, createdArchiveFile, normalizedSourcePath);
 
-    QVariantList fingerprintHistoryIds;
-    {
-        QString historySourceLabel = valueFromMap(createValues, QStringLiteral("importHistorySourceLabel"));
-        if (historySourceLabel.isEmpty()) {
-            historySourceLabel = QFileInfo(historySourcePath).fileName().trimmed();
-        }
-
-        const QString seriesKeyForHistory = normalizeSeriesKey(valueFromMap(createValues, QStringLiteral("series")));
-        const QString fingerprintEvent = action == QStringLiteral("restored")
-            ? QStringLiteral("import_restored")
-            : QStringLiteral("import_created");
-        QVector<FingerprintHistoryEntrySpec> fingerprintEntries;
-
-        FingerprintSnapshot sourceFingerprint;
-        QString sourceFingerprintError;
-        if (loadFingerprintSnapshotFromValues(
-                createValues,
-                QStringLiteral("importFingerprintSha1"),
-                QStringLiteral("importFingerprintSizeBytes"),
-                sourceFingerprint)
-            || computeImportSourceFingerprint(historySourcePath, historySourceType, sourceFingerprint, sourceFingerprintError)) {
-            appendFingerprintHistoryEntry(
-                fingerprintEntries,
-                importedComicId,
-                seriesKeyForHistory,
-                fingerprintEvent,
-                historySourceType,
-                QStringLiteral("source"),
-                sourceFingerprint,
-                historySourceLabel
-            );
-        }
-
-        FingerprintSnapshot libraryFingerprint;
-        QString libraryFingerprintError;
-        if (computeFileFingerprint(finalFilePath, libraryFingerprint, libraryFingerprintError)) {
-            appendFingerprintHistoryEntry(
-                fingerprintEntries,
-                importedComicId,
-                seriesKeyForHistory,
-                fingerprintEvent,
-                QStringLiteral("archive"),
-                QStringLiteral("library"),
-                libraryFingerprint,
-                finalFilename
-            );
-        }
-
-        insertFingerprintHistoryEntries(m_dbPath, fingerprintEntries, &fingerprintHistoryIds);
-        if (outResult && !fingerprintHistoryIds.isEmpty()) {
-            outResult->insert(QStringLiteral("fingerprintHistoryIds"), fingerprintHistoryIds);
-        }
-    }
-
     if (importedComicId > 0) {
         ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, importedComicId);
         setReaderArchivePathForComic(
@@ -2427,7 +2234,6 @@ QString ComicsListModel::importImageFolderAndCreateIssueInternal(
     );
     createValues = ComicImportMatching::applyPassportDefaults(createValues, passport);
     createValues.insert(QStringLiteral("importHistorySourcePath"), normalizedFolderPath);
-    createValues.insert(QStringLiteral("importHistorySourceType"), QStringLiteral("image_folder"));
     createValues.insert(QStringLiteral("importHistorySourceLabel"), folderName);
 
     const QString effectiveFilenameHint = filenameHint.trimmed().isEmpty()

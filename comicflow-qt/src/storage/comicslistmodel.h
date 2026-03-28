@@ -204,7 +204,6 @@ public:
         const QVariantMap &importSignalValues
     );
     Q_INVOKABLE QString deleteFileAtPath(const QString &filePath);
-    Q_INVOKABLE QString deleteFileFingerprintHistoryEntries(const QVariantList &entryIds);
     Q_INVOKABLE QVariantMap exportComicInfoXml(int comicId);
     Q_INVOKABLE QString syncComicInfoToArchive(int comicId);
     Q_INVOKABLE QString importComicInfoFromArchive(int comicId, const QString &mode);
@@ -422,7 +421,6 @@ private:
         const QString &targetPath
     );
     bool deleteComicHardInternal(int comicId, QString &messageOut);
-    QString deleteFileFingerprintHistoryForComicIds(const QVector<int> &comicIds);
     QString pruneEquivalentDetachedGhostRowsForComic(int comicId);
     int liveIssueCountForSeries(const QString &seriesKey) const;
     QVariantMap buildRetainedSeriesMetadata(const QString &seriesKey) const;

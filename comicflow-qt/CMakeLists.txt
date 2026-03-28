@@ -58,8 +58,6 @@ set(_comicpile_core_sources
     src/storage/datarootrelocationbootstrap.h
     src/storage/deletestagingops.cpp
     src/storage/deletestagingops.h
-    src/storage/fingerprinthistoryutils.cpp
-    src/storage/fingerprinthistoryutils.h
     src/storage/duplicaterestoreresolver.cpp
     src/storage/duplicaterestoreresolver.h
     src/storage/importduplicateclassifier.cpp
