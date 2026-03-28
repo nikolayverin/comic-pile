@@ -4,6 +4,7 @@
 #include <QByteArray>
 #include <QCoreApplication>
 #include <QDir>
+#include <QDirIterator>
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
@@ -67,6 +68,33 @@ QString findSeedArchive(const QString &workspaceRoot)
             return it.next();
         }
     }
+
+    const QStringList recursiveRoots = {
+        QDir(workspaceRoot).filePath("_tmp"),
+        QDir(workspaceRoot).filePath("Library"),
+        workspaceRoot,
+    };
+    for (const QString &rootPath : recursiveRoots) {
+        if (!QFileInfo::exists(rootPath)) continue;
+
+        QDirIterator it(
+            rootPath,
+            { "*.cbz", "*.zip", "*.cbr" },
+            QDir::Files | QDir::NoSymLinks,
+            QDirIterator::Subdirectories
+        );
+        while (it.hasNext()) {
+            const QString archivePath = it.next();
+            const QString normalizedPath = QDir::fromNativeSeparators(archivePath);
+            if (normalizedPath.contains(QStringLiteral("/_build/"), Qt::CaseInsensitive)
+                || normalizedPath.contains(QStringLiteral("/tools/"), Qt::CaseInsensitive)
+                || normalizedPath.contains(QStringLiteral("/.git/"), Qt::CaseInsensitive)) {
+                continue;
+            }
+            return archivePath;
+        }
+    }
+
     return {};
 }
 

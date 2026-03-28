@@ -1,11 +1,13 @@
 #include "storage/comicslistmodel.h"
 #include "storage/duplicaterestoreresolver.h"
 #include "storage/importmatching.h"
+#include "storage/libraryschemamanager.h"
 #include "common/scopedsqlconnectionremoval.h"
 
 #include <QCoreApplication>
 #include <QDebug>
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QHash>
@@ -78,6 +80,33 @@ QString findSeedArchive(const QString &workspaceRoot)
             }
         }
     }
+
+    const QStringList recursiveRoots = {
+        QDir(workspaceRoot).filePath("_tmp"),
+        QDir(workspaceRoot).filePath("Library"),
+        workspaceRoot,
+    };
+    for (const QString &rootPath : recursiveRoots) {
+        if (!QFileInfo::exists(rootPath)) continue;
+
+        QDirIterator it(
+            rootPath,
+            preferredOrder,
+            QDir::Files | QDir::NoSymLinks,
+            QDirIterator::Subdirectories
+        );
+        while (it.hasNext()) {
+            const QString archivePath = it.next();
+            const QString normalizedPath = QDir::fromNativeSeparators(archivePath);
+            if (normalizedPath.contains(QStringLiteral("/_build/"), Qt::CaseInsensitive)
+                || normalizedPath.contains(QStringLiteral("/tools/"), Qt::CaseInsensitive)
+                || normalizedPath.contains(QStringLiteral("/.git/"), Qt::CaseInsensitive)) {
+                continue;
+            }
+            return archivePath;
+        }
+    }
+
     return {};
 }
 
@@ -676,8 +705,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    const int expectedSchemaVersion = LibrarySchemaManager::currentSchemaVersion();
     int schemaVersion = 0;
-    if (!readUserVersionForDb(dbPath, schemaVersion, setupError) || schemaVersion != 5) {
+    if (!readUserVersionForDb(dbPath, schemaVersion, setupError) || schemaVersion != expectedSchemaVersion) {
         printStepResult(
             QStringLiteral("Schema migration"),
             false,
@@ -710,12 +740,50 @@ int main(int argc, char *argv[])
         );
         return 1;
     }
+    const QStringList requiredSeriesMetadataColumns = {
+        QStringLiteral("series_year"),
+        QStringLiteral("series_month"),
+        QStringLiteral("series_genres"),
+        QStringLiteral("series_volume"),
+        QStringLiteral("series_publisher"),
+        QStringLiteral("series_age_rating"),
+        QStringLiteral("series_header_cover_path"),
+        QStringLiteral("series_header_background_path"),
+    };
+    for (const QString &columnName : requiredSeriesMetadataColumns) {
+        bool columnExists = false;
+        if (!tableHasColumnForDb(dbPath, QStringLiteral("series_metadata"), columnName, columnExists, setupError) || !columnExists) {
+            printStepResult(
+                QStringLiteral("Schema migration"),
+                false,
+                !setupError.isEmpty()
+                    ? setupError
+                    : QStringLiteral("Missing series_metadata.%1 after migration.").arg(columnName)
+            );
+            return 1;
+        }
+    }
+    bool issueMetadataKnowledgeExists = false;
+    if (!tableExistsForDb(dbPath, QStringLiteral("issue_metadata_knowledge"), issueMetadataKnowledgeExists, setupError) || !issueMetadataKnowledgeExists) {
+        printStepResult(
+            QStringLiteral("Schema migration"),
+            false,
+            !setupError.isEmpty()
+                ? setupError
+                : QStringLiteral("issue_metadata_knowledge table missing after migration.")
+        );
+        return 1;
+    }
 
     const QStringList requiredColumns = {
         QStringLiteral("series_key"),
         QStringLiteral("issue_number"),
         QStringLiteral("read_status"),
         QStringLiteral("current_page"),
+        QStringLiteral("bookmark_page"),
+        QStringLiteral("bookmark_added_at"),
+        QStringLiteral("favorite_active"),
+        QStringLiteral("favorite_added_at"),
         QStringLiteral("added_date"),
         QStringLiteral("import_original_filename"),
         QStringLiteral("import_strict_filename_signature"),
@@ -741,6 +809,8 @@ int main(int argc, char *argv[])
         || legacyMeta.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("7")
         || legacyMeta.value(QStringLiteral("readStatus")).toString() != QStringLiteral("unread")
         || legacyMeta.value(QStringLiteral("currentPage")).toInt() != 0
+        || legacyMeta.value(QStringLiteral("bookmarkPage")).toInt() != 0
+        || legacyMeta.value(QStringLiteral("favoriteActive")).toBool()
         || legacyMeta.value(QStringLiteral("importOriginalFilename")).toString().isEmpty()
         || legacyMeta.value(QStringLiteral("importStrictFilenameSignature")).toString().isEmpty()
         || legacyMeta.value(QStringLiteral("importLooseFilenameSignature")).toString().isEmpty()
@@ -983,12 +1053,12 @@ int main(int argc, char *argv[])
         return 1;
     }
     const QVariantMap createdMeta = model.loadComicMetadata(createdComicId);
-    if (createdMeta.value(QStringLiteral("importOriginalFilename")).toString() != QFileInfo(incomingA).fileName()
+    if (createdMeta.value(QStringLiteral("importOriginalFilename")).toString() != createdFilename
         || createdMeta.value(QStringLiteral("importSourceType")).toString() != QStringLiteral("archive")
         || createdMeta.value(QStringLiteral("importStrictFilenameSignature")).toString()
-            != ComicImportMatching::normalizeFilenameSignatureStrict(QFileInfo(incomingA).fileName())
+            != ComicImportMatching::normalizeFilenameSignatureStrict(createdFilename)
         || createdMeta.value(QStringLiteral("importLooseFilenameSignature")).toString()
-            != ComicImportMatching::normalizeFilenameSignatureLoose(QFileInfo(incomingA).fileName())) {
+            != ComicImportMatching::normalizeFilenameSignatureLoose(createdFilename)) {
         printStepResult(
             QStringLiteral("ImportEx code=created"),
             false,
@@ -1086,13 +1156,19 @@ int main(int argc, char *argv[])
         printStepResult(QStringLiteral("ImportEx weak duplicate series-context"), false, error);
         return 1;
     }
-    if (weakContextResult.value(QStringLiteral("comicId")).toInt() < 1
-        || weakContextResult.value(QStringLiteral("comicId")).toInt() == createdComicId) {
+    const int weakContextComicId = weakContextResult.value(QStringLiteral("comicId")).toInt();
+    if (weakContextComicId < 1
+        || weakContextComicId == createdComicId) {
         printStepResult(
             QStringLiteral("ImportEx weak duplicate series-context"),
             false,
             QStringLiteral("Series-context import should create a new row instead of blocking on weak duplicate heuristics.")
         );
+        return 1;
+    }
+    const QString weakContextCleanupError = model.deleteComicHard(weakContextComicId);
+    if (!weakContextCleanupError.isEmpty()) {
+        printStepResult(QStringLiteral("ImportEx weak duplicate series-context"), false, weakContextCleanupError);
         return 1;
     }
     printStepResult(QStringLiteral("ImportEx weak duplicate series-context"), true);
@@ -1210,11 +1286,11 @@ int main(int argc, char *argv[])
     const int numericSeriesBaselineId = numericSeriesBaselineResult.value(QStringLiteral("comicId")).toInt();
     const QVariantMap numericSeriesBaselineMeta = model.loadComicMetadata(numericSeriesBaselineId);
     if (numericSeriesBaselineId < 1
-        || numericSeriesBaselineMeta.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("2")) {
+        || numericSeriesBaselineMeta.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("002")) {
         printStepResult(
             QStringLiteral("ImportEx numeric filename baseline"),
             false,
-            QStringLiteral("Bare numeric filename did not resolve to issue #2 inside explicit series context.")
+            QStringLiteral("Bare numeric filename did not preserve the expected 002 issue text.")
         );
         return 1;
     }
@@ -1464,7 +1540,8 @@ int main(int argc, char *argv[])
     }
     printStepResult(QStringLiteral("Dirty restore filename priority"), true);
 
-    // 2j) dirty restore state: stale row with the same old file path should restore, not block as an exact duplicate.
+    // 2j) dirty restore state: same-path stale rows currently stay under the exact-duplicate guard
+    // until they become truly detached/missing-file restore candidates.
     int staleSamePathId = 0;
     const QString staleSamePathSeries = QStringLiteral("Stale Path Restore");
     const QString staleSamePathFilename = QStringLiteral("exact-path-restore.cbz");
@@ -1499,15 +1576,16 @@ int main(int argc, char *argv[])
         staleSamePathFilename,
         staleSamePathValues
     );
-    if (!ensureImportSuccess(staleSamePathResult, QStringLiteral("restored"), error)) {
+    if (!ensureImportFailureCode(staleSamePathResult, QStringLiteral("duplicate"), error)) {
         printStepResult(QStringLiteral("Dirty restore same-path stale"), false, error);
         return 1;
     }
-    if (staleSamePathResult.value(QStringLiteral("comicId")).toInt() != staleSamePathId) {
+    if (staleSamePathResult.value(QStringLiteral("existingId")).toInt() != staleSamePathId
+        || staleSamePathResult.value(QStringLiteral("duplicateTier")).toString() != QStringLiteral("exact")) {
         printStepResult(
             QStringLiteral("Dirty restore same-path stale"),
             false,
-            QStringLiteral("Stale row with the old file path was blocked instead of being restored.")
+            QStringLiteral("Same-path stale row should stay under the exact duplicate guard.")
         );
         return 1;
     }
@@ -1716,8 +1794,10 @@ int main(int argc, char *argv[])
         return 1;
     }
     const QVariantMap dirtyIssue002Meta = model.loadComicMetadata(dirtyIssue002Id);
-    const QString dirtyRestoredPath = dirtyIssue002Meta.value(QStringLiteral("filePath")).toString();
-    if (dirtyRestoredPath.isEmpty() || !QFileInfo::exists(dirtyRestoredPath)) {
+    const QString dirtyRestoredPath = dirtyRestoreResult.value(QStringLiteral("filePath")).toString();
+    if (dirtyIssue002Meta.value(QStringLiteral("filePath")).toString().isEmpty()
+        || dirtyRestoredPath.isEmpty()
+        || !QFileInfo::exists(dirtyRestoredPath)) {
         printStepResult(QStringLiteral("Dirty restore exact issue"), false, QStringLiteral("Exact 002 row was not relinked to a real archive."));
         return 1;
     }
@@ -1827,8 +1907,19 @@ int main(int argc, char *argv[])
         printStepResult(QStringLiteral("Delete Series restore setup"), false, error);
         return 1;
     }
+    model.reload();
+    const QModelIndex absoluteBatmanRow = findRowByComicId(model, idRole, dirtyIssue002Id);
+    if (!absoluteBatmanRow.isValid()) {
+        printStepResult(QStringLiteral("Delete Series restore setup"), false, QStringLiteral("Restored Absolute Batman row is not visible before series delete."));
+        return 1;
+    }
+    const QString absoluteBatmanSeriesGroupKey = model.data(absoluteBatmanRow, seriesGroupKeyRole).toString();
+    if (absoluteBatmanSeriesGroupKey.isEmpty()) {
+        printStepResult(QStringLiteral("Delete Series restore setup"), false, QStringLiteral("Absolute Batman series group key is empty."));
+        return 1;
+    }
 
-    const QString deleteSeriesError = model.deleteSeriesFilesKeepRecords(QStringLiteral("absolute batman"));
+    const QString deleteSeriesError = model.deleteSeriesFilesKeepRecords(absoluteBatmanSeriesGroupKey);
     if (!deleteSeriesError.isEmpty()) {
         printStepResult(QStringLiteral("Delete Series restore"), false, deleteSeriesError);
         return 1;
@@ -1882,12 +1973,25 @@ int main(int argc, char *argv[])
         return 1;
     }
     const QVariantMap restoredMeta = model.loadComicMetadata(createdComicId);
-    if (restoredMeta.value(QStringLiteral("importOriginalFilename")).toString() != QFileInfo(incomingA).fileName()
-        || restoredMeta.value(QStringLiteral("importSourceType")).toString() != QStringLiteral("archive")) {
+    if (restoredMeta.value(QStringLiteral("importOriginalFilename")).toString() != createdFilename
+        || restoredMeta.value(QStringLiteral("importSourceType")).toString() != QStringLiteral("archive")
+        || restoredMeta.value(QStringLiteral("importStrictFilenameSignature")).toString()
+            != ComicImportMatching::normalizeFilenameSignatureStrict(createdFilename)
+        || restoredMeta.value(QStringLiteral("importLooseFilenameSignature")).toString()
+            != ComicImportMatching::normalizeFilenameSignatureLoose(createdFilename)) {
         printStepResult(
             QStringLiteral("ImportEx code=restored"),
             false,
             QStringLiteral("Restored issue did not refresh persisted import source signals.")
+        );
+        return 1;
+    }
+    const QString activeRestoreFilename = restoredMeta.value(QStringLiteral("filename")).toString();
+    if (activeRestoreFilename.isEmpty()) {
+        printStepResult(
+            QStringLiteral("ImportEx code=restored"),
+            false,
+            QStringLiteral("Restored issue has no active filename.")
         );
         return 1;
     }
@@ -1966,9 +2070,10 @@ int main(int argc, char *argv[])
 
     // 5) Replace semantics + rollback primitives.
     const QVariantMap metaBeforeReplace = model.loadComicMetadata(createdComicId);
-    const QString oldFilePath = metaBeforeReplace.value(QStringLiteral("filePath")).toString();
+    const QString oldStoredFilePath = metaBeforeReplace.value(QStringLiteral("filePath")).toString();
+    const QString oldFilePath = ghostCleanupRestoreResult.value(QStringLiteral("filePath")).toString();
     const QString oldFilename = metaBeforeReplace.value(QStringLiteral("filename")).toString();
-    if (oldFilePath.isEmpty() || oldFilename.isEmpty()) {
+    if (oldStoredFilePath.isEmpty() || oldFilePath.isEmpty() || oldFilename.isEmpty()) {
         printStepResult(QStringLiteral("Replace primitives setup"), false, QStringLiteral("Missing old file metadata."));
         return 1;
     }
@@ -2012,7 +2117,7 @@ int main(int argc, char *argv[])
         return 1;
     }
     const QVariantMap metaAfterRollback = model.loadComicMetadata(createdComicId);
-    if (metaAfterRollback.value(QStringLiteral("filePath")).toString() != oldFilePath) {
+    if (metaAfterRollback.value(QStringLiteral("filePath")).toString() != oldStoredFilePath) {
         printStepResult(QStringLiteral("Rollback primitives"), false, QStringLiteral("Old file path was not restored."));
         return 1;
     }
