@@ -2,9 +2,11 @@
 
 #include "storage/comicinfoarchive.h"
 #include "storage/sqliteconnectionutils.h"
+#include "storage/storedpathutils.h"
 
 #include "common/scopedsqlconnectionremoval.h"
 
+#include <QFileInfo>
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
@@ -16,6 +18,33 @@ namespace {
 QString trimOrEmpty(const QVariant &value)
 {
     return value.toString().trimmed();
+}
+
+QString resolvedArchivePathOrStoredPath(
+    const QString &dbPath,
+    const QString &archivePathOverride,
+    const QVariant &storedFilePathValue,
+    const QVariant &storedFilenameValue
+)
+{
+    const QString archivePath = archivePathOverride.trimmed();
+    if (!archivePath.isEmpty()) {
+        return archivePath;
+    }
+
+    const QString storedFilePath = trimOrEmpty(storedFilePathValue);
+    const QString storedFilename = trimOrEmpty(storedFilenameValue);
+    const QString dataRoot = QFileInfo(dbPath).absolutePath();
+    const QString resolvedArchivePath = ComicStoragePaths::resolveStoredArchivePath(
+        dataRoot,
+        storedFilePath,
+        storedFilename
+    );
+    if (!resolvedArchivePath.isEmpty()) {
+        return resolvedArchivePath;
+    }
+
+    return ComicStoragePaths::normalizePathInput(storedFilePath);
 }
 
 } // namespace
@@ -75,9 +104,7 @@ QVariantMap exportComicInfoXml(const QString &dbPath, int comicId, const QString
 
         values.insert(
             QStringLiteral("archivePath"),
-            archivePathOverride.trimmed().isEmpty()
-                ? trimOrEmpty(query.value(0))
-                : archivePathOverride.trimmed()
+            resolvedArchivePathOrStoredPath(dbPath, archivePathOverride, query.value(0), query.value(1))
         );
         values.insert(QStringLiteral("filename"), trimOrEmpty(query.value(1)));
         values.insert(QStringLiteral("series"), trimOrEmpty(query.value(2)));
@@ -198,9 +225,7 @@ QVariantMap buildComicInfoImportPatch(
             };
         }
 
-        archivePath = archivePathOverride.trimmed().isEmpty()
-            ? trimOrEmpty(query.value(0))
-            : archivePathOverride.trimmed();
+        archivePath = resolvedArchivePathOrStoredPath(dbPath, archivePathOverride, query.value(0), query.value(1));
         filename = trimOrEmpty(query.value(1));
         db.close();
     }
