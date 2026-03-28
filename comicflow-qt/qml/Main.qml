@@ -389,6 +389,7 @@ ApplicationWindow {
         actionResultDialogRef: actionResultDialog
         seriesMetaDialogRef: seriesMetaDialog
         settingsDialogRef: settingsDialog
+        replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
         seriesHeaderDialogRef: seriesHeaderDialog
         deleteConfirmDialogRef: deleteConfirmDialog
         deleteErrorDialogRef: deleteErrorDialog
@@ -1185,6 +1186,20 @@ ApplicationWindow {
             return false
         }
 
+        return queueReplaceIssueArchive(comicId, selectedPath)
+    }
+
+    function queueReplaceIssueArchive(comicId, selectedPath) {
+        if (replaceArchiveOperationActive) {
+            return false
+        }
+        const normalizedComicId = Number(comicId || 0)
+        const normalizedPath = String(selectedPath || "").trim()
+        if (normalizedComicId < 1 || normalizedPath.length < 1) {
+            return false
+        }
+        pendingReplaceArchiveComicId = normalizedComicId
+        pendingReplaceArchiveSourcePath = normalizedPath
         replaceArchiveOperationStatusText = "Replacing archive..."
         replaceArchiveOperationActive = true
         replaceArchiveActionTimer.start()
@@ -1214,7 +1229,7 @@ ApplicationWindow {
         }
 
         if (!Boolean(appSettingsController.safetyConfirmBeforeReplace)) {
-            performReplaceIssueArchive(comicId, selectedPath)
+            queueReplaceIssueArchive(comicId, selectedPath)
             return
         }
 
