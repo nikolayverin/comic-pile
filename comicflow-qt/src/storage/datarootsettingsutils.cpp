@@ -1,6 +1,7 @@
 #include "storage/datarootsettingsutils.h"
 #include "storage/storedpathutils.h"
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QSettings>
 #include <QtGlobal>
@@ -66,6 +67,45 @@ QString pendingDataRootRelocationPath()
 {
     QSettings settings = relocationSettingsStore();
     return normalizedFolderPath(settings.value(pendingDataRootRelocationSettingsKey()).toString());
+}
+
+QString resolveActiveDataRootPath()
+{
+    const QString envValuePrimary = qEnvironmentVariable("COMIC_PILE_DATA_DIR").trimmed();
+    if (!envValuePrimary.isEmpty()) {
+        return QDir(envValuePrimary).absolutePath();
+    }
+
+    const QString envValueLegacy = qEnvironmentVariable("COMICFLOW_DATA_DIR").trimmed();
+    if (!envValueLegacy.isEmpty()) {
+        return QDir(envValueLegacy).absolutePath();
+    }
+
+    const QString configuredOverride = configuredDataRootOverridePath();
+    if (!configuredOverride.isEmpty()) {
+        return QDir(configuredOverride).absolutePath();
+    }
+
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QString currentDir = QDir::currentPath();
+    const QStringList candidates = {
+        QDir(appDir).filePath(QStringLiteral("Database")),
+        QDir(appDir).filePath(QStringLiteral("../Database")),
+        QDir(appDir).filePath(QStringLiteral("../../Database")),
+        QDir(appDir).filePath(QStringLiteral("../../../Database")),
+        QDir(currentDir).filePath(QStringLiteral("Database")),
+        QDir(currentDir).filePath(QStringLiteral("../Database")),
+        QDir(currentDir).filePath(QStringLiteral("../../Database")),
+    };
+
+    for (const QString &candidate : candidates) {
+        const QString found = ComicStoragePaths::absoluteExistingDirPath(candidate);
+        if (!found.isEmpty()) {
+            return found;
+        }
+    }
+
+    return QDir(appDir).filePath(QStringLiteral("Database"));
 }
 
 bool writeConfiguredDataRootOverridePath(const QString &rawPath)

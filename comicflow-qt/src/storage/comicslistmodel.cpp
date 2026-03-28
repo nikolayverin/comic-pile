@@ -1,6 +1,7 @@
 #include "storage/comicslistmodel.h"
 #include "storage/archivepacking.h"
 #include "storage/archiveprocessutils.h"
+#include "storage/archivesupportutils.h"
 #include "storage/comicinfoarchive.h"
 #include "storage/comicinfoops.h"
 #include "storage/deletestagingops.h"
@@ -26,7 +27,6 @@
 #include <limits>
 #include <QCollator>
 #include <QClipboard>
-#include <QCoreApplication>
 #include <QDate>
 #include <QDateTime>
 #include <QDir>
@@ -49,7 +49,6 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSaveFile>
-#include <QStandardPaths>
 #include <QStringList>
 #include <QTimer>
 #include <QTransform>
@@ -59,11 +58,6 @@
 #include <QtMath>
 
 namespace {
-
-QString absolutePathIfExists(const QString &candidate)
-{
-    return ComicStartupRuntime::absolutePathIfExists(candidate);
-}
 
 QString libraryStorageMigrationMarkerPath(const QString &dataRoot)
 {
@@ -241,7 +235,7 @@ QString formatDeleteFailureText(const DeleteFailureInfo &info)
 
 QString sevenZipMissingMessage()
 {
-    return QStringLiteral("Archive support component (7z) is missing. Reinstall/repair Comic Pile or set a custom 7z path.");
+    return ComicArchiveSupport::sevenZipMissingMessage();
 }
 
 bool tryRemoveFileWithDetails(
@@ -626,34 +620,7 @@ int metadataTextMatchScore(const QString &input, const QString &candidate, int w
 
 QVariantMap readComicInfoIdentityHints(const QString &archivePath)
 {
-    const QString normalizedArchivePath = normalizeInputFilePath(archivePath);
-    if (normalizedArchivePath.isEmpty()) return {};
-
-    QString xml;
-    QString readError;
-    if (!ComicInfoArchive::readComicInfoXmlFromArchive(normalizedArchivePath, xml, readError)) {
-        Q_UNUSED(readError);
-        return {};
-    }
-
-    QString parseError;
-    const QVariantMap parsed = ComicInfoArchive::parseComicInfoXml(xml, parseError);
-    if (!parseError.isEmpty()) {
-        return {};
-    }
-
-    QVariantMap hints;
-    auto copyField = [&](const char *sourceKey, const char *targetKey = nullptr) {
-        const QString value = trimOrEmpty(parsed.value(QString::fromLatin1(sourceKey)));
-        if (value.isEmpty()) return;
-        hints.insert(QString::fromLatin1(targetKey ? targetKey : sourceKey), value);
-    };
-
-    copyField("series");
-    copyField("volume");
-    copyField("issue", "issueNumber");
-    copyField("title");
-    return hints;
+    return ComicInfoOps::readComicInfoIdentityHints(archivePath);
 }
 
 QVariantMap withImportSeriesContext(const QVariantMap &values, const QString &seriesContext)
@@ -1071,255 +1038,69 @@ void collectExpandedImportSources(
     }
 }
 
-QString resolve7ZipExecutable();
-QSet<QString> resolvedSevenZipArchiveExtensions();
-
 QString normalizeArchiveExtension(const QString &pathOrExtension)
 {
-    QString value = pathOrExtension.trimmed().toLower();
-    if (value.isEmpty()) return {};
-    if (value.contains('/') || value.contains('\\')) {
-        value = QFileInfo(value).suffix().toLower();
-    }
-    if (value.startsWith('.')) {
-        value = value.mid(1);
-    }
-    return value.trimmed();
+    return ComicArchiveSupport::normalizeArchiveExtension(pathOrExtension);
 }
 
 QString resolve7ZipExecutableFromHint(const QString &hintPath)
 {
-    const QString existingFilePath = ComicStoragePaths::absoluteExistingFilePath(hintPath);
-    if (!existingFilePath.isEmpty()) {
-        return existingFilePath;
-    }
-
-    const QString existingDirPath = ComicStoragePaths::absoluteExistingDirPath(hintPath);
-    if (!existingDirPath.isEmpty()) {
-        static const QStringList executableNames = {
-            QStringLiteral("7z.exe"),
-            QStringLiteral("7z"),
-            QStringLiteral("7za.exe"),
-            QStringLiteral("7za")
-        };
-        for (const QString &name : executableNames) {
-            const QFileInfo nested(QDir(existingDirPath).filePath(name));
-            if (nested.exists() && nested.isFile()) {
-                return QDir::toNativeSeparators(nested.absoluteFilePath());
-            }
-        }
-    }
-    return {};
+    return ComicArchiveSupport::resolve7ZipExecutableFromHint(hintPath);
 }
 
 const QSet<QString> &nativeImportArchiveExtensions()
 {
-    static const QSet<QString> extensions = {
-        QStringLiteral("cbz"),
-        QStringLiteral("zip")
-    };
-    return extensions;
+    return ComicArchiveSupport::nativeImportArchiveExtensions();
 }
 
 const QSet<QString> &documentImportExtensions()
 {
-    static const QSet<QString> extensions = {
-        QStringLiteral("pdf"),
-        QStringLiteral("djvu"),
-        QStringLiteral("djv")
-    };
-    return extensions;
+    return ComicArchiveSupport::documentImportExtensions();
 }
 
 const QSet<QString> &fallbackSevenZipArchiveExtensions()
 {
-    static const QSet<QString> extensions = {
-        QStringLiteral("7z"),
-        QStringLiteral("apk"),
-        QStringLiteral("ar"),
-        QStringLiteral("arj"),
-        QStringLiteral("bz2"),
-        QStringLiteral("cab"),
-        QStringLiteral("cb7"),
-        QStringLiteral("cbr"),
-        QStringLiteral("chm"),
-        QStringLiteral("cpio"),
-        QStringLiteral("deb"),
-        QStringLiteral("dmg"),
-        QStringLiteral("ear"),
-        QStringLiteral("epub"),
-        QStringLiteral("gz"),
-        QStringLiteral("iso"),
-        QStringLiteral("jar"),
-        QStringLiteral("lha"),
-        QStringLiteral("lzh"),
-        QStringLiteral("lz"),
-        QStringLiteral("lzma"),
-        QStringLiteral("msi"),
-        QStringLiteral("nupkg"),
-        QStringLiteral("pkg"),
-        QStringLiteral("qcow"),
-        QStringLiteral("qcow2"),
-        QStringLiteral("rar"),
-        QStringLiteral("rpm"),
-        QStringLiteral("squashfs"),
-        QStringLiteral("tar"),
-        QStringLiteral("taz"),
-        QStringLiteral("tbz"),
-        QStringLiteral("tbz2"),
-        QStringLiteral("tgz"),
-        QStringLiteral("txz"),
-        QStringLiteral("udf"),
-        QStringLiteral("vdi"),
-        QStringLiteral("vhd"),
-        QStringLiteral("vhdx"),
-        QStringLiteral("vmdk"),
-        QStringLiteral("war"),
-        QStringLiteral("wim"),
-        QStringLiteral("xar"),
-        QStringLiteral("xz"),
-        QStringLiteral("z"),
-        QStringLiteral("zipx"),
-        QStringLiteral("zst"),
-        QStringLiteral("tzst")
-    };
-    return extensions;
+    return ComicArchiveSupport::fallbackSevenZipArchiveExtensions();
 }
 
 QString resolveDjVuExecutableFromHint(const QString &hintPath)
 {
-    const QString existingFilePath = ComicStoragePaths::absoluteExistingFilePath(hintPath);
-    if (!existingFilePath.isEmpty()) {
-        return existingFilePath;
-    }
-
-    const QString existingDirPath = ComicStoragePaths::absoluteExistingDirPath(hintPath);
-    if (!existingDirPath.isEmpty()) {
-        static const QStringList executableNames = {
-            QStringLiteral("ddjvu.exe"),
-            QStringLiteral("ddjvu")
-        };
-        for (const QString &name : executableNames) {
-            const QFileInfo nested(QDir(existingDirPath).filePath(name));
-            if (nested.exists() && nested.isFile()) {
-                return QDir::toNativeSeparators(nested.absoluteFilePath());
-            }
-        }
-    }
-    return {};
+    return ComicArchiveSupport::resolveDjVuExecutableFromHint(hintPath);
 }
 
 QString resolveDjVuExecutable()
 {
-    const QStringList envCandidates = {
-        QStringLiteral("COMIC_PILE_DJVU_PATH"),
-        QStringLiteral("DJVU_PATH")
-    };
-    for (const QString &envKey : envCandidates) {
-        const QString resolved = resolveDjVuExecutableFromHint(qEnvironmentVariable(envKey.toUtf8().constData()));
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    const QString appDir = QCoreApplication::applicationDirPath();
-    const QString currentDir = QDir::currentPath();
-    const QStringList bundledCandidates = {
-        QDir(appDir).filePath(QStringLiteral("ddjvu.exe")),
-        QDir(appDir).filePath(QStringLiteral("tools/djvulibre/ddjvu.exe")),
-        QDir(appDir).filePath(QStringLiteral("tools/djvulibre/runtime/ddjvu.exe")),
-        QDir(appDir).filePath(QStringLiteral("../tools/djvulibre/ddjvu.exe")),
-        QDir(appDir).filePath(QStringLiteral("../tools/djvulibre/runtime/ddjvu.exe")),
-        QDir(appDir).filePath(QStringLiteral("../../tools/djvulibre/ddjvu.exe")),
-        QDir(appDir).filePath(QStringLiteral("../../tools/djvulibre/runtime/ddjvu.exe")),
-        QDir(currentDir).filePath(QStringLiteral("ddjvu.exe")),
-        QDir(currentDir).filePath(QStringLiteral("tools/djvulibre/ddjvu.exe")),
-        QDir(currentDir).filePath(QStringLiteral("tools/djvulibre/runtime/ddjvu.exe")),
-        QDir(currentDir).filePath(QStringLiteral("../tools/djvulibre/ddjvu.exe")),
-        QDir(currentDir).filePath(QStringLiteral("../tools/djvulibre/runtime/ddjvu.exe"))
-    };
-    for (const QString &candidate : bundledCandidates) {
-        const QString resolved = resolveDjVuExecutableFromHint(candidate);
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    const QStringList programCandidates = {
-        QStringLiteral("ddjvu.exe"),
-        QStringLiteral("ddjvu")
-    };
-    for (const QString &candidate : programCandidates) {
-        const QString found = QStandardPaths::findExecutable(candidate);
-        if (!found.isEmpty()) {
-            return QDir::toNativeSeparators(found);
-        }
-    }
-
-    return {};
+    return ComicArchiveSupport::resolveDjVuExecutable();
 }
 
 bool isPdfExtension(const QString &extension)
 {
-    return normalizeArchiveExtension(extension) == QStringLiteral("pdf");
+    return ComicArchiveSupport::isPdfExtension(extension);
 }
 
 bool isDjvuExtension(const QString &extension)
 {
-    const QString normalized = normalizeArchiveExtension(extension);
-    return normalized == QStringLiteral("djvu") || normalized == QStringLiteral("djv");
+    return ComicArchiveSupport::isDjvuExtension(extension);
 }
 
 QString djvuBackendMissingMessage()
 {
-    return QStringLiteral("DJVU import component (ddjvu) is missing. Reinstall/repair Comic Pile or set a custom DjVuLibre path.");
+    return ComicArchiveSupport::djvuMissingMessage();
 }
 
 QSet<QString> supportedImportArchiveExtensionsSet()
 {
-    static const QSet<QString> extensions = {
-        QStringLiteral("cbz"),
-        QStringLiteral("zip"),
-        QStringLiteral("pdf"),
-        QStringLiteral("djvu"),
-        QStringLiteral("djv"),
-        QStringLiteral("cbr"),
-        QStringLiteral("rar"),
-        QStringLiteral("cb7"),
-        QStringLiteral("7z"),
-        QStringLiteral("cbt"),
-        QStringLiteral("tar")
-    };
-    return extensions;
+    return ComicArchiveSupport::declaredImportArchiveExtensions();
 }
 
 QString formatSupportedArchiveList()
 {
-    QStringList tokens;
-    const QSet<QString> extensions = supportedImportArchiveExtensionsSet();
-    tokens.reserve(extensions.size());
-    for (const QString &ext : extensions) {
-        tokens.push_back(QString(".%1").arg(ext));
-    }
-    std::sort(tokens.begin(), tokens.end(), [](const QString &left, const QString &right) {
-        return compareNaturalText(left, right) < 0;
-    });
-    return tokens.join(QString(", "));
+    return ComicArchiveSupport::formatDeclaredSupportedArchiveList();
 }
 
 QString buildImportArchiveDialogFilter()
 {
-    QStringList wildcards;
-    const QSet<QString> extensions = supportedImportArchiveExtensionsSet();
-    wildcards.reserve(extensions.size());
-    for (const QString &ext : extensions) {
-        wildcards.push_back(QString("*.%1").arg(ext));
-    }
-    std::sort(wildcards.begin(), wildcards.end(), [](const QString &left, const QString &right) {
-        return compareNaturalText(left, right) < 0;
-    });
-
-    return QString("Comic files (%1);;All files (*)").arg(wildcards.join(QString(" ")));
+    return ComicArchiveSupport::buildDeclaredImportArchiveDialogFilter();
 }
 
 QString buildImageDialogFilter()
@@ -1355,30 +1136,17 @@ QString relativePathWithinDataRoot(const QString &dataRoot, const QString &absol
 
 bool isImportArchiveExtensionSupported(const QString &extension)
 {
-    const QString normalized = normalizeArchiveExtension(extension);
-    if (normalized.isEmpty()) return false;
-    const QSet<QString> extensions = supportedImportArchiveExtensionsSet();
-    return extensions.contains(normalized);
+    return ComicArchiveSupport::isDeclaredImportArchiveExtensionSupported(extension);
 }
 
 bool isSevenZipExtension(const QString &extension)
 {
-    const QString normalized = normalizeArchiveExtension(extension);
-    if (normalized.isEmpty()) return false;
-    if (nativeImportArchiveExtensions().contains(normalized)) {
-        return false;
-    }
-    if (documentImportExtensions().contains(normalized)) {
-        return false;
-    }
-    const QSet<QString> extensions = supportedImportArchiveExtensionsSet();
-    return extensions.contains(normalized);
+    return ComicArchiveSupport::isDeclaredSevenZipExtension(extension);
 }
 
 bool isSupportedArchiveExtension(const QString &path)
 {
-    const QString extension = normalizeArchiveExtension(path);
-    return isImportArchiveExtensionSupported(extension);
+    return ComicArchiveSupport::isDeclaredSupportedArchivePath(path);
 }
 
 QString formatSeriesGroupTitle(const QString &series, const QString &volume)
@@ -1401,67 +1169,7 @@ QString formatSeriesGroupTitle(const QString &series, const QString &volume)
 
 QString resolve7ZipExecutable()
 {
-    const QStringList envCandidates = {
-        QStringLiteral("COMIC_PILE_7ZIP_PATH"),
-        QStringLiteral("SEVENZIP_PATH")
-    };
-    for (const QString &envKey : envCandidates) {
-        const QString resolved = resolve7ZipExecutableFromHint(qEnvironmentVariable(envKey.toUtf8().constData()));
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    const QString appDir = QCoreApplication::applicationDirPath();
-    const QString currentDir = QDir::currentPath();
-    const QStringList bundledCandidates = {
-        QDir(appDir).filePath(QStringLiteral("7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("7za.exe")),
-        QDir(appDir).filePath(QStringLiteral("tools/7zip/7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("tools/7zip/7za.exe")),
-        QDir(appDir).filePath(QStringLiteral("../tools/7zip/7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("../tools/7zip/7za.exe")),
-        QDir(appDir).filePath(QStringLiteral("../../tools/7zip/7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("../../tools/7zip/7za.exe")),
-        QDir(currentDir).filePath(QStringLiteral("7z.exe")),
-        QDir(currentDir).filePath(QStringLiteral("7za.exe")),
-        QDir(currentDir).filePath(QStringLiteral("tools/7zip/7z.exe")),
-        QDir(currentDir).filePath(QStringLiteral("tools/7zip/7za.exe")),
-        QDir(currentDir).filePath(QStringLiteral("../tools/7zip/7z.exe")),
-        QDir(currentDir).filePath(QStringLiteral("../tools/7zip/7za.exe"))
-    };
-    for (const QString &candidate : bundledCandidates) {
-        const QString resolved = resolve7ZipExecutableFromHint(candidate);
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    const QStringList programCandidates = {
-        QString("7z.exe"),
-        QString("7z"),
-        QString("7za.exe"),
-        QString("7za")
-    };
-    for (const QString &candidate : programCandidates) {
-        const QString found = QStandardPaths::findExecutable(candidate);
-        if (!found.isEmpty()) {
-            return QDir::toNativeSeparators(found);
-        }
-    }
-
-    const QStringList absoluteCandidates = {
-        QStringLiteral("C:/Program Files/7-Zip/7z.exe"),
-        QStringLiteral("C:/Program Files (x86)/7-Zip/7z.exe")
-    };
-    for (const QString &candidate : absoluteCandidates) {
-        const QString resolved = ComicStoragePaths::absoluteExistingFilePath(candidate);
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    return {};
+    return ComicArchiveSupport::resolve7ZipExecutable();
 }
 
 QString readTrimmedTextFile(const QString &filePath)
@@ -1502,94 +1210,6 @@ bool moveFileWithFallback(const QString &sourcePath, const QString &targetPath, 
 }
 
 using StagedArchiveDeleteOp = ComicDeleteOps::StagedArchiveDeleteOp;
-
-QSet<QString> parseSevenZipExtensionsFromIndexOutput(const QString &output)
-{
-    QSet<QString> extensions;
-    if (output.trimmed().isEmpty()) return extensions;
-
-    bool inFormatsSection = false;
-    const QStringList lines = output.split('\n');
-    const QRegularExpression rowPattern(
-        "^\\s*[0-9]{0,3}\\s*[A-Z\\.]{0,8}\\s*[A-Z\\.]{0,8}\\s+[^\\s]+\\s+(.+?)\\s*$",
-        QRegularExpression::CaseInsensitiveOption
-    );
-    const QRegularExpression tokenCleaner("[^a-z0-9+\\-.]");
-    const QRegularExpression validTokenPattern("^[a-z0-9][a-z0-9+\\-]{0,31}$");
-
-    for (const QString &rawLine : lines) {
-        const QString trimmed = rawLine.trimmed();
-        if (trimmed.isEmpty()) continue;
-
-        if (!inFormatsSection) {
-            if (trimmed.compare(QStringLiteral("Formats:"), Qt::CaseInsensitive) == 0) {
-                inFormatsSection = true;
-            }
-            continue;
-        }
-
-        if (trimmed.endsWith(':') && trimmed.compare(QStringLiteral("Formats:"), Qt::CaseInsensitive) != 0) {
-            break;
-        }
-
-        const QRegularExpressionMatch rowMatch = rowPattern.match(rawLine);
-        if (!rowMatch.hasMatch()) continue;
-
-        const QString extChunk = rowMatch.captured(1);
-        const QStringList rawTokens = extChunk.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
-        for (const QString &rawToken : rawTokens) {
-            QString token = rawToken.trimmed().toLower();
-            if (token.startsWith('.')) {
-                token = token.mid(1);
-            }
-            token.remove(tokenCleaner);
-            if (!validTokenPattern.match(token).hasMatch()) continue;
-            extensions.insert(token);
-        }
-    }
-
-    return extensions;
-}
-
-QSet<QString> resolvedSevenZipArchiveExtensions()
-{
-    static QString cachedExecutable;
-    static QSet<QString> cachedExtensions = fallbackSevenZipArchiveExtensions();
-
-    const QString executable = resolve7ZipExecutable();
-    if (!cachedExecutable.isEmpty()
-            && executable.compare(cachedExecutable, Qt::CaseInsensitive) == 0) {
-        return cachedExtensions;
-    }
-
-    cachedExecutable = executable;
-    cachedExtensions = fallbackSevenZipArchiveExtensions();
-
-    if (executable.isEmpty()) {
-        return cachedExtensions;
-    }
-
-    QByteArray stdOutBytes;
-    QByteArray stdErrBytes;
-    QString errorText;
-    if (!ComicArchiveProcess::runExternalProcess(
-            executable,
-            { QStringLiteral("i") },
-            stdOutBytes,
-            stdErrBytes,
-            errorText,
-            15000
-        )) {
-        return cachedExtensions;
-    }
-
-    const QString stdOut = QString::fromUtf8(stdOutBytes);
-    const QSet<QString> parsed = parseSevenZipExtensionsFromIndexOutput(stdOut);
-    if (!parsed.isEmpty()) {
-        cachedExtensions.unite(parsed);
-    }
-    return cachedExtensions;
-}
 
 void cleanupEmptyLibraryDirs(const QString &libraryRootPath, const QStringList &candidateDirs)
 {
@@ -3572,37 +3192,7 @@ QString ComicsListModel::resolveStoredArchivePathForDataRoot(
 
 QString ComicsListModel::resolveDataRoot() const
 {
-    const QString envValuePrimary = qEnvironmentVariable("COMIC_PILE_DATA_DIR").trimmed();
-    if (!envValuePrimary.isEmpty()) {
-        return QDir(envValuePrimary).absolutePath();
-    }
-    // Backward compatibility for previous builds and docs.
-    const QString envValueLegacy = qEnvironmentVariable("COMICFLOW_DATA_DIR").trimmed();
-    if (!envValueLegacy.isEmpty()) {
-        return QDir(envValueLegacy).absolutePath();
-    }
-    const QString configuredOverride = ComicDataRootSettings::configuredDataRootOverridePath();
-    if (!configuredOverride.isEmpty()) {
-        return QDir(configuredOverride).absolutePath();
-    }
-    const QString appDir = QCoreApplication::applicationDirPath();
-    const QString currentDir = QDir::currentPath();
-    const QStringList candidates = {
-        QDir(appDir).filePath("Database"),
-        QDir(appDir).filePath("../Database"),
-        QDir(appDir).filePath("../../Database"),
-        QDir(appDir).filePath("../../../Database"),
-        QDir(currentDir).filePath("Database"),
-        QDir(currentDir).filePath("../Database"),
-        QDir(currentDir).filePath("../../Database"),
-    };
-
-    for (const QString &candidate : candidates) {
-        const QString found = absolutePathIfExists(candidate);
-        if (!found.isEmpty()) return found;
-    }
-
-    return QDir(appDir).filePath("Database");
+    return ComicDataRootSettings::resolveActiveDataRootPath();
 }
 
 QString ComicsListModel::baseNameWithoutExtension(const QString &filename)

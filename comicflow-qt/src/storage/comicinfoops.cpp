@@ -172,6 +172,40 @@ QString syncComicInfoToArchive(const QString &dbPath, int comicId, const QString
     return {};
 }
 
+QVariantMap readComicInfoIdentityHints(const QString &archivePath)
+{
+    const QString normalizedArchivePath = ComicStoragePaths::normalizePathInput(archivePath);
+    if (normalizedArchivePath.isEmpty()) {
+        return {};
+    }
+
+    QString xml;
+    QString readError;
+    if (!ComicInfoArchive::readComicInfoXmlFromArchive(normalizedArchivePath, xml, readError)) {
+        Q_UNUSED(readError);
+        return {};
+    }
+
+    QString parseError;
+    const QVariantMap parsed = ComicInfoArchive::parseComicInfoXml(xml, parseError);
+    if (!parseError.isEmpty()) {
+        return {};
+    }
+
+    QVariantMap hints;
+    auto copyField = [&](const char *sourceKey, const char *targetKey = nullptr) {
+        const QString value = trimOrEmpty(parsed.value(QString::fromLatin1(sourceKey)));
+        if (value.isEmpty()) return;
+        hints.insert(QString::fromLatin1(targetKey ? targetKey : sourceKey), value);
+    };
+
+    copyField("series");
+    copyField("volume");
+    copyField("issue", "issueNumber");
+    copyField("title");
+    return hints;
+}
+
 QVariantMap buildComicInfoImportPatch(
     const QString &dbPath,
     int comicId,

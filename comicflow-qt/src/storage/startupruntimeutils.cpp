@@ -1,7 +1,6 @@
 #include "storage/startupruntimeutils.h"
 
 #include "storage/sqliteconnectionutils.h"
-#include "storage/storedpathutils.h"
 #include "common/scopedsqlconnectionremoval.h"
 
 #include <algorithm>
@@ -89,11 +88,6 @@ void ensureHiddenDirectoryOnWindows(const QString &path)
 } // namespace
 
 namespace ComicStartupRuntime {
-
-QString absolutePathIfExists(const QString &candidate)
-{
-    return ComicStoragePaths::absoluteExistingDirPath(candidate);
-}
 
 void resetTextLogFile(const QString &path)
 {

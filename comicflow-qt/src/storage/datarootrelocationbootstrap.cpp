@@ -357,45 +357,6 @@ bool removeSourceDirectoryAfterRelocation(
     return true;
 }
 
-QString resolveLaunchDataRootCandidate()
-{
-    const QString envValuePrimary = qEnvironmentVariable("COMIC_PILE_DATA_DIR").trimmed();
-    if (!envValuePrimary.isEmpty()) {
-        return QDir(envValuePrimary).absolutePath();
-    }
-
-    const QString envValueLegacy = qEnvironmentVariable("COMICFLOW_DATA_DIR").trimmed();
-    if (!envValueLegacy.isEmpty()) {
-        return QDir(envValueLegacy).absolutePath();
-    }
-
-    const QString configuredOverride = ComicDataRootSettings::configuredDataRootOverridePath();
-    if (!configuredOverride.isEmpty()) {
-        return QDir(configuredOverride).absolutePath();
-    }
-
-    const QString appDir = QCoreApplication::applicationDirPath();
-    const QString currentDir = QDir::currentPath();
-    const QStringList candidates = {
-        QDir(appDir).filePath("Database"),
-        QDir(appDir).filePath("../Database"),
-        QDir(appDir).filePath("../../Database"),
-        QDir(appDir).filePath("../../../Database"),
-        QDir(currentDir).filePath("Database"),
-        QDir(currentDir).filePath("../Database"),
-        QDir(currentDir).filePath("../../Database"),
-    };
-
-    for (const QString &candidate : candidates) {
-        const QString found = ComicStartupRuntime::absolutePathIfExists(candidate);
-        if (!found.isEmpty()) {
-            return found;
-        }
-    }
-
-    return QDir(appDir).filePath("Database");
-}
-
 } // namespace
 
 namespace ComicDataRootRelocationBootstrap {
@@ -411,7 +372,9 @@ void processPendingDataRootRelocation()
         return;
     }
 
-    const QString currentRoot = ComicDataRootSettings::normalizedFolderPath(resolveLaunchDataRootCandidate());
+    const QString currentRoot = ComicDataRootSettings::normalizedFolderPath(
+        ComicDataRootSettings::resolveActiveDataRootPath()
+    );
     if (currentRoot.isEmpty()) {
         return;
     }
@@ -481,7 +444,7 @@ void processPendingDataRootRelocation()
 
 QString resolveLaunchDataRoot()
 {
-    return resolveLaunchDataRootCandidate();
+    return ComicDataRootSettings::resolveActiveDataRootPath();
 }
 
 } // namespace ComicDataRootRelocationBootstrap

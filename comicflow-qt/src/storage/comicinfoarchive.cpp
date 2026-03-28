@@ -1,16 +1,15 @@
 #include "storage/comicinfoarchive.h"
 #include "storage/archiveprocessutils.h"
+#include "storage/archivesupportutils.h"
 #include "storage/storedpathutils.h"
 
 #include <algorithm>
 
-#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QImageReader>
 #include <QRegularExpression>
-#include <QStandardPaths>
 #include <QVector>
 #include <QUuid>
 
@@ -68,101 +67,6 @@ QString escapeXml(const QString &value)
     escaped.replace(QLatin1Char('"'), QStringLiteral("&quot;"));
     escaped.replace(QLatin1Char('\''), QStringLiteral("&apos;"));
     return escaped;
-}
-
-QString resolve7ZipExecutableFromHint(const QString &hintPath)
-{
-    const QString existingFilePath = ComicStoragePaths::absoluteExistingFilePath(hintPath);
-    if (!existingFilePath.isEmpty()) {
-        return existingFilePath;
-    }
-
-    const QString existingDirPath = ComicStoragePaths::absoluteExistingDirPath(hintPath);
-    if (!existingDirPath.isEmpty()) {
-        static const QStringList executableNames = {
-            QStringLiteral("7z.exe"),
-            QStringLiteral("7z"),
-            QStringLiteral("7za.exe"),
-            QStringLiteral("7za")
-        };
-        for (const QString &name : executableNames) {
-            const QFileInfo nested(QDir(existingDirPath).filePath(name));
-            if (nested.exists() && nested.isFile()) {
-                return QDir::toNativeSeparators(nested.absoluteFilePath());
-            }
-        }
-    }
-    return {};
-}
-
-QString resolve7ZipExecutable()
-{
-    const QStringList envCandidates = {
-        QStringLiteral("COMIC_PILE_7ZIP_PATH"),
-        QStringLiteral("SEVENZIP_PATH")
-    };
-    for (const QString &envKey : envCandidates) {
-        const QString resolved = resolve7ZipExecutableFromHint(qEnvironmentVariable(envKey.toUtf8().constData()));
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    const QString appDir = QCoreApplication::applicationDirPath();
-    const QString currentDir = QDir::currentPath();
-    const QStringList bundledCandidates = {
-        QDir(appDir).filePath(QStringLiteral("7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("7za.exe")),
-        QDir(appDir).filePath(QStringLiteral("tools/7zip/7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("tools/7zip/7za.exe")),
-        QDir(appDir).filePath(QStringLiteral("../tools/7zip/7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("../tools/7zip/7za.exe")),
-        QDir(appDir).filePath(QStringLiteral("../../tools/7zip/7z.exe")),
-        QDir(appDir).filePath(QStringLiteral("../../tools/7zip/7za.exe")),
-        QDir(currentDir).filePath(QStringLiteral("7z.exe")),
-        QDir(currentDir).filePath(QStringLiteral("7za.exe")),
-        QDir(currentDir).filePath(QStringLiteral("tools/7zip/7z.exe")),
-        QDir(currentDir).filePath(QStringLiteral("tools/7zip/7za.exe")),
-        QDir(currentDir).filePath(QStringLiteral("../tools/7zip/7z.exe")),
-        QDir(currentDir).filePath(QStringLiteral("../tools/7zip/7za.exe"))
-    };
-    for (const QString &candidate : bundledCandidates) {
-        const QString resolved = resolve7ZipExecutableFromHint(candidate);
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    const QStringList programCandidates = {
-        QStringLiteral("7z.exe"),
-        QStringLiteral("7z"),
-        QStringLiteral("7za.exe"),
-        QStringLiteral("7za")
-    };
-    for (const QString &candidate : programCandidates) {
-        const QString found = QStandardPaths::findExecutable(candidate);
-        if (!found.isEmpty()) {
-            return QDir::toNativeSeparators(found);
-        }
-    }
-
-    const QStringList absoluteCandidates = {
-        QStringLiteral("C:/Program Files/7-Zip/7z.exe"),
-        QStringLiteral("C:/Program Files (x86)/7-Zip/7z.exe")
-    };
-    for (const QString &candidate : absoluteCandidates) {
-        const QString resolved = ComicStoragePaths::absoluteExistingFilePath(candidate);
-        if (!resolved.isEmpty()) {
-            return resolved;
-        }
-    }
-
-    return {};
-}
-
-QString sevenZipMissingMessage()
-{
-    return QStringLiteral("Archive support component (7z) is missing. Reinstall/repair Comic Pile or set a custom 7z path.");
 }
 
 int compareText(const QString &left, const QString &right)
@@ -383,9 +287,9 @@ bool listImageEntriesInArchive(
     }
 
     if (usesSevenZipArchiveBackend(extension)) {
-        const QString sevenZip = resolve7ZipExecutable();
+        const QString sevenZip = ComicArchiveSupport::resolve7ZipExecutable();
         if (sevenZip.isEmpty()) {
-            errorText = sevenZipMissingMessage();
+            errorText = ComicArchiveSupport::sevenZipMissingMessage();
             return false;
         }
 
@@ -527,9 +431,9 @@ bool extractArchiveEntryToFile(
     }
 
     if (usesSevenZipArchiveBackend(extension)) {
-        const QString sevenZip = resolve7ZipExecutable();
+        const QString sevenZip = ComicArchiveSupport::resolve7ZipExecutable();
         if (sevenZip.isEmpty()) {
-            errorText = sevenZipMissingMessage();
+            errorText = ComicArchiveSupport::sevenZipMissingMessage();
             return false;
         }
 

@@ -7,6 +7,7 @@ namespace ComicInfoOps {
 
 QVariantMap exportComicInfoXml(const QString &dbPath, int comicId, const QString &archivePathOverride = QString());
 QString syncComicInfoToArchive(const QString &dbPath, int comicId, const QString &archivePathOverride = QString());
+QVariantMap readComicInfoIdentityHints(const QString &archivePath);
 QVariantMap buildComicInfoImportPatch(
     const QString &dbPath,
     int comicId,

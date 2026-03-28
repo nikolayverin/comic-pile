@@ -40,6 +40,8 @@ set(_comicpile_core_sources
     src/storage/archivepacking.h
     src/storage/archiveprocessutils.cpp
     src/storage/archiveprocessutils.h
+    src/storage/archivesupportutils.cpp
+    src/storage/archivesupportutils.h
     src/storage/comicinfoarchive.cpp
     src/storage/comicinfoarchive.h
     src/storage/comicinfoops.cpp

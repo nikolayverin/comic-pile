@@ -5,8 +5,6 @@
 
 namespace ComicStartupRuntime {
 
-QString absolutePathIfExists(const QString &candidate);
-
 void resetTextLogFile(const QString &path);
 void appendNormalizedTextLogLine(const QString &path, const QString &line);
 

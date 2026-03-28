@@ -10,6 +10,7 @@ QString persistedFolderPathForDisplay(const QString &rawPath);
 
 QString configuredDataRootOverridePath();
 QString pendingDataRootRelocationPath();
+QString resolveActiveDataRootPath();
 
 bool writeConfiguredDataRootOverridePath(const QString &rawPath);
 bool writePendingDataRootRelocationPath(const QString &rawPath, QString &errorText);
