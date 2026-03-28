@@ -50,6 +50,16 @@ $env:COMIC_PILE_7ZIP_PATH = "C:\Program Files\7-Zip\7z.exe"
 $env:COMIC_PILE_DJVU_PATH = "C:\path\to\ddjvu.exe"
 ```
 - Bundled `DjVuLibre` source archive for redistribution is stored at `tools/djvulibre/djvulibre-3.5.29.tar.gz` next to the app build.
+
+## Structural ownership map
+- `storedpathutils` owns storage-aware path persistence and resolution against the active data root.
+- `libraryschemamanager` owns schema-version orchestration; `librarydatarepairops` owns repair/backfill steps.
+- `librarystoragemigrationops` owns one-time library layout migration; `librarystoragemigrationstate` owns the completion marker.
+- `datarootrelocationops` owns relocation target validation and empty-target rules; `datarootrelocationbootstrap` owns the restart-time relocation flow.
+- `archivesupportutils` and `archiveprocessutils` own archive capability rules and external process execution contracts.
+- `importworkflowutils` owns shared import-intent, passport, and persisted import-signal helpers used across import and replace flows.
+- `librarymutationops` owns bulk metadata mutation / verification work; `ComicsListModel` stays the QML-facing facade.
+
 ## Current scope
 - CMake project created
 - Qt Quick window boots successfully

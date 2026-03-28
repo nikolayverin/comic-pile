@@ -85,6 +85,12 @@ void ensureHiddenDirectoryOnWindows(const QString &path)
 }
 #endif
 
+QString startupSnapshotPath(const QString &dataRoot)
+{
+    return QDir(ComicStartupRuntime::startupRuntimeDirPath(dataRoot))
+        .filePath(QStringLiteral("startup-snapshot.json"));
+}
+
 } // namespace
 
 namespace ComicStartupRuntime {
@@ -121,16 +127,6 @@ QString startupRuntimeDirPath(const QString &dataRoot)
     ensureHiddenDirectoryOnWindows(runtimeDirPath);
 #endif
     return runtimeDirPath;
-}
-
-QString startupLaunchLogPathForDataRoot(const QString &dataRoot)
-{
-    return QDir(startupRuntimeDirPath(dataRoot)).filePath(QStringLiteral("startup-log.txt"));
-}
-
-QString startupSnapshotPath(const QString &dataRoot)
-{
-    return QDir(startupRuntimeDirPath(dataRoot)).filePath(QStringLiteral("startup-snapshot.json"));
 }
 
 QString startupLogPath(const QString &dataRoot)
@@ -193,7 +189,7 @@ void appendLaunchTimelineEventForDataRoot(const QString &dataRoot, const QString
 
     const qint64 elapsedMs = std::max<qint64>(0, QDateTime::currentMSecsSinceEpoch() - startedAtMs);
     appendNormalizedTextLogLine(
-        startupLaunchLogPathForDataRoot(dataRoot),
+        startupLogPath(dataRoot),
         QStringLiteral("[launch][%1ms] %2").arg(elapsedMs).arg(message)
     );
 }

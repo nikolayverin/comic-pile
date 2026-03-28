@@ -64,7 +64,7 @@ void LaunchState::setRootWindowVisible(bool value)
 QString resolveLaunchLogPath()
 {
     const QString dataRoot = ComicDataRootRelocationBootstrap::resolveLaunchDataRoot();
-    return ComicStartupRuntime::startupLaunchLogPathForDataRoot(dataRoot);
+    return ComicStartupRuntime::startupLogPath(dataRoot);
 }
 
 void resetLaunchLog(const QString &path)

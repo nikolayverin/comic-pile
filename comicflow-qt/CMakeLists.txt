@@ -68,6 +68,8 @@ set(_comicpile_core_sources
     src/storage/importduplicateclassifier.h
     src/storage/importmatching.cpp
     src/storage/importmatching.h
+    src/storage/importworkflowutils.cpp
+    src/storage/importworkflowutils.h
     src/storage/imagepreparationops.cpp
     src/storage/imagepreparationops.h
     src/storage/issuefileops.cpp

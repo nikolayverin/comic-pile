@@ -6,11 +6,11 @@
 #include "storage/archivepacking.h"
 #include "storage/archivesupportutils.h"
 #include "storage/comicinfoarchive.h"
-#include "storage/comicinfoops.h"
 #include "storage/deletestagingops.h"
 #include "storage/duplicaterestoreresolver.h"
 #include "storage/importduplicateclassifier.h"
 #include "storage/importmatching.h"
+#include "storage/importworkflowutils.h"
 #include "storage/libraryschemamanager.h"
 #include "storage/librarylayoututils.h"
 #include "storage/readercacheutils.h"
@@ -101,79 +101,6 @@ QString archiveValidationCode(const QString &errorText)
         : QStringLiteral("archive_validation_failed");
 }
 
-struct PersistedImportSignals {
-    QString originalFilename;
-    QString strictFilenameSignature;
-    QString looseFilenameSignature;
-    QString sourceType;
-};
-
-PersistedImportSignals resolvedImportSignals(
-    const QVariantMap &values,
-    const QString &fallbackOriginalFilename,
-    const QString &fallbackSourceType
-)
-{
-    PersistedImportSignals resolvedSignals;
-    resolvedSignals.originalFilename = valueFromMap(values, QStringLiteral("importOriginalFilename"));
-    if (resolvedSignals.originalFilename.isEmpty()) {
-        resolvedSignals.originalFilename = fallbackOriginalFilename.trimmed();
-    }
-
-    resolvedSignals.sourceType = ComicImportMatching::normalizeImportSourceType(
-        valueFromMap(values, QStringLiteral("importSourceType"))
-    );
-    if (resolvedSignals.sourceType.isEmpty()) {
-        resolvedSignals.sourceType = ComicImportMatching::normalizeImportSourceType(fallbackSourceType);
-    }
-    if (resolvedSignals.sourceType.isEmpty()) {
-        resolvedSignals.sourceType = QStringLiteral("archive");
-    }
-
-    resolvedSignals.strictFilenameSignature = valueFromMap(values, QStringLiteral("importStrictFilenameSignature"));
-    if (resolvedSignals.strictFilenameSignature.isEmpty()) {
-        resolvedSignals.strictFilenameSignature =
-            ComicImportMatching::normalizeFilenameSignatureStrict(resolvedSignals.originalFilename);
-    }
-
-    resolvedSignals.looseFilenameSignature = valueFromMap(values, QStringLiteral("importLooseFilenameSignature"));
-    if (resolvedSignals.looseFilenameSignature.isEmpty()) {
-        resolvedSignals.looseFilenameSignature =
-            ComicImportMatching::normalizeFilenameSignatureLoose(resolvedSignals.originalFilename);
-    }
-
-    return resolvedSignals;
-}
-
-QString parentFolderNameForFile(const QFileInfo &fileInfo)
-{
-    const QString absolutePath = fileInfo.absolutePath();
-    if (absolutePath.isEmpty()) return {};
-    return QFileInfo(absolutePath).fileName().trimmed();
-}
-
-QVariantMap readComicInfoIdentityHints(const QString &archivePath)
-{
-    return ComicInfoOps::readComicInfoIdentityHints(archivePath);
-}
-
-QVariantMap withImportSeriesContext(const QVariantMap &values, const QString &seriesContext)
-{
-    QVariantMap result = values;
-    const QString trimmedContext = seriesContext.trimmed();
-    if (trimmedContext.isEmpty()) {
-        return result;
-    }
-
-    if (valueFromMap(result, QStringLiteral("importContextSeries")).isEmpty()) {
-        result.insert(QStringLiteral("importContextSeries"), trimmedContext);
-    }
-    if (valueFromMap(result, QStringLiteral("series")).isEmpty()) {
-        result.insert(QStringLiteral("series"), trimmedContext);
-    }
-    return result;
-}
-
 int parseOptionalBoundedInt(const QString &input, int minValue, int maxValue, bool &ok, bool &isNull)
 {
     const QString trimmed = input.trimmed();
@@ -207,173 +134,6 @@ int parseOptionalMonth(const QString &input, bool &ok, bool &isNull)
 int parseOptionalCurrentPage(const QString &input, bool &ok, bool &isNull)
 {
     return parseOptionalBoundedInt(input, 0, 1000000, ok, isNull);
-}
-
-QString normalizeImportIntentValue(const QString &value)
-{
-    const QString normalized = value.trimmed().toLower();
-    if (normalized == QStringLiteral("global_add")
-        || normalized == QStringLiteral("series_add")
-        || normalized == QStringLiteral("issue_replace")) {
-        return normalized;
-    }
-    return {};
-}
-
-QString importIntentKey(const QVariantMap &values)
-{
-    const QString explicitIntent = normalizeImportIntentValue(valueFromMap(values, QStringLiteral("importIntent")));
-    if (!explicitIntent.isEmpty()) {
-        return explicitIntent;
-    }
-
-    QString contextSeries = valueFromMap(values, QStringLiteral("importContextSeries")).trimmed();
-    if (contextSeries.isEmpty()) {
-        contextSeries = valueFromMap(values, QStringLiteral("seriesContext")).trimmed();
-    }
-    if (contextSeries.isEmpty()) {
-        contextSeries = valueFromMap(values, QStringLiteral("selectedSeriesContext")).trimmed();
-    }
-    if (!contextSeries.isEmpty()) {
-        return QStringLiteral("series_add");
-    }
-
-    return {};
-}
-
-bool hasNarrowImportSeriesContext(
-    const QVariantMap &values,
-    const QString &effectiveSeriesKey
-)
-{
-    QString contextSeries = valueFromMap(values, QStringLiteral("importContextSeries")).trimmed();
-    if (contextSeries.isEmpty()) {
-        contextSeries = valueFromMap(values, QStringLiteral("seriesContext")).trimmed();
-    }
-    if (contextSeries.isEmpty()) {
-        contextSeries = valueFromMap(values, QStringLiteral("selectedSeriesContext")).trimmed();
-    }
-    if (contextSeries.isEmpty()) {
-        return false;
-    }
-
-    const QString contextSeriesKey = ComicImportMatching::normalizeSeriesKey(contextSeries);
-    if (contextSeriesKey.isEmpty() || contextSeriesKey == QStringLiteral("unknown-series")) {
-        return false;
-    }
-
-    return contextSeriesKey == effectiveSeriesKey.trimmed();
-}
-
-bool shouldAllowMetadataRestoreForImport(
-    const QVariantMap &values,
-    const QString &effectiveSeriesKey
-)
-{
-    const QString intent = importIntentKey(values);
-    if (intent == QStringLiteral("global_add")) {
-        return false;
-    }
-    if (intent == QStringLiteral("series_add")) {
-        return hasNarrowImportSeriesContext(values, effectiveSeriesKey);
-    }
-    return true;
-}
-
-ComicImportMatching::ImportIdentityPassport buildArchiveImportPassport(
-    const QFileInfo &sourceInfo,
-    const QString &normalizedSourcePath,
-    const QString &filenameHint,
-    const QVariantMap &values
-)
-{
-    QString passportSourcePath = valueFromMap(values, QStringLiteral("importHistorySourcePath"));
-    if (passportSourcePath.isEmpty()) {
-        passportSourcePath = normalizedSourcePath;
-    }
-
-    QString passportSourceLabel = valueFromMap(values, QStringLiteral("importHistorySourceLabel"));
-    if (passportSourceLabel.isEmpty()) {
-        passportSourceLabel = filenameHint.trimmed();
-    }
-    if (passportSourceLabel.isEmpty()) {
-        passportSourceLabel = sourceInfo.fileName();
-    } else {
-        passportSourceLabel = QFileInfo(passportSourceLabel).fileName().trimmed();
-    }
-
-    QString passportParentFolderLabel = parentFolderNameForFile(sourceInfo);
-    const QFileInfo originalSourceInfo(passportSourcePath);
-    const QString originalParentFolderLabel = parentFolderNameForFile(originalSourceInfo);
-    if (!originalParentFolderLabel.isEmpty()) {
-        passportParentFolderLabel = originalParentFolderLabel;
-    }
-
-    return ComicImportMatching::buildImportIdentityPassport(
-        QStringLiteral("archive"),
-        passportSourcePath,
-        passportSourceLabel,
-        passportParentFolderLabel,
-        filenameHint,
-        values,
-        readComicInfoIdentityHints(normalizedSourcePath)
-    );
-}
-
-ComicImportMatching::ImportIdentityPassport buildImageFolderImportPassport(
-    const QFileInfo &folderInfo,
-    const QString &normalizedFolderPath,
-    const QString &filenameHint,
-    const QVariantMap &values
-)
-{
-    return ComicImportMatching::buildImportIdentityPassport(
-        QStringLiteral("image_folder"),
-        normalizedFolderPath,
-        folderInfo.fileName(),
-        QFileInfo(folderInfo.absolutePath()).fileName().trimmed(),
-        filenameHint,
-        values
-    );
-}
-
-QString ensureTargetCbzFilename(const QString &filenameHint, const QString &sourceFilename)
-{
-    auto stripKnownArchiveExtension = [](const QString &value) -> QString {
-        const QString trimmedValue = value.trimmed();
-        if (trimmedValue.isEmpty()) return {};
-
-        const QFileInfo info(trimmedValue);
-        const QString suffix = info.suffix().trimmed().toLower();
-        static const QSet<QString> knownArchiveSuffixes = {
-            QStringLiteral("cbz"),
-            QStringLiteral("zip"),
-            QStringLiteral("cbr"),
-            QStringLiteral("rar"),
-            QStringLiteral("7z"),
-            QStringLiteral("cb7"),
-            QStringLiteral("cbt"),
-            QStringLiteral("tar"),
-        };
-        if (knownArchiveSuffixes.contains(suffix)) {
-            return info.completeBaseName().trimmed();
-        }
-        return trimmedValue;
-    };
-
-    QString baseName = filenameHint.trimmed();
-    if (!baseName.isEmpty()) {
-        baseName = QFileInfo(baseName).fileName().trimmed();
-        baseName = stripKnownArchiveExtension(baseName);
-    } else {
-        baseName = stripKnownArchiveExtension(QFileInfo(sourceFilename).fileName());
-    }
-
-    if (baseName.isEmpty()) {
-        baseName = QStringLiteral("imported");
-    }
-
-    return QStringLiteral("%1.cbz").arg(baseName);
 }
 
 QString normalizeArchiveExtension(const QString &pathOrExtension)
@@ -1052,7 +812,10 @@ QString ComicsListModel::predictedPendingImportTargetPath(
     const QString sourceType = trimOrEmpty(entry.value(QStringLiteral("sourceType"))).toLower();
     const QString filenameHint = trimOrEmpty(entry.value(QStringLiteral("filenameHint")));
     const QString seriesOverride = trimOrEmpty(entry.value(QStringLiteral("seriesOverride")));
-    QVariantMap values = withImportSeriesContext(entry.value(QStringLiteral("values")).toMap(), seriesOverride);
+    QVariantMap values = ComicImportWorkflow::withImportSeriesContext(
+        entry.value(QStringLiteral("values")).toMap(),
+        seriesOverride
+    );
     const bool deferReload = boolFromMap(values, QStringLiteral("deferReload"))
         || boolFromMap(values, QStringLiteral("defer_reload"));
 
@@ -1074,7 +837,7 @@ QString ComicsListModel::predictedPendingImportTargetPath(
         if (!isImportArchiveExtensionSupported(extension)) return {};
         if (isSevenZipExtension(extension) && !isCbrBackendAvailable()) return {};
 
-        const ComicImportMatching::ImportIdentityPassport passport = buildArchiveImportPassport(
+        const ComicImportMatching::ImportIdentityPassport passport = ComicImportWorkflow::buildArchiveImportPassport(
             sourceInfo,
             normalizedSourcePath,
             filenameHint,
@@ -1082,7 +845,7 @@ QString ComicsListModel::predictedPendingImportTargetPath(
         );
         createValues = ComicImportMatching::applyPassportDefaults(createValues, passport);
 
-        targetFilename = ensureTargetCbzFilename(filenameHint, sourceInfo.fileName());
+        targetFilename = ComicImportWorkflow::ensureTargetCbzFilename(filenameHint, sourceInfo.fileName());
         if (targetFilename.isEmpty()) return {};
     } else if (sourceType == QStringLiteral("image_folder")) {
         const QString normalizedFolderPath = normalizeInputFilePath(sourcePath);
@@ -1094,7 +857,7 @@ QString ComicsListModel::predictedPendingImportTargetPath(
         const QStringList imagePaths = listSupportedImageFilesInFolder(normalizedFolderPath);
         if (imagePaths.isEmpty()) return {};
 
-        const ComicImportMatching::ImportIdentityPassport passport = buildImageFolderImportPassport(
+        const ComicImportMatching::ImportIdentityPassport passport = ComicImportWorkflow::buildImageFolderImportPassport(
             folderInfo,
             normalizedFolderPath,
             filenameHint,
@@ -1110,7 +873,7 @@ QString ComicsListModel::predictedPendingImportTargetPath(
         const QString effectiveFilenameHint = filenameHint.trimmed().isEmpty()
             ? folderName
             : filenameHint.trimmed();
-        targetFilename = ensureTargetCbzFilename(effectiveFilenameHint, folderName);
+        targetFilename = ComicImportWorkflow::ensureTargetCbzFilename(effectiveFilenameHint, folderName);
         if (targetFilename.isEmpty()) return {};
     } else {
         return {};
@@ -1225,14 +988,14 @@ QString ComicsListModel::createComicFromLibrary(
     const QString normalizedFilePath = QDir::toNativeSeparators(QFileInfo(resolvedFilePath).absoluteFilePath());
     const QString storedFilePath = ComicStoragePaths::persistPathForDataRoot(m_dataRoot, normalizedFilePath);
     const QString resolvedFilename = QFileInfo(normalizedFilePath).fileName().trimmed();
-    const PersistedImportSignals importSignals = resolvedImportSignals(
+    const ComicImportWorkflow::PersistedImportSignals importSignals = ComicImportWorkflow::resolvePersistedImportSignals(
         values,
         resolvedFilename,
         QStringLiteral("archive")
     );
     const QString candidateSeriesKey = normalizeSeriesKey(series);
-    const bool allowMetadataRestore = shouldAllowMetadataRestoreForImport(values, candidateSeriesKey);
-    const bool relaxWeakLiveDuplicateChecks = hasNarrowImportSeriesContext(values, candidateSeriesKey);
+    const bool allowMetadataRestore = ComicImportWorkflow::shouldAllowMetadataRestoreForImport(values, candidateSeriesKey);
+    const bool relaxWeakLiveDuplicateChecks = ComicImportWorkflow::hasNarrowImportSeriesContext(values, candidateSeriesKey);
     const QString candidateVolumeKey = normalizeVolumeKey(volume);
     QString candidateIssueValue = issueNumber;
     if (candidateIssueValue.isEmpty()) {
@@ -1726,7 +1489,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     if (deferReload) {
         createValues.insert("deferReload", true);
     }
-    const ComicImportMatching::ImportIdentityPassport passport = buildArchiveImportPassport(
+    const ComicImportMatching::ImportIdentityPassport passport = ComicImportWorkflow::buildArchiveImportPassport(
         sourceInfo,
         normalizedSourcePath,
         filenameHint,
@@ -1767,7 +1530,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         return error;
     }
 
-    const QString targetFilename = ensureTargetCbzFilename(filenameHint, sourceInfo.fileName());
+    const QString targetFilename = ComicImportWorkflow::ensureTargetCbzFilename(filenameHint, sourceInfo.fileName());
     if (targetFilename.isEmpty()) {
         const QString error = QString("Invalid archive filename.");
         setOutError("invalid_filename", error);
@@ -1808,7 +1571,8 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         const QString candidateIssueKey = ComicImportMatching::normalizeIssueKey(candidateIssue);
         const QString strictTargetSignature = ComicImportMatching::normalizeFilenameSignatureStrict(targetFilename);
         const QString looseTargetSignature = ComicImportMatching::normalizeFilenameSignatureLoose(targetFilename);
-        const bool relaxWeakLiveDuplicateChecks = hasNarrowImportSeriesContext(createValues, candidateSeriesKey);
+        const bool relaxWeakLiveDuplicateChecks =
+            ComicImportWorkflow::hasNarrowImportSeriesContext(createValues, candidateSeriesKey);
 
         QString liveDuplicateError;
         const LiveDuplicateCheckResult liveDuplicate = evaluateLiveDuplicateForImport(
@@ -1970,7 +1734,7 @@ QString ComicsListModel::importImageFolderAndCreateIssueInternal(
     if (folderName.isEmpty()) {
         folderName = QStringLiteral("imported");
     }
-    const ComicImportMatching::ImportIdentityPassport passport = buildImageFolderImportPassport(
+    const ComicImportMatching::ImportIdentityPassport passport = ComicImportWorkflow::buildImageFolderImportPassport(
         folderInfo,
         normalizedFolderPath,
         filenameHint,
@@ -1994,7 +1758,7 @@ QString ComicsListModel::importImageFolderAndCreateIssueInternal(
     }
 
     const QString tempCbzPath = QDir(tempRootPath).filePath(
-        ensureTargetCbzFilename(effectiveFilenameHint, folderName)
+        ComicImportWorkflow::ensureTargetCbzFilename(effectiveFilenameHint, folderName)
     );
     auto cleanupTemp = [&]() {
         QDir(tempRootPath).removeRecursively();

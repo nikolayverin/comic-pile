@@ -9,8 +9,6 @@ void resetTextLogFile(const QString &path);
 void appendNormalizedTextLogLine(const QString &path, const QString &line);
 
 QString startupRuntimeDirPath(const QString &dataRoot);
-QString startupLaunchLogPathForDataRoot(const QString &dataRoot);
-QString startupSnapshotPath(const QString &dataRoot);
 QString startupLogPath(const QString &dataRoot);
 QString startupDebugLogPath(const QString &dataRoot);
 QString startupPreviewPath(const QString &dataRoot);
