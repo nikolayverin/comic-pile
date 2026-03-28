@@ -19,13 +19,23 @@
 
 namespace {
 
-QString seriesHeroPendingKey(const QString &seriesKey)
+QString seriesHeroPendingKeyPrefix(const QString &seriesKey)
 {
     const QByteArray digest = QCryptographicHash::hash(
         seriesKey.trimmed().toUtf8(),
         QCryptographicHash::Sha1
     ).toHex();
     return QStringLiteral("series-hero:%1").arg(QString::fromLatin1(digest));
+}
+
+QString seriesHeroPendingKey(const QString &seriesKey, const QString &requestToken = QString())
+{
+    const QString prefix = seriesHeroPendingKeyPrefix(seriesKey);
+    const QString normalizedToken = requestToken.trimmed();
+    if (normalizedToken.isEmpty()) {
+        return prefix;
+    }
+    return QStringLiteral("%1:%2").arg(prefix, normalizedToken);
 }
 
 int seriesHeroPageIndexForEntryCount(int entryCount)
@@ -114,6 +124,7 @@ int ComicsListModel::requestSeriesHeroAsync(const QString &seriesKey)
 
     const QString cachedHeroPath = ComicReaderCache::cachedSeriesHeroPath(m_dataRoot, requestedSeriesKey);
     if (!cachedHeroPath.isEmpty()) {
+        m_artworkState.latestSeriesHeroPendingKeyBySeriesKey.remove(requestedSeriesKey);
         ComicReaderCache::pruneSeriesHeroVariantsForKey(m_dataRoot, requestedSeriesKey, cachedHeroPath);
         emitLaterSingle(QUrl::fromLocalFile(cachedHeroPath).toString(), {});
         return requestId;
@@ -131,17 +142,22 @@ int ComicsListModel::requestSeriesHeroAsync(const QString &seriesKey)
         return requestId;
     }
 
-    const QString pendingKey = seriesHeroPendingKey(requestedSeriesKey);
+    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+    const QString pendingKey = seriesHeroPendingKey(
+        requestedSeriesKey,
+        QStringLiteral("%1:%2").arg(comicId).arg(cacheStamp)
+    );
     if (!ComicReaderRequests::beginPendingImageRequest(m_artworkState.pendingSeriesHeroRequestIdsByKey, pendingKey, requestId)) {
         return requestId;
     }
+    m_artworkState.latestSeriesHeroPendingKeyBySeriesKey.insert(requestedSeriesKey, pendingKey);
 
     const QueuedSeriesHeroGeneration job {
         pendingKey,
         requestedSeriesKey,
         comicId,
         archivePath,
-        ComicReaderCache::buildArchiveCacheStamp(archivePath),
+        cacheStamp,
         ComicReaderCache::preferredThumbnailFormat()
     };
 
@@ -195,6 +211,7 @@ int ComicsListModel::requestRandomSeriesHeroAsync(const QString &seriesKey)
     if (!ComicReaderRequests::beginPendingImageRequest(m_artworkState.pendingSeriesHeroRequestIdsByKey, pendingKey, requestId)) {
         return requestId;
     }
+    m_artworkState.latestSeriesHeroPendingKeyBySeriesKey.insert(requestKey, pendingKey);
 
     const QueuedSeriesHeroGeneration job {
         pendingKey,
@@ -238,9 +255,17 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
             const QString imageSource = result.value(QStringLiteral("imageSource")).toString();
             const QString localFilePath = result.value(QStringLiteral("localFilePath")).toString();
             const QString errorText = result.value(QStringLiteral("error")).toString();
+            const QString latestPendingKey = m_artworkState.latestSeriesHeroPendingKeyBySeriesKey.value(seriesKey);
+            const bool staleResult = !latestPendingKey.isEmpty() && latestPendingKey != pendingKey;
 
-            if (requestIds.isEmpty()) {
-                ComicReaderCache::purgeSeriesHeroForKey(m_dataRoot, seriesKey);
+            if (latestPendingKey == pendingKey) {
+                m_artworkState.latestSeriesHeroPendingKeyBySeriesKey.remove(seriesKey);
+            }
+
+            if (staleResult || requestIds.isEmpty()) {
+                if (!localFilePath.trimmed().isEmpty()) {
+                    QFile::remove(localFilePath);
+                }
             } else {
                 if (errorText.trimmed().isEmpty() && !localFilePath.trimmed().isEmpty()) {
                     ComicReaderCache::pruneSeriesHeroVariantsForKey(m_dataRoot, seriesKey, localFilePath);
@@ -458,9 +483,15 @@ void ComicsListModel::purgeSeriesHeroCacheForKey(const QString &seriesKey)
     if (normalizedKey.isEmpty()) return;
 
     ComicReaderCache::purgeSeriesHeroForKey(m_dataRoot, normalizedKey);
+    m_artworkState.latestSeriesHeroPendingKeyBySeriesKey.remove(normalizedKey);
 
-    const QString pendingKey = seriesHeroPendingKey(normalizedKey);
-    m_artworkState.pendingSeriesHeroRequestIdsByKey.remove(pendingKey);
+    const QString pendingKeyPrefix = seriesHeroPendingKeyPrefix(normalizedKey);
+    const QStringList pendingKeys = m_artworkState.pendingSeriesHeroRequestIdsByKey.keys();
+    for (const QString &pendingKey : pendingKeys) {
+        if (pendingKey == pendingKeyPrefix || pendingKey.startsWith(pendingKeyPrefix + QLatin1Char(':'))) {
+            m_artworkState.pendingSeriesHeroRequestIdsByKey.remove(pendingKey);
+        }
+    }
 
     m_artworkState.seriesHeroGenerationQueue.erase(
         std::remove_if(

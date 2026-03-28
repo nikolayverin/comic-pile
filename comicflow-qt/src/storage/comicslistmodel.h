@@ -333,6 +333,7 @@ private:
     struct ArtworkRuntimeState {
         QHash<QString, QList<int>> pendingImageRequestIdsByKey;
         QHash<QString, QList<int>> pendingSeriesHeroRequestIdsByKey;
+        QHash<QString, QString> latestSeriesHeroPendingKeyBySeriesKey;
         QVector<QueuedCoverGeneration> coverGenerationQueue;
         QVector<QueuedSeriesHeroGeneration> seriesHeroGenerationQueue;
         int activeCoverGenerationCount = 0;

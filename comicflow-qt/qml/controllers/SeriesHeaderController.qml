@@ -211,7 +211,15 @@ Item {
         return Boolean(rows && rows.length > 0)
     }
 
+    function isShuffleBackgroundBusy() {
+        return Number(dialogBackgroundShuffleRequestId || -1) !== -1
+    }
+
     function shuffleBackground() {
+        if (isShuffleBackgroundBusy()) {
+            return
+        }
+
         const key = String(dialogSeriesKey || "").trim()
         if (key.length < 1) {
             setErrorText("Series context is missing.")
