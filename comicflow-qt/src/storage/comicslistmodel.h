@@ -1,5 +1,7 @@
 #pragma once
 
+#include "storage/deletestagingops.h"
+
 #include <QAbstractListModel>
 #include <QByteArray>
 #include <QDirIterator>
@@ -420,6 +422,13 @@ private:
         const QString &backupPath,
         const QString &targetPath
     );
+    QString rollbackStagedArchiveDeleteWithWarning(
+        const ComicDeleteOps::StagedArchiveDeleteOp &stagedDelete
+    ) const;
+    QString finalizePendingStagedArchiveDelete(
+        const ComicDeleteOps::StagedArchiveDeleteOp &stagedDelete,
+        const QString &warningPrefix
+    ) const;
     bool deleteComicHardInternal(int comicId, QString &messageOut);
     QString pruneEquivalentDetachedGhostRowsForComic(int comicId);
     int liveIssueCountForSeries(const QString &seriesKey) const;

@@ -66,34 +66,6 @@ void appendWarningLine(QStringList &lines, const QString &text)
     }
 }
 
-bool performStageArchiveDelete(
-    const QString &filePath,
-    StagedArchiveDeleteOp &opOut,
-    DeleteFailureInfo &failureOut
-)
-{
-    return ComicDeleteOps::stageArchiveDelete(filePath, opOut, failureOut);
-}
-
-bool performRollbackStagedArchiveDelete(const StagedArchiveDeleteOp &op, DeleteFailureInfo &failureOut)
-{
-    return ComicDeleteOps::rollbackStagedArchiveDelete(op, failureOut);
-}
-
-bool performFinalizeStagedArchiveDelete(
-    const StagedArchiveDeleteOp &op,
-    QString &cleanupDirPathOut,
-    DeleteFailureInfo &failureOut
-)
-{
-    return ComicDeleteOps::finalizeStagedArchiveDelete(op, cleanupDirPathOut, failureOut);
-}
-
-QString performRollbackStagedArchiveDeletes(const QVector<StagedArchiveDeleteOp> &ops)
-{
-    return ComicDeleteOps::rollbackStagedArchiveDeletes(ops);
-}
-
 void cleanupEmptyLibraryDirs(const QString &libraryRootPath, const QStringList &candidateDirs)
 {
     ComicDeleteOps::cleanupEmptyLibraryDirs(libraryRootPath, candidateDirs);
@@ -178,7 +150,7 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
         bool markMissing = true;
         if (!archivePath.isEmpty()) {
             DeleteFailureInfo failure;
-            if (!performStageArchiveDelete(archivePath, stagedDelete, failure)) {
+            if (!ComicDeleteOps::stageArchiveDelete(archivePath, stagedDelete, failure)) {
                 markMissing = false;
                 failedFiles.push_back(failure);
             }
@@ -203,7 +175,7 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
             QStringLiteral("delete_series_files")
         );
         if (!applyError.isEmpty()) {
-            const QString rollbackWarning = performRollbackStagedArchiveDeletes(stagedDeletes);
+            const QString rollbackWarning = ComicDeleteOps::rollbackStagedArchiveDeletes(stagedDeletes);
             if (!rollbackWarning.isEmpty()) {
                 return QString("%1\nRollback warning:\n%2").arg(applyError, rollbackWarning);
             }
@@ -220,7 +192,7 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
         for (const StagedArchiveDeleteOp &stagedDelete : stagedDeletes) {
             QString cleanupDirPath;
             DeleteFailureInfo finalizeFailure;
-            if (performFinalizeStagedArchiveDelete(stagedDelete, cleanupDirPath, finalizeFailure)) {
+            if (ComicDeleteOps::finalizeStagedArchiveDelete(stagedDelete, cleanupDirPath, finalizeFailure)) {
                 if (!cleanupDirPath.isEmpty()) {
                     dirsToCleanup.push_back(cleanupDirPath);
                 }
@@ -229,9 +201,9 @@ QString ComicsListModel::deleteSeriesFilesKeepRecords(const QString &seriesKey)
 
             failedFiles.push_back(finalizeFailure);
 
-            DeleteFailureInfo rollbackFailure;
-            if (!performRollbackStagedArchiveDelete(stagedDelete, rollbackFailure)) {
-                recoveryWarnings.push_back(formatDeleteFailureText(rollbackFailure));
+            const QString rollbackWarning = rollbackStagedArchiveDeleteWithWarning(stagedDelete);
+            if (!rollbackWarning.isEmpty()) {
+                recoveryWarnings.push_back(rollbackWarning);
                 continue;
             }
 
@@ -346,7 +318,7 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
     stagedDelete.comicId = comicId;
     if (!filePath.isEmpty()) {
         DeleteFailureInfo stageFailure;
-        if (!performStageArchiveDelete(filePath, stagedDelete, stageFailure)) {
+        if (!ComicDeleteOps::stageArchiveDelete(filePath, stagedDelete, stageFailure)) {
             return QString("Could not remove archive file.\n%1").arg(formatDeleteFailureText(stageFailure));
         }
     }
@@ -358,22 +330,22 @@ QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
         QStringLiteral("delete_issue_files")
     );
     if (!applyError.isEmpty()) {
-        DeleteFailureInfo rollbackFailure;
-        if (!performRollbackStagedArchiveDelete(stagedDelete, rollbackFailure)) {
+        const QString rollbackWarning = rollbackStagedArchiveDeleteWithWarning(stagedDelete);
+        if (!rollbackWarning.isEmpty()) {
             return QString("%1\nRollback warning:\n%2")
-                .arg(applyError, formatDeleteFailureText(rollbackFailure));
+                .arg(applyError, rollbackWarning);
         }
         return applyError;
     }
 
     QString removedDirPath;
     DeleteFailureInfo finalizeFailure;
-    if (!performFinalizeStagedArchiveDelete(stagedDelete, removedDirPath, finalizeFailure)) {
-        DeleteFailureInfo rollbackFailure;
-        if (!performRollbackStagedArchiveDelete(stagedDelete, rollbackFailure)) {
+    if (!ComicDeleteOps::finalizeStagedArchiveDelete(stagedDelete, removedDirPath, finalizeFailure)) {
+        const QString rollbackWarning = rollbackStagedArchiveDeleteWithWarning(stagedDelete);
+        if (!rollbackWarning.isEmpty()) {
             reload();
             return QString("Could not remove archive file.\n%1\nRecovery warning:\n%2")
-                .arg(formatDeleteFailureText(finalizeFailure), formatDeleteFailureText(rollbackFailure));
+                .arg(formatDeleteFailureText(finalizeFailure), rollbackWarning);
         }
 
         QHash<int, QString> restoreBindingByComicId;
@@ -765,7 +737,7 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
     bool stagedArchiveDeletePending = false;
     if (!filePath.isEmpty()) {
         DeleteFailureInfo stageFailure;
-        if (!performStageArchiveDelete(filePath, stagedDelete, stageFailure)) {
+        if (!ComicDeleteOps::stageArchiveDelete(filePath, stagedDelete, stageFailure)) {
             messageOut = QStringLiteral(
                 "Issue was not removed because the archive file could not be deleted.\n%1"
             ).arg(formatDeleteFailureText(stageFailure));
@@ -777,10 +749,10 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
     const QString deleteError = ComicIssueFileOps::hardDeleteComicRecord(m_dbPath, comicId);
     if (!deleteError.isEmpty()) {
         if (stagedArchiveDeletePending) {
-            DeleteFailureInfo rollbackFailure;
-            if (!performRollbackStagedArchiveDelete(stagedDelete, rollbackFailure)) {
+            const QString rollbackWarning = rollbackStagedArchiveDeleteWithWarning(stagedDelete);
+            if (!rollbackWarning.isEmpty()) {
                 messageOut = QStringLiteral("%1\nRollback warning:\n%2")
-                    .arg(deleteError, formatDeleteFailureText(rollbackFailure));
+                    .arg(deleteError, rollbackWarning);
                 return false;
             }
         }
@@ -809,24 +781,13 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
 
     QStringList warnings;
     if (stagedArchiveDeletePending) {
-        ComicDeleteOps::rememberPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
-
-        QString removedDirPath;
-        DeleteFailureInfo finalizeFailure;
-        if (!performFinalizeStagedArchiveDelete(stagedDelete, removedDirPath, finalizeFailure)) {
-            appendWarningLine(
-                warnings,
-                QStringLiteral("Archive cleanup after delete failed: %1").arg(formatDeleteFailureText(finalizeFailure))
-            );
-        } else {
-            ComicDeleteOps::forgetPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
-            if (!removedDirPath.isEmpty()) {
-                cleanupEmptyLibraryDirs(
-                    QDir(m_dataRoot).filePath(QStringLiteral("Library")),
-                    { removedDirPath }
-                );
-            }
-        }
+        appendWarningLine(
+            warnings,
+            finalizePendingStagedArchiveDelete(
+                stagedDelete,
+                QStringLiteral("Archive cleanup after delete failed: ")
+            )
+        );
     }
 
     if (!warnings.isEmpty()) {

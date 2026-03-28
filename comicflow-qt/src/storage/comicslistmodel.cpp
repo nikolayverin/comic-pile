@@ -1517,34 +1517,6 @@ bool moveFileWithFallback(const QString &sourcePath, const QString &targetPath, 
 
 using StagedArchiveDeleteOp = ComicDeleteOps::StagedArchiveDeleteOp;
 
-bool performStageArchiveDelete(
-    const QString &filePath,
-    StagedArchiveDeleteOp &opOut,
-    DeleteFailureInfo &failureOut
-)
-{
-    return ComicDeleteOps::stageArchiveDelete(filePath, opOut, failureOut);
-}
-
-bool performRollbackStagedArchiveDelete(const StagedArchiveDeleteOp &op, DeleteFailureInfo &failureOut)
-{
-    return ComicDeleteOps::rollbackStagedArchiveDelete(op, failureOut);
-}
-
-bool performFinalizeStagedArchiveDelete(
-    const StagedArchiveDeleteOp &op,
-    QString &cleanupDirPathOut,
-    DeleteFailureInfo &failureOut
-)
-{
-    return ComicDeleteOps::finalizeStagedArchiveDelete(op, cleanupDirPathOut, failureOut);
-}
-
-QString performRollbackStagedArchiveDeletes(const QVector<StagedArchiveDeleteOp> &ops)
-{
-    return ComicDeleteOps::rollbackStagedArchiveDeletes(ops);
-}
-
 QSet<QString> parseSevenZipExtensionsFromIndexOutput(const QString &output)
 {
     QSet<QString> extensions;
@@ -3150,18 +3122,14 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
 
     StagedArchiveDeleteOp stagedDelete;
     DeleteFailureInfo stageFailure;
-    if (!performStageArchiveDelete(existingFilePath, stagedDelete, stageFailure)) {
+    if (!ComicDeleteOps::stageArchiveDelete(existingFilePath, stagedDelete, stageFailure)) {
         result.insert(QStringLiteral("code"), QStringLiteral("replace_stage_failed"));
         result.insert(QStringLiteral("error"), formatDeleteFailureText(stageFailure));
         return result;
     }
 
     auto rollbackStage = [&]() -> QString {
-        DeleteFailureInfo rollbackFailure;
-        if (performRollbackStagedArchiveDelete(stagedDelete, rollbackFailure)) {
-            return {};
-        }
-        return formatDeleteFailureText(rollbackFailure);
+        return rollbackStagedArchiveDeleteWithWarning(stagedDelete);
     };
 
     QString writeError;
@@ -3213,23 +3181,13 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         return result;
     }
 
-    QString cleanupDirPath;
-    DeleteFailureInfo finalizeFailure;
-    if (!performFinalizeStagedArchiveDelete(stagedDelete, cleanupDirPath, finalizeFailure)) {
-        ComicDeleteOps::rememberPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
-        result.insert(
-            QStringLiteral("cleanupWarning"),
-            QStringLiteral("Old archive backup cleanup failed: %1").arg(formatDeleteFailureText(finalizeFailure))
-        );
+    const QString cleanupWarning = finalizePendingStagedArchiveDelete(
+        stagedDelete,
+        QStringLiteral("Old archive backup cleanup failed: ")
+    );
+    if (!cleanupWarning.isEmpty()) {
+        result.insert(QStringLiteral("cleanupWarning"), cleanupWarning);
         return result;
-    }
-
-    ComicDeleteOps::forgetPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
-    if (!cleanupDirPath.isEmpty()) {
-        cleanupEmptyLibraryDirs(
-            QDir(m_dataRoot).filePath(QStringLiteral("Library")),
-            { cleanupDirPath }
-        );
     }
 
     return result;
@@ -3366,6 +3324,46 @@ QString ComicsListModel::relinkComicFileKeepMetadataInternal(
 
     m_lastMutationKind = QString("relink_issue_file_keep_metadata");
     emit statusChanged();
+    return {};
+}
+
+QString ComicsListModel::rollbackStagedArchiveDeleteWithWarning(
+    const ComicDeleteOps::StagedArchiveDeleteOp &stagedDelete
+) const
+{
+    DeleteFailureInfo rollbackFailure;
+    if (ComicDeleteOps::rollbackStagedArchiveDelete(stagedDelete, rollbackFailure)) {
+        return {};
+    }
+    return formatDeleteFailureText(rollbackFailure);
+}
+
+QString ComicsListModel::finalizePendingStagedArchiveDelete(
+    const ComicDeleteOps::StagedArchiveDeleteOp &stagedDelete,
+    const QString &warningPrefix
+) const
+{
+    if (stagedDelete.stagedPath.trimmed().isEmpty()) {
+        return {};
+    }
+
+    ComicDeleteOps::rememberPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
+
+    QString cleanupDirPath;
+    DeleteFailureInfo finalizeFailure;
+    if (!ComicDeleteOps::finalizeStagedArchiveDelete(stagedDelete, cleanupDirPath, finalizeFailure)) {
+        const QString detail = formatDeleteFailureText(finalizeFailure);
+        return warningPrefix.isEmpty() ? detail : QStringLiteral("%1%2").arg(warningPrefix, detail);
+    }
+
+    ComicDeleteOps::forgetPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
+    if (!cleanupDirPath.isEmpty()) {
+        cleanupEmptyLibraryDirs(
+            QDir(m_dataRoot).filePath(QStringLiteral("Library")),
+            { cleanupDirPath }
+        );
+    }
+
     return {};
 }
 
