@@ -6,6 +6,7 @@
 #include "storage/issuefileops.h"
 #include "storage/readercacheutils.h"
 #include "storage/readerrequestutils.h"
+#include "storage/storedpathutils.h"
 
 #include <QDir>
 #include <QFile>
@@ -14,7 +15,6 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QStringList>
-#include <QUrl>
 #include <QUuid>
 
 namespace {
@@ -26,19 +26,7 @@ QString trimOrEmpty(const QVariant &value)
 
 QString normalizeInputFilePath(const QString &rawInput)
 {
-    QString input = rawInput.trimmed();
-    if (input.isEmpty()) return {};
-
-    if ((input.startsWith('"') && input.endsWith('"')) || (input.startsWith('\'') && input.endsWith('\''))) {
-        input = input.mid(1, input.length() - 2).trimmed();
-    }
-
-    const QUrl url = QUrl::fromUserInput(input);
-    if (url.isValid() && url.isLocalFile()) {
-        return QDir::toNativeSeparators(url.toLocalFile());
-    }
-
-    return QDir::toNativeSeparators(input);
+    return ComicStoragePaths::normalizePathInput(rawInput);
 }
 
 using DeleteFailureInfo = ComicDeleteOps::DeleteFailureInfo;

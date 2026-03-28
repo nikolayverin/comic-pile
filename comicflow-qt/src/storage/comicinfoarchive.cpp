@@ -1,5 +1,6 @@
 #include "storage/comicinfoarchive.h"
 #include "storage/archiveprocessutils.h"
+#include "storage/storedpathutils.h"
 
 #include <algorithm>
 
@@ -17,9 +18,7 @@ namespace {
 
 QString normalizeInputFilePath(const QString &rawInput)
 {
-    const QString trimmed = rawInput.trimmed();
-    if (trimmed.isEmpty()) return {};
-    return QDir::toNativeSeparators(QFileInfo(QDir::fromNativeSeparators(trimmed)).absoluteFilePath());
+    return ComicStoragePaths::absolutePathFromInput(rawInput);
 }
 
 QString normalizeReadStatus(const QString &value)
@@ -73,14 +72,13 @@ QString escapeXml(const QString &value)
 
 QString resolve7ZipExecutableFromHint(const QString &hintPath)
 {
-    const QString hint = normalizeInputFilePath(hintPath);
-    if (hint.isEmpty()) return {};
-
-    const QFileInfo info(hint);
-    if (info.exists() && info.isFile()) {
-        return QDir::toNativeSeparators(info.absoluteFilePath());
+    const QString existingFilePath = ComicStoragePaths::absoluteExistingFilePath(hintPath);
+    if (!existingFilePath.isEmpty()) {
+        return existingFilePath;
     }
-    if (info.exists() && info.isDir()) {
+
+    const QString existingDirPath = ComicStoragePaths::absoluteExistingDirPath(hintPath);
+    if (!existingDirPath.isEmpty()) {
         static const QStringList executableNames = {
             QStringLiteral("7z.exe"),
             QStringLiteral("7z"),
@@ -88,7 +86,7 @@ QString resolve7ZipExecutableFromHint(const QString &hintPath)
             QStringLiteral("7za")
         };
         for (const QString &name : executableNames) {
-            const QFileInfo nested(QDir(info.absoluteFilePath()).filePath(name));
+            const QFileInfo nested(QDir(existingDirPath).filePath(name));
             if (nested.exists() && nested.isFile()) {
                 return QDir::toNativeSeparators(nested.absoluteFilePath());
             }
@@ -153,8 +151,9 @@ QString resolve7ZipExecutable()
         QStringLiteral("C:/Program Files (x86)/7-Zip/7z.exe")
     };
     for (const QString &candidate : absoluteCandidates) {
-        if (QFileInfo::exists(candidate)) {
-            return QDir::toNativeSeparators(QFileInfo(candidate).absoluteFilePath());
+        const QString resolved = ComicStoragePaths::absoluteExistingFilePath(candidate);
+        if (!resolved.isEmpty()) {
+            return resolved;
         }
     }
 

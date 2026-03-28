@@ -29,6 +29,28 @@ QString absoluteNativeFilePath(const QString &path)
     return QDir::toNativeSeparators(QFileInfo(info.absoluteFilePath()).absoluteFilePath());
 }
 
+QString absoluteNativePathFromInput(const QString &rawInput)
+{
+    const QString normalized = ComicStoragePaths::normalizePathInput(rawInput);
+    if (normalized.isEmpty()) return {};
+
+    const QFileInfo info(QDir::fromNativeSeparators(normalized));
+    return QDir::toNativeSeparators(QFileInfo(info.absoluteFilePath()).absoluteFilePath());
+}
+
+QString absoluteExistingPathFromInput(const QString &rawInput, bool requireFile, bool requireDir)
+{
+    const QString absolutePath = absoluteNativePathFromInput(rawInput);
+    if (absolutePath.isEmpty()) return {};
+
+    const QFileInfo info(QDir::fromNativeSeparators(absolutePath));
+    if (!info.exists()) return {};
+    if (requireFile && !info.isFile()) return {};
+    if (requireDir && !info.isDir()) return {};
+
+    return QDir::toNativeSeparators(info.absoluteFilePath());
+}
+
 bool isInsideRootPath(const QString &candidatePath, const QString &rootPath)
 {
     const QString normalizedCandidate = ComicLibraryLayout::normalizedPathForCompare(candidatePath);
@@ -75,6 +97,21 @@ QString normalizePathInput(const QString &rawInput)
     }
 
     return QDir::toNativeSeparators(input);
+}
+
+QString absolutePathFromInput(const QString &rawInput)
+{
+    return absoluteNativePathFromInput(rawInput);
+}
+
+QString absoluteExistingFilePath(const QString &rawInput)
+{
+    return absoluteExistingPathFromInput(rawInput, true, false);
+}
+
+QString absoluteExistingDirPath(const QString &rawInput)
+{
+    return absoluteExistingPathFromInput(rawInput, false, true);
 }
 
 QString persistPathForRoot(const QString &rootPath, const QString &absolutePath)

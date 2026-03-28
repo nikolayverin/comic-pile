@@ -1,4 +1,5 @@
 #include "storage/deletestagingops.h"
+#include "storage/storedpathutils.h"
 
 #include <algorithm>
 
@@ -56,9 +57,7 @@ QString classifyDeleteReasonCode(QFileDevice::FileError error, const QString &sy
 
 QString normalizeInputFilePath(const QString &rawInput)
 {
-    const QString trimmed = rawInput.trimmed();
-    if (trimmed.isEmpty()) return {};
-    return QDir::toNativeSeparators(QFileInfo(QDir::fromNativeSeparators(trimmed)).absoluteFilePath());
+    return ComicStoragePaths::absolutePathFromInput(rawInput);
 }
 
 bool ensureDirForFile(const QString &filePath)

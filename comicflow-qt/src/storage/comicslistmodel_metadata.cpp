@@ -91,19 +91,7 @@ QString relativePathWithinDataRoot(const QString &dataRoot, const QString &absol
 
 QString normalizeInputFilePath(const QString &rawInput)
 {
-    QString input = rawInput.trimmed();
-    if (input.isEmpty()) return {};
-
-    if ((input.startsWith('"') && input.endsWith('"')) || (input.startsWith('\'') && input.endsWith('\''))) {
-        input = input.mid(1, input.length() - 2).trimmed();
-    }
-
-    const QUrl url = QUrl::fromUserInput(input);
-    if (url.isValid() && url.isLocalFile()) {
-        return QDir::toNativeSeparators(url.toLocalFile());
-    }
-
-    return QDir::toNativeSeparators(input);
+    return ComicStoragePaths::normalizePathInput(rawInput);
 }
 
 } // namespace

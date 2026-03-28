@@ -1,6 +1,7 @@
 #include "storage/startupruntimeutils.h"
 
 #include "storage/sqliteconnectionutils.h"
+#include "storage/storedpathutils.h"
 #include "common/scopedsqlconnectionremoval.h"
 
 #include <algorithm>
@@ -91,9 +92,7 @@ namespace ComicStartupRuntime {
 
 QString absolutePathIfExists(const QString &candidate)
 {
-    const QFileInfo info(candidate);
-    if (!info.exists() || !info.isDir()) return {};
-    return info.absoluteFilePath();
+    return ComicStoragePaths::absoluteExistingDirPath(candidate);
 }
 
 void resetTextLogFile(const QString &path)

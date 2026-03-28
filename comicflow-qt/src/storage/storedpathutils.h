@@ -6,6 +6,9 @@
 namespace ComicStoragePaths {
 
 QString normalizePathInput(const QString &rawInput);
+QString absolutePathFromInput(const QString &rawInput);
+QString absoluteExistingFilePath(const QString &rawInput);
+QString absoluteExistingDirPath(const QString &rawInput);
 QString persistPathForRoot(const QString &rootPath, const QString &absolutePath);
 QString persistPathForDataRoot(const QString &dataRoot, const QString &absolutePath);
 QString resolveStoredPathAgainstRoot(

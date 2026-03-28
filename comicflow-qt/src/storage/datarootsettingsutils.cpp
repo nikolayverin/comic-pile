@@ -1,8 +1,8 @@
 #include "storage/datarootsettingsutils.h"
+#include "storage/storedpathutils.h"
 
 #include <QDir>
 #include <QSettings>
-#include <QUrl>
 #include <QtGlobal>
 
 namespace {
@@ -33,23 +33,7 @@ namespace ComicDataRootSettings {
 
 QString normalizePathInput(const QString &rawInput)
 {
-    QString input = rawInput.trimmed();
-    if (input.isEmpty()) {
-        return {};
-    }
-
-    if (input.size() >= 2
-        && ((input.startsWith(QLatin1Char('"')) && input.endsWith(QLatin1Char('"')))
-            || (input.startsWith(QLatin1Char('\'')) && input.endsWith(QLatin1Char('\''))))) {
-        input = input.mid(1, input.length() - 2).trimmed();
-    }
-
-    const QUrl url = QUrl::fromUserInput(input);
-    if (url.isValid() && url.isLocalFile()) {
-        return QDir::toNativeSeparators(url.toLocalFile());
-    }
-
-    return QDir::toNativeSeparators(input);
+    return ComicStoragePaths::normalizePathInput(rawInput);
 }
 
 QString normalizedFolderPath(const QString &rawPath)

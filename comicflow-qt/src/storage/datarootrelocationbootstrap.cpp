@@ -90,15 +90,6 @@ private:
     bool m_active = false;
 };
 
-QString absolutePathIfExists(const QString &candidate)
-{
-    const QFileInfo info(candidate);
-    if (!info.exists() || !info.isDir()) {
-        return {};
-    }
-    return info.absoluteFilePath();
-}
-
 void clearCopiedLibraryStorageMigrationMarker(const QString &dataRoot)
 {
     const QString markerPath = ComicStartupRuntime::libraryStorageMigrationMarkerPath(dataRoot);
@@ -396,7 +387,7 @@ QString resolveLaunchDataRootCandidate()
     };
 
     for (const QString &candidate : candidates) {
-        const QString found = absolutePathIfExists(candidate);
+        const QString found = ComicStartupRuntime::absolutePathIfExists(candidate);
         if (!found.isEmpty()) {
             return found;
         }

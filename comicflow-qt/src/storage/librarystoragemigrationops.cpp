@@ -19,7 +19,6 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QUrl>
 #include <QUuid>
 #include <QVariant>
 #include <QVector>
@@ -29,24 +28,6 @@ namespace {
 QString trimOrEmpty(const QVariant &value)
 {
     return value.toString().trimmed();
-}
-
-QString normalizeInputFilePath(const QString &rawInput)
-{
-    QString input = rawInput.trimmed();
-    if (input.isEmpty()) return {};
-
-    if ((input.startsWith(QLatin1Char('"')) && input.endsWith(QLatin1Char('"')))
-        || (input.startsWith(QLatin1Char('\'')) && input.endsWith(QLatin1Char('\'')))) {
-        input = input.mid(1, input.length() - 2).trimmed();
-    }
-
-    const QUrl url = QUrl::fromUserInput(input);
-    if (url.isValid() && url.isLocalFile()) {
-        return QDir::toNativeSeparators(url.toLocalFile());
-    }
-
-    return QDir::toNativeSeparators(input);
 }
 
 QString normalizeSeriesKeyValue(const QString &value)
@@ -213,16 +194,16 @@ QVariantMap runLibraryStorageLayoutMigration(const QString &dataRoot, const QStr
         QSet<QString> consumedSourcePaths;
 
         auto chooseExistingPath = [&](const MigrationRow &row) -> QString {
-            const QString normalizedDbPath = normalizeInputFilePath(row.filePath);
-            if (!normalizedDbPath.isEmpty()) {
-                const QFileInfo dbPathInfo(normalizedDbPath);
-                if (dbPathInfo.exists() && dbPathInfo.isFile()) {
-                    const QString abs = QDir::toNativeSeparators(dbPathInfo.absoluteFilePath());
-                    const QString key = ComicLibraryLayout::normalizedPathForCompare(abs);
-                    if (!consumedSourcePaths.contains(key)) {
-                        consumedSourcePaths.insert(key);
-                        return abs;
-                    }
+            const QString resolvedDbPath = ComicStoragePaths::resolveStoredArchivePath(
+                dataRoot,
+                row.filePath,
+                row.filename
+            );
+            if (!resolvedDbPath.isEmpty()) {
+                const QString key = ComicLibraryLayout::normalizedPathForCompare(resolvedDbPath);
+                if (!consumedSourcePaths.contains(key)) {
+                    consumedSourcePaths.insert(key);
+                    return resolvedDbPath;
                 }
             }
 
