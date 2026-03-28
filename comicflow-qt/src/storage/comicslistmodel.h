@@ -412,6 +412,7 @@ private:
         const QString &filename,
         const QVariantMap &importSignalValues
     );
+    bool deleteComicHardInternal(int comicId, QString &messageOut);
     QString deleteFileFingerprintHistoryForComicIds(const QVector<int> &comicIds);
     QString pruneEquivalentDetachedGhostRowsForComic(int comicId);
     int liveIssueCountForSeries(const QString &seriesKey) const;

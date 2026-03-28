@@ -127,12 +127,9 @@ QString loadComicFilePath(
 
 QString hardDeleteComicRecord(
     const QString &dbPath,
-    const QString &dataRoot,
-    int comicId,
-    QString &deletedFilePathOut
+    int comicId
 )
 {
-    deletedFilePathOut.clear();
     if (comicId < 1) return QStringLiteral("Invalid issue id.");
 
     const QString connectionName = QStringLiteral("comic_pile_delete_hard_%1")
@@ -144,30 +141,6 @@ QString hardDeleteComicRecord(
     if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
         return openError;
     }
-
-    QSqlQuery selectQuery(db);
-    selectQuery.prepare(
-        QStringLiteral(
-            "SELECT COALESCE(file_path, ''), COALESCE(filename, '') "
-            "FROM comics WHERE id = ? LIMIT 1"
-        )
-    );
-    selectQuery.addBindValue(comicId);
-    if (!selectQuery.exec()) {
-        const QString error = QStringLiteral("Failed to read issue before hard delete: %1")
-            .arg(selectQuery.lastError().text());
-        db.close();
-        return error;
-    }
-    if (!selectQuery.next()) {
-        db.close();
-        return QStringLiteral("Issue id %1 not found.").arg(comicId);
-    }
-    deletedFilePathOut = ComicStoragePaths::resolveStoredArchivePath(
-        dataRoot,
-        trimOrEmpty(selectQuery.value(0)),
-        trimOrEmpty(selectQuery.value(1))
-    );
 
     QSqlQuery deleteQuery(db);
     deleteQuery.prepare(QStringLiteral("DELETE FROM comics WHERE id = ?"));

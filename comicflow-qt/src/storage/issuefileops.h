@@ -38,9 +38,7 @@ QString loadComicFilePath(
 
 QString hardDeleteComicRecord(
     const QString &dbPath,
-    const QString &dataRoot,
-    int comicId,
-    QString &deletedFilePathOut
+    int comicId
 );
 
 QString relinkComicFileKeepMetadata(

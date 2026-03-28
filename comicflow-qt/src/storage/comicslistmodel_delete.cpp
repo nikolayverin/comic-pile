@@ -278,6 +278,7 @@ QString ComicsListModel::deleteSeriesFiles(const QString &seriesKey)
 
     QVector<int> idsToDelete;
     QVector<int> deletedComicIds;
+    QStringList warnings;
     idsToDelete.reserve(m_rows.size());
     deletedComicIds.reserve(m_rows.size());
     for (const ComicRow &row : m_rows) {
@@ -304,21 +305,35 @@ QString ComicsListModel::deleteSeriesFiles(const QString &seriesKey)
             errors.push_back(preserveIssueError);
             continue;
         }
-        const QString deleteError = deleteComicHard(comicId);
-        if (!deleteError.isEmpty()) {
-            errors.push_back(deleteError);
-        } else {
+        QString deleteMessage;
+        const bool removed = deleteComicHardInternal(comicId, deleteMessage);
+        if (removed) {
             deletedComicIds.push_back(comicId);
+        }
+        if (!deleteMessage.isEmpty()) {
+            const QString detail = QStringLiteral("Issue %1: %2").arg(comicId).arg(deleteMessage);
+            if (removed) {
+                warnings.push_back(detail);
+            } else {
+                errors.push_back(detail);
+            }
         }
     }
 
     const QString historyCleanupError = deleteFileFingerprintHistoryForComicIds(deletedComicIds);
     if (!historyCleanupError.isEmpty()) {
-        errors.push_back(QStringLiteral("Fingerprint history cleanup failed: %1").arg(historyCleanupError));
+        warnings.push_back(QStringLiteral("Fingerprint history cleanup failed: %1").arg(historyCleanupError));
     }
 
     if (!errors.isEmpty()) {
-        return QStringLiteral("Some issues could not be removed:\n%1").arg(errors.join('\n'));
+        QString result = QStringLiteral("Some issues could not be removed:\n%1").arg(errors.join('\n'));
+        if (!warnings.isEmpty()) {
+            result += QStringLiteral("\nWarnings:\n%1").arg(warnings.join('\n'));
+        }
+        return result;
+    }
+    if (!warnings.isEmpty()) {
+        return QStringLiteral("Issues were removed with warnings:\n%1").arg(warnings.join('\n'));
     }
     return {};
 }
@@ -1076,15 +1091,34 @@ QString ComicsListModel::deleteComic(int comicId)
         return preserveIssueError;
     }
 
-    const QString deleteError = deleteComicHard(comicId);
-    if (!deleteError.isEmpty()) {
-        return deleteError;
+    QString deleteMessage;
+    if (!deleteComicHardInternal(comicId, deleteMessage)) {
+        return deleteMessage;
     }
+
+    QStringList warnings;
+    appendWarningLine(warnings, deleteMessage);
+    QString historyCleanupError;
     if (deletingLastIssueInSeries) {
-        const QString historyCleanupError = deleteFileFingerprintHistoryForComicIds({ comicId });
+        historyCleanupError = deleteFileFingerprintHistoryForComicIds({ comicId });
         if (!historyCleanupError.isEmpty()) {
-            return QStringLiteral("Issue was removed, but fingerprint history cleanup failed: %1").arg(historyCleanupError);
+            appendWarningLine(
+                warnings,
+                QStringLiteral("Fingerprint history cleanup failed: %1").arg(historyCleanupError)
+            );
         }
+    }
+
+    if (!warnings.isEmpty()) {
+        if (warnings.size() == 1) {
+            if (!deleteMessage.isEmpty() && historyCleanupError.isEmpty()) {
+                return deleteMessage;
+            }
+            if (deleteMessage.isEmpty() && !historyCleanupError.isEmpty()) {
+                return QStringLiteral("Issue was removed, but %1").arg(warnings.first());
+            }
+        }
+        return QStringLiteral("Issue was removed with warnings:\n%1").arg(warnings.join('\n'));
     }
 
     return {};
@@ -1092,16 +1126,27 @@ QString ComicsListModel::deleteComic(int comicId)
 
 QString ComicsListModel::deleteComicHard(int comicId)
 {
-    if (comicId < 1) return QString("Invalid issue id.");
+    QString message;
+    deleteComicHardInternal(comicId, message);
+    return message;
+}
+
+bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
+{
+    messageOut.clear();
+    if (comicId < 1) {
+        messageOut = QStringLiteral("Invalid issue id.");
+        return false;
+    }
 
     const QString seriesKey = seriesGroupKeyForComicId(comicId);
 
     QString filePath;
-    QString removedDirPath;
     {
-        const QString deleteError = ComicIssueFileOps::hardDeleteComicRecord(m_dbPath, m_dataRoot, comicId, filePath);
-        if (!deleteError.isEmpty()) {
-            return deleteError;
+        const QString loadError = ComicIssueFileOps::loadComicFilePath(m_dbPath, m_dataRoot, comicId, filePath);
+        if (!loadError.isEmpty()) {
+            messageOut = loadError;
+            return false;
         }
     }
 
@@ -1123,14 +1168,31 @@ QString ComicsListModel::deleteComicHard(int comicId)
         }
     }
 
-    QString deleteFileWarning;
+    StagedArchiveDeleteOp stagedDelete;
+    bool stagedArchiveDeletePending = false;
     if (!filePath.isEmpty()) {
-        QFile file(filePath);
-        if (file.exists() && !file.remove()) {
-            deleteFileWarning = QString("Issue removed from DB, but file delete failed: %1").arg(filePath);
-        } else if (!filePath.trimmed().isEmpty()) {
-            removedDirPath = QFileInfo(filePath).absolutePath();
+        DeleteFailureInfo stageFailure;
+        if (!performStageArchiveDelete(filePath, stagedDelete, stageFailure)) {
+            messageOut = QStringLiteral(
+                "Issue was not removed because the archive file could not be deleted.\n%1"
+            ).arg(formatDeleteFailureText(stageFailure));
+            return false;
         }
+        stagedArchiveDeletePending = !stagedDelete.stagedPath.trimmed().isEmpty();
+    }
+
+    const QString deleteError = ComicIssueFileOps::hardDeleteComicRecord(m_dbPath, comicId);
+    if (!deleteError.isEmpty()) {
+        if (stagedArchiveDeletePending) {
+            DeleteFailureInfo rollbackFailure;
+            if (!performRollbackStagedArchiveDelete(stagedDelete, rollbackFailure)) {
+                messageOut = QStringLiteral("%1\nRollback warning:\n%2")
+                    .arg(deleteError, formatDeleteFailureText(rollbackFailure));
+                return false;
+            }
+        }
+        messageOut = deleteError;
+        return false;
     }
 
     ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
@@ -1157,27 +1219,42 @@ QString ComicsListModel::deleteComicHard(int comicId)
     m_lastMutationKind = QString("delete_comic_hard");
     emit statusChanged();
 
-    if (!removedDirPath.isEmpty()) {
-        cleanupEmptyLibraryDirs(
-            QDir(m_dataRoot).filePath(QStringLiteral("Library")),
-            { removedDirPath }
-        );
+    QStringList warnings;
+    if (stagedArchiveDeletePending) {
+        ComicDeleteOps::rememberPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
+
+        QString removedDirPath;
+        DeleteFailureInfo finalizeFailure;
+        if (!performFinalizeStagedArchiveDelete(stagedDelete, removedDirPath, finalizeFailure)) {
+            appendWarningLine(
+                warnings,
+                QStringLiteral("Archive cleanup after delete failed: %1").arg(formatDeleteFailureText(finalizeFailure))
+            );
+        } else {
+            ComicDeleteOps::forgetPendingStagedDelete(m_dataRoot, stagedDelete.stagedPath);
+            if (!removedDirPath.isEmpty()) {
+                cleanupEmptyLibraryDirs(
+                    QDir(m_dataRoot).filePath(QStringLiteral("Library")),
+                    { removedDirPath }
+                );
+            }
+        }
     }
 
     const QString fingerprintHistoryError = insertFingerprintHistoryEntries(m_dbPath, fingerprintEntries, nullptr);
+    if (!fingerprintHistoryError.isEmpty()) {
+        appendWarningLine(
+            warnings,
+            QStringLiteral("Restore history update failed: %1").arg(fingerprintHistoryError)
+        );
+    }
 
-    if (!deleteFileWarning.isEmpty() && fingerprintHistoryError.isEmpty()) {
-        return deleteFileWarning;
+    if (!warnings.isEmpty()) {
+        if (warnings.size() == 1) {
+            messageOut = QStringLiteral("Issue was removed with warning.\n%1").arg(warnings.first());
+            return true;
+        }
+        messageOut = QStringLiteral("Issue was removed with warnings.\n%1").arg(warnings.join('\n'));
     }
-    if (deleteFileWarning.isEmpty() && !fingerprintHistoryError.isEmpty()) {
-        return QStringLiteral(
-            "Issue was removed, but restore history update failed.\n%1"
-        ).arg(fingerprintHistoryError);
-    }
-    if (!deleteFileWarning.isEmpty() && !fingerprintHistoryError.isEmpty()) {
-        return QStringLiteral(
-            "%1\nRestore history update failed: %2"
-        ).arg(deleteFileWarning, fingerprintHistoryError);
-    }
-    return {};
+    return true;
 }
