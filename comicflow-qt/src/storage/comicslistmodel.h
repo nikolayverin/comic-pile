@@ -315,6 +315,7 @@ private:
         QHash<int, QVariantList> pageMetricsById;
         QHash<int, QList<int>> pendingSessionRequestIdsByComicId;
         QHash<int, QList<int>> pendingPageRequestIdsByComicId;
+        QHash<QString, QList<int>> pendingWarmupPageRequestIdsByKey;
         QHash<int, QList<int>> pendingPageMetricsRequestIdsByComicId;
         QHash<int, int> asyncRevisionByComicId;
         int asyncEpoch = 0;

@@ -101,6 +101,55 @@ QVariantMap makeCanceledReaderAsyncResult()
     };
 }
 
+QString readerWarmupPagePendingKey(int comicId, int pageIndex)
+{
+    return QStringLiteral("reader-warm:%1:%2").arg(comicId).arg(pageIndex);
+}
+
+void removePendingReaderRequestIds(
+    QHash<int, QList<int>> &pendingRequestIdsByComicId,
+    int comicId,
+    const QList<int> &requestIds
+)
+{
+    if (comicId < 1 || requestIds.isEmpty()) {
+        return;
+    }
+
+    QList<int> pendingRequestIds = pendingRequestIdsByComicId.value(comicId);
+    if (pendingRequestIds.isEmpty()) {
+        return;
+    }
+
+    for (int requestId : requestIds) {
+        pendingRequestIds.removeAll(requestId);
+    }
+
+    if (pendingRequestIds.isEmpty()) {
+        pendingRequestIdsByComicId.remove(comicId);
+    } else {
+        pendingRequestIdsByComicId.insert(comicId, pendingRequestIds);
+    }
+}
+
+void clearPendingWarmupPageRequestsForComic(
+    QHash<QString, QList<int>> &pendingRequestIdsByKey,
+    int comicId
+)
+{
+    if (comicId < 1 || pendingRequestIdsByKey.isEmpty()) {
+        return;
+    }
+
+    const QString pendingKeyPrefix = QStringLiteral("reader-warm:%1:").arg(comicId);
+    const QStringList pendingKeys = pendingRequestIdsByKey.keys();
+    for (const QString &pendingKey : pendingKeys) {
+        if (pendingKey.startsWith(pendingKeyPrefix)) {
+            pendingRequestIdsByKey.remove(pendingKey);
+        }
+    }
+}
+
 } // namespace
 
 QVariantMap ComicsListModel::loadReaderSessionPayload(
@@ -237,6 +286,7 @@ void ComicsListModel::invalidateAllReaderAsyncState()
     m_readerState.asyncRevisionByComicId.clear();
     m_readerState.pendingSessionRequestIdsByComicId.clear();
     m_readerState.pendingPageRequestIdsByComicId.clear();
+    m_readerState.pendingWarmupPageRequestIdsByKey.clear();
     m_readerState.pendingPageMetricsRequestIdsByComicId.clear();
     m_artworkState.pendingImageRequestIdsByKey.clear();
     m_artworkState.pendingSeriesHeroRequestIdsByKey.clear();
@@ -302,6 +352,7 @@ void ComicsListModel::clearReaderRuntimeStateForComic(int comicId)
         m_artworkState.pendingImageRequestIdsByKey,
         comicId
     );
+    clearPendingWarmupPageRequestsForComic(m_readerState.pendingWarmupPageRequestIdsByKey, comicId);
     m_readerState.asyncRevisionByComicId.insert(comicId, m_readerState.asyncRevisionByComicId.value(comicId) + 1);
     m_readerState.archivePathById.remove(comicId);
     m_readerState.imageEntriesById.remove(comicId);
@@ -621,17 +672,28 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
     const QStringList cachedEntries = m_readerState.imageEntriesById.value(comicId);
     const bool needsSessionRebuild = cachedArchivePath.trimmed().isEmpty() || cachedEntries.isEmpty();
     if (needsSessionRebuild) {
+        const QString pendingKey = readerWarmupPagePendingKey(comicId, pageIndex);
         const int asyncEpoch = m_readerState.asyncEpoch;
         const int comicAsyncRevision = m_readerState.asyncRevisionByComicId.value(comicId);
         m_readerState.pendingPageRequestIdsByComicId[comicId].push_back(requestId);
+        if (!ComicReaderRequests::beginPendingImageRequest(
+                m_readerState.pendingWarmupPageRequestIdsByKey,
+                pendingKey,
+                requestId
+            )) {
+            return requestId;
+        }
+
         auto *watcher = new QFutureWatcher<QVariantMap>(this);
-        connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, requestId, comicId, pageIndex, asyncEpoch, comicAsyncRevision]() {
-            QList<int> pendingPageRequestIds = m_readerState.pendingPageRequestIdsByComicId.value(comicId);
-            pendingPageRequestIds.removeAll(requestId);
-            if (pendingPageRequestIds.isEmpty()) {
-                m_readerState.pendingPageRequestIdsByComicId.remove(comicId);
-            } else {
-                m_readerState.pendingPageRequestIdsByComicId.insert(comicId, pendingPageRequestIds);
+        connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, pendingKey, comicId, pageIndex, asyncEpoch, comicAsyncRevision]() {
+            const QList<int> requestIds = ComicReaderRequests::takePendingImageRequestIds(
+                m_readerState.pendingWarmupPageRequestIdsByKey,
+                pendingKey
+            );
+            removePendingReaderRequestIds(m_readerState.pendingPageRequestIdsByComicId, comicId, requestIds);
+            if (requestIds.isEmpty()) {
+                watcher->deleteLater();
+                return;
             }
 
             if (asyncEpoch != m_readerState.asyncEpoch
@@ -650,7 +712,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
                 ? result.value(QStringLiteral("pageIndex")).toInt()
                 : pageIndex;
             emitPageReadyForRequestIds(
-                { requestId },
+                requestIds,
                 comicId,
                 resolvedPageIndex,
                 result.value(QStringLiteral("imageSource")).toString(),
