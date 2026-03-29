@@ -206,6 +206,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupStatusActionButton.qml
         qml/components/NavigationHelperButton.qml
         qml/components/BottomBarHelperButton.qml
+        qml/components/BottomBarGridDensityControl.qml
         qml/components/PopupFooterRow.qml
         qml/components/PopupCloseButton.qml
         qml/components/PopupDialogShell.qml

@@ -3093,6 +3093,19 @@ ApplicationWindow {
                 onClicked: navigationSurfaceController.toggleIssueOrder()
             }
 
+            BottomBarGridDensityControl {
+                anchors.top: parent.top
+                anchors.topMargin: 16
+                anchors.right: parent.right
+                anchors.rightMargin: 16
+                uiFontFamily: root.uiFontFamily
+                options: SettingsCatalog.appearanceGridDensityOptions
+                currentText: String(appSettingsController.appearanceGridDensity || "Default")
+                onActivated: function(index, text) {
+                    appSettingsController.setSettingValue("appearance_grid_density", text)
+                }
+            }
+
         }
 
     }
