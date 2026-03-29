@@ -128,7 +128,6 @@ readonly property real heroCollapseProgress: heroCollapseRange > 0
 readonly property real notchOpacity: (!heroSectionVisible || !hasIssueOverflow || !heroCollapsed)
     ? 1.0
     : 0.0
-readonly property bool showInfoVisible: heroSectionVisible && hasIssueOverflow && heroCollapsed
 readonly property var activeIssuesFlick: issuesFlick
 readonly property real maxGridScrollRange: Math.max(
     0,
@@ -207,18 +206,6 @@ function animateHeroTo(targetOffset) {
     heroCollapseAnimation.stop()
     heroCollapseAnimation.to = clamped
     heroCollapseAnimation.start()
-}
-
-function toggleHeroPanel() {
-    if (manualHeroRevealActive) {
-        animateManualHeroReveal(0)
-        return
-    }
-    if (heroCollapsed) {
-        animateManualHeroReveal(root.heroBlockHeight)
-        return
-    }
-    animateHeroTo(heroCollapseRange)
 }
 
 function setAbsoluteSplitScroll(targetValue) {
@@ -1241,12 +1228,6 @@ Item {
                 ctx.stroke()
             }
 
-            MouseArea {
-                anchors.fill: parent
-                enabled: rightPane.showInfoVisible
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: rightPane.toggleHeroPanel()
-            }
         }
 
         Image {
@@ -1256,49 +1237,6 @@ Item {
             fillMode: Image.PreserveAspectFit
             smooth: true
             opacity: rightPane.notchOpacity
-        }
-
-        Item {
-            id: showInfoPill
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: 6
-            width: 76
-            height: 20
-            z: 7
-            visible: rightPane.showInfoVisible
-
-            Rectangle {
-                anchors.fill: parent
-                radius: 10
-                color: root.bgApp
-            }
-
-            Rectangle {
-                width: 72
-                height: 16
-                anchors.centerIn: parent
-                radius: 8
-                color: root.uiActionHoverBackground
-                visible: showInfoHoverArea.containsMouse
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: "Show info"
-                color: root.textPrimary
-                font.family: root.uiFontFamily
-                font.pixelSize: root.fontPxUiBase
-                font.weight: Font.Normal
-            }
-
-            MouseArea {
-                id: showInfoHoverArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: rightPane.toggleHeroPanel()
-            }
         }
     }
 }
