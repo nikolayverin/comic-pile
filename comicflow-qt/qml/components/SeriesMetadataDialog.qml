@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import "MetadataTextUtils.js" as MetadataTextUtils
 import "PublisherCatalog.js" as PublisherCatalog
+import "AppText.js" as AppText
 
 Popup {
     id: seriesMetaDialog
@@ -296,8 +297,8 @@ Popup {
         id: shell
         popupStyle: popupStyle
         title: seriesMetaDialog.mergeMode
-            ? "Merge into series"
-            : (seriesMetaDialog.bulkMode ? "Bulk Edit" : "Series Metadata")
+            ? AppText.seriesMetaTitleMerge
+            : (seriesMetaDialog.bulkMode ? AppText.seriesMetaTitleBulk : AppText.seriesMetaTitleSingle)
         onCloseRequested: seriesMetaDialog.cancelRequested()
 
         PopupContentGeometry {
@@ -335,7 +336,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.yGeneral
-            text: "General"
+            text: AppText.seriesMetaSectionGeneral
             color: popupStyle.textColor
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -343,7 +344,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: "Series"
+            text: AppText.seriesMetaLabelSeries
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.bulkMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -380,7 +381,7 @@ Popup {
         Label {
             x: shell.rightColX + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: "Volume"
+            text: AppText.seriesMetaLabelVolume
             color: seriesMetaDialog.labelColor(seriesMetaDialog.volumeEditable)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -408,7 +409,7 @@ Popup {
         Label {
             x: shell.rightCol2X + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: "Genres"
+            text: AppText.seriesMetaLabelGenres
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -434,7 +435,7 @@ Popup {
         Label {
             x: shell.rightCol3X + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: "Publisher"
+            text: AppText.seriesMetaLabelPublisher
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -468,7 +469,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.yTitleLabel
-            text: "Series title"
+            text: AppText.seriesMetaLabelSeriesTitle
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -505,7 +506,7 @@ Popup {
         Label {
             x: shell.rightColX + shell.labelInsetX
             y: shell.yTitleLabel
-            text: "Year"
+            text: AppText.seriesMetaLabelYear
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -533,7 +534,7 @@ Popup {
         Label {
             x: shell.rightCol2X + shell.labelInsetX
             y: shell.yTitleLabel
-            text: "Month"
+            text: AppText.seriesMetaLabelMonth
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -559,7 +560,7 @@ Popup {
         Label {
             x: shell.rightCol3X + shell.labelInsetX
             y: shell.yTitleLabel
-            text: "Age rating"
+            text: AppText.seriesMetaLabelAgeRating
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -584,7 +585,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.ySummaryLabel
-            text: "Summary"
+            text: AppText.seriesMetaLabelSummary
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -632,7 +633,7 @@ Popup {
 
         PopupInlineErrorMessage {
             visible: seriesMetaDialog.inlineErrorText.length > 0
-            headline: "Save failed"
+            headline: AppText.seriesMetaInlineErrorHeadline
             message: seriesMetaDialog.inlineErrorText
             textColor: popupStyle.textColor
             anchors.left: parent.left
@@ -661,7 +662,7 @@ Popup {
                 hoverColor: popupStyle.footerButtonHoverColor
                 textColor: popupStyle.textColor
                 textPixelSize: popupStyle.footerButtonTextSize
-                text: seriesMetaDialog.mergeMode ? "Merge" : "Save"
+                text: seriesMetaDialog.mergeMode ? AppText.seriesMetaButtonMerge : AppText.seriesMetaButtonSave
                 onClicked: seriesMetaDialog.saveRequested()
             }
 

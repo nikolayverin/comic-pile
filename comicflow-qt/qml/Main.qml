@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
 import "components"
+import "components/AppText.js" as AppText
 import "components/PublisherCatalog.js" as PublisherCatalog
 import "components/SettingsCatalog.js" as SettingsCatalog
 import "components/AppErrorMapper.js" as AppErrorMapper
@@ -762,7 +763,7 @@ ApplicationWindow {
     function startImportFromSourcePaths(paths, options, emptyMessage) {
         const resolvedEntries = resolveImportSourceEntries(paths)
         if (!resolvedEntries || resolvedEntries.length < 1) {
-            popupController.showActionResult(String(emptyMessage || "No supported comic sources found for import."), true)
+            popupController.showActionResult(String(emptyMessage || AppText.sidebarDropNoSupportedSources), true)
             return false
         }
         return importController.importSourceEntries(resolvedEntries, options || {})
@@ -838,7 +839,7 @@ ApplicationWindow {
         const result = libraryModel.scheduleDataRootRelocation(selectedPath)
         if (!Boolean((result || {}).ok)) {
             popupController.showActionResult(
-                String((result || {}).error || "Failed to schedule the new library data location."),
+                String((result || {}).error || AppText.mainFailedScheduleLibraryLocation),
                 true
             )
             return
@@ -937,7 +938,7 @@ ApplicationWindow {
     function openSeriesFolder(seriesKey, seriesName) {
         const normalizedSeriesKey = String(seriesKey || "").trim()
         if (normalizedSeriesKey.length < 1) {
-            popupController.showActionResult("Series folder is unavailable.", true)
+            popupController.showActionResult(AppText.mainSeriesFolderUnavailable, true)
             return
         }
 
@@ -956,7 +957,7 @@ ApplicationWindow {
 
         const resolvedSeriesName = String(seriesName || "").trim()
         const label = resolvedSeriesName.length > 0 ? resolvedSeriesName : "this series"
-        popupController.showActionResult("No folder is available for " + label + ".", true)
+        popupController.showActionResult(AppText.noFolderAvailableMessage(label), true)
     }
 
     function cloneVariantMap(sourceValues) {
@@ -1144,7 +1145,7 @@ ApplicationWindow {
         if (sizeBytes > limitBytes) {
             const label = libraryBackgroundCustomImageMode === "Tile" ? "1 MB" : "8 MB"
             popupController.showActionResult(
-                "Selected background image is too large. Limit for this mode is " + label + ".",
+                AppText.backgroundImageTooLargeMessage(label),
                 true
             )
             return
@@ -1165,7 +1166,7 @@ ApplicationWindow {
                 const sizeBytes = fileSizeBytes(currentPath)
                 if (sizeBytes > libraryBackgroundTileImageMaxBytes) {
                     popupController.showActionResult(
-                        "Tile mode supports background images up to 1 MB.",
+                        AppText.mainTileModeImageLimit,
                         true
                     )
                     return
@@ -1277,7 +1278,7 @@ ApplicationWindow {
     function replaceIssueArchive(comicId) {
         if (comicId < 1) return
         if (importInProgress) {
-            popupController.showActionResult("Import is already running. Wait for completion.", true)
+            popupController.showActionResult(AppText.importAlreadyRunning, true)
             return
         }
 
@@ -1393,7 +1394,7 @@ ApplicationWindow {
             selectedSeriesKeys = ({})
             seriesSelectionAnchorIndex = -1
             selectedVolumeKey = "__all__"
-            selectedVolumeTitle = "All volumes"
+            selectedVolumeTitle = AppText.libraryAllVolumes
             volumeListModel.clear()
             clearSelection()
             setGridScrollToTop()

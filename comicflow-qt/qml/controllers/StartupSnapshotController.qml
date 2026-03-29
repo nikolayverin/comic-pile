@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/AppText.js" as AppText
 
 Item {
     id: snapshotController
@@ -294,7 +295,7 @@ Item {
             selectedSeriesKey: String(root.selectedSeriesKey || ""),
             selectedSeriesTitle: selectedSeriesTitle,
             selectedVolumeKey: String(root.selectedVolumeKey || "__all__"),
-            selectedVolumeTitle: String(root.selectedVolumeTitle || "All volumes"),
+            selectedVolumeTitle: String(root.selectedVolumeTitle || AppText.libraryAllVolumes),
             sidebarQuickFilterKey: String(root.sidebarQuickFilterKey || ""),
             lastImportSessionComicIds: Array.isArray(root.lastImportSessionComicIds)
                 ? root.lastImportSessionComicIds
@@ -491,7 +492,7 @@ Item {
         root.selectedSeriesKey = String(parsed.selectedSeriesKey || "")
         root.selectedSeriesTitle = String(parsed.selectedSeriesTitle || "")
         root.selectedVolumeKey = String(parsed.selectedVolumeKey || "__all__")
-        root.selectedVolumeTitle = String(parsed.selectedVolumeTitle || "All volumes")
+        root.selectedVolumeTitle = String(parsed.selectedVolumeTitle || AppText.libraryAllVolumes)
         root.heroCoverComicId = Number(parsed.heroCoverComicId || -1)
         const restoredSelection = {}
         if (root.selectedSeriesKey.length > 0) {

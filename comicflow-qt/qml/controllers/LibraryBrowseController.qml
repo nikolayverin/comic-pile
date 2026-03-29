@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -21,7 +22,7 @@ Item {
     property string selectedSeriesKey: ""
     property string selectedSeriesTitle: ""
     property string selectedVolumeKey: "__all__"
-    property string selectedVolumeTitle: "All volumes"
+    property string selectedVolumeTitle: AppText.libraryAllVolumes
     property string sidebarSearchText: ""
     property string sidebarQuickFilterKey: ""
     property var lastImportSessionComicIds: []
@@ -53,17 +54,17 @@ Item {
 
     function quickFilterTitleText(filterKey) {
         const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return "Last imported issues"
-        if (key === "favorites") return "Favorite issues"
-        if (key === "bookmarks") return "Bookmarked issues"
+        if (key === "last_import") return AppText.quickFilterLastImportedIssuesTitle
+        if (key === "favorites") return AppText.quickFilterFavoriteIssuesTitle
+        if (key === "bookmarks") return AppText.quickFilterBookmarkedIssuesTitle
         return ""
     }
 
     function quickFilterEmptyText(filterKey) {
         const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return "No recent import yet"
-        if (key === "favorites") return "No favorite issues yet"
-        if (key === "bookmarks") return "No bookmarked issues yet"
+        if (key === "last_import") return AppText.quickFilterLastImportedEmpty
+        if (key === "favorites") return AppText.quickFilterFavoriteEmpty
+        if (key === "bookmarks") return AppText.quickFilterBookmarkedEmpty
         return ""
     }
 
@@ -191,7 +192,7 @@ Item {
             root.selectedSeriesKeys = emptySelection
             root.seriesSelectionAnchorIndex = -1
             selectedVolumeKey = "__all__"
-            selectedVolumeTitle = "All volumes"
+            selectedVolumeTitle = AppText.libraryAllVolumes
             if (volumeListModelRef) {
                 volumeListModelRef.clear()
             }
@@ -252,12 +253,12 @@ Item {
     function applyVolumeSelectionByIndex(index) {
         if (!volumeListModelRef || index < 0 || index >= volumeListModelRef.count) {
             selectedVolumeKey = "__all__"
-            selectedVolumeTitle = "All volumes"
+            selectedVolumeTitle = AppText.libraryAllVolumes
             return
         }
         const item = volumeListModelRef.get(index)
         selectedVolumeKey = String(item.volumeKey || "__all__")
-        selectedVolumeTitle = String(item.volumeTitle || "All volumes")
+        selectedVolumeTitle = String(item.volumeTitle || AppText.libraryAllVolumes)
     }
 
     function refreshVolumeList() {
@@ -276,16 +277,16 @@ Item {
 
         volumeListModelRef.append({
             volumeKey: "__all__",
-            volumeTitle: "All volumes",
+            volumeTitle: AppText.libraryAllVolumes,
             count: totalCount,
-            displayLabel: "All volumes (" + totalCount + ")"
+            displayLabel: AppText.libraryAllVolumes + " (" + totalCount + ")"
         })
 
         let restoredIndex = 0
         for (let i = 0; i < groups.length; i += 1) {
             const item = groups[i]
             const volumeKey = String(item.volumeKey || "")
-            const volumeTitle = String(item.volumeTitle || "No Volume")
+            const volumeTitle = String(item.volumeTitle || AppText.libraryNoVolume)
             const count = Number(item.count || 0)
             volumeListModelRef.append({
                 volumeKey: volumeKey,

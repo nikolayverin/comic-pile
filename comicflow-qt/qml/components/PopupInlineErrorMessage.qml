@@ -1,9 +1,10 @@
 import QtQuick
+import "AppText.js" as AppText
 
 Item {
     id: root
 
-    property string headline: "Save failed"
+    property string headline: AppText.seriesMetaInlineErrorHeadline
     property string message: ""
     property color textColor: "#ffffff"
     property string iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-alert-triangle.svg"

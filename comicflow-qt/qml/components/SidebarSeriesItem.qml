@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 Item {
     id: root
@@ -21,9 +22,9 @@ Item {
     property bool menuDeleteOnly: false
     property bool menuBulkEditMode: false
     property bool menuMergeMode: false
-    property string menuDeleteLabel: "Delete files"
-    property string menuShowFolderLabel: "Show folder"
-    readonly property string menuEditLabel: menuBulkEditMode ? "Bulk Edit" : "Edit Series"
+    property string menuDeleteLabel: AppText.sidebarMenuDeleteFiles
+    property string menuShowFolderLabel: AppText.sidebarMenuShowFolder
+    readonly property string menuEditLabel: menuBulkEditMode ? AppText.sidebarMenuBulkEdit : AppText.sidebarMenuEditSeries
     property string uiFontFamily: Qt.application.font.family
     property int uiFontPixelSize: typography.uiBasePx
     property color textColor: themeColors.textPrimary
@@ -60,7 +61,7 @@ Item {
         const items = []
         if (!menuDeleteOnly) {
             items.push({
-                text: "Add issues",
+                text: AppText.sidebarMenuAddIssues,
                 action: "addIssues",
                 enabled: !importInProgress
             })
@@ -73,7 +74,7 @@ Item {
         }
         if (menuMergeMode) {
             items.push({
-                text: "Merge into series",
+                text: AppText.sidebarMenuMergeIntoSeries,
                 action: "mergeSeries"
             })
         }

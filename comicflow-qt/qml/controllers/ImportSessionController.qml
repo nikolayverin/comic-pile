@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -317,7 +318,7 @@ Item {
         if (rollbackError.length > 0) {
             pushImportFailure(
                 "[rollback] issue " + String(comicId),
-                "Rollback failed: " + rollbackError,
+                AppText.importRollbackFailedPrefix + rollbackError,
                 "runtime_error"
             )
         }
@@ -410,7 +411,7 @@ Item {
         const ok = Boolean(effectiveResult.ok)
         if (!ok) {
             const code = String(effectiveResult.code || "runtime_error")
-            const errorText = String(effectiveResult.error || "Import failed.")
+            const errorText = String(effectiveResult.error || AppText.importFailedDefault)
             const duplicateTier = String(effectiveResult.duplicateTier || "").trim().toLowerCase()
             if ((code === "duplicate" || code === "restore_review_required")
                 && Number(effectiveResult.existingId || 0) > 0) {
@@ -1132,11 +1133,11 @@ Item {
     function startImportBatch(paths, options) {
         const queue = prepareImportQueue(paths, options)
         if (queue.length < 1) {
-            showActionResult("No valid files selected for import.", true)
+            showActionResult(AppText.importNoValidFilesSelected, true)
             return false
         }
         if (importInProgress) {
-            showActionResult("Import is already running. Wait for completion.", true)
+            showActionResult(AppText.importAlreadyRunning, true)
             return false
         }
 
@@ -1183,7 +1184,7 @@ Item {
             const fileName = fileNameFromPath(path)
             failedImportItemsModelRef.append({
                 path: path,
-                fileName: fileName.length > 0 ? fileName : "[unknown file]",
+                fileName: fileName.length > 0 ? fileName : AppText.importFailedUnknownFile,
                 error: String(lastFailedImportErrors[i] || "")
             })
         }
@@ -1262,7 +1263,7 @@ Item {
             }
 
             if (!libraryModelRef) {
-                pushImportFailure(sourcePath, "Import model is unavailable.", "runtime_error")
+                pushImportFailure(sourcePath, AppText.importModelUnavailable, "runtime_error")
                 advanceCompletedImportBytes(queuedFileSizeBytes)
                 finishImportBatch(false)
                 return
@@ -1294,7 +1295,7 @@ Item {
                 importValues: cloneVariantMap(importValues)
             }))
         } catch (e) {
-            pushImportFailure("[runtime]", "Import runtime error: " + String(e), "runtime_error")
+            pushImportFailure("[runtime]", AppText.importRuntimeErrorPrefix + String(e), "runtime_error")
             finishImportBatch(false)
         }
     }
@@ -1349,7 +1350,7 @@ Item {
 
         const resolvedEntries = resolveImportSourceEntries([sourcePath])
         if (!resolvedEntries || resolvedEntries.length !== 1) {
-            const classifiedMissing = classifyImportError(sourcePath, "Source path no longer resolves to a single importable item.", "file_not_found")
+            const classifiedMissing = classifyImportError(sourcePath, AppText.importRetrySourceMissing, "file_not_found")
             lastFailedImportErrors[index] = classifiedMissing.reason
             rebuildFailedImportItemsModel()
             return
@@ -1420,7 +1421,7 @@ Item {
             if (!Boolean(normalizationResult.ok)) {
                 pushImportFailure(
                     sourcePath,
-                    String(normalizationResult.error || "Import preparation failed."),
+                    String(normalizationResult.error || AppText.importPreparationFailed),
                     String(normalizationResult.code || "archive_normalize_failed")
                 )
                 advanceCompletedImportBytes(queuedFileSizeBytes)
@@ -1434,7 +1435,7 @@ Item {
             }
 
             if (!libraryModelRef) {
-                pushImportFailure(sourcePath, "Import model is unavailable.", "runtime_error")
+                pushImportFailure(sourcePath, AppText.importModelUnavailable, "runtime_error")
                 advanceCompletedImportBytes(queuedFileSizeBytes)
                 cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
                 finishImportBatch(false)

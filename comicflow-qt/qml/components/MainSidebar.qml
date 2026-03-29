@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 Rectangle {
     id: sidebarPanel
@@ -150,7 +151,7 @@ Rectangle {
             spacing: 6
 
             SidebarQuickFilterItem {
-                title: "Last import"
+                title: AppText.sidebarQuickFilterLastImport
                 issueCount: rootObject ? rootObject.sidebarQuickFilterCount("last_import") : 0
                 selected: rootObject ? rootObject.sidebarQuickFilterKey === "last_import" : false
                 sidebarWidth: rootObject ? rootObject.sidebarWidth : 320
@@ -164,7 +165,7 @@ Rectangle {
             }
 
             SidebarQuickFilterItem {
-                title: "Favorites"
+                title: AppText.sidebarQuickFilterFavorites
                 issueCount: rootObject ? rootObject.sidebarQuickFilterCount("favorites") : 0
                 selected: rootObject ? rootObject.sidebarQuickFilterKey === "favorites" : false
                 sidebarWidth: rootObject ? rootObject.sidebarWidth : 320
@@ -178,7 +179,7 @@ Rectangle {
             }
 
             SidebarQuickFilterItem {
-                title: "Bookmarks"
+                title: AppText.sidebarQuickFilterBookmarks
                 issueCount: rootObject ? rootObject.sidebarQuickFilterCount("bookmarks") : 0
                 selected: rootObject ? rootObject.sidebarQuickFilterKey === "bookmarks" : false
                 sidebarWidth: rootObject ? rootObject.sidebarWidth : 320
@@ -202,7 +203,7 @@ Rectangle {
             Text {
                 x: 0
                 y: 2
-                text: "Library"
+                text: AppText.sidebarLibrarySection
                 color: rootObject ? rootObject.uiTextShadow : "transparent"
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: 12
@@ -212,7 +213,7 @@ Rectangle {
             Text {
                 x: 0
                 y: 0
-                text: "Library"
+                text: AppText.sidebarLibrarySection
                 color: rootObject ? rootObject.textPrimary : "white"
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: 12
@@ -279,8 +280,8 @@ Rectangle {
                 menuDeleteLabel: (rootObject
                     && rootObject.selectedSeriesCount() > 1
                     && rootObject.isSeriesSelected(seriesKey))
-                    ? "Delete selected"
-                    : "Delete files"
+                    ? AppText.sidebarMenuDeleteSelected
+                    : AppText.sidebarMenuDeleteFiles
                 uiFontFamily: rootObject ? rootObject.uiFontFamily : ""
                 uiFontPixelSize: rootObject ? rootObject.fontPxUiBase : 14
                 textColor: rootObject ? rootObject.textPrimary : "white"
@@ -406,7 +407,7 @@ Rectangle {
                 font.bold: true
                 color: rootObject ? rootObject.dropZoneTextColor : "white"
                 z: 1
-                text: "Drop archives here to add\nissues to library"
+                text: AppText.sidebarDropZoneTitle
             }
 
             Text {
@@ -437,7 +438,7 @@ Rectangle {
                 font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
                 color: rootObject ? rootObject.dropZoneTextColor : "white"
                 z: 1
-                text: "Supports any archive files"
+                text: AppText.sidebarDropZoneSubtitle
             }
 
             Text {
@@ -481,14 +482,14 @@ Rectangle {
                     }
                     if (paths.length < 1) {
                         if (popupControllerRef) {
-                            popupControllerRef.showActionResult("Drop Contains No Local Files.", true)
+                            popupControllerRef.showActionResult(AppText.sidebarDropNoLocalFiles, true)
                         }
                         return
                     }
                     if (rootObject && rootObject.startImportFromSourcePaths(
                                 paths,
                                 { importIntent: "global_add" },
-                                "Drop Contains No Supported Comic Sources."
+                                AppText.sidebarDropNoSupportedSources
                             )) {
                         drop.acceptProposedAction()
                     }

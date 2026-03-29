@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "MetadataTextUtils.js" as MetadataTextUtils
+import "AppText.js" as AppText
 
 Popup {
     id: metadataDialog
@@ -853,7 +854,7 @@ Popup {
 
             PopupInlineErrorMessage {
                 visible: metadataDialog.errorText.length > 0
-                headline: "Save failed"
+                headline: AppText.seriesMetaInlineErrorHeadline
                 message: metadataDialog.errorText
                 textColor: popupStyle.textColor
                 anchors.left: parent.left

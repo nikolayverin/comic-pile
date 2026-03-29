@@ -1,4 +1,6 @@
 import QtQuick
+import "../components/AppText.js" as AppText
+import "../components/AppErrorMapper.js" as AppErrorMapper
 
 Item {
     id: controller
@@ -42,18 +44,22 @@ Item {
     }
 
     function showNavigationMessage(title, message) {
-        if (!popupControllerRef || typeof popupControllerRef.showActionResult !== "function") {
+        if (!popupControllerRef || typeof popupControllerRef.showMappedActionResult !== "function") {
             return
         }
-        popupControllerRef.showActionResult(String(message || "").trim(), true)
-        popupControllerRef.actionResultTitle = String(title || "Action Error").trim()
+        popupControllerRef.showMappedActionResult(
+            AppErrorMapper.navigationResult(
+                String(title || AppText.popupActionErrorTitle).trim(),
+                String(message || "").trim()
+            )
+        )
     }
 
     function resolveContinueReadingTarget() {
         return readingContinuationControllerRef
             && typeof readingContinuationControllerRef.resolveContinueReadingTarget === "function"
-            ? (readingContinuationControllerRef.resolveContinueReadingTarget() || ({ ok: false, message: "No active reading session is available yet." }))
-            : ({ ok: false, message: "No active reading session is available yet." })
+            ? (readingContinuationControllerRef.resolveContinueReadingTarget() || ({ ok: false, message: AppText.navigationNoActiveReadingSession }))
+            : ({ ok: false, message: AppText.navigationNoActiveReadingSession })
     }
 
     function clearSeriesViewFilters() {
@@ -156,10 +162,10 @@ Item {
             return false
         }
 
-        const title = String(pendingIssueTarget.failureTitle || "Action Error").trim()
+        const title = String(pendingIssueTarget.failureTitle || AppText.popupActionErrorTitle).trim()
         const message = String(
             pendingIssueTarget.failureMessage
-                || "The requested issue could not be revealed in the library view."
+                || AppText.navigationRevealIssueUnavailable
         ).trim()
         finishPendingIssueTarget()
         showNavigationMessage(title, message)
@@ -181,8 +187,8 @@ Item {
         const seriesKey = String((target || {}).seriesKey || "").trim()
         if (comicId < 1 || seriesKey.length < 1) {
             showNavigationMessage(
-                String(failureTitle || "Action Error"),
-                String((target || {}).message || failureMessage || "The requested issue is unavailable.")
+                String(failureTitle || AppText.popupActionErrorTitle),
+                String((target || {}).message || failureMessage || AppText.navigationIssueUnavailable)
             )
             return
         }
@@ -198,10 +204,10 @@ Item {
             seriesKey: seriesKey,
             displayTitle: String((target || {}).displayTitle || "").trim(),
             openReader: true,
-            failureTitle: String(failureTitle || "Action Error"),
+            failureTitle: String(failureTitle || AppText.popupActionErrorTitle),
             failureMessage: String(
                 failureMessage
-                    || "The requested issue could not be revealed in the library view."
+                    || AppText.navigationRevealIssueUnavailable
             )
         })
     }
@@ -212,16 +218,16 @@ Item {
         const target = resolveContinueReadingTarget() || ({})
         if (!Boolean(target.ok)) {
             showNavigationMessage(
-                "Continue reading",
-                String(target.message || "No active reading session is available yet.")
+                AppText.navigationContinueReadingTitle,
+                String(target.message || AppText.navigationNoActiveReadingSession)
             )
             return
         }
 
         openIssueTarget(
             target,
-            "Continue reading",
-            "The saved reading target could not be opened from the library view."
+            AppText.navigationContinueReadingTitle,
+            AppText.navigationContinueRevealFailure
         )
     }
 
@@ -231,8 +237,8 @@ Item {
         const continueTarget = resolveContinueReadingTarget() || ({})
         if (!Boolean(continueTarget.ok)) {
             showNavigationMessage(
-                "Next unread",
-                String(continueTarget.message || "No active reading session is available yet.")
+                AppText.navigationNextUnreadTitle,
+                String(continueTarget.message || AppText.navigationNoActiveReadingSession)
             )
             return
         }
@@ -243,16 +249,16 @@ Item {
             : ({})
         if (!Boolean(target.ok)) {
             showNavigationMessage(
-                "Next unread",
-                String(target.message || "No next unread issue is queued right now.")
+                AppText.navigationNextUnreadTitle,
+                String(target.message || AppText.navigationNoNextUnread)
             )
             return
         }
 
         openIssueTarget(
             target,
-            "Next unread",
-            "The next unread issue could not be opened from the library view."
+            AppText.navigationNextUnreadTitle,
+            AppText.navigationNextUnreadRevealFailure
         )
     }
 

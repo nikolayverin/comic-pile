@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -222,11 +223,11 @@ Item {
 
         const key = String(dialogSeriesKey || "").trim()
         if (key.length < 1) {
-            setErrorText("Series context is missing.")
+            setErrorText(AppText.seriesHeaderContextMissing)
             return
         }
         if (!libraryModelRef || typeof libraryModelRef.requestRandomSeriesHeroAsync !== "function") {
-            setErrorText("Failed to prepare shuffled background.")
+            setErrorText(AppText.seriesHeaderPrepareShuffleFailed)
             return
         }
 
@@ -234,7 +235,7 @@ Item {
         const requestId = Number(libraryModelRef.requestRandomSeriesHeroAsync(key) || -1)
         if (requestId < 1) {
             dialogBackgroundShuffleRequestId = -1
-            setErrorText("Failed to prepare shuffled background.")
+            setErrorText(AppText.seriesHeaderPrepareShuffleFailed)
             return
         }
 
@@ -254,11 +255,11 @@ Item {
     function saveDialogChanges() {
         const key = String(dialogSeriesKey || "").trim()
         if (key.length < 1) {
-            setErrorText("Series context is missing.")
+            setErrorText(AppText.seriesHeaderContextMissing)
             return false
         }
         if (!libraryModelRef || typeof libraryModelRef.saveSeriesHeaderImages !== "function") {
-            setErrorText("Failed to save series header images.")
+            setErrorText(AppText.seriesHeaderSaveFailed)
             return false
         }
 
@@ -268,7 +269,7 @@ Item {
             dialogBackgroundPath
         ) || {}
         if (!Boolean(result.ok)) {
-            setErrorText(String(result.error || "Failed to save series header images."))
+            setErrorText(String(result.error || AppText.seriesHeaderSaveFailed))
             return false
         }
 
@@ -304,7 +305,7 @@ Item {
         }
 
         if (String(error || "").trim().length > 0 || String(imageSource || "").trim().length < 1) {
-            setErrorText(String(error || "Failed to prepare shuffled background."))
+            setErrorText(String(error || AppText.seriesHeaderPrepareShuffleFailed))
             return
         }
 

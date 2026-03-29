@@ -1,6 +1,7 @@
 import QtQuick
 import QtCore
 import "../components/SettingsCatalog.js" as SettingsCatalog
+import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -134,7 +135,7 @@ Item {
     function normalizeGeneralDefaultViewAfterLaunch(value) {
         const normalized = String(value || "").trim()
         if (normalized === "Last Import") {
-            return "Last import"
+            return AppText.sidebarQuickFilterLastImport
         }
         return normalizeChoice(
             normalized,

@@ -1,5 +1,6 @@
 import QtQuick
 import "../components/PublisherCatalog.js" as PublisherCatalog
+import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -65,7 +66,7 @@ Item {
         const root = activeRoot()
         if (!root || !libraryModelRef) return false
         if (!editingComic) {
-            root.metadataDialog.errorText = "Nothing selected."
+            root.metadataDialog.errorText = AppText.metadataNothingSelected
             return false
         }
 
@@ -112,9 +113,10 @@ Item {
             pendingIssueMetadataSuggestion = suggestion
             const suggestionSeriesLabel = String(suggestion.displayTitle || draft.series || "this series")
             const suggestionIssueLabel = String(suggestion.issueNumber || draft.issueNumber || "")
-            root.issueMetadataAutofillConfirmDialog.messageText =
-                "Saved issue info was found for issue #" + suggestionIssueLabel + " in \"" + suggestionSeriesLabel + "\".\n\n"
-                + "Fill the remaining issue fields automatically before saving?"
+            root.issueMetadataAutofillConfirmDialog.messageText = AppText.issueAutofillMessage(
+                suggestionIssueLabel,
+                suggestionSeriesLabel
+            )
             root.issueMetadataAutofillConfirmDialog.open()
             return
         }
@@ -163,7 +165,7 @@ Item {
 
         const key = String(seriesKey || root.selectedSeriesKey || "").trim()
         if (key.length < 1) {
-            popupControllerRef.showActionResult("Select a series first.", true)
+            popupControllerRef.showActionResult(AppText.metadataSelectSeriesFirst, true)
             return
         }
 
@@ -368,9 +370,9 @@ Item {
         if (suggestion) {
             pendingSeriesMetadataSuggestion = suggestion
             const suggestionLabel = String(suggestion.displayTitle || root.seriesMetaSeriesField.text || "this series")
-            root.seriesMetadataAutofillConfirmDialog.messageText =
-                "Saved series info was found for \"" + suggestionLabel + "\".\n\n"
-                + "Fill the remaining series fields automatically before saving?"
+            root.seriesMetadataAutofillConfirmDialog.messageText = AppText.seriesAutofillMessage(
+                suggestionLabel
+            )
             root.seriesMetadataAutofillConfirmDialog.open()
             return
         }
@@ -439,7 +441,7 @@ Item {
             .map(function(k) { return String(k || "").trim() })
             .filter(function(k) { return k.length > 0 })
         if (normalizedKeys.length < 1) {
-            root.seriesMetaDialog.errorText = "Series context is missing."
+            root.seriesMetaDialog.errorText = AppText.metadataSeriesContextMissing
             return false
         }
 
@@ -465,7 +467,7 @@ Item {
         }
 
         if (ids.length < 1) {
-            root.seriesMetaDialog.errorText = "No issues found for selected series."
+            root.seriesMetaDialog.errorText = AppText.metadataNoIssuesFound
             return false
         }
         const dedupMap = ({})
@@ -511,7 +513,7 @@ Item {
         const applyMap = {}
         if (mergeMode) {
             if (seriesValue.length < 1) {
-                root.seriesMetaDialog.errorText = "Enter a series name to merge into."
+                root.seriesMetaDialog.errorText = AppText.metadataMergeTargetRequired
                 return false
             }
             values.series = seriesValue
@@ -534,7 +536,7 @@ Item {
                     && seriesTitleValue.length < 1
                     && yearValue.length < 1
                     && genresValue.length < 1) {
-                root.seriesMetaDialog.errorText = "Enter at least one field for bulk edit."
+                root.seriesMetaDialog.errorText = AppText.metadataBulkEditFieldRequired
                 return false
             }
         } else {
@@ -563,7 +565,7 @@ Item {
             const verify = libraryModelRef.loadComicMetadata(verifyId)
             if (verify && verify.error) {
                 startupControllerRef.startupLog("seriesDialog verify error: " + String(verify.error || "unknown"))
-                root.seriesMetaDialog.errorText = String(verify.error || "Save verification failed.")
+                root.seriesMetaDialog.errorText = String(verify.error || AppText.metadataSaveVerificationFailed)
                 return false
             }
 
@@ -583,7 +585,7 @@ Item {
                     + " verifyMonth=\"" + String(verify.month || "") + "\""
                     + " verifyAgeRating=\"" + String(verify.ageRating || "") + "\""
                 )
-                root.seriesMetaDialog.errorText = "Metadata save verification mismatch. Please retry."
+                root.seriesMetaDialog.errorText = AppText.metadataSaveMismatch
                 root.scheduleModelReconcile(true)
                 return false
             }

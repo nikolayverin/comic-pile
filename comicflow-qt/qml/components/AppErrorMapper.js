@@ -48,8 +48,21 @@ function readerActionDetails(message) {
 function readerActionResult(message) {
     return defaultActionResultPayload(
         message,
-        AppText.popupActionErrorTitle,
+        isArchiveUnavailableMessage(message)
+            ? AppText.popupIssueArchiveUnavailableTitle
+            : AppText.popupActionErrorTitle,
         readerActionDetails(message),
+        "",
+        "",
+        ""
+    )
+}
+
+function navigationResult(title, message) {
+    return defaultActionResultPayload(
+        message,
+        title,
+        "",
         "",
         "",
         ""
