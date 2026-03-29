@@ -171,6 +171,7 @@ qt_add_qml_module(comic_pile_qt
         qml/controllers/ReaderDisplayModeController.qml
         qml/controllers/ReaderSessionController.qml
         qml/controllers/ReaderPopupStateController.qml
+        qml/controllers/ReadingContinuationController.qml
         qml/controllers/NavigationSurfaceController.qml
         qml/controllers/LibraryBrowseController.qml
         qml/controllers/SeriesSelectionController.qml

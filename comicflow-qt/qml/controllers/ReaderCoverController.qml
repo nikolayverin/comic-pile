@@ -275,6 +275,23 @@ Item {
         libraryModelRef.requestIssueThumbnailAsync(comicId)
     }
 
+    function resolvedSeriesKeyForComic(comicId, fallbackSeriesKey) {
+        const normalizedComicId = Number(comicId || 0)
+        if (!libraryModelRef || normalizedComicId < 1) {
+            return String(fallbackSeriesKey || "").trim()
+        }
+
+        if (typeof libraryModelRef.navigationTargetForComic === "function") {
+            const target = libraryModelRef.navigationTargetForComic(normalizedComicId) || ({})
+            const resolvedSeriesKey = String(target.seriesKey || "").trim()
+            if (Boolean(target.ok) && resolvedSeriesKey.length > 0) {
+                return resolvedSeriesKey
+            }
+        }
+
+        return String(fallbackSeriesKey || "").trim()
+    }
+
     function displaySeriesTitleForIssue(issue) {
         const row = issue || {}
         const series = String(row.series || "").trim()
@@ -460,7 +477,10 @@ Item {
             pendingReaderPersistGuardComicId = Number(comicId || -1)
             pendingReaderPersistGuardPageIndex = Math.max(0, Math.round(normalizedPersistGuardPageIndex))
         }
-        root.readerSeriesKey = String(root.readerSeriesKey || root.selectedSeriesKey || "").trim()
+        root.readerSeriesKey = resolvedSeriesKeyForComic(
+            root.readerComicId,
+            root.readerSeriesKey
+        )
         root.readerBookmarkActive = false
         root.readerBookmarkPageIndex = -1
         root.readerBookmarkComicId = -1
@@ -474,7 +494,7 @@ Item {
         if (!root) return []
         const gridRows = listCopy(root.issuesGridData)
 
-        const seriesKey = String(root.readerSeriesKey || root.selectedSeriesKey || "").trim()
+        const seriesKey = String(root.readerSeriesKey || "").trim()
         if (libraryModelRef && seriesKey.length > 0) {
             const seriesRows = libraryModelRef.issuesForSeries(seriesKey, "__all__", "all", "")
             if (listCount(seriesRows) > 0) {
@@ -893,7 +913,10 @@ Item {
             }
 
             root.readerComicId = Number(result.comicId || root.readerComicId)
-            root.readerSeriesKey = String(result.seriesKey || root.readerSeriesKey || root.selectedSeriesKey || "").trim()
+            root.readerSeriesKey = resolvedSeriesKeyForComic(
+                Number(result.comicId || root.readerComicId),
+                String(result.seriesKey || root.readerSeriesKey || "").trim()
+            )
             root.readerTitle = String(result.title || root.readerTitle || ("Issue #" + root.readerComicId))
             root.readerPageCount = Number(result.pageCount || 0)
             const hasPendingStartOverride = Number(pendingReaderStartOverrideComicId || -1) === Number(root.readerComicId || 0)

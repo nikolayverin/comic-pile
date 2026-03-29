@@ -250,7 +250,6 @@ Item {
 
         function onReaderComicIdChanged() { controller.refreshIssueNavigationState() }
         function onReaderSeriesKeyChanged() { controller.refreshIssueNavigationState() }
-        function onSelectedSeriesKeyChanged() { controller.refreshIssueNavigationState() }
         function onIssuesGridDataChanged() { controller.refreshIssueNavigationState() }
     }
 

@@ -251,8 +251,8 @@ ApplicationWindow {
     property alias seriesSelectionAnchorIndex: seriesSelectionController.seriesSelectionAnchorIndex
     property alias selectedVolumeKey: libraryBrowseController.selectedVolumeKey
     property alias selectedVolumeTitle: libraryBrowseController.selectedVolumeTitle
-    property int continueReadingComicId: -1
-    property string continueReadingSeriesKey: ""
+    property alias continueReadingComicId: readingContinuationController.continueReadingComicId
+    property alias continueReadingSeriesKey: readingContinuationController.continueReadingSeriesKey
     property alias pendingSeriesKey: deleteController.pendingSeriesKey
     property alias pendingSeriesTitle: deleteController.pendingSeriesTitle
     property alias pendingSeriesKeys: deleteController.pendingSeriesKeys
@@ -380,6 +380,12 @@ ApplicationWindow {
         seriesHeaderDialogRef: seriesHeaderDialog
     }
 
+    ReadingContinuationController {
+        id: readingContinuationController
+        rootObject: root
+        libraryModelRef: libraryModel
+    }
+
     LibraryBrowseController {
         id: libraryBrowseController
         rootObject: root
@@ -438,6 +444,7 @@ ApplicationWindow {
         popupControllerRef: popupController
         appSettingsRef: appSettingsController
         issuesFlick: root.activeIssuesFlick
+        readingContinuationControllerRef: readingContinuationController
     }
 
     property string sevenZipConfiguredPath: ""
@@ -600,22 +607,12 @@ ApplicationWindow {
     }
 
     function rememberContinueReadingTarget(comicId, seriesKey, displayTitle, persistState) {
-        const normalizedComicId = Number(comicId || 0)
-        const nextComicId = normalizedComicId > 0 ? normalizedComicId : -1
-        const nextSeriesKey = nextComicId > 0
-            ? String(seriesKey || "").trim()
-            : ""
-        const changed = continueReadingComicId !== nextComicId
-            || continueReadingSeriesKey !== nextSeriesKey
-        continueReadingComicId = nextComicId
-        continueReadingSeriesKey = nextSeriesKey
-        if (changed && persistState !== false && libraryModel
-                && typeof libraryModel.writeContinueReadingState === "function") {
-            libraryModel.writeContinueReadingState({
-                comicId: continueReadingComicId,
-                seriesKey: continueReadingSeriesKey
-            })
-        }
+        readingContinuationController.rememberContinueReadingTarget(
+            comicId,
+            seriesKey,
+            displayTitle,
+            persistState
+        )
     }
 
     function coverSourceForComic(comicId) {

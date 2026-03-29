@@ -492,10 +492,16 @@ QVariantMap ComicsListModel::buildIssueNavigationTarget(const ComicRow &row) con
         ? row.filename.trimmed()
         : row.title.trimmed();
     const QString normalizedReadStatus = normalizeReadStatus(row.readStatus);
+    const bool hasBookmark = row.bookmarkPage > 0;
+    const bool hasProgress = row.currentPage > 0 && normalizedReadStatus != QStringLiteral("read");
+    const int startPageIndex = hasBookmark
+        ? std::max(0, row.bookmarkPage - 1)
+        : (hasProgress ? std::max(0, row.currentPage - 1) : 0);
 
     return {
         { QStringLiteral("ok"), true },
         { QStringLiteral("comicId"), row.id },
+        { QStringLiteral("anchorComicId"), row.id },
         { QStringLiteral("seriesKey"), normalizedSeriesKey },
         { QStringLiteral("seriesTitle"), row.seriesGroupTitle.trimmed().isEmpty() ? row.series.trimmed() : row.seriesGroupTitle.trimmed() },
         { QStringLiteral("title"), row.title.trimmed() },
@@ -504,7 +510,10 @@ QVariantMap ComicsListModel::buildIssueNavigationTarget(const ComicRow &row) con
         { QStringLiteral("issueNumber"), row.issueNumber.trimmed() },
         { QStringLiteral("readStatus"), normalizedReadStatus.isEmpty() ? QStringLiteral("unread") : normalizedReadStatus },
         { QStringLiteral("currentPage"), row.currentPage },
-        { QStringLiteral("bookmarkPage"), row.bookmarkPage }
+        { QStringLiteral("bookmarkPage"), row.bookmarkPage },
+        { QStringLiteral("hasBookmark"), hasBookmark },
+        { QStringLiteral("hasProgress"), hasProgress },
+        { QStringLiteral("startPageIndex"), startPageIndex }
     };
 }
 

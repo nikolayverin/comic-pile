@@ -11,11 +11,14 @@ Item {
     property var popupControllerRef: null
     property var appSettingsRef: null
     property var issuesFlick: null
+    property var readingContinuationControllerRef: null
 
     property bool issueOrderDescending: false
     property var pendingIssueTarget: null
     property int pendingIssueResolveAttempts: 0
-    property bool continueReadingAvailable: false
+    readonly property bool continueReadingAvailable: readingContinuationControllerRef
+        ? Boolean(readingContinuationControllerRef.continueReadingAvailable)
+        : false
 
     readonly property string issueOrderButtonText: issueOrderDescending ? "9 \u2192 1" : "1 \u2192 9"
 
@@ -47,65 +50,10 @@ Item {
     }
 
     function resolveContinueReadingTarget() {
-        if (!libraryModelRef) {
-            return ({ ok: false, message: "No active reading session is available yet." })
-        }
-
-        const root = rootObject
-        const rememberedComicId = root ? Number(root.continueReadingComicId || -1) : -1
-        const rememberedSeriesKey = root
-            ? String(root.continueReadingSeriesKey || "").trim()
-            : ""
-        if (rememberedComicId > 0 && typeof libraryModelRef.navigationTargetForComic === "function") {
-            const rememberedTarget = libraryModelRef.navigationTargetForComic(rememberedComicId) || ({})
-            if (Boolean(rememberedTarget.ok)) {
-                const resolvedSeriesKey = String(rememberedTarget.seriesKey || "").trim()
-                if (root
-                        && resolvedSeriesKey.length > 0
-                        && resolvedSeriesKey !== rememberedSeriesKey
-                        && typeof root.rememberContinueReadingTarget === "function") {
-                    root.rememberContinueReadingTarget(
-                        Number(rememberedTarget.comicId || rememberedComicId),
-                        resolvedSeriesKey,
-                        String(rememberedTarget.displayTitle || rememberedTarget.title || "").trim()
-                    )
-                }
-                return rememberedTarget
-            }
-            return {
-                ok: false,
-                message: "The last reading issue is no longer available."
-            }
-        }
-
-        return {
-            ok: false,
-            message: "No active reading session is available yet."
-        }
-    }
-
-    function refreshContinueReadingAvailability() {
-        const target = resolveContinueReadingTarget() || ({})
-        continueReadingAvailable = Boolean(target.ok)
-    }
-
-    function loadPersistedContinueReadingTarget() {
-        const root = rootObject
-        if (!root || !libraryModelRef || typeof libraryModelRef.readContinueReadingState !== "function") {
-            refreshContinueReadingAvailability()
-            return
-        }
-
-        const persistedState = libraryModelRef.readContinueReadingState() || ({})
-        if (typeof root.rememberContinueReadingTarget === "function") {
-            root.rememberContinueReadingTarget(
-                Number(persistedState.comicId || -1),
-                String(persistedState.seriesKey || ""),
-                "",
-                false
-            )
-        }
-        refreshContinueReadingAvailability()
+        return readingContinuationControllerRef
+            && typeof readingContinuationControllerRef.resolveContinueReadingTarget === "function"
+            ? (readingContinuationControllerRef.resolveContinueReadingTarget() || ({ ok: false, message: "No active reading session is available yet." }))
+            : ({ ok: false, message: "No active reading session is available yet." })
     }
 
     function clearSeriesViewFilters() {
@@ -289,10 +237,10 @@ Item {
             return
         }
 
-        const target = libraryModelRef.nextUnreadTarget(
-            String(continueTarget.seriesKey || "").trim(),
-            Number(continueTarget.comicId || -1)
-        ) || ({})
+        const target = readingContinuationControllerRef
+            && typeof readingContinuationControllerRef.nextUnreadTarget === "function"
+            ? (readingContinuationControllerRef.nextUnreadTarget() || ({}))
+            : ({})
         if (!Boolean(target.ok)) {
             showNavigationMessage(
                 "Next unread",
@@ -339,10 +287,6 @@ Item {
     Connections {
         target: rootObject
 
-        function onContinueReadingComicIdChanged() {
-            controller.refreshContinueReadingAvailability()
-        }
-
         function onIssuesGridDataChanged() {
             controller.tryResolvePendingIssueTarget()
         }
@@ -351,14 +295,4 @@ Item {
             controller.tryResolvePendingIssueTarget()
         }
     }
-
-    Connections {
-        target: libraryModelRef
-
-        function onStatusChanged() {
-            controller.refreshContinueReadingAvailability()
-        }
-    }
-
-    Component.onCompleted: loadPersistedContinueReadingTarget()
 }
