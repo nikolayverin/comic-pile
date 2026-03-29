@@ -117,6 +117,8 @@ ApplicationWindow {
     property color uiMenuIdleText: themeColors.uiMenuIdleText
     property color uiWindowControlCloseHover: themeColors.uiWindowControlCloseHover
     property color uiActionHoverBackground: themeColors.uiActionHoverBackground
+    property color topBarInnerShadowColor: "#555555"
+    property color bottomBarInnerShadowColor: "#000000"
     property color sidebarRowHoverColor: themeColors.sidebarRowHoverColor
     property color loadErrorBannerBg: themeColors.loadErrorBannerBg
     property color loadErrorBannerText: themeColors.loadErrorBannerText
@@ -149,6 +151,7 @@ ApplicationWindow {
     property int radiusSm: 6
     property int radiusMd: 10
     property int radiusLg: 18
+    property int windowCornerRadius: 14
     property int motionFastMs: 120
     property int motionBaseMs: 180
     property int motionSlowMs: 260
@@ -2955,6 +2958,7 @@ ApplicationWindow {
             textColor: root.textPrimary
             mutedTextColor: root.textMuted
             textShadowColor: root.uiTextShadow
+            topEdgeColor: root.topBarInnerShadowColor
             menuTextIdleColor: root.uiMenuIdleText
             menuTextActiveColor: root.textPrimary
             menuPopupBackgroundColor: root.uiMenuBackground
@@ -2982,6 +2986,7 @@ ApplicationWindow {
             helperButtonsSpacing: 8
             continueReadingEnabled: navigationSurfaceController.continueReadingAvailable
             centerLabel: uiTokens.appTitle
+            windowCornerRadius: root.windowCornerRadius
             onContinueReadingRequested: navigationSurfaceController.continueReading()
             onNextUnreadRequested: navigationSurfaceController.nextUnread()
             onSeriesInfoRequested: navigationSurfaceController.toggleSeriesInfo()
@@ -3083,6 +3088,54 @@ ApplicationWindow {
                 anchors.right: parent.right
                 height: 1
                 color: root.lineBottombarTop
+            }
+
+            Canvas {
+                id: bottomInnerShadow
+                visible: root.visibility !== Window.Maximized
+                    && root.visibility !== Window.FullScreen
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: Math.max(2, root.windowCornerRadius + 1)
+                antialiasing: true
+                contextType: "2d"
+                z: 2
+
+                onPaint: {
+                    const ctx = getContext("2d")
+                    ctx.reset()
+
+                    const w = Math.max(1, width)
+                    const h = Math.max(1, height)
+                    const px = 0.5
+                    const r = Math.max(0, Math.min(root.windowCornerRadius, (w - 1) / 2, h - 1))
+                    const fadeWidth = Math.max(1, Math.min(r + 2, w * 0.04))
+                    const fadeStop = Math.max(0.001, Math.min(0.49, fadeWidth / w))
+
+                    const grad = ctx.createLinearGradient(0, 0, w, 0)
+                    grad.addColorStop(0.0, "transparent")
+                    grad.addColorStop(fadeStop, root.bottomBarInnerShadowColor)
+                    grad.addColorStop(1.0 - fadeStop, root.bottomBarInnerShadowColor)
+                    grad.addColorStop(1.0, "transparent")
+
+                    ctx.strokeStyle = grad
+                    ctx.lineWidth = 1
+                    ctx.lineJoin = "round"
+                    ctx.lineCap = "round"
+
+                    ctx.beginPath()
+                    ctx.moveTo(px, h - r - px)
+                    ctx.quadraticCurveTo(px, h - px, r + px, h - px)
+                    ctx.lineTo(w - r - px, h - px)
+                    ctx.quadraticCurveTo(w - px, h - px, w - px, h - r - px)
+                    ctx.stroke()
+                }
+
+                onVisibleChanged: requestPaint()
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+                Component.onCompleted: requestPaint()
             }
 
             BottomBarHelperButton {

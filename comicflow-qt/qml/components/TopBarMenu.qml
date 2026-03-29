@@ -122,6 +122,7 @@ Rectangle {
         onVisibleChanged: requestPaint()
         onWidthChanged: requestPaint()
         onHeightChanged: requestPaint()
+        Component.onCompleted: requestPaint()
     }
 
     MouseArea {
