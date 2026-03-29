@@ -1,5 +1,7 @@
 import QtQuick
 import QtQuick.Window
+import "../components/AppText.js" as AppText
+import "../components/AppErrorMapper.js" as AppErrorMapper
 
 Item {
     id: controller
@@ -25,7 +27,7 @@ Item {
     property var deleteErrorDialogRef: null
 
     property string actionResultMessage: ""
-    property string actionResultTitle: "Action Error"
+    property string actionResultTitle: AppText.popupActionErrorTitle
     property string actionResultDetailsText: ""
     property string actionResultSecondaryText: ""
     property string actionResultSecondaryPath: ""
@@ -129,63 +131,74 @@ Item {
         }
     }
 
-    function showActionResult(message, isError) {
-        if (!Boolean(isError)) return
-        actionResultTitle = "Action Error"
-        actionResultMessage = String(message || "").trim()
+    function applyActionResultPayload(payload) {
+        const next = payload || ({})
+        actionResultTitle = String(next.title || AppText.popupActionErrorTitle).trim()
+        if (actionResultTitle.length < 1) {
+            actionResultTitle = AppText.popupActionErrorTitle
+        }
+        actionResultMessage = String(next.message || "").trim()
         if (actionResultMessage.length < 1) {
             actionResultMessage = "Unknown error."
         }
-        actionResultDetailsText = ""
-        actionResultSecondaryText = ""
-        actionResultSecondaryPath = ""
-        actionResultSecondaryAction = ""
+        actionResultDetailsText = String(next.detailsText || "").trim()
+        actionResultSecondaryPath = String(next.filePath || "").trim()
+        actionResultSecondaryAction = String(next.actionKey || "").trim()
+        actionResultSecondaryText = String(next.buttonText || "").trim()
+        if (actionResultSecondaryPath.length < 1 && actionResultSecondaryAction.length < 1) {
+            actionResultSecondaryText = ""
+        }
+    }
+
+    function showMappedActionResult(payload) {
+        applyActionResultPayload(payload)
         openExclusivePopup(actionResultDialogRef)
+    }
+
+    function showActionResult(message, isError) {
+        if (!Boolean(isError)) return
+        showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
+            message,
+            AppText.popupActionErrorTitle,
+            "",
+            "",
+            "",
+            ""
+        ))
     }
 
     function showActionResultWithDetails(message, detailsText) {
-        actionResultTitle = "Action Error"
-        actionResultMessage = String(message || "").trim()
-        if (actionResultMessage.length < 1) {
-            actionResultMessage = "Unknown error."
-        }
-        actionResultDetailsText = String(detailsText || "").trim()
-        actionResultSecondaryText = ""
-        actionResultSecondaryPath = ""
-        actionResultSecondaryAction = ""
-        openExclusivePopup(actionResultDialogRef)
+        showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
+            message,
+            AppText.popupActionErrorTitle,
+            detailsText,
+            "",
+            "",
+            ""
+        ))
     }
 
     function showActionResultWithFolder(message, detailsText, filePath, buttonText) {
-        actionResultTitle = "Action Error"
-        actionResultMessage = String(message || "").trim()
-        if (actionResultMessage.length < 1) {
-            actionResultMessage = "Unknown error."
-        }
-        actionResultDetailsText = String(detailsText || "").trim()
-        actionResultSecondaryPath = String(filePath || "").trim()
-        actionResultSecondaryAction = ""
-        actionResultSecondaryText = actionResultSecondaryPath.length > 0
-            ? String(buttonText || "Open folder")
-            : ""
-        openExclusivePopup(actionResultDialogRef)
+        showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
+            message,
+            AppText.popupActionErrorTitle,
+            detailsText,
+            filePath ? String(buttonText || AppText.popupOpenFolder) : "",
+            "",
+            filePath
+        ))
     }
 
     function showActionResultWithAction(message, detailsText, buttonText, actionKey) {
-        if (String(actionResultTitle || "").trim().length < 1) {
-            actionResultTitle = "Action Error"
-        }
-        actionResultMessage = String(message || "").trim()
-        if (actionResultMessage.length < 1) {
-            actionResultMessage = "Unknown error."
-        }
-        actionResultDetailsText = String(detailsText || "").trim()
-        actionResultSecondaryPath = ""
-        actionResultSecondaryAction = String(actionKey || "").trim()
-        actionResultSecondaryText = actionResultSecondaryAction.length > 0
-            ? String(buttonText || "").trim()
-            : ""
-        openExclusivePopup(actionResultDialogRef)
+        const explicitTitle = String(actionResultTitle || "").trim()
+        showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
+            message,
+            explicitTitle.length > 0 ? explicitTitle : AppText.popupActionErrorTitle,
+            detailsText,
+            buttonText,
+            actionKey,
+            ""
+        ))
     }
 
     function triggerActionResultSecondary() {
@@ -262,7 +275,7 @@ Item {
     }
 
     function handleActionResultDialogClosed() {
-        actionResultTitle = "Action Error"
+        actionResultTitle = AppText.popupActionErrorTitle
         actionResultMessage = ""
         actionResultDetailsText = ""
         actionResultSecondaryText = ""

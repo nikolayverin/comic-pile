@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "SettingsCatalog.js" as SettingsCatalog
+import "AppText.js" as AppText
 
 Item {
     id: root
@@ -125,7 +126,7 @@ Item {
         id: libraryBackgroundLabel
         x: 0
         y: 0
-        text: "Cover grid background"
+        text: AppText.settingsAppearanceCoverGridBackground
         color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
         font.family: Qt.application.font.family
         font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11
@@ -155,7 +156,7 @@ Item {
                     anchors.fill: parent
                     chromeVisible: sourceSlotHover.hovered
                         || String(parent.modelData.key || "") === root.backgroundSource
-                    title: parent.modeKey === "Custom image" ? "Custom" : String(parent.modelData.label || "")
+                    title: parent.modeKey === "Custom image" ? AppText.settingsAppearanceCustomShort : String(parent.modelData.label || "")
                     selected: String(parent.modelData.key || "") === root.backgroundSource
                     bodyColor: themeColorsRef ? themeColorsRef.settingsBackgroundChoiceBodyColor : "#333333"
                     cornerRadius: 6
@@ -362,7 +363,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                text: "Use a built-in cover grid background"
+                text: AppText.settingsAppearanceUseBuiltInBackground
                 color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
                 font.family: Qt.application.font.family
                 font.pixelSize: 11
@@ -566,7 +567,7 @@ Item {
                 id: chooseCustomBackgroundButton
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.hasCustomImage ? "Change" : "Upload"
+                text: root.hasCustomImage ? AppText.commonChange : AppText.commonUpload
                 textPixelSize: 13
                 cornerRadius: Math.round(height / 2)
                 minimumWidth: 92
@@ -591,7 +592,7 @@ Item {
         Text {
             x: 0
             y: Math.round((parent.height - implicitHeight) / 2)
-            text: "Grid density"
+            text: AppText.settingsAppearanceGridDensity
             color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
             font.family: Qt.application.font.family
             font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11
@@ -618,7 +619,7 @@ Item {
         Text {
             x: 0
             y: Math.round((parent.height - implicitHeight) / 2)
-            text: "Show hero block"
+            text: AppText.settingsAppearanceShowHeroBlock
             color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
             font.family: Qt.application.font.family
             font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11
@@ -644,7 +645,7 @@ Item {
         Text {
             x: 0
             y: Math.round((parent.height - implicitHeight) / 2)
-            text: "Show bookmark ribbon on grid covers"
+            text: AppText.settingsAppearanceShowBookmarkRibbon
             color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
             font.family: Qt.application.font.family
             font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11

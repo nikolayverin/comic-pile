@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "SettingsCatalog.js" as SettingsCatalog
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -104,10 +105,10 @@ PopupDialogWindow {
     function conciseSevenZipVerifyMessage() {
         const rawText = String(dialog.sevenZipStatusMessage || "").trim()
         if (rawText.length < 1) {
-            return "7-Zip is not available."
+            return AppText.settingsSevenZipUnavailable
         }
         if (rawText.toLowerCase().indexOf("missing") >= 0) {
-            return "7-Zip is not available."
+            return AppText.settingsSevenZipUnavailable
         }
         return rawText
     }
@@ -233,7 +234,7 @@ PopupDialogWindow {
             id: settingsTitle
             x: dialog.menuTextGlobalX
             y: dialog.menuTop - dialog.titleToMenuGap - implicitHeight
-            text: "Settings"
+            text: AppText.popupSettingsTitle
             color: styleTokens.textColor
             font.family: Qt.application.font.family
             font.pixelSize: 13
@@ -441,7 +442,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: 14
-                    text: "Reset"
+                    text: AppText.commonReset
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -512,7 +513,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: resetSettingsButton.y + Math.round((resetSettingsButton.height - implicitHeight) / 2)
-                    text: "Reset settings to default"
+                    text: AppText.settingsResetToDefault
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -548,7 +549,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: Math.round((dialog.optionRowPitch - height) / 2)
-                    text: "Choose"
+                    text: AppText.commonChoose
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -565,7 +566,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: "7-Zip path:"
+                    text: AppText.settingsSevenZipPath
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -596,7 +597,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: dialog.optionRowPitch + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: "Verify 7-Zip"
+                    text: AppText.settingsVerifySevenZip
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -676,7 +677,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: "Verify"
+                    text: AppText.commonCheck
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -721,7 +722,7 @@ PopupDialogWindow {
                     readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
-                    text: "Supported archive formats:"
+                    text: AppText.settingsSupportedArchiveFormats
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -753,7 +754,7 @@ PopupDialogWindow {
                     readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 24
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
-                    text: "Supported image formats:"
+                    text: AppText.settingsSupportedImageFormats
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -776,7 +777,7 @@ PopupDialogWindow {
                     readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 48
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
-                    text: "Supported document formats:"
+                    text: AppText.settingsSupportedDocumentFormats
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -815,7 +816,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: Math.round((dialog.optionRowPitch - height) / 2)
-                    text: "Open"
+                    text: AppText.commonOpen
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -833,7 +834,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: "Library data location:"
+                    text: AppText.settingsLibraryDataLocation
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -865,7 +866,7 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: "Open"
+                    text: AppText.commonOpen
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -884,7 +885,7 @@ PopupDialogWindow {
                     x: 0
                     y: dialog.optionRowPitch
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: "Library folder:"
+                    text: AppText.settingsLibraryFolder
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -918,7 +919,7 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch * 2
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: "Open"
+                    text: AppText.commonOpen
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -937,7 +938,7 @@ PopupDialogWindow {
                     x: 0
                     y: dialog.optionRowPitch * 2
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: "Runtime folder:"
+                    text: AppText.settingsRuntimeFolder
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -971,7 +972,7 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch * 3
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: "Check"
+                    text: AppText.commonCheck
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -987,7 +988,7 @@ PopupDialogWindow {
                     pressedEdgeColor: dialog.actionPressedEdgeColor
                     onClicked: {
                         dialog.storageAccessCheckState = "running"
-                        dialog.storageAccessResultText = "Checking..."
+                        dialog.storageAccessResultText = AppText.settingsChecking
                         dialog.storageAccessHintText = ""
                         dialog.checkStorageAccessRequested()
                     }
@@ -1066,7 +1067,7 @@ PopupDialogWindow {
                     x: 0
                     y: dialog.optionRowPitch * 3
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: "Check storage access"
+                    text: AppText.settingsCheckStorageAccess
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -1118,7 +1119,7 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: libraryDataContent.relocationBlockTop
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: libraryDataContent.hasPendingMove ? "Change" : "Choose"
+                    text: libraryDataContent.hasPendingMove ? AppText.commonChange : AppText.commonChoose
                     textPixelSize: 13
                     cornerRadius: 10
                     minimumWidth: 92
@@ -1136,7 +1137,7 @@ PopupDialogWindow {
                     x: 0
                     y: libraryDataContent.relocationBlockTop
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: "Move library data:"
+                    text: AppText.settingsMoveLibraryData
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -1159,7 +1160,7 @@ PopupDialogWindow {
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
                     text: libraryDataContent.hasPendingMove
                         ? String(dialog.libraryDataPendingMovePath || "")
-                        : "No destination selected"
+                        : AppText.settingsNoDestinationSelected
                     color: libraryDataContent.hasPendingMove ? styleTokens.textColor : styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 13
@@ -1171,7 +1172,7 @@ PopupDialogWindow {
                     x: dialog.importPrimaryLabelWidth
                     y: libraryDataContent.relocationBlockTop + dialog.optionRowPitch + 1
                     width: parent.width - x - dialog.optionControlRightMargin
-                    text: "Scheduled after restart."
+                    text: AppText.settingsScheduledAfterRestart
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -1183,7 +1184,7 @@ PopupDialogWindow {
                         + dialog.optionRowPitch
                         + (libraryDataContent.hasPendingMove ? 17 : 9)
                     width: parent.width - dialog.optionControlRightMargin
-                    text: "The transfer will run after you restart the app and may take time depending on library size. Choose an empty folder."
+                    text: AppText.settingsRelocationHint
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11

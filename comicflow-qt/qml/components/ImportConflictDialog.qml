@@ -1,16 +1,17 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
 
     ThemeColors { id: themeColors }
 
-    property string titleText: "Issue Already Exists"
-    property string messageText: "This archive matches an existing issue in your library. Choose what to do:"
-    property string secondaryActionText: "Keep current"
-    property string primaryActionText: "Replace"
+    property string titleText: AppText.popupImportConflictTitle
+    property string messageText: AppText.popupImportConflictMessage
+    property string secondaryActionText: AppText.popupImportConflictKeepCurrent
+    property string primaryActionText: AppText.popupImportConflictReplace
     property string incomingLabel: ""
     property string existingLabel: ""
     property string nextIncomingLabel: ""
@@ -74,7 +75,7 @@ PopupDialogWindow {
 
                 Text {
                     visible: dialog.incomingLabel.length > 0
-                    text: "<font color=\"" + styleTokens.hintTextColor + "\">Incoming archive:</font> "
+                    text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupIncomingArchive + "</font> "
                         + "<font color=\"" + styleTokens.textColor + "\">"
                         + dialog.incomingLabel
                         + "</font>"
@@ -86,7 +87,7 @@ PopupDialogWindow {
 
                 Text {
                     visible: dialog.existingLabel.length > 0
-                    text: "<font color=\"" + styleTokens.hintTextColor + "\">Existing record:</font> "
+                    text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupExistingRecord + "</font> "
                         + "<font color=\"" + styleTokens.textColor + "\">"
                         + dialog.existingLabel
                         + "</font>"
@@ -110,7 +111,7 @@ PopupDialogWindow {
 
                     Text {
                         visible: dialog.nextIncomingLabel.length > 0
-                        text: "<font color=\"" + styleTokens.hintTextColor + "\">Incoming archive:</font> "
+                        text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupIncomingArchive + "</font> "
                             + "<font color=\"" + styleTokens.textColor + "\">"
                             + dialog.nextIncomingLabel
                             + "</font>"
@@ -122,7 +123,7 @@ PopupDialogWindow {
 
                     Text {
                         visible: dialog.nextExistingLabel.length > 0
-                        text: "<font color=\"" + styleTokens.hintTextColor + "\">Existing record:</font> "
+                        text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupExistingRecord + "</font> "
                             + "<font color=\"" + styleTokens.textColor + "\">"
                             + dialog.nextExistingLabel
                             + "</font>"
@@ -192,7 +193,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Skip all"
+                text: AppText.commonSkipAll
                 enabled: !dialog.progressActive
                 onClicked: dialog.skipAllRequested()
             }
@@ -207,7 +208,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Replace all"
+                text: AppText.commonReplaceAll
                 enabled: !dialog.progressActive
                 onClicked: dialog.replaceAllRequested()
             }

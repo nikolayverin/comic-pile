@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -44,7 +45,7 @@ PopupDialogWindow {
 
     popupStyle: styleTokens
     titleTopMargin: 12
-    title: dialog.headline.length > 0 ? dialog.headline : "Couldn't remove file"
+    title: dialog.headline.length > 0 ? dialog.headline : AppText.popupDeleteErrorTitle
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: Math.max(
         deleteErrorFooter.requiredDialogWidth,
@@ -107,7 +108,7 @@ PopupDialogWindow {
 
             Text {
                 visible: dialog.systemText.length > 0
-                text: "System: " + dialog.systemText
+                text: AppText.popupSystemPrefix + dialog.systemText
                 color: styleTokens.subtleTextColor
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
@@ -135,7 +136,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: dialog.retryStatusText.length > 0 ? dialog.retryStatusText : "Retrying delete..."
+                text: dialog.retryStatusText.length > 0 ? dialog.retryStatusText : AppText.popupDeleteRetrying
                 color: styleTokens.subtleTextColor
                 font.pixelSize: 12
             }
@@ -161,7 +162,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: dialog.retryActive ? "Retrying..." : "Retry"
+                text: dialog.retryActive ? AppText.commonRetrying : AppText.commonRetry
                 enabled: !dialog.retryActive
                 onClicked: dialog.retryRequested()
             }
@@ -175,7 +176,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Open folder"
+                text: AppText.popupOpenFolder
                 enabled: dialog.primaryPath.length > 0 && !dialog.retryActive
                 onClicked: dialog.openFolderRequested()
             }
@@ -189,7 +190,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Close"
+                text: AppText.commonClose
                 enabled: !dialog.retryActive
                 onClicked: dialog.close()
             }
@@ -210,7 +211,7 @@ PopupDialogWindow {
         TextMetrics {
             id: deleteSystemMetrics
             font.pixelSize: 12
-            text: dialog.systemText.length > 0 ? ("System: " + dialog.systemText) : ""
+            text: dialog.systemText.length > 0 ? (AppText.popupSystemPrefix + dialog.systemText) : ""
         }
     }
 }

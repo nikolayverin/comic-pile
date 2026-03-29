@@ -1,11 +1,12 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
 
-    property string dialogTitle: "Action Error"
+    property string dialogTitle: AppText.popupActionErrorTitle
     property string message: ""
     property string detailsText: ""
     property string secondaryActionText: ""
@@ -131,7 +132,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "OK"
+                text: AppText.commonOk
                 onClicked: dialog.close()
             }
         }

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -64,7 +65,7 @@ PopupDialogWindow {
 
     popupStyle: styleTokens
     titleTopMargin: 12
-    title: "Import Errors"
+    title: AppText.popupImportErrorsTitle
     showCloseButton: false
     closePolicy: Popup.NoAutoClose
     width: Math.min(availableDialogWidth, preferredDialogWidth)
@@ -100,7 +101,7 @@ PopupDialogWindow {
             blockSpacing: 18
 
             Text {
-                text: "These archives were not imported. Review reason and retry after fixing."
+                text: AppText.popupImportErrorsIntro
                 color: styleTokens.subtleTextColor
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
@@ -184,7 +185,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Retry"
+                text: AppText.commonRetry
                 enabled: dialog.actionsEnabled && itemCount > 0
                 onClicked: dialog.retryRequested(0)
             }
@@ -198,7 +199,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Skip"
+                text: AppText.commonSkip
                 enabled: dialog.actionsEnabled && itemCount > 0
                 onClicked: dialog.skipRequested(0)
             }
@@ -212,7 +213,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Skip all"
+                text: AppText.commonSkipAll
                 enabled: dialog.actionsEnabled && itemCount > 0
                 onClicked: dialog.skipAllRequested()
             }
@@ -221,7 +222,7 @@ PopupDialogWindow {
         TextMetrics {
             id: failedImportsIntroMetrics
             font.pixelSize: 12
-            text: "These archives were not imported. Review reason and retry after fixing."
+            text: AppText.popupImportErrorsIntro
         }
 
         TextMetrics {

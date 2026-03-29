@@ -1,4 +1,5 @@
 .pragma library
+.import "AppText.js" as AppText
 
 function optionKeys(entries) {
     const result = []
@@ -144,35 +145,35 @@ function appearanceTextureUsesDefaultBase(textureKey) {
 var appearanceBackgroundImageModeOptions = ["Fit", "Fill", "Stretch", "Tile"]
 var appearanceBackgroundTileSizeOptions = ["64x64px", "256x256px", "512x512px"]
 var settingsSections = [
-    { key: "general", label: "General", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-pencil-ruler.svg" },
-    { key: "reader", label: "Reader", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-book-open-text.svg" },
-    { key: "import_archives", label: "Import & Archives", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-download.svg" },
-    { key: "library_data", label: "Library & Data", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-library-big.svg" },
-    { key: "appearance", label: "Appearance", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-appearance.svg" },
-    { key: "safety", label: "Safety", iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-shield-check.svg" }
+    { key: "general", label: AppText.settingsGeneralSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-pencil-ruler.svg" },
+    { key: "reader", label: AppText.settingsReaderSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-book-open-text.svg" },
+    { key: "import_archives", label: AppText.settingsImportArchivesSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-download.svg" },
+    { key: "library_data", label: AppText.settingsLibraryDataSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-library-big.svg" },
+    { key: "appearance", label: AppText.settingsAppearanceSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-appearance.svg" },
+    { key: "safety", label: AppText.settingsSafetySection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-shield-check.svg" }
 ]
 
 var sectionOptionRows = {
     general: [
         {
-            label: "Default reading mode",
+            label: AppText.settingsGeneralDefaultReadingMode,
             controlType: "dropdown",
             valueKey: "general_default_reading_mode",
             options: generalDefaultReadingModeOptions
         },
         {
-            label: "Open reader in fullscreen by default",
+            label: AppText.settingsGeneralOpenReaderFullscreenByDefault,
             controlType: "checkbox",
             valueKey: "general_open_reader_fullscreen_by_default"
         },
         {
-            label: "After import:",
+            label: AppText.settingsGeneralAfterImport,
             controlType: "dropdown",
             valueKey: "general_after_import",
             options: generalAfterImportOptions
         },
         {
-            label: "Default view after launch:",
+            label: AppText.settingsGeneralDefaultViewAfterLaunch,
             controlType: "dropdown",
             valueKey: "general_default_view_after_launch",
             options: generalDefaultViewAfterLaunchOptions
@@ -180,35 +181,35 @@ var sectionOptionRows = {
     ],
     reader: [
         {
-            label: "Default reading mode",
+            label: AppText.settingsGeneralDefaultReadingMode,
             controlType: "segmented",
             valueKey: "reader_default_reading_mode",
             options: readerDefaultReadingModeOptions
         },
         {
-            label: "Remember last reader mode",
+            label: AppText.settingsReaderRememberLastReaderMode,
             controlType: "switch",
             valueKey: "reader_remember_last_reader_mode"
         },
         {
-            label: "Magnifier size",
+            label: AppText.settingsReaderMagnifierSize,
             controlType: "segmented",
             valueKey: "reader_magnifier_size",
             options: readerMagnifierSizeOptions
         },
         {
-            label: "Page edge behavior",
+            label: AppText.settingsReaderPageEdgeBehavior,
             controlType: "segmented",
             valueKey: "reader_page_edge_behavior",
             options: readerPageEdgeBehaviorOptions
         },
         {
-            label: "Auto-open bookmarked page instead of last page",
+            label: AppText.settingsReaderAutoOpenBookmarkedPage,
             controlType: "switch",
             valueKey: "reader_auto_open_bookmarked_page_instead_of_last_page"
         },
         {
-            label: "Show action notifications in Reader",
+            label: AppText.settingsReaderShowActionNotifications,
             controlType: "switch",
             valueKey: "reader_show_action_notifications"
         }
@@ -217,24 +218,24 @@ var sectionOptionRows = {
     library_data: [],
     appearance: [
         {
-            label: "Cover grid background",
+            label: AppText.settingsAppearanceCoverGridBackground,
             controlType: "dropdown",
             valueKey: "appearance_library_background",
             options: appearanceBackgroundSourceModeKeys
         },
         {
-            label: "Grid density",
+            label: AppText.settingsAppearanceGridDensity,
             controlType: "segmented",
             valueKey: "appearance_grid_density",
             options: appearanceGridDensityOptions
         },
         {
-            label: "Show hero block",
+            label: AppText.settingsAppearanceShowHeroBlock,
             controlType: "switch",
             valueKey: "appearance_show_hero_block"
         },
         {
-            label: "Show bookmark ribbon on grid covers",
+            label: AppText.settingsAppearanceShowBookmarkRibbon,
             controlType: "switch",
             valueKey: "reader_show_bookmark_ribbon_on_grid_covers"
         }

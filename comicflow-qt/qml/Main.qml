@@ -5,6 +5,7 @@ import QtQuick.Window
 import "components"
 import "components/PublisherCatalog.js" as PublisherCatalog
 import "components/SettingsCatalog.js" as SettingsCatalog
+import "components/AppErrorMapper.js" as AppErrorMapper
 import "controllers"
 
 ApplicationWindow {
@@ -822,13 +823,7 @@ ApplicationWindow {
     function presentLibraryLoadError(messageText) {
         const message = String(messageText || "").trim()
         if (message.length < 1) return
-        popupController.actionResultTitle = "Library load failed"
-        popupController.showActionResultWithAction(
-            message,
-            "Check the library data location in Settings and try reloading the library.",
-            "Open Settings",
-            "open_library_data_settings"
-        )
+        popupController.showMappedActionResult(AppErrorMapper.libraryLoadFailure(message))
     }
 
     function scheduleLibraryDataRelocationFromSettings() {
@@ -1682,8 +1677,7 @@ ApplicationWindow {
         const result = libraryModel.deleteReaderPageFromArchive(comicId, pageIndex) || ({})
         const errorText = String(result.error || "").trim()
         if (errorText.length > 0) {
-            popupController.actionResultTitle = "Couldn't delete page"
-            popupController.showActionResultWithAction(errorText, "", "", "")
+            popupController.showMappedActionResult(AppErrorMapper.deleteReaderPageFailure(errorText))
             return false
         }
 

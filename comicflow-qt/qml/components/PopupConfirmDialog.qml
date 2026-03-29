@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -17,8 +18,8 @@ PopupDialogWindow {
         : minimumDialogHeight
     property bool busy: false
     property string busyText: ""
-    property string primaryButtonText: "OK"
-    property string secondaryButtonText: "Cancel"
+    property string primaryButtonText: AppText.commonOk
+    property string secondaryButtonText: AppText.commonCancel
     property var criticalAttentionTarget: null
     property color criticalAttentionColor: themeColors.dialogAttentionColor
 
@@ -77,7 +78,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: dialog.busyText.length > 0 ? dialog.busyText : "Working..."
+                text: dialog.busyText.length > 0 ? dialog.busyText : AppText.commonWorking
                 color: dialog.popupStyle ? dialog.popupStyle.subtleTextColor : themeColors.subtleTextColor
                 font.pixelSize: dialog.popupStyle ? dialog.popupStyle.dialogBodyFontSize : 13
                 wrapMode: Text.WordWrap
