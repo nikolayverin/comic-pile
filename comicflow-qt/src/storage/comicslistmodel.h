@@ -1,6 +1,7 @@
 #pragma once
 
 #include "storage/deletestagingops.h"
+#include "storage/readerruntimeutils.h"
 
 #include <QAbstractListModel>
 #include <QByteArray>
@@ -318,18 +319,6 @@ private:
         QStringList candidateArchivePaths;
     };
 
-    struct ReaderRuntimeState {
-        QHash<int, QString> archivePathById;
-        QHash<int, QStringList> imageEntriesById;
-        QHash<int, QVariantList> pageMetricsById;
-        QHash<int, QList<int>> pendingSessionRequestIdsByComicId;
-        QHash<int, QList<int>> pendingPageRequestIdsByComicId;
-        QHash<QString, QList<int>> pendingWarmupPageRequestIdsByKey;
-        QHash<int, QList<int>> pendingPageMetricsRequestIdsByComicId;
-        QHash<int, int> asyncRevisionByComicId;
-        int asyncEpoch = 0;
-    };
-
     struct ImportWorkflowState {
         QHash<QString, QString> deferredFolderBySeriesKey;
         QString lastAction;
@@ -490,7 +479,7 @@ private:
     QString m_lastError;
     QString m_lastMutationKind;
     QVector<ComicRow> m_rows;
-    ReaderRuntimeState m_readerState;
+    ComicReaderRuntime::ReaderRuntimeState m_readerState;
     ImportWorkflowState m_importState;
     ArtworkRuntimeState m_artworkState;
     int m_nextAsyncRequestId = 1;

@@ -5,6 +5,7 @@
 #include "storage/readercacheutils.h"
 #include "storage/readerpayloadutils.h"
 #include "storage/readerrequestutils.h"
+#include "storage/readerruntimeutils.h"
 #include "storage/readersessionops.h"
 
 #include <algorithm>
@@ -20,137 +21,6 @@
 #include <QMetaObject>
 #include <QUrl>
 #include <QtConcurrent>
-
-namespace {
-
-QString readerValueFromMap(const QVariantMap &map, const QString &key)
-{
-    return map.value(key).toString().trimmed();
-}
-
-struct ReaderPageRequestState {
-    QVariantMap sessionToCache;
-    QString archivePath;
-    QStringList entries;
-    int resolvedPageIndex = 0;
-    QString error;
-};
-
-ReaderPageRequestState buildReaderPageRequestState(
-    int comicId,
-    int requestedPageIndex,
-    const QString &cachedArchivePath,
-    const QStringList &cachedEntries,
-    const QVariantMap &sessionFallback
-)
-{
-    ReaderPageRequestState state;
-    if (comicId < 1) {
-        state.error = QStringLiteral("Invalid issue id.");
-        return state;
-    }
-
-    state.archivePath = cachedArchivePath.trimmed();
-    state.entries = cachedEntries;
-    if (state.archivePath.isEmpty() || state.entries.isEmpty()) {
-        const QString sessionError = readerValueFromMap(sessionFallback, QStringLiteral("error"));
-        if (!sessionError.isEmpty()) {
-            state.error = sessionError;
-            return state;
-        }
-
-        state.archivePath = readerValueFromMap(sessionFallback, QStringLiteral("archivePath"));
-        state.entries = sessionFallback.value(QStringLiteral("entries")).toStringList();
-        if (!state.archivePath.isEmpty() && !state.entries.isEmpty()) {
-            state.sessionToCache = sessionFallback;
-        }
-    }
-
-    if (state.archivePath.isEmpty()) {
-        state.error = QStringLiteral("Archive path is empty for issue id %1.").arg(comicId);
-        return state;
-    }
-    if (state.entries.isEmpty()) {
-        state.error = QStringLiteral("No image pages found in archive.");
-        return state;
-    }
-
-    state.resolvedPageIndex = requestedPageIndex;
-    if (state.resolvedPageIndex < 0 || state.resolvedPageIndex >= state.entries.size()) {
-        state.resolvedPageIndex = 0;
-    }
-
-    return state;
-}
-
-QVariantMap makeAsyncImageResult(
-    const QString &imageSource = QString(),
-    const QString &error = QString()
-)
-{
-    QVariantMap result;
-    result.insert(QStringLiteral("imageSource"), imageSource);
-    result.insert(QStringLiteral("error"), error);
-    return result;
-}
-
-QVariantMap makeCanceledReaderAsyncResult()
-{
-    return {
-        { QStringLiteral("error"), QStringLiteral("Reader session is not ready.") }
-    };
-}
-
-QString readerWarmupPagePendingKey(int comicId, int pageIndex)
-{
-    return QStringLiteral("reader-warm:%1:%2").arg(comicId).arg(pageIndex);
-}
-
-void removePendingReaderRequestIds(
-    QHash<int, QList<int>> &pendingRequestIdsByComicId,
-    int comicId,
-    const QList<int> &requestIds
-)
-{
-    if (comicId < 1 || requestIds.isEmpty()) {
-        return;
-    }
-
-    QList<int> pendingRequestIds = pendingRequestIdsByComicId.value(comicId);
-    if (pendingRequestIds.isEmpty()) {
-        return;
-    }
-
-    for (int requestId : requestIds) {
-        pendingRequestIds.removeAll(requestId);
-    }
-
-    if (pendingRequestIds.isEmpty()) {
-        pendingRequestIdsByComicId.remove(comicId);
-    } else {
-        pendingRequestIdsByComicId.insert(comicId, pendingRequestIds);
-    }
-}
-
-void clearPendingWarmupPageRequestsForComic(
-    QHash<QString, QList<int>> &pendingRequestIdsByKey,
-    int comicId
-)
-{
-    if (comicId < 1 || pendingRequestIdsByKey.isEmpty()) {
-        return;
-    }
-
-    const QString pendingKeyPrefix = QStringLiteral("reader-warm:%1:").arg(comicId);
-    const QStringList pendingKeys = pendingRequestIdsByKey.keys();
-    for (const QString &pendingKey : pendingKeys) {
-        if (pendingKey.startsWith(pendingKeyPrefix)) {
-            pendingRequestIdsByKey.remove(pendingKey);
-        }
-    }
-}
-
-} // namespace
 
 QVariantMap ComicsListModel::loadReaderSessionPayload(
     const QString &dbPath,
@@ -248,28 +118,12 @@ QVariantMap ComicsListModel::loadReaderPageMetricsPayload(
 
 void ComicsListModel::cacheReaderSession(const QVariantMap &session)
 {
-    const QString error = session.value(QStringLiteral("error")).toString().trimmed();
-    if (!error.isEmpty()) {
-        return;
-    }
-
-    const int comicId = session.value(QStringLiteral("comicId")).toInt();
-    const QString archivePath = session.value(QStringLiteral("archivePath")).toString().trimmed();
-    const QStringList entries = session.value(QStringLiteral("entries")).toStringList();
-    if (comicId < 1 || archivePath.isEmpty() || entries.isEmpty()) {
-        return;
-    }
-
-    m_readerState.archivePathById.insert(comicId, archivePath);
-    m_readerState.imageEntriesById.insert(comicId, entries);
+    ComicReaderRuntime::cacheSession(m_readerState, session);
 }
 
 void ComicsListModel::cacheReaderPageMetrics(int comicId, const QVariantList &pageMetrics)
 {
-    if (comicId < 1 || pageMetrics.isEmpty()) {
-        return;
-    }
-    m_readerState.pageMetricsById.insert(comicId, pageMetrics);
+    ComicReaderRuntime::cachePageMetrics(m_readerState, comicId, pageMetrics);
 }
 
 void ComicsListModel::invalidateAllReaderAsyncState()
@@ -295,7 +149,7 @@ void ComicsListModel::invalidateAllReaderAsyncState()
     m_artworkState.activeCoverGenerationCount = 0;
     m_artworkState.activeSeriesHeroGenerationCount = 0;
 
-    const QVariantMap canceledResult = makeCanceledReaderAsyncResult();
+    const QVariantMap canceledResult = ComicReaderRuntime::makeCanceledReaderAsyncResult();
     for (auto it = pendingSessionRequestIdsByComicId.cbegin(); it != pendingSessionRequestIdsByComicId.cend(); ++it) {
         emitReaderSessionReadyForRequestIds(it.value(), canceledResult);
     }
@@ -352,13 +206,16 @@ void ComicsListModel::clearReaderRuntimeStateForComic(int comicId)
         m_artworkState.pendingImageRequestIdsByKey,
         comicId
     );
-    clearPendingWarmupPageRequestsForComic(m_readerState.pendingWarmupPageRequestIdsByKey, comicId);
+    ComicReaderRuntime::clearPendingWarmupPageRequestsForComic(
+        m_readerState.pendingWarmupPageRequestIdsByKey,
+        comicId
+    );
     m_readerState.asyncRevisionByComicId.insert(comicId, m_readerState.asyncRevisionByComicId.value(comicId) + 1);
     m_readerState.archivePathById.remove(comicId);
     m_readerState.imageEntriesById.remove(comicId);
     m_readerState.pageMetricsById.remove(comicId);
 
-    const QVariantMap canceledResult = makeCanceledReaderAsyncResult();
+    const QVariantMap canceledResult = ComicReaderRuntime::makeCanceledReaderAsyncResult();
     emitReaderSessionReadyForRequestIds(pendingSessionRequestIds, canceledResult);
     emitPageReadyForRequestIds(
         pendingPageRequestIds,
@@ -830,7 +687,7 @@ QVariantMap ComicsListModel::loadReaderPage(int comicId, int pageIndex)
         rebuiltSession = loadReaderSessionPayload(m_dbPath, m_dataRoot, comicId);
     }
 
-    const ReaderPageRequestState state = buildReaderPageRequestState(
+    const ComicReaderRuntime::ReaderPageRequestState state = ComicReaderRuntime::buildPageRequestState(
         comicId,
         pageIndex,
         cachedArchivePath,
@@ -874,7 +731,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
     const QStringList cachedEntries = m_readerState.imageEntriesById.value(comicId);
     const bool needsSessionRebuild = cachedArchivePath.trimmed().isEmpty() || cachedEntries.isEmpty();
     if (needsSessionRebuild) {
-        const QString pendingKey = readerWarmupPagePendingKey(comicId, pageIndex);
+        const QString pendingKey = ComicReaderRuntime::warmupPagePendingKey(comicId, pageIndex);
         const int asyncEpoch = m_readerState.asyncEpoch;
         const int comicAsyncRevision = m_readerState.asyncRevisionByComicId.value(comicId);
         m_readerState.pendingPageRequestIdsByComicId[comicId].push_back(requestId);
@@ -892,7 +749,11 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
                 m_readerState.pendingWarmupPageRequestIdsByKey,
                 pendingKey
             );
-            removePendingReaderRequestIds(m_readerState.pendingPageRequestIdsByComicId, comicId, requestIds);
+            ComicReaderRuntime::removePendingRequestIds(
+                m_readerState.pendingPageRequestIdsByComicId,
+                comicId,
+                requestIds
+            );
             if (requestIds.isEmpty()) {
                 watcher->deleteLater();
                 return;
@@ -926,7 +787,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
 
         const auto task = [dbPath = m_dbPath, dataRoot = m_dataRoot, comicId, pageIndex]() {
             const QVariantMap rebuiltSession = ComicsListModel::loadReaderSessionPayload(dbPath, dataRoot, comicId);
-            const ReaderPageRequestState state = buildReaderPageRequestState(
+            const ComicReaderRuntime::ReaderPageRequestState state = ComicReaderRuntime::buildPageRequestState(
                 comicId,
                 pageIndex,
                 QString(),
@@ -960,7 +821,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
         return requestId;
     }
 
-    const ReaderPageRequestState state = buildReaderPageRequestState(
+    const ComicReaderRuntime::ReaderPageRequestState state = ComicReaderRuntime::buildPageRequestState(
         comicId,
         pageIndex,
         cachedArchivePath,
@@ -1091,10 +952,10 @@ void ComicsListModel::startQueuedCoverGeneration(const QueuedCoverGeneration &jo
         QStringList entries;
         QString listError;
         if (!ComicsListModel::listImageEntriesInArchive(job.archivePath, entries, listError)) {
-            return makeAsyncImageResult({}, listError);
+            return ComicReaderRuntime::makeAsyncImageResult({}, listError);
         }
         if (entries.isEmpty()) {
-            return makeAsyncImageResult({}, QStringLiteral("No image pages found in archive."));
+            return ComicReaderRuntime::makeAsyncImageResult({}, QStringLiteral("No image pages found in archive."));
         }
 
         const QString entryName = entries.at(0);
@@ -1103,7 +964,7 @@ void ComicsListModel::startQueuedCoverGeneration(const QueuedCoverGeneration &jo
         const QString pageCachePath = ComicReaderCache::buildReaderCachePath(dataRoot, job.comicId, job.cacheStamp, 0, extension);
 
         if (!ComicReaderCache::ensureDirForFile(pageCachePath) || !ComicReaderCache::ensureDirForFile(job.coverPath)) {
-            return makeAsyncImageResult({}, QStringLiteral("Failed to create thumbnail cache directory."));
+            return ComicReaderRuntime::makeAsyncImageResult({}, QStringLiteral("Failed to create thumbnail cache directory."));
         }
 
         const QFileInfo localPageInfo(pageCachePath);
@@ -1114,7 +975,7 @@ void ComicsListModel::startQueuedCoverGeneration(const QueuedCoverGeneration &jo
         if (!QFileInfo::exists(pageCachePath)) {
             QString extractError;
             if (!ComicsListModel::extractArchiveEntryToFile(job.archivePath, entryName, pageCachePath, extractError)) {
-                return makeAsyncImageResult({}, extractError);
+                return ComicReaderRuntime::makeAsyncImageResult({}, extractError);
             }
         }
 
@@ -1126,11 +987,11 @@ void ComicsListModel::startQueuedCoverGeneration(const QueuedCoverGeneration &jo
         if (!QFileInfo::exists(job.coverPath)) {
             QString thumbError;
             if (!ComicImagePreparation::generateThumbnailImage(pageCachePath, job.coverPath, job.coverFormat, thumbError)) {
-                return makeAsyncImageResult({}, thumbError);
+                return ComicReaderRuntime::makeAsyncImageResult({}, thumbError);
             }
         }
 
-        return makeAsyncImageResult(QUrl::fromLocalFile(job.coverPath).toString(), {});
+        return ComicReaderRuntime::makeAsyncImageResult(QUrl::fromLocalFile(job.coverPath).toString(), {});
     };
 
     watcher->setFuture(QtConcurrent::run(task));

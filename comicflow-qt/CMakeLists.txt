@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.7.20 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.7.21 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -94,6 +94,8 @@ set(_comicpile_core_sources
     src/storage/readerpayloadutils.h
     src/storage/readerrequestutils.cpp
     src/storage/readerrequestutils.h
+    src/storage/readerruntimeutils.cpp
+    src/storage/readerruntimeutils.h
     src/storage/readersessionops.cpp
     src/storage/readersessionops.h
     src/storage/sqliteconnectionutils.cpp
