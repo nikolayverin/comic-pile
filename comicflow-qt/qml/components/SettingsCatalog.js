@@ -295,6 +295,71 @@ var defaultSettingsState = {
     safety_confirm_before_deleting_page: true
 }
 
+var appearanceSettingDescriptors = [
+    {
+        valueKey: "appearance_library_background",
+        controllerProperty: "appearanceLibraryBackground",
+        storeProperty: "appearanceLibraryBackground",
+        defaultValue: defaultSettingsState.appearance_library_background,
+        normalization: "choice",
+        options: appearanceBackgroundSourceModeKeys
+    },
+    {
+        valueKey: "appearance_grid_density",
+        controllerProperty: "appearanceGridDensity",
+        storeProperty: "appearanceGridDensity",
+        defaultValue: defaultSettingsState.appearance_grid_density,
+        normalization: "choice",
+        options: appearanceGridDensityOptions
+    },
+    {
+        valueKey: "appearance_show_hero_block",
+        controllerProperty: "appearanceShowHeroBlock",
+        storeProperty: "appearanceShowHeroBlock",
+        defaultValue: defaultSettingsState.appearance_show_hero_block,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "appearance_library_background_solid_color",
+        controllerProperty: "appearanceLibraryBackgroundSolidColor",
+        storeProperty: "appearanceLibraryBackgroundSolidColor",
+        defaultValue: defaultSettingsState.appearance_library_background_solid_color,
+        normalization: "choice",
+        options: appearanceSolidColorOptions
+    },
+    {
+        valueKey: "appearance_library_background_texture",
+        controllerProperty: "appearanceLibraryBackgroundTexture",
+        storeProperty: "appearanceLibraryBackgroundTexture",
+        defaultValue: defaultSettingsState.appearance_library_background_texture,
+        normalization: "choice",
+        options: appearanceTexturePresetOptions
+    },
+    {
+        valueKey: "appearance_library_background_custom_image_path",
+        controllerProperty: "appearanceLibraryBackgroundCustomImagePath",
+        storeProperty: "appearanceLibraryBackgroundCustomImagePath",
+        defaultValue: defaultSettingsState.appearance_library_background_custom_image_path,
+        normalization: "trimmed_string"
+    },
+    {
+        valueKey: "appearance_library_background_image_mode",
+        controllerProperty: "appearanceLibraryBackgroundImageMode",
+        storeProperty: "appearanceLibraryBackgroundImageMode",
+        defaultValue: defaultSettingsState.appearance_library_background_image_mode,
+        normalization: "choice",
+        options: appearanceBackgroundImageModeOptions
+    },
+    {
+        valueKey: "appearance_library_background_tile_size",
+        controllerProperty: "appearanceLibraryBackgroundTileSize",
+        storeProperty: "appearanceLibraryBackgroundTileSize",
+        defaultValue: defaultSettingsState.appearance_library_background_tile_size,
+        normalization: "choice",
+        options: appearanceBackgroundTileSizeOptions
+    }
+]
+
 function defaultSettingValue(valueKey) {
     const key = String(valueKey || "")
     return defaultSettingsState[key]

@@ -241,6 +241,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/SettingsBackgroundChoiceButton.qml
         qml/components/SettingsCheckbox.qml
         qml/components/SettingsChoiceDropdown.qml
+        qml/components/SettingsAppearanceSection.qml
         qml/components/SettingsDialog.qml
         qml/components/SettingsRadioGroup.qml
         qml/components/SettingsSegmentedChoice.qml

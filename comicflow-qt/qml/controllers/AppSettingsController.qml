@@ -34,6 +34,7 @@ Item {
     readonly property bool defaultSafetyConfirmBeforeDeletingSeries: SettingsCatalog.defaultSafetyConfirmBeforeDeletingSeries
     readonly property bool defaultSafetyConfirmBeforeReplace: SettingsCatalog.defaultSafetyConfirmBeforeReplace
     readonly property bool defaultSafetyConfirmBeforeDeletingPage: SettingsCatalog.defaultSafetyConfirmBeforeDeletingPage
+    readonly property var appearanceSettingDescriptors: SettingsCatalog.appearanceSettingDescriptors
 
     function normalizeChoice(value, allowedValues, fallbackValue) {
         const normalizedValue = String(value || "").trim()
@@ -50,6 +51,64 @@ Item {
     function normalizeBoolean(value, fallbackValue) {
         if (typeof value === "boolean") return value
         return Boolean(fallbackValue)
+    }
+
+    function settingDescriptor(descriptors, valueKey) {
+        const normalizedKey = String(valueKey || "")
+        const source = Array.isArray(descriptors) ? descriptors : []
+        for (let i = 0; i < source.length; i += 1) {
+            const descriptor = source[i] || {}
+            if (String(descriptor.valueKey || "") === normalizedKey) {
+                return descriptor
+            }
+        }
+        return null
+    }
+
+    function normalizeConfiguredSetting(descriptor, value, fallbackValue) {
+        const entry = descriptor || ({})
+        const defaultValue = entry.hasOwnProperty("defaultValue")
+            ? entry.defaultValue
+            : fallbackValue
+        const normalization = String(entry.normalization || "").trim()
+        if (normalization === "boolean") {
+            return normalizeBoolean(value, defaultValue)
+        }
+        if (normalization === "trimmed_string") {
+            return String(value || "").trim()
+        }
+        return normalizeChoice(value, entry.options || [], defaultValue)
+    }
+
+    function appearanceSettingDescriptor(valueKey) {
+        return settingDescriptor(appearanceSettingDescriptors, valueKey)
+    }
+
+    function normalizeAppearanceSettingValue(valueKey, value, fallbackValue) {
+        const descriptor = appearanceSettingDescriptor(valueKey)
+        if (!descriptor) {
+            return fallbackValue
+        }
+        return normalizeConfiguredSetting(descriptor, value, fallbackValue)
+    }
+
+    function syncAppearanceSetting(valueKey) {
+        const descriptor = appearanceSettingDescriptor(valueKey)
+        if (!descriptor) return
+
+        const propertyName = String(descriptor.controllerProperty || "").trim()
+        const storePropertyName = String(descriptor.storeProperty || "").trim()
+        if (propertyName.length < 1 || storePropertyName.length < 1) return
+
+        const currentValue = controller[propertyName]
+        const normalized = normalizeConfiguredSetting(descriptor, currentValue, descriptor.defaultValue)
+        if (currentValue !== normalized) {
+            controller[propertyName] = normalized
+            return
+        }
+        if (settingsStore[storePropertyName] !== normalized) {
+            settingsStore[storePropertyName] = normalized
+        }
     }
 
     function normalizeGeneralDefaultReadingMode(value) {
@@ -108,58 +167,6 @@ Item {
         )
     }
 
-    function normalizeAppearanceLibraryBackground(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.appearanceBackgroundSourceModeKeys,
-            defaultAppearanceLibraryBackground
-        )
-    }
-
-    function normalizeAppearanceGridDensity(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.appearanceGridDensityOptions,
-            defaultAppearanceGridDensity
-        )
-    }
-
-    function normalizeAppearanceLibraryBackgroundSolidColor(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.appearanceSolidColorOptions,
-            defaultAppearanceLibraryBackgroundSolidColor
-        )
-    }
-
-    function normalizeAppearanceLibraryBackgroundTexture(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.appearanceTexturePresetOptions,
-            defaultAppearanceLibraryBackgroundTexture
-        )
-    }
-
-    function normalizeAppearanceLibraryBackgroundCustomImagePath(value) {
-        return String(value || "").trim()
-    }
-
-    function normalizeAppearanceLibraryBackgroundImageMode(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.appearanceBackgroundImageModeOptions,
-            defaultAppearanceLibraryBackgroundImageMode
-        )
-    }
-
-    function normalizeAppearanceLibraryBackgroundTileSize(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.appearanceBackgroundTileSizeOptions,
-            defaultAppearanceLibraryBackgroundTileSize
-        )
-    }
-
     function normalizedReaderViewMode(currentMode) {
         if (Boolean(readerRememberLastReaderMode)) {
             return String(currentMode || "one_page") === "two_page" ? "two_page" : "one_page"
@@ -213,29 +220,13 @@ Item {
         if (key === "import_treat_image_folders_as_issues") {
             return normalizeBoolean(importTreatImageFoldersAsIssues, fallbackValue)
         }
-        if (key === "appearance_library_background") {
-            return normalizeAppearanceLibraryBackground(appearanceLibraryBackground)
-        }
-        if (key === "appearance_grid_density") {
-            return normalizeAppearanceGridDensity(appearanceGridDensity)
-        }
-        if (key === "appearance_show_hero_block") {
-            return normalizeBoolean(appearanceShowHeroBlock, fallbackValue)
-        }
-        if (key === "appearance_library_background_solid_color") {
-            return normalizeAppearanceLibraryBackgroundSolidColor(appearanceLibraryBackgroundSolidColor)
-        }
-        if (key === "appearance_library_background_texture") {
-            return normalizeAppearanceLibraryBackgroundTexture(appearanceLibraryBackgroundTexture)
-        }
-        if (key === "appearance_library_background_custom_image_path") {
-            return normalizeAppearanceLibraryBackgroundCustomImagePath(appearanceLibraryBackgroundCustomImagePath)
-        }
-        if (key === "appearance_library_background_image_mode") {
-            return normalizeAppearanceLibraryBackgroundImageMode(appearanceLibraryBackgroundImageMode)
-        }
-        if (key === "appearance_library_background_tile_size") {
-            return normalizeAppearanceLibraryBackgroundTileSize(appearanceLibraryBackgroundTileSize)
+        const appearanceDescriptor = appearanceSettingDescriptor(key)
+        if (appearanceDescriptor) {
+            return normalizeConfiguredSetting(
+                appearanceDescriptor,
+                controller[String(appearanceDescriptor.controllerProperty || "").trim()],
+                fallbackValue
+            )
         }
         if (key === "safety_confirm_before_deleting_files") {
             return normalizeBoolean(safetyConfirmBeforeDeletingFiles, fallbackValue)
@@ -318,36 +309,16 @@ Item {
             )
             return
         }
-        if (key === "appearance_library_background") {
-            appearanceLibraryBackground = normalizeAppearanceLibraryBackground(nextValue)
-            return
-        }
-        if (key === "appearance_grid_density") {
-            appearanceGridDensity = normalizeAppearanceGridDensity(nextValue)
-            return
-        }
-        if (key === "appearance_show_hero_block") {
-            appearanceShowHeroBlock = normalizeBoolean(nextValue, defaultAppearanceShowHeroBlock)
-            return
-        }
-        if (key === "appearance_library_background_solid_color") {
-            appearanceLibraryBackgroundSolidColor = normalizeAppearanceLibraryBackgroundSolidColor(nextValue)
-            return
-        }
-        if (key === "appearance_library_background_texture") {
-            appearanceLibraryBackgroundTexture = normalizeAppearanceLibraryBackgroundTexture(nextValue)
-            return
-        }
-        if (key === "appearance_library_background_custom_image_path") {
-            appearanceLibraryBackgroundCustomImagePath = normalizeAppearanceLibraryBackgroundCustomImagePath(nextValue)
-            return
-        }
-        if (key === "appearance_library_background_image_mode") {
-            appearanceLibraryBackgroundImageMode = normalizeAppearanceLibraryBackgroundImageMode(nextValue)
-            return
-        }
-        if (key === "appearance_library_background_tile_size") {
-            appearanceLibraryBackgroundTileSize = normalizeAppearanceLibraryBackgroundTileSize(nextValue)
+        const appearanceDescriptor = appearanceSettingDescriptor(key)
+        if (appearanceDescriptor) {
+            const propertyName = String(appearanceDescriptor.controllerProperty || "").trim()
+            if (propertyName.length > 0) {
+                controller[propertyName] = normalizeConfiguredSetting(
+                    appearanceDescriptor,
+                    nextValue,
+                    appearanceDescriptor.defaultValue
+                )
+            }
             return
         }
         if (key === "safety_confirm_before_deleting_files") {
@@ -464,30 +435,45 @@ Item {
         settingsStore.importTreatImageFoldersAsIssues,
         defaultImportTreatImageFoldersAsIssues
     )
-    property string appearanceLibraryBackground: normalizeAppearanceLibraryBackground(
-        settingsStore.appearanceLibraryBackground
+    property string appearanceLibraryBackground: normalizeAppearanceSettingValue(
+        "appearance_library_background",
+        settingsStore.appearanceLibraryBackground,
+        defaultAppearanceLibraryBackground
     )
-    property string appearanceGridDensity: normalizeAppearanceGridDensity(
-        settingsStore.appearanceGridDensity
+    property string appearanceGridDensity: normalizeAppearanceSettingValue(
+        "appearance_grid_density",
+        settingsStore.appearanceGridDensity,
+        defaultAppearanceGridDensity
     )
-    property bool appearanceShowHeroBlock: normalizeBoolean(
+    property bool appearanceShowHeroBlock: normalizeAppearanceSettingValue(
+        "appearance_show_hero_block",
         settingsStore.appearanceShowHeroBlock,
         defaultAppearanceShowHeroBlock
     )
-    property string appearanceLibraryBackgroundSolidColor: normalizeAppearanceLibraryBackgroundSolidColor(
-        settingsStore.appearanceLibraryBackgroundSolidColor
+    property string appearanceLibraryBackgroundSolidColor: normalizeAppearanceSettingValue(
+        "appearance_library_background_solid_color",
+        settingsStore.appearanceLibraryBackgroundSolidColor,
+        defaultAppearanceLibraryBackgroundSolidColor
     )
-    property string appearanceLibraryBackgroundTexture: normalizeAppearanceLibraryBackgroundTexture(
-        settingsStore.appearanceLibraryBackgroundTexture
+    property string appearanceLibraryBackgroundTexture: normalizeAppearanceSettingValue(
+        "appearance_library_background_texture",
+        settingsStore.appearanceLibraryBackgroundTexture,
+        defaultAppearanceLibraryBackgroundTexture
     )
-    property string appearanceLibraryBackgroundCustomImagePath: normalizeAppearanceLibraryBackgroundCustomImagePath(
-        settingsStore.appearanceLibraryBackgroundCustomImagePath
+    property string appearanceLibraryBackgroundCustomImagePath: normalizeAppearanceSettingValue(
+        "appearance_library_background_custom_image_path",
+        settingsStore.appearanceLibraryBackgroundCustomImagePath,
+        defaultAppearanceLibraryBackgroundCustomImagePath
     )
-    property string appearanceLibraryBackgroundImageMode: normalizeAppearanceLibraryBackgroundImageMode(
-        settingsStore.appearanceLibraryBackgroundImageMode
+    property string appearanceLibraryBackgroundImageMode: normalizeAppearanceSettingValue(
+        "appearance_library_background_image_mode",
+        settingsStore.appearanceLibraryBackgroundImageMode,
+        defaultAppearanceLibraryBackgroundImageMode
     )
-    property string appearanceLibraryBackgroundTileSize: normalizeAppearanceLibraryBackgroundTileSize(
-        settingsStore.appearanceLibraryBackgroundTileSize
+    property string appearanceLibraryBackgroundTileSize: normalizeAppearanceSettingValue(
+        "appearance_library_background_tile_size",
+        settingsStore.appearanceLibraryBackgroundTileSize,
+        defaultAppearanceLibraryBackgroundTileSize
     )
     property bool safetyConfirmBeforeDeletingFiles: normalizeBoolean(
         settingsStore.safetyConfirmBeforeDeletingFiles,
@@ -657,96 +643,35 @@ Item {
     }
 
     onAppearanceLibraryBackgroundChanged: {
-        const normalized = normalizeAppearanceLibraryBackground(appearanceLibraryBackground)
-        if (appearanceLibraryBackground !== normalized) {
-            appearanceLibraryBackground = normalized
-            return
-        }
-        if (settingsStore.appearanceLibraryBackground !== normalized) {
-            settingsStore.appearanceLibraryBackground = normalized
-        }
+        syncAppearanceSetting("appearance_library_background")
     }
 
     onAppearanceGridDensityChanged: {
-        const normalized = normalizeAppearanceGridDensity(appearanceGridDensity)
-        if (appearanceGridDensity !== normalized) {
-            appearanceGridDensity = normalized
-            return
-        }
-        if (settingsStore.appearanceGridDensity !== normalized) {
-            settingsStore.appearanceGridDensity = normalized
-        }
+        syncAppearanceSetting("appearance_grid_density")
     }
 
     onAppearanceShowHeroBlockChanged: {
-        const normalized = normalizeBoolean(
-            appearanceShowHeroBlock,
-            defaultAppearanceShowHeroBlock
-        )
-        if (appearanceShowHeroBlock !== normalized) {
-            appearanceShowHeroBlock = normalized
-            return
-        }
-        if (settingsStore.appearanceShowHeroBlock !== normalized) {
-            settingsStore.appearanceShowHeroBlock = normalized
-        }
+        syncAppearanceSetting("appearance_show_hero_block")
     }
 
     onAppearanceLibraryBackgroundSolidColorChanged: {
-        const normalized = normalizeAppearanceLibraryBackgroundSolidColor(appearanceLibraryBackgroundSolidColor)
-        if (appearanceLibraryBackgroundSolidColor !== normalized) {
-            appearanceLibraryBackgroundSolidColor = normalized
-            return
-        }
-        if (settingsStore.appearanceLibraryBackgroundSolidColor !== normalized) {
-            settingsStore.appearanceLibraryBackgroundSolidColor = normalized
-        }
+        syncAppearanceSetting("appearance_library_background_solid_color")
     }
 
     onAppearanceLibraryBackgroundTextureChanged: {
-        const normalized = normalizeAppearanceLibraryBackgroundTexture(appearanceLibraryBackgroundTexture)
-        if (appearanceLibraryBackgroundTexture !== normalized) {
-            appearanceLibraryBackgroundTexture = normalized
-            return
-        }
-        if (settingsStore.appearanceLibraryBackgroundTexture !== normalized) {
-            settingsStore.appearanceLibraryBackgroundTexture = normalized
-        }
+        syncAppearanceSetting("appearance_library_background_texture")
     }
 
     onAppearanceLibraryBackgroundCustomImagePathChanged: {
-        const normalized = normalizeAppearanceLibraryBackgroundCustomImagePath(
-            appearanceLibraryBackgroundCustomImagePath
-        )
-        if (appearanceLibraryBackgroundCustomImagePath !== normalized) {
-            appearanceLibraryBackgroundCustomImagePath = normalized
-            return
-        }
-        if (settingsStore.appearanceLibraryBackgroundCustomImagePath !== normalized) {
-            settingsStore.appearanceLibraryBackgroundCustomImagePath = normalized
-        }
+        syncAppearanceSetting("appearance_library_background_custom_image_path")
     }
 
     onAppearanceLibraryBackgroundImageModeChanged: {
-        const normalized = normalizeAppearanceLibraryBackgroundImageMode(appearanceLibraryBackgroundImageMode)
-        if (appearanceLibraryBackgroundImageMode !== normalized) {
-            appearanceLibraryBackgroundImageMode = normalized
-            return
-        }
-        if (settingsStore.appearanceLibraryBackgroundImageMode !== normalized) {
-            settingsStore.appearanceLibraryBackgroundImageMode = normalized
-        }
+        syncAppearanceSetting("appearance_library_background_image_mode")
     }
 
     onAppearanceLibraryBackgroundTileSizeChanged: {
-        const normalized = normalizeAppearanceLibraryBackgroundTileSize(appearanceLibraryBackgroundTileSize)
-        if (appearanceLibraryBackgroundTileSize !== normalized) {
-            appearanceLibraryBackgroundTileSize = normalized
-            return
-        }
-        if (settingsStore.appearanceLibraryBackgroundTileSize !== normalized) {
-            settingsStore.appearanceLibraryBackgroundTileSize = normalized
-        }
+        syncAppearanceSetting("appearance_library_background_tile_size")
     }
 
     onSafetyConfirmBeforeDeletingFilesChanged: {
