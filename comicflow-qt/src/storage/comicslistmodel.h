@@ -130,6 +130,8 @@ public:
     Q_INVOKABLE QVariantMap scheduleDataRootRelocation(const QString &targetPath);
     Q_INVOKABLE QString readStartupSnapshot() const;
     Q_INVOKABLE bool writeStartupSnapshot(const QString &payload) const;
+    Q_INVOKABLE QVariantMap readContinueReadingState() const;
+    Q_INVOKABLE bool writeContinueReadingState(const QVariantMap &state) const;
     Q_INVOKABLE QVariantMap currentStartupInventorySignature() const;
     Q_INVOKABLE int requestStartupInventorySignatureAsync();
     Q_INVOKABLE QString startupLogPath() const;
@@ -153,6 +155,12 @@ public:
     Q_INVOKABLE QVariantList issuesForQuickFilter(
         const QString &filterKey,
         const QVariantList &lastImportComicIds
+    ) const;
+    Q_INVOKABLE QVariantMap continueReadingTarget() const;
+    Q_INVOKABLE QVariantMap navigationTargetForComic(int comicId) const;
+    Q_INVOKABLE QVariantMap nextUnreadTarget(
+        const QString &preferredSeriesKey,
+        int afterComicId = -1
     ) const;
     Q_INVOKABLE int quickFilterIssueCount(
         const QString &filterKey,
@@ -475,6 +483,7 @@ private:
     void clearReaderRuntimeStateForComic(int comicId);
     void clearReaderRuntimeStateForComics(const QVector<int> &comicIds);
     void setReaderArchivePathForComic(int comicId, const QString &archivePath);
+    QVariantMap buildIssueNavigationTarget(const ComicRow &row) const;
 
     QString m_dataRoot;
     QString m_dbPath;

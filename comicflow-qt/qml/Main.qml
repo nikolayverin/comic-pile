@@ -248,6 +248,8 @@ ApplicationWindow {
     property int seriesSelectionAnchorIndex: -1
     property string selectedVolumeKey: "__all__"
     property string selectedVolumeTitle: "All volumes"
+    property int continueReadingComicId: -1
+    property string continueReadingSeriesKey: ""
     property alias pendingSeriesKey: deleteController.pendingSeriesKey
     property alias pendingSeriesTitle: deleteController.pendingSeriesTitle
     property alias pendingSeriesKeys: deleteController.pendingSeriesKeys
@@ -393,6 +395,15 @@ ApplicationWindow {
         seriesHeaderDialogRef: seriesHeaderDialog
         deleteConfirmDialogRef: deleteConfirmDialog
         deleteErrorDialogRef: deleteErrorDialog
+    }
+
+    NavigationSurfaceController {
+        id: navigationSurfaceController
+        rootObject: root
+        libraryModelRef: libraryModel
+        popupControllerRef: popupController
+        appSettingsRef: appSettingsController
+        issuesFlick: root.activeIssuesFlick
     }
 
     property string sevenZipConfiguredPath: ""
@@ -552,6 +563,25 @@ ApplicationWindow {
 
     function clearSelection() {
         selectedIds = ({})
+    }
+
+    function rememberContinueReadingTarget(comicId, seriesKey, displayTitle, persistState) {
+        const normalizedComicId = Number(comicId || 0)
+        const nextComicId = normalizedComicId > 0 ? normalizedComicId : -1
+        const nextSeriesKey = nextComicId > 0
+            ? String(seriesKey || "").trim()
+            : ""
+        const changed = continueReadingComicId !== nextComicId
+            || continueReadingSeriesKey !== nextSeriesKey
+        continueReadingComicId = nextComicId
+        continueReadingSeriesKey = nextSeriesKey
+        if (changed && persistState !== false && libraryModel
+                && typeof libraryModel.writeContinueReadingState === "function") {
+            libraryModel.writeContinueReadingState({
+                comicId: continueReadingComicId,
+                seriesKey: continueReadingSeriesKey
+            })
+        }
     }
 
     function coverSourceForComic(comicId) {
@@ -1686,7 +1716,8 @@ ApplicationWindow {
 
     function refreshQuickFilterGridData(shouldPreserveSplitScroll, preservedSplitScroll) {
         const activeQuickFilterKey = String(sidebarQuickFilterKey || "").trim().toLowerCase()
-        issuesGridData = libraryModel.issuesForQuickFilter(activeQuickFilterKey, lastImportSessionComicIds)
+        const liveIssues = libraryModel.issuesForQuickFilter(activeQuickFilterKey, lastImportSessionComicIds)
+        issuesGridData = navigationSurfaceController.applyIssueOrder(liveIssues)
         primeVisibleIssueCoverSourcesFromCache()
         if (startupReconcileCompleted || !startupSnapshotApplied) {
             warmVisibleIssueThumbnails()
@@ -1716,7 +1747,8 @@ ApplicationWindow {
             libraryReadStatusFilter,
             librarySearchText
         )
-        const liveIssueListChanged = !startupController.issueListsEquivalentByIdAndOrder(previousIssues, liveIssues)
+        const orderedIssues = navigationSurfaceController.applyIssueOrder(liveIssues)
+        const liveIssueListChanged = !startupController.issueListsEquivalentByIdAndOrder(previousIssues, orderedIssues)
         if (
             startupSnapshotApplied
                 && !startupHydrationInProgress
@@ -1733,13 +1765,13 @@ ApplicationWindow {
         if (startupSnapshotApplied && startupHydrationInProgress) {
             if (liveIssues.length < 1 && issuesGridData.length > 0) {
                 startupController.startupLog("refreshIssuesGridData keep snapshot: live issues empty during hydration")
-            } else if (startupController.issueListsEquivalentByIdAndOrder(issuesGridData, liveIssues)) {
+            } else if (startupController.issueListsEquivalentByIdAndOrder(issuesGridData, orderedIssues)) {
                 startupController.startupLog("refreshIssuesGridData keep snapshot: live issues equivalent during hydration")
             } else {
-                issuesGridData = liveIssues
+                issuesGridData = orderedIssues
             }
         } else {
-            issuesGridData = liveIssues
+            issuesGridData = orderedIssues
         }
         if (liveIssueListChanged) {
             const resetComicIds = []
@@ -2945,7 +2977,14 @@ ApplicationWindow {
             windowControlButtonWidth: 24
             windowControlButtonHeight: 16
             windowControlSpacing: 0
+            helperButtonsLeftMargin: root.sidebarWidth + 8
+            helperButtonsBottomMargin: 8
+            helperButtonsSpacing: 8
+            continueReadingEnabled: navigationSurfaceController.continueReadingAvailable
             centerLabel: uiTokens.appTitle
+            onContinueReadingRequested: navigationSurfaceController.continueReading()
+            onNextUnreadRequested: navigationSurfaceController.nextUnread()
+            onSeriesInfoRequested: navigationSurfaceController.toggleSeriesInfo()
             onAddFilesRequested: root.quickAddFilesFromDialog()
             onAddFolderRequested: root.quickAddFolderFromDialog()
             onAddIssueRequested: root.quickAddFilesFromDialog()
@@ -3029,6 +3068,7 @@ ApplicationWindow {
         }
 
         Rectangle {
+            id: bottomBar
             Layout.fillWidth: true
             Layout.preferredHeight: root.footerHeight
             gradient: Gradient {
@@ -3043,6 +3083,14 @@ ApplicationWindow {
                 anchors.right: parent.right
                 height: 1
                 color: root.lineBottombarTop
+            }
+
+            BottomBarHelperButton {
+                x: root.sidebarWidth + 14
+                y: 14
+                text: navigationSurfaceController.issueOrderButtonText
+                fontFamily: root.uiFontFamily
+                onClicked: navigationSurfaceController.toggleIssueOrder()
             }
 
         }

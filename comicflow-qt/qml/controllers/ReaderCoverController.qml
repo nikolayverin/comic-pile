@@ -738,6 +738,14 @@ Item {
         if (root.readerFinalizing) return
         root.readerFinalizing = true
 
+        if (Number(root.readerComicId || 0) > 0 && typeof root.rememberContinueReadingTarget === "function") {
+            root.rememberContinueReadingTarget(
+                root.readerComicId,
+                root.readerSeriesKey,
+                root.readerTitle
+            )
+        }
+
         clearPendingPopupOpen()
         const persisted = persistReaderProgress(showErrorDialog === true)
         if (persisted) {
@@ -920,6 +928,13 @@ Item {
                 ? Number(root.readerComicId || -1)
                 : -1
             root.readerFavoriteActive = Boolean(result.favoriteActive)
+            if (typeof root.rememberContinueReadingTarget === "function") {
+                root.rememberContinueReadingTarget(
+                    root.readerComicId,
+                    root.readerSeriesKey,
+                    root.readerTitle
+                )
+            }
             readerDisplayModeController.recordSessionEntries((result || {}).entries || [])
             root.readerError = ""
             root.readerLoading = true

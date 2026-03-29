@@ -10,6 +10,8 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QSaveFile>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -91,6 +93,12 @@ QString startupSnapshotPath(const QString &dataRoot)
         .filePath(QStringLiteral("startup-snapshot.json"));
 }
 
+QString continueReadingStatePath(const QString &dataRoot)
+{
+    return QDir(ComicStartupRuntime::startupRuntimeDirPath(dataRoot))
+        .filePath(QStringLiteral("continue-reading-state.json"));
+}
+
 } // namespace
 
 namespace ComicStartupRuntime {
@@ -157,6 +165,46 @@ QString readStartupSnapshot(const QString &dataRoot)
 bool writeStartupSnapshot(const QString &dataRoot, const QString &payload)
 {
     return writeTextFileAtomically(startupSnapshotPath(dataRoot), payload);
+}
+
+QVariantMap readContinueReadingState(const QString &dataRoot)
+{
+    const QString raw = readTextFileIfPresent(continueReadingStatePath(dataRoot), QIODevice::ReadOnly | QIODevice::Text).trimmed();
+    if (raw.isEmpty()) {
+        return {};
+    }
+
+    QJsonParseError parseError;
+    const QJsonDocument document = QJsonDocument::fromJson(raw.toUtf8(), &parseError);
+    if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+        return {};
+    }
+
+    const QJsonObject object = document.object();
+    return {
+        { QStringLiteral("comicId"), object.value(QStringLiteral("comicId")).toInt(-1) },
+        { QStringLiteral("seriesKey"), object.value(QStringLiteral("seriesKey")).toString().trimmed() }
+    };
+}
+
+bool writeContinueReadingState(const QString &dataRoot, const QVariantMap &state)
+{
+    const int comicId = state.value(QStringLiteral("comicId")).toInt();
+    const QString seriesKey = state.value(QStringLiteral("seriesKey")).toString().trimmed();
+
+    if (comicId < 1) {
+        QFile::remove(continueReadingStatePath(dataRoot));
+        return true;
+    }
+
+    QJsonObject object;
+    object.insert(QStringLiteral("comicId"), comicId);
+    object.insert(QStringLiteral("seriesKey"), seriesKey);
+    return writeTextFileAtomically(
+        continueReadingStatePath(dataRoot),
+        QString::fromUtf8(QJsonDocument(object).toJson(QJsonDocument::Compact)),
+        QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text
+    );
 }
 
 QString readStartupPreviewMeta(const QString &dataRoot)

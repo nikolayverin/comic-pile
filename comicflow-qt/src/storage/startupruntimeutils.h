@@ -16,6 +16,8 @@ QString startupPreviewMetaPath(const QString &dataRoot);
 
 QString readStartupSnapshot(const QString &dataRoot);
 bool writeStartupSnapshot(const QString &dataRoot, const QString &payload);
+QVariantMap readContinueReadingState(const QString &dataRoot);
+bool writeContinueReadingState(const QString &dataRoot, const QVariantMap &state);
 QString readStartupPreviewMeta(const QString &dataRoot);
 bool writeStartupPreviewMeta(const QString &dataRoot, const QString &payload);
 

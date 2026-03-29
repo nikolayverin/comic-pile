@@ -478,6 +478,199 @@ QVariantMap ComicsListModel::openReaderSession(int comicId)
     return session;
 }
 
+QVariantMap ComicsListModel::buildIssueNavigationTarget(const ComicRow &row) const
+{
+    const QString normalizedSeriesKey = row.seriesGroupKey.trimmed();
+    if (row.id < 1 || normalizedSeriesKey.isEmpty()) {
+        return {
+            { QStringLiteral("ok"), false },
+            { QStringLiteral("message"), QStringLiteral("Issue target is unavailable.") }
+        };
+    }
+
+    const QString displayTitle = row.title.trimmed().isEmpty()
+        ? row.filename.trimmed()
+        : row.title.trimmed();
+    const QString normalizedReadStatus = normalizeReadStatus(row.readStatus);
+
+    return {
+        { QStringLiteral("ok"), true },
+        { QStringLiteral("comicId"), row.id },
+        { QStringLiteral("seriesKey"), normalizedSeriesKey },
+        { QStringLiteral("seriesTitle"), row.seriesGroupTitle.trimmed().isEmpty() ? row.series.trimmed() : row.seriesGroupTitle.trimmed() },
+        { QStringLiteral("title"), row.title.trimmed() },
+        { QStringLiteral("displayTitle"), displayTitle.isEmpty() ? QStringLiteral("Issue #%1").arg(row.id) : displayTitle },
+        { QStringLiteral("filename"), row.filename.trimmed() },
+        { QStringLiteral("issueNumber"), row.issueNumber.trimmed() },
+        { QStringLiteral("readStatus"), normalizedReadStatus.isEmpty() ? QStringLiteral("unread") : normalizedReadStatus },
+        { QStringLiteral("currentPage"), row.currentPage },
+        { QStringLiteral("bookmarkPage"), row.bookmarkPage }
+    };
+}
+
+QVariantMap ComicsListModel::continueReadingTarget() const
+{
+    const ComicRow *bestBookmarkedRow = nullptr;
+    const ComicRow *bestProgressRow = nullptr;
+    QString bestBookmarkTimestamp;
+
+    auto progressRank = [](const ComicRow &row) {
+        const QString normalizedStatus = normalizeReadStatus(row.readStatus);
+        if (normalizedStatus == QStringLiteral("in_progress")) {
+            return 2;
+        }
+        if (row.currentPage > 0) {
+            return 1;
+        }
+        return 0;
+    };
+
+    for (const ComicRow &row : m_rows) {
+        const QString normalizedStatus = normalizeReadStatus(row.readStatus);
+        const bool hasBookmark = row.bookmarkPage > 0;
+        const bool hasProgress = row.currentPage > 0 && normalizedStatus != QStringLiteral("read");
+        if (!hasBookmark && !hasProgress) {
+            continue;
+        }
+
+        if (hasBookmark) {
+            const QString bookmarkTimestamp = row.bookmarkAddedAt.trimmed();
+            if (!bestBookmarkedRow) {
+                bestBookmarkedRow = &row;
+                bestBookmarkTimestamp = bookmarkTimestamp;
+                continue;
+            }
+
+            if (bookmarkTimestamp != bestBookmarkTimestamp) {
+                if (bookmarkTimestamp > bestBookmarkTimestamp) {
+                    bestBookmarkedRow = &row;
+                    bestBookmarkTimestamp = bookmarkTimestamp;
+                }
+                continue;
+            }
+
+            if (compareRows(row, *bestBookmarkedRow) < 0) {
+                bestBookmarkedRow = &row;
+                bestBookmarkTimestamp = bookmarkTimestamp;
+            }
+            continue;
+        }
+
+        if (!bestProgressRow) {
+            bestProgressRow = &row;
+            continue;
+        }
+
+        const int candidateRank = progressRank(row);
+        const int bestRank = progressRank(*bestProgressRow);
+        if (candidateRank != bestRank) {
+            if (candidateRank > bestRank) {
+                bestProgressRow = &row;
+            }
+            continue;
+        }
+
+        if (row.currentPage != bestProgressRow->currentPage) {
+            if (row.currentPage > bestProgressRow->currentPage) {
+                bestProgressRow = &row;
+            }
+            continue;
+        }
+
+        if (compareRows(row, *bestProgressRow) < 0) {
+            bestProgressRow = &row;
+        }
+    }
+
+    if (bestBookmarkedRow) {
+        return buildIssueNavigationTarget(*bestBookmarkedRow);
+    }
+    if (bestProgressRow) {
+        return buildIssueNavigationTarget(*bestProgressRow);
+    }
+
+    return {
+        { QStringLiteral("ok"), false },
+        { QStringLiteral("message"), QStringLiteral("No active reading session is available yet.") }
+    };
+}
+
+QVariantMap ComicsListModel::navigationTargetForComic(int comicId) const
+{
+    if (comicId < 1) {
+        return {
+            { QStringLiteral("ok"), false },
+            { QStringLiteral("message"), QStringLiteral("Issue target is unavailable.") }
+        };
+    }
+
+    for (const ComicRow &row : m_rows) {
+        if (row.id != comicId) {
+            continue;
+        }
+        return buildIssueNavigationTarget(row);
+    }
+
+    return {
+        { QStringLiteral("ok"), false },
+        { QStringLiteral("message"), QStringLiteral("Issue target is unavailable.") }
+    };
+}
+
+QVariantMap ComicsListModel::nextUnreadTarget(const QString &preferredSeriesKey, int afterComicId) const
+{
+    const QString normalizedSeriesKey = preferredSeriesKey.trimmed();
+    if (normalizedSeriesKey.isEmpty()) {
+        return {
+            { QStringLiteral("ok"), false },
+            { QStringLiteral("message"), QStringLiteral("Select a series first.") }
+        };
+    }
+
+    bool seriesFound = false;
+    bool afterComicSeen = afterComicId < 1;
+    const ComicRow *firstUnreadRow = nullptr;
+
+    for (const ComicRow &row : m_rows) {
+        if (row.seriesGroupKey != normalizedSeriesKey) {
+            continue;
+        }
+
+        seriesFound = true;
+        const QString normalizedStatus = normalizeReadStatus(row.readStatus);
+        const bool unread = normalizedStatus != QStringLiteral("read");
+
+        if (afterComicSeen) {
+            if (row.id != afterComicId && unread) {
+                return buildIssueNavigationTarget(row);
+            }
+        } else if (row.id == afterComicId) {
+            afterComicSeen = true;
+            continue;
+        }
+
+        if (!firstUnreadRow && unread) {
+            firstUnreadRow = &row;
+        }
+    }
+
+    if (!seriesFound) {
+        return {
+            { QStringLiteral("ok"), false },
+            { QStringLiteral("message"), QStringLiteral("The selected series is unavailable.") }
+        };
+    }
+
+    if (afterComicId < 1 && firstUnreadRow) {
+        return buildIssueNavigationTarget(*firstUnreadRow);
+    }
+
+    return {
+        { QStringLiteral("ok"), false },
+        { QStringLiteral("message"), QStringLiteral("No next unread issue is queued for this series.") }
+    };
+}
+
 int ComicsListModel::requestReaderPageMetricsAsync(int comicId)
 {
     const int requestId = m_nextAsyncRequestId++;

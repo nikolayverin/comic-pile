@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.7.13 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.7.14 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -171,6 +171,7 @@ qt_add_qml_module(comic_pile_qt
         qml/controllers/ReaderDisplayModeController.qml
         qml/controllers/ReaderSessionController.qml
         qml/controllers/ReaderPopupStateController.qml
+        qml/controllers/NavigationSurfaceController.qml
         qml/controllers/ReaderSpreadLayout.js
         qml/controllers/ImportController.qml
         qml/controllers/ImportSessionController.qml
@@ -203,6 +204,8 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupTextArea.qml
         qml/components/PopupActionButton.qml
         qml/components/PopupStatusActionButton.qml
+        qml/components/NavigationHelperButton.qml
+        qml/components/BottomBarHelperButton.qml
         qml/components/PopupFooterRow.qml
         qml/components/PopupCloseButton.qml
         qml/components/PopupDialogShell.qml

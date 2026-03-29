@@ -265,6 +265,16 @@ bool ComicsListModel::writeStartupSnapshot(const QString &payload) const
     return ComicStartupRuntime::writeStartupSnapshot(m_dataRoot, payload);
 }
 
+QVariantMap ComicsListModel::readContinueReadingState() const
+{
+    return ComicStartupRuntime::readContinueReadingState(m_dataRoot);
+}
+
+bool ComicsListModel::writeContinueReadingState(const QVariantMap &state) const
+{
+    return ComicStartupRuntime::writeContinueReadingState(m_dataRoot, state);
+}
+
 QVariantMap ComicsListModel::currentStartupInventorySignature() const
 {
     return ComicStartupInventoryOps::currentStartupInventorySignature(m_dataRoot, m_dbPath);

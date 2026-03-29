@@ -47,6 +47,10 @@ Rectangle {
     property color statusChipTextColor: themeColors.topbarStatusChipTextColor
     property color statusChipBorderColor: themeColors.topbarStatusChipBorderColor
     property color statusChipFillColor: themeColors.topbarStatusChipFillColor
+    property int helperButtonsLeftMargin: 0
+    property int helperButtonsBottomMargin: 8
+    property int helperButtonsSpacing: 8
+    property bool continueReadingEnabled: true
     property bool topMenuSessionActive: false
     property var activeTopMenuPopup: null
     property int windowCornerRadius: 14
@@ -65,6 +69,9 @@ Rectangle {
     signal maximizeRestoreRequested()
     signal closeRequested()
     signal settingsRequested()
+    signal continueReadingRequested()
+    signal nextUnreadRequested()
+    signal seriesInfoRequested()
     gradient: Gradient {
         orientation: Gradient.Vertical
         GradientStop { position: 0.0; color: root.topColor }
@@ -248,6 +255,35 @@ Rectangle {
             menuPopup: helpMenu
         }
 
+    }
+
+    Row {
+        id: helperButtonsRow
+        z: 2
+        anchors.left: parent.left
+        anchors.leftMargin: root.helperButtonsLeftMargin
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.helperButtonsBottomMargin
+        spacing: root.helperButtonsSpacing
+
+        NavigationHelperButton {
+            text: "Continue reading"
+            fontFamily: root.uiFontFamily
+            enabled: root.continueReadingEnabled
+            onClicked: root.continueReadingRequested()
+        }
+
+        NavigationHelperButton {
+            text: "Next unread"
+            fontFamily: root.uiFontFamily
+            onClicked: root.nextUnreadRequested()
+        }
+
+        NavigationHelperButton {
+            text: "Show series Info"
+            fontFamily: root.uiFontFamily
+            onClicked: root.seriesInfoRequested()
+        }
     }
 
     Item {

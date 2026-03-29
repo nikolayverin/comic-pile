@@ -96,10 +96,6 @@ Popup {
 
     PopupStyle { id: popupStyle }
 
-    Overlay.modal: Rectangle {
-        color: popupStyle.overlayColor
-    }
-
     background: PopupSurface {
         cornerRadius: popupStyle.popupRadius
         fillColor: popupStyle.popupFillColor
