@@ -159,7 +159,6 @@ ApplicationWindow {
     property real shadowHeavyOpacity: 0.45
 
     property var selectedIds: ({})
-    property var editingComic: null
     property alias actionResultMessage: popupController.actionResultMessage
     property alias pendingDeleteId: deleteController.pendingDeleteId
     property alias deleteErrorHeadline: deleteController.deleteErrorHeadline
@@ -174,12 +173,13 @@ ApplicationWindow {
     property alias deleteRetrySeriesKeys: deleteController.deleteRetrySeriesKeys
     property alias deleteRetryInProgress: deleteController.deleteRetryInProgress
     property alias deleteRetryStatusText: deleteController.deleteRetryStatusText
-    property string editingSeriesKey: ""
-    property var editingSeriesKeys: []
-    property string editingSeriesTitle: ""
-    property string editingSeriesDialogMode: "single"
-    property var pendingSeriesMetadataSuggestion: ({})
-    property var pendingIssueMetadataSuggestion: ({})
+    property alias editingComic: metadataDialogController.editingComic
+    property alias editingSeriesKey: metadataDialogController.editingSeriesKey
+    property alias editingSeriesKeys: metadataDialogController.editingSeriesKeys
+    property alias editingSeriesTitle: metadataDialogController.editingSeriesTitle
+    property alias editingSeriesDialogMode: metadataDialogController.editingSeriesDialogMode
+    property alias pendingSeriesMetadataSuggestion: metadataDialogController.pendingSeriesMetadataSuggestion
+    property alias pendingIssueMetadataSuggestion: metadataDialogController.pendingIssueMetadataSuggestion
     readonly property var importModalOverlay: mainDialogHost.importModalOverlayRef
     readonly property var importConflictDialog: mainDialogHost.importConflictDialogRef
     readonly property var seriesDeleteConfirmDialog: mainDialogHost.seriesDeleteConfirmDialogRef
@@ -245,12 +245,12 @@ ApplicationWindow {
         && readerIssueIndexInSeries + 1 < readerIssueCountInSeries
     readonly property bool readerCanGoPreviousPage: readerSessionController.canGoPreviousPage
     readonly property bool readerCanGoNextPage: readerSessionController.canGoNextPage
-    property string selectedSeriesKey: ""
-    property string selectedSeriesTitle: ""
-    property var selectedSeriesKeys: ({})
-    property int seriesSelectionAnchorIndex: -1
-    property string selectedVolumeKey: "__all__"
-    property string selectedVolumeTitle: "All volumes"
+    property alias selectedSeriesKey: libraryBrowseController.selectedSeriesKey
+    property alias selectedSeriesTitle: libraryBrowseController.selectedSeriesTitle
+    property alias selectedSeriesKeys: seriesSelectionController.selectedSeriesKeys
+    property alias seriesSelectionAnchorIndex: seriesSelectionController.seriesSelectionAnchorIndex
+    property alias selectedVolumeKey: libraryBrowseController.selectedVolumeKey
+    property alias selectedVolumeTitle: libraryBrowseController.selectedVolumeTitle
     property int continueReadingComicId: -1
     property string continueReadingSeriesKey: ""
     property alias pendingSeriesKey: deleteController.pendingSeriesKey
@@ -280,20 +280,20 @@ ApplicationWindow {
         logoSource: ""
     })
     property bool addFilesDropActive: false
-    property string sidebarSearchText: ""
-    property string sidebarQuickFilterKey: ""
-    property var lastImportSessionComicIds: []
-    property int quickFilterLastImportCount: 0
-    property int quickFilterFavoritesCount: 0
-    property int quickFilterBookmarksCount: 0
+    property alias sidebarSearchText: libraryBrowseController.sidebarSearchText
+    property alias sidebarQuickFilterKey: libraryBrowseController.sidebarQuickFilterKey
+    property alias lastImportSessionComicIds: libraryBrowseController.lastImportSessionComicIds
+    property alias quickFilterLastImportCount: libraryBrowseController.quickFilterLastImportCount
+    property alias quickFilterFavoritesCount: libraryBrowseController.quickFilterFavoritesCount
+    property alias quickFilterBookmarksCount: libraryBrowseController.quickFilterBookmarksCount
     readonly property var activeIssuesFlick: (typeof mainLibraryPane !== "undefined" && mainLibraryPane)
         ? mainLibraryPane.activeIssuesFlick
         : null
-    property string librarySearchText: ""
-    property string libraryReadStatusFilter: "all"
+    property alias librarySearchText: libraryBrowseController.librarySearchText
+    property alias libraryReadStatusFilter: libraryBrowseController.libraryReadStatusFilter
     property bool gridSplitScrollRestorePending: false
     property real pendingGridSplitScrollValue: 0
-    property bool libraryLoading: false
+    property alias libraryLoading: libraryBrowseController.libraryLoading
     property bool cbrBackendAvailable: false
     property string cbrBackendMissingMessage: ""
     property string libraryDataRootPath: String(libraryModel.dataRoot || "")
@@ -378,6 +378,37 @@ ApplicationWindow {
         popupControllerRef: popupController
         startupControllerRef: startupController
         seriesHeaderDialogRef: seriesHeaderDialog
+    }
+
+    LibraryBrowseController {
+        id: libraryBrowseController
+        rootObject: root
+        libraryModelRef: libraryModel
+        startupControllerRef: startupController
+        navigationSurfaceControllerRef: navigationSurfaceController
+        readerCoverControllerRef: readerCoverController
+        heroSeriesControllerRef: heroSeriesController
+        uiTokensRef: uiTokens
+        seriesListModelRef: seriesListModel
+        volumeListModelRef: volumeListModel
+        mainLibraryPaneRef: mainLibraryPane
+        issuesGridRefreshDebounceRef: issuesGridRefreshDebounce
+    }
+
+    SeriesSelectionController {
+        id: seriesSelectionController
+        rootObject: root
+        seriesListModelRef: seriesListModel
+        mainLibraryPaneRef: mainLibraryPane
+    }
+
+    MetadataDialogController {
+        id: metadataDialogController
+        rootObject: root
+        libraryModelRef: libraryModel
+        popupControllerRef: popupController
+        startupControllerRef: startupController
+        heroSeriesControllerRef: heroSeriesController
     }
 
     PopupController {
@@ -1465,341 +1496,31 @@ ApplicationWindow {
         return true
     }
 
-    function refreshQuickFilterCounts() {
-        quickFilterLastImportCount = libraryModel.quickFilterIssueCount("last_import", lastImportSessionComicIds)
-        quickFilterFavoritesCount = libraryModel.quickFilterIssueCount("favorites", lastImportSessionComicIds)
-        quickFilterBookmarksCount = libraryModel.quickFilterIssueCount("bookmarks", lastImportSessionComicIds)
-    }
+    function refreshQuickFilterCounts() { libraryBrowseController.refreshQuickFilterCounts() }
 
-    function sidebarQuickFilterCount(filterKey) {
-        const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return quickFilterLastImportCount
-        if (key === "favorites") return quickFilterFavoritesCount
-        if (key === "bookmarks") return quickFilterBookmarksCount
-        return 0
-    }
+    function sidebarQuickFilterCount(filterKey) { return libraryBrowseController.sidebarQuickFilterCount(filterKey) }
 
-    function quickFilterTitleText(filterKey) {
-        const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return "Last imported issues"
-        if (key === "favorites") return "Favorite issues"
-        if (key === "bookmarks") return "Bookmarked issues"
-        return ""
-    }
+    function quickFilterTitleText(filterKey) { return libraryBrowseController.quickFilterTitleText(filterKey) }
 
-    function quickFilterEmptyText(filterKey) {
-        const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return "No recent import yet"
-        if (key === "favorites") return "No favorite issues yet"
-        if (key === "bookmarks") return "No bookmarked issues yet"
-        return ""
-    }
+    function quickFilterEmptyText(filterKey) { return libraryBrowseController.quickFilterEmptyText(filterKey) }
 
-    function quickFilterTitleIconSource(filterKey) {
-        const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return uiTokens.quickFilterTitleLastImportIcon
-        if (key === "favorites") return uiTokens.quickFilterTitleFavoriteIcon
-        if (key === "bookmarks") return uiTokens.quickFilterTitleBookmarkIcon
-        return ""
-    }
+    function quickFilterTitleIconSource(filterKey) { return libraryBrowseController.quickFilterTitleIconSource(filterKey) }
 
-    function isQuickFilterModeActive() {
-        return String(sidebarQuickFilterKey || "").trim().length > 0
-    }
+    function isQuickFilterModeActive() { return libraryBrowseController.isQuickFilterModeActive() }
 
-    function resetLastImportSession() {
-        lastImportSessionComicIds = []
-        refreshQuickFilterCounts()
-        if (String(sidebarQuickFilterKey || "") === "last_import") {
-            setGridScrollToTop()
-            scheduleIssuesGridRefresh(true)
-        }
-        startupController.requestSnapshotSave()
-    }
+    function resetLastImportSession() { libraryBrowseController.resetLastImportSession() }
 
-    function rememberLastImportComicId(comicId) {
-        const normalizedComicId = Number(comicId || 0)
-        if (normalizedComicId < 1) return
+    function rememberLastImportComicId(comicId) { libraryBrowseController.rememberLastImportComicId(comicId) }
 
-        const nextIds = []
-        nextIds.push(normalizedComicId)
-        const existingIds = Array.isArray(lastImportSessionComicIds) ? lastImportSessionComicIds : []
-        for (let i = 0; i < existingIds.length; i += 1) {
-            const existingId = Number(existingIds[i] || 0)
-            if (existingId < 1 || existingId === normalizedComicId) continue
-            nextIds.push(existingId)
-        }
-        lastImportSessionComicIds = nextIds
-        refreshQuickFilterCounts()
-        if (String(sidebarQuickFilterKey || "") === "last_import") {
-            scheduleIssuesGridRefresh(true)
-        }
-        startupController.requestSnapshotSave()
-    }
+    function selectSidebarQuickFilter(filterKey) { libraryBrowseController.selectSidebarQuickFilter(filterKey) }
 
-    function selectSidebarQuickFilter(filterKey) {
-        const key = String(filterKey || "").trim().toLowerCase()
-        if (key.length < 1) return
-        sidebarQuickFilterKey = key
-        clearSelection()
-        setGridScrollToTop()
-        if (typeof mainLibraryPane !== "undefined") {
-            mainLibraryPane.heroCollapseOffset = 0
-        }
-        scheduleIssuesGridRefresh(true)
-        startupController.requestSnapshotSave()
-    }
+    function refreshSeriesList() { libraryBrowseController.refreshSeriesList() }
 
-    function refreshSeriesList() {
-        const groups = libraryModel.seriesGroups().slice(0)
-        if (
-            startupSnapshotApplied
-                && startupHydrationInProgress
-                && groups.length < 1
-                && seriesListModel.count > 0
-        ) {
-            startupController.startupLog("refreshSeriesList keep snapshot: live groups empty during hydration")
-            return
-        }
-        groups.sort(function(a, b) {
-            const left = String(a.seriesTitle || "").toLowerCase()
-            const right = String(b.seriesTitle || "").toLowerCase()
-            if (left < right) return -1
-            if (left > right) return 1
-            return 0
-        })
+    function applyVolumeSelectionByIndex(index) { libraryBrowseController.applyVolumeSelectionByIndex(index) }
 
-        const searchNeedle = String(sidebarSearchText || "").trim().toLowerCase()
-        seriesListModel.clear()
-        for (let i = 0; i < groups.length; i += 1) {
-            const item = groups[i]
-            const title = String(item.seriesTitle || "")
-            if (searchNeedle.length > 0 && title.toLowerCase().indexOf(searchNeedle) < 0) {
-                continue
-            }
-            seriesListModel.append({
-                seriesKey: String(item.seriesKey || ""),
-                seriesTitle: title,
-                count: Number(item.count || 0)
-            })
-        }
+    function refreshVolumeList() { libraryBrowseController.refreshVolumeList() }
 
-        libraryLoading = false
-
-        if (applyConfiguredLaunchViewAfterRefreshIfNeeded()) {
-            return
-        }
-
-        if (seriesListModel.count < 1) {
-            clearImportSeriesFocusState()
-            selectedSeriesKey = ""
-            selectedSeriesTitle = ""
-            selectedSeriesKeys = ({})
-            seriesSelectionAnchorIndex = -1
-            selectedVolumeKey = "__all__"
-            selectedVolumeTitle = "All volumes"
-            volumeListModel.clear()
-            heroSeriesController.resolveHeroMediaForSelectedSeries()
-            heroSeriesController.refreshSeriesData()
-            refreshQuickFilterCounts()
-            return
-        }
-
-        if (applyPendingImportedSeriesFocus()) {
-            heroSeriesController.resolveHeroMediaForSelectedSeries()
-            heroSeriesController.refreshSeriesData()
-            refreshQuickFilterCounts()
-            return
-        }
-
-        const preservedSelection = {}
-        for (let i = 0; i < seriesListModel.count; i += 1) {
-            const item = seriesListModel.get(i)
-            const key = String(item.seriesKey || "")
-            if (selectedSeriesKeys[key] === true) {
-                preservedSelection[key] = true
-            }
-        }
-        selectedSeriesKeys = preservedSelection
-
-        for (let i = 0; i < seriesListModel.count; i += 1) {
-            const item = seriesListModel.get(i)
-            if (item.seriesKey === selectedSeriesKey) {
-                selectedSeriesTitle = item.seriesTitle
-                if (!isSeriesSelected(selectedSeriesKey)) {
-                    const next = Object.assign({}, selectedSeriesKeys)
-                    next[String(selectedSeriesKey)] = true
-                    selectedSeriesKeys = next
-                }
-                seriesSelectionAnchorIndex = i
-                refreshVolumeList()
-                heroSeriesController.resolveHeroMediaForSelectedSeries()
-                heroSeriesController.refreshSeriesData()
-                refreshQuickFilterCounts()
-                return
-            }
-        }
-
-        selectedSeriesTitle = seriesListModel.get(0).seriesTitle
-        selectedSeriesKey = seriesListModel.get(0).seriesKey
-        const nextSelection = {}
-        nextSelection[String(selectedSeriesKey)] = true
-        selectedSeriesKeys = nextSelection
-        seriesSelectionAnchorIndex = 0
-        refreshVolumeList()
-        heroSeriesController.resolveHeroMediaForSelectedSeries()
-        heroSeriesController.refreshSeriesData()
-        refreshQuickFilterCounts()
-    }
-
-    function applyVolumeSelectionByIndex(index) {
-        if (index < 0 || index >= volumeListModel.count) {
-            selectedVolumeKey = "__all__"
-            selectedVolumeTitle = "All volumes"
-            return
-        }
-        const item = volumeListModel.get(index)
-        selectedVolumeKey = String(item.volumeKey || "__all__")
-        selectedVolumeTitle = String(item.volumeTitle || "All volumes")
-    }
-
-    function refreshVolumeList() {
-        const previousKey = selectedVolumeKey
-        const groups = selectedSeriesKey.length > 0
-            ? libraryModel.volumeGroupsForSeries(selectedSeriesKey)
-            : []
-
-        volumeListModel.clear()
-
-        let totalCount = 0
-        for (let i = 0; i < groups.length; i += 1) {
-            totalCount += Number(groups[i].count || 0)
-        }
-
-        volumeListModel.append({
-            volumeKey: "__all__",
-            volumeTitle: "All volumes",
-            count: totalCount,
-            displayLabel: "All volumes (" + totalCount + ")"
-        })
-
-        let restoredIndex = 0
-        for (let i = 0; i < groups.length; i += 1) {
-            const item = groups[i]
-            const volumeKey = String(item.volumeKey || "")
-            const volumeTitle = String(item.volumeTitle || "No Volume")
-            const count = Number(item.count || 0)
-            volumeListModel.append({
-                volumeKey: volumeKey,
-                volumeTitle: volumeTitle,
-                count: count,
-                displayLabel: volumeTitle + " (" + count + ")"
-            })
-            if (volumeKey === previousKey) {
-                restoredIndex = i + 1
-            }
-        }
-
-        applyVolumeSelectionByIndex(restoredIndex)
-    }
-
-    function refreshIssuesGridData(preserveSplitScroll) {
-        const shouldPreserveSplitScroll = preserveSplitScroll === true
-        const preservedSplitScroll = shouldPreserveSplitScroll && typeof mainLibraryPane !== "undefined" && mainLibraryPane
-            ? Number(mainLibraryPane.currentSplitScroll || 0)
-            : 0
-
-        if (isQuickFilterModeActive()) {
-            refreshQuickFilterGridData(shouldPreserveSplitScroll, preservedSplitScroll)
-            return
-        }
-
-        refreshSeriesGridData(shouldPreserveSplitScroll, preservedSplitScroll)
-    }
-
-    function refreshQuickFilterGridData(shouldPreserveSplitScroll, preservedSplitScroll) {
-        const activeQuickFilterKey = String(sidebarQuickFilterKey || "").trim().toLowerCase()
-        const liveIssues = libraryModel.issuesForQuickFilter(activeQuickFilterKey, lastImportSessionComicIds)
-        issuesGridData = navigationSurfaceController.applyIssueOrder(liveIssues)
-        primeVisibleIssueCoverSourcesFromCache()
-        if (startupReconcileCompleted || !startupSnapshotApplied) {
-            warmVisibleIssueThumbnails()
-        } else {
-            startupController.startupLog("defer warmVisibleIssueThumbnails until first reconcile")
-        }
-        refreshQuickFilterCounts()
-        if (shouldPreserveSplitScroll) {
-            scheduleGridSplitScrollRestore(preservedSplitScroll)
-        }
-    }
-
-    function refreshSeriesGridData(shouldPreserveSplitScroll, preservedSplitScroll) {
-        if (selectedSeriesKey.length < 1) {
-            if (startupSnapshotApplied && startupHydrationInProgress && issuesGridData.length > 0) {
-                startupController.startupLog("refreshIssuesGridData keep snapshot: selectedSeriesKey empty during hydration")
-                return
-            }
-            issuesGridData = []
-            return
-        }
-
-        const previousIssues = Array.isArray(issuesGridData) ? issuesGridData.slice(0) : []
-        const liveIssues = libraryModel.issuesForSeries(
-            selectedSeriesKey,
-            selectedVolumeKey,
-            libraryReadStatusFilter,
-            librarySearchText
-        )
-        const orderedIssues = navigationSurfaceController.applyIssueOrder(liveIssues)
-        const liveIssueListChanged = !startupController.issueListsEquivalentByIdAndOrder(previousIssues, orderedIssues)
-        if (
-            startupSnapshotApplied
-                && !startupHydrationInProgress
-                && liveIssues.length < 1
-                && selectedVolumeKey === "__all__"
-                && String(librarySearchText || "").trim().length < 1
-                && String(libraryReadStatusFilter || "all") === "all"
-                && !startupSnapshotLiveReloadRequested
-        ) {
-            startupSnapshotLiveReloadRequested = true
-            startupController.startupLog("refreshIssuesGridData request live reload for key=" + String(selectedSeriesKey))
-            libraryModel.reload()
-        }
-        if (startupSnapshotApplied && startupHydrationInProgress) {
-            if (liveIssues.length < 1 && issuesGridData.length > 0) {
-                startupController.startupLog("refreshIssuesGridData keep snapshot: live issues empty during hydration")
-            } else if (startupController.issueListsEquivalentByIdAndOrder(issuesGridData, orderedIssues)) {
-                startupController.startupLog("refreshIssuesGridData keep snapshot: live issues equivalent during hydration")
-            } else {
-                issuesGridData = orderedIssues
-            }
-        } else {
-            issuesGridData = orderedIssues
-        }
-        if (liveIssueListChanged) {
-            const resetComicIds = []
-            for (let i = 0; i < previousIssues.length; i += 1) {
-                const previousId = Number((previousIssues[i] || {}).id || 0)
-                if (previousId > 0) resetComicIds.push(previousId)
-            }
-            for (let i = 0; i < liveIssues.length; i += 1) {
-                const liveId = Number((liveIssues[i] || {}).id || 0)
-                if (liveId > 0) resetComicIds.push(liveId)
-            }
-            readerCoverController.clearCoverSourcesForComicIds(resetComicIds)
-        }
-        primeVisibleIssueCoverSourcesFromCache()
-        if (startupReconcileCompleted || !startupSnapshotApplied) {
-            warmVisibleIssueThumbnails()
-        } else {
-            startupController.startupLog("defer warmVisibleIssueThumbnails until first reconcile")
-        }
-
-        if (shouldPreserveSplitScroll) {
-            scheduleGridSplitScrollRestore(preservedSplitScroll)
-        }
-        refreshQuickFilterCounts()
-    }
+    function refreshIssuesGridData(preserveSplitScroll) { libraryBrowseController.refreshIssuesGridData(preserveSplitScroll) }
 
     function reconcileFromModel() {
         startupController.reconcileFromModel()
@@ -1829,129 +1550,22 @@ ApplicationWindow {
         readerCoverController.prefetchReaderNeighbors(centerPageIndex)
     }
 
-    function scheduleIssuesGridRefresh(immediate, preserveSplitScroll) {
-        if (immediate === true) {
-            issuesGridRefreshDebounce.stop()
-            refreshIssuesGridData(preserveSplitScroll)
-            return
-        }
-        issuesGridRefreshDebounce.restart()
-    }
+    function scheduleIssuesGridRefresh(immediate, preserveSplitScroll) { libraryBrowseController.scheduleIssuesGridRefresh(immediate, preserveSplitScroll) }
 
-    function isSeriesSelected(seriesKey) {
-        return selectedSeriesKeys[String(seriesKey || "")] === true
-    }
+    function isSeriesSelected(seriesKey) { return seriesSelectionController.isSeriesSelected(seriesKey) }
 
-    function selectedSeriesCount() {
-        return Object.keys(selectedSeriesKeys).length
-    }
+    function selectedSeriesCount() { return seriesSelectionController.selectedSeriesCount() }
 
-    function selectedSeriesIssueCount() {
-        let total = 0
-        for (let i = 0; i < seriesListModel.count; i += 1) {
-            const item = seriesListModel.get(i)
-            const key = String(item.seriesKey || "")
-            if (selectedSeriesKeys[key] === true) {
-                total += Number(item.count || 0)
-            }
-        }
-        return total
-    }
+    function selectedSeriesIssueCount() { return seriesSelectionController.selectedSeriesIssueCount() }
 
-    function indexForSeriesKey(seriesKey) {
-        const key = String(seriesKey || "")
-        if (key.length < 1) return -1
-        for (let i = 0; i < seriesListModel.count; i += 1) {
-            const item = seriesListModel.get(i)
-            if (String(item.seriesKey || "") === key) return i
-        }
-        return -1
-    }
+    function indexForSeriesKey(seriesKey) { return seriesSelectionController.indexForSeriesKey(seriesKey) }
 
-    function applySeriesSelectionRange(fromIndex, toIndex) {
-        if (seriesListModel.count < 1) return
-        const start = Math.max(0, Math.min(fromIndex, toIndex))
-        const end = Math.min(seriesListModel.count - 1, Math.max(fromIndex, toIndex))
-        const next = {}
-        for (let i = start; i <= end; i += 1) {
-            const item = seriesListModel.get(i)
-            const key = String(item.seriesKey || "")
-            if (key.length > 0) next[key] = true
-        }
-        selectedSeriesKeys = next
-    }
+    function applySeriesSelectionRange(fromIndex, toIndex) { seriesSelectionController.applySeriesSelectionRange(fromIndex, toIndex) }
 
-    function selectSeries(seriesKey, seriesTitle, indexValue) {
-        seriesMenuDismissToken += 1
-        const key = String(seriesKey || "")
-        const title = String(seriesTitle || "")
-        const sameSeries = key.length > 0 && key === String(selectedSeriesKey || "")
-        const hadQuickFilter = String(sidebarQuickFilterKey || "").trim().length > 0
-        if (hadQuickFilter) {
-            sidebarQuickFilterKey = ""
-        }
-        selectedSeriesTitle = title
-        selectedSeriesKey = key
-
-        const next = {}
-        if (key.length > 0) next[key] = true
-        selectedSeriesKeys = next
-        if (typeof indexValue === "number" && indexValue >= 0) {
-            seriesSelectionAnchorIndex = Math.floor(indexValue)
-        } else {
-            seriesSelectionAnchorIndex = indexForSeriesKey(key)
-        }
-
-        if (sameSeries) {
-            clearSelection()
-            setGridScrollToTop()
-            if (typeof mainLibraryPane !== "undefined") {
-                mainLibraryPane.heroCollapseOffset = 0
-            }
-            if (hadQuickFilter) {
-                scheduleIssuesGridRefresh(true)
-            }
-            return
-        }
-
-        refreshVolumeList()
-        clearSelection()
-        setGridScrollToTop()
-        if (typeof mainLibraryPane !== "undefined") {
-            mainLibraryPane.heroCollapseOffset = 0
-        }
-    }
+    function selectSeries(seriesKey, seriesTitle, indexValue) { seriesSelectionController.selectSeries(seriesKey, seriesTitle, indexValue) }
 
     function selectSeriesWithModifiers(seriesKey, seriesTitle, itemIndex, modifiers) {
-        const key = String(seriesKey || "")
-        const title = String(seriesTitle || "")
-        const index = Number(itemIndex || 0)
-        const shiftPressed = (Number(modifiers || 0) & Qt.ShiftModifier) !== 0
-
-        if (shiftPressed && selectedSeriesCount() > 0) {
-            const anchor = seriesSelectionAnchorIndex >= 0 ? seriesSelectionAnchorIndex : indexForSeriesKey(selectedSeriesKey)
-            if (anchor >= 0) {
-                applySeriesSelectionRange(anchor, index)
-            } else {
-                const next = {}
-                if (key.length > 0) next[key] = true
-                selectedSeriesKeys = next
-            }
-            selectedSeriesTitle = title
-            selectedSeriesKey = key
-            if (String(sidebarQuickFilterKey || "").trim().length > 0) {
-                sidebarQuickFilterKey = ""
-            }
-            refreshVolumeList()
-            clearSelection()
-            setGridScrollToTop()
-            if (typeof mainLibraryPane !== "undefined") {
-                mainLibraryPane.heroCollapseOffset = 0
-            }
-            return
-        }
-
-        selectSeries(key, title, index)
+        seriesSelectionController.selectSeriesWithModifiers(seriesKey, seriesTitle, itemIndex, modifiers)
     }
 
     function hasTextInputFocus() {
@@ -1975,110 +1589,21 @@ ApplicationWindow {
         return false
     }
 
-    function openMetadataEditor(comic) {
-        let loaded = libraryModel.loadComicMetadata(comic.id)
-        if (loaded && loaded.error) {
-            libraryModel.reload()
-            loaded = libraryModel.loadComicMetadata(comic.id)
-        }
-        if (loaded && loaded.error) {
-            editingComic = null
-            return
-        }
+    function openMetadataEditor(comic) { metadataDialogController.openMetadataEditor(comic) }
 
-        editingComic = comic
-        const values = loaded || comic || {}
-        popupController.closeAllManagedPopups(metadataDialog)
-        metadataDialog.openForState(values)
-    }
+    function saveMetadata(draftState) { return metadataDialogController.saveMetadata(draftState) }
 
-    function saveMetadata(draftState) {
-        if (!editingComic) {
-            metadataDialog.errorText = "Nothing selected."
-            return false
-        }
+    function buildIssueMetadataSuggestion(draftState) { return metadataDialogController.buildIssueMetadataSuggestion(draftState) }
 
-        const draft = draftState || metadataDialog.currentState()
-        const result = libraryModel.updateComicMetadata(
-            editingComic.id,
-            draft
-        )
-        if (result.length > 0) {
-            metadataDialog.errorText = result
-            return false
-        }
+    function applyIssueMetadataSuggestionPatch(patch) { metadataDialogController.applyIssueMetadataSuggestionPatch(patch) }
 
-        metadataDialog.errorText = ""
-        metadataDialog.markSaved(draft)
-        return true
-    }
+    function requestApplyIssueMetadataEdit(draftState) { metadataDialogController.requestApplyIssueMetadataEdit(draftState) }
 
-    function buildIssueMetadataSuggestion(draftState) {
-        if (!editingComic) return null
-        const draft = draftState || metadataDialog.currentState()
-        const suggestion = libraryModel.issueMetadataSuggestion(draft, Number(editingComic.id || 0)) || {}
-        return Object.keys(suggestion).length > 0 ? suggestion : null
-    }
+    function acceptIssueMetadataSuggestion() { metadataDialogController.acceptIssueMetadataSuggestion() }
 
-    function applyIssueMetadataSuggestionPatch(patch) {
-        if (!patch || typeof patch !== "object") return
-        const nextState = metadataDialog.currentState()
-        const keys = Object.keys(patch)
-        for (let i = 0; i < keys.length; i += 1) {
-            const key = String(keys[i] || "")
-            if (key.length < 1) continue
-            if (String(nextState[key] || "").trim().length > 0) continue
-            nextState[key] = patch[key]
-        }
-        metadataDialog.applyState(nextState)
-    }
+    function skipIssueMetadataSuggestion() { metadataDialogController.skipIssueMetadataSuggestion() }
 
-    function requestApplyIssueMetadataEdit(draftState) {
-        const draft = draftState || metadataDialog.currentState()
-        const suggestion = buildIssueMetadataSuggestion(draft)
-        if (suggestion) {
-            pendingIssueMetadataSuggestion = suggestion
-            const suggestionSeriesLabel = String(suggestion.displayTitle || draft.series || "this series")
-            const suggestionIssueLabel = String(suggestion.issueNumber || draft.issueNumber || "")
-            issueMetadataAutofillConfirmDialog.messageText =
-                "Saved issue info was found for issue #" + suggestionIssueLabel + " in \"" + suggestionSeriesLabel + "\".\n\n"
-                + "Fill the remaining issue fields automatically before saving?"
-            issueMetadataAutofillConfirmDialog.open()
-            return
-        }
-
-        pendingIssueMetadataSuggestion = ({})
-        if (saveMetadata(draft)) {
-            metadataDialog.close()
-        }
-    }
-
-    function acceptIssueMetadataSuggestion() {
-        const suggestion = pendingIssueMetadataSuggestion || ({})
-        pendingIssueMetadataSuggestion = ({})
-        if (issueMetadataAutofillConfirmDialog.visible) {
-            issueMetadataAutofillConfirmDialog.close()
-        }
-        applyIssueMetadataSuggestionPatch(suggestion.patch || {})
-        if (saveMetadata(metadataDialog.currentState())) {
-            metadataDialog.close()
-        }
-    }
-
-    function skipIssueMetadataSuggestion() {
-        pendingIssueMetadataSuggestion = ({})
-        if (issueMetadataAutofillConfirmDialog.visible) {
-            issueMetadataAutofillConfirmDialog.close()
-        }
-        if (saveMetadata(metadataDialog.currentState())) {
-            metadataDialog.close()
-        }
-    }
-
-    function resetMetadataEditor() {
-        if (!editingComic) return
-        metadataDialog.resetToInitial()
-    }
+    function resetMetadataEditor() { metadataDialogController.resetMetadataEditor() }
 
     function openReader(comicId, title) {
         readerSessionController.openReader(comicId, title)
@@ -2183,607 +1708,29 @@ ApplicationWindow {
         readerSessionController.jumpToReaderBookmark()
     }
 
-    function seriesMetaMonthNameFromNumber(monthNumber) {
-        const value = Number(monthNumber || 0)
-        if (value < 1 || value > 12) return ""
-        return String(seriesMetaMonthOptions[value - 1] || "")
-    }
+    function seriesMetaMonthNameFromNumber(monthNumber) { return metadataDialogController.seriesMetaMonthNameFromNumber(monthNumber) }
 
-    function seriesMetaMonthNumberFromName(monthName) {
-        const name = String(monthName || "").trim()
-        if (name.length < 1) return ""
-        const idx = seriesMetaMonthOptions.indexOf(name)
-        if (idx >= 0) return String(idx + 1)
-        return ""
-    }
+    function seriesMetaMonthNumberFromName(monthName) { return metadataDialogController.seriesMetaMonthNumberFromName(monthName) }
 
     function openSeriesMetadataDialog(seriesKey, seriesTitle, focusField, mode) {
-        const key = String(seriesKey || selectedSeriesKey || "").trim()
-        if (key.length < 1) {
-            popupController.showActionResult("Select a series first.", true)
-            return
-        }
-
-        const selectedKeys = Object.keys(selectedSeriesKeys).filter(function(k) {
-            return selectedSeriesKeys[k] === true
-        })
-        const multiSelected = selectedKeys.length > 1 && selectedKeys.indexOf(key) >= 0
-        const targetKeys = multiSelected ? selectedKeys : [key]
-        const requestedMode = String(mode || "").trim().toLowerCase()
-        const effectiveMode = multiSelected
-            ? (requestedMode === "merge" ? "merge" : "bulk")
-            : "single"
-        editingSeriesKey = key
-        editingSeriesKeys = targetKeys
-        editingSeriesDialogMode = effectiveMode
-        if (multiSelected) {
-            editingSeriesTitle = String(targetKeys.length) + " series selected"
-        } else {
-            editingSeriesTitle = String(seriesTitle || selectedSeriesTitle || "").trim()
-            if (editingSeriesTitle.length < 1) {
-                editingSeriesTitle = String(libraryModel.groupTitleForKey(key) || "")
-            }
-        }
-
-        const rows = libraryModel.issuesForSeries(key, "__all__", "all", "")
-        const storedSeriesMetadata = multiSelected ? {} : (libraryModel.seriesMetadataForKey(key) || {})
-        let seedSeries = ""
-        let seedVolume = String(storedSeriesMetadata.volume || "").trim()
-        let seedSeriesTitle = String(storedSeriesMetadata.seriesTitle || "").trim()
-        let seedYear = String(storedSeriesMetadata.year || "").trim()
-        let seedGenres = String(storedSeriesMetadata.genres || "").trim()
-        let seedMonthName = seriesMetaMonthNameFromNumber(storedSeriesMetadata.month)
-        let seedPublisher = String(storedSeriesMetadata.publisher || "").trim()
-        let seedAgeRating = String(storedSeriesMetadata.ageRating || "").trim()
-        const rowCount = Number(rows && rows.length ? rows.length : 0)
-        if (rowCount > 0) {
-            const firstRow = rows[0] || {}
-            seedSeries = normalizeSeriesNameForSave(String(firstRow.series || "").trim(), String(firstRow.volume || "").trim())
-            if (seedVolume.length < 1) {
-                seedVolume = String(firstRow.volume || "").trim()
-            }
-            if (seedMonthName.length < 1) {
-                seedMonthName = seriesMetaMonthNameFromNumber(firstRow.month)
-            }
-            if (seedAgeRating.length < 1) {
-                seedAgeRating = String(firstRow.ageRating || "").trim()
-            }
-            let minYear = 0
-            const publisherCounts = ({})
-            const publisherLabel = ({})
-            const genreSeedSeen = ({})
-            const genreSeedList = []
-            for (let i = 0; i < rows.length; i += 1) {
-                const row = rows[i] || {}
-                const y = Number(row.year || 0)
-                if (y > 0 && (minYear < 1 || y < minYear)) minYear = y
-
-                const p = displayPublisherName(row.publisher)
-                if (p.length > 0) {
-                    const pk = PublisherCatalog.normalizePublisherKey(p)
-                    publisherCounts[pk] = Number(publisherCounts[pk] || 0) + 1
-                    if (!publisherLabel[pk]) publisherLabel[pk] = p
-                }
-
-                if (seedGenres.length < 1) {
-                    const rowGenres = heroSeriesController.splitGenres(row.genres)
-                    for (let g = 0; g < rowGenres.length; g += 1) {
-                        const token = rowGenres[g]
-                        const tokenKey = token.toLowerCase()
-                        if (genreSeedSeen[tokenKey] === true) continue
-                        genreSeedSeen[tokenKey] = true
-                        genreSeedList.push(token)
-                    }
-                }
-            }
-            if (seedYear.length < 1 && minYear > 0) seedYear = String(minYear)
-            if (seedGenres.length < 1 && genreSeedList.length > 0) seedGenres = genreSeedList.join(" / ")
-            let topPublisher = ""
-            let topCount = -1
-            const pKeys = Object.keys(publisherCounts)
-            for (let p = 0; p < pKeys.length; p += 1) {
-                const pk = pKeys[p]
-                const cnt = Number(publisherCounts[pk] || 0)
-                if (cnt > topCount) {
-                    topCount = cnt
-                    topPublisher = String(publisherLabel[pk] || "")
-                }
-            }
-            if (seedPublisher.length < 1) {
-                seedPublisher = topPublisher
-            }
-        }
-
-        seriesMetaDialog.prepareDropdownState(seedYear, seedAgeRating, seedGenres, seedPublisher)
-
-        seriesMetaSeriesField.text = seedSeries.length > 0
-            ? seedSeries
-            : normalizeSeriesNameForSave(String(editingSeriesTitle || ""), "")
-        seriesMetaSummaryField.text = multiSelected ? "" : String(storedSeriesMetadata.summary || "")
-        seriesMetaYearField.text = seedYear
-        seriesMetaTitleField.text = seedSeriesTitle
-        seriesMetaVolumeField.text = seedVolume.length > 0
-            ? seedVolume
-            : ""
-        seriesMetaGenresField.text = seedGenres
-        seriesMetaPublisherField.text = seedPublisher
-        seriesMetaMonthCombo.editText = seedMonthName
-        seriesMetaAgeRatingCombo.editText = seedAgeRating
-        if (seriesMetaSummaryField.text === "-") seriesMetaSummaryField.text = ""
-        if (seriesMetaYearField.text === "-") seriesMetaYearField.text = ""
-        if (seriesMetaVolumeField.text === "Multiple" || seriesMetaVolumeField.text === "-") seriesMetaVolumeField.text = ""
-        if (seriesMetaGenresField.text === "-") seriesMetaGenresField.text = ""
-        if (seriesMetaPublisherField.text === "-") seriesMetaPublisherField.text = ""
-        startupController.startupLog(
-            "seriesDialog open key=" + key
-            + " mode=" + effectiveMode
-            + " multi=" + String(multiSelected)
-            + " targetKeys=" + String(targetKeys.length)
-            + " rows=" + String(rowCount)
-            + " seedSeries=\"" + String(seriesMetaSeriesField.text || "") + "\""
-            + " seedSeriesTitle=\"" + String(seriesMetaTitleField.text || "") + "\""
-            + " seedVolume=\"" + String(seriesMetaVolumeField.text || "") + "\""
-            + " seedGenres=\"" + String(seriesMetaGenresField.text || "") + "\""
-            + " seedPublisher=\"" + String(seriesMetaPublisherField.text || "") + "\""
-            + " seedYear=\"" + String(seriesMetaYearField.text || "") + "\""
-            + " seedMonth=\"" + String(seriesMetaMonthCombo.currentText || "") + "\""
-            + " seedAge=\"" + String(seriesMetaAgeRatingCombo.currentText || "") + "\""
-            + " seedSummaryLen=" + String(String(seriesMetaSummaryField.text || "").length)
-        )
-        seriesMetaDialog.pendingFocusField = String(focusField || "").trim()
-        seriesMetaDialog.errorText = ""
-        popupController.openExclusivePopup(seriesMetaDialog)
+        metadataDialogController.openSeriesMetadataDialog(seriesKey, seriesTitle, focusField, mode)
     }
 
-    function openSeriesMergeDialog(seriesKey, seriesTitle) {
-        openSeriesMetadataDialog(seriesKey, seriesTitle, "series", "merge")
-    }
+    function openSeriesMergeDialog(seriesKey, seriesTitle) { metadataDialogController.openSeriesMergeDialog(seriesKey, seriesTitle) }
 
-    function buildSeriesMetadataSuggestion() {
-        const currentKey = String(editingSeriesKey || "").trim()
-        if (currentKey.length < 1) return null
-        if (Array.isArray(editingSeriesKeys) && editingSeriesKeys.length > 1) return null
+    function buildSeriesMetadataSuggestion() { return metadataDialogController.buildSeriesMetadataSuggestion() }
 
-        const seriesRawValue = String(seriesMetaSeriesField.text || "").trim()
-        const volumeValue = String(seriesMetaVolumeField.text || "").trim()
-        const seriesValue = normalizeSeriesNameForSave(seriesRawValue, volumeValue)
-        const suggestion = libraryModel.seriesMetadataSuggestion({
-            series: seriesValue,
-            seriesTitle: String(seriesMetaTitleField.text || "").trim(),
-            summary: String(seriesMetaSummaryField.text || "").trim(),
-            year: String(seriesMetaYearField.text || "").trim(),
-            month: seriesMetaMonthNumberFromName(seriesMetaMonthCombo.currentText),
-            genres: String(seriesMetaGenresField.text || "").trim(),
-            volume: volumeValue,
-            publisher: String(seriesMetaPublisherField.text || "").trim(),
-            ageRating: String(seriesMetaAgeRatingCombo.currentText || "").trim()
-        }, currentKey) || {}
-        return Object.keys(suggestion).length > 0 ? suggestion : null
-    }
+    function applySeriesMetadataSuggestionPatch(patch) { metadataDialogController.applySeriesMetadataSuggestionPatch(patch) }
 
-    function applySeriesMetadataSuggestionPatch(patch) {
-        const values = patch || {}
-        if (Object.prototype.hasOwnProperty.call(values, "seriesTitle")
-                && String(seriesMetaTitleField.text || "").trim().length < 1) {
-            seriesMetaTitleField.text = String(values.seriesTitle || "").trim()
-        }
-        if (Object.prototype.hasOwnProperty.call(values, "summary")
-                && String(seriesMetaSummaryField.text || "").trim().length < 1) {
-            seriesMetaSummaryField.text = String(values.summary || "").trim()
-        }
-        if (Object.prototype.hasOwnProperty.call(values, "year")
-                && String(seriesMetaYearField.text || "").trim().length < 1) {
-            seriesMetaYearField.text = String(values.year || "").trim()
-        }
-        if (Object.prototype.hasOwnProperty.call(values, "month")
-                && String(seriesMetaMonthCombo.currentText || "").trim().length < 1) {
-            seriesMetaMonthCombo.editText = seriesMetaMonthNameFromNumber(values.month)
-        }
-        if (Object.prototype.hasOwnProperty.call(values, "genres")
-                && String(seriesMetaGenresField.text || "").trim().length < 1) {
-            seriesMetaGenresField.text = String(values.genres || "").trim()
-        }
-        if (Object.prototype.hasOwnProperty.call(values, "volume")
-                && String(seriesMetaVolumeField.text || "").trim().length < 1) {
-            seriesMetaVolumeField.text = String(values.volume || "").trim()
-        }
-        if (Object.prototype.hasOwnProperty.call(values, "publisher")
-                && String(seriesMetaPublisherField.text || "").trim().length < 1) {
-            seriesMetaPublisherField.text = String(values.publisher || "").trim()
-        }
-        if (Object.prototype.hasOwnProperty.call(values, "ageRating")
-                && String(seriesMetaAgeRatingCombo.currentText || "").trim().length < 1) {
-            seriesMetaAgeRatingCombo.editText = String(values.ageRating || "").trim()
-        }
-    }
+    function requestApplySeriesMetadataEdit() { metadataDialogController.requestApplySeriesMetadataEdit() }
 
-    function requestApplySeriesMetadataEdit() {
-        const suggestion = buildSeriesMetadataSuggestion()
-        if (suggestion) {
-            pendingSeriesMetadataSuggestion = suggestion
-            const suggestionLabel = String(suggestion.displayTitle || seriesMetaSeriesField.text || "this series")
-            seriesMetadataAutofillConfirmDialog.messageText =
-                "Saved series info was found for \"" + suggestionLabel + "\".\n\n"
-                + "Fill the remaining series fields automatically before saving?"
-            seriesMetadataAutofillConfirmDialog.open()
-            return
-        }
+    function acceptSeriesMetadataSuggestion() { metadataDialogController.acceptSeriesMetadataSuggestion() }
 
-        pendingSeriesMetadataSuggestion = ({})
-        if (applySeriesMetadataEdit()) {
-            seriesMetaDialog.close()
-        }
-    }
+    function skipSeriesMetadataSuggestion() { metadataDialogController.skipSeriesMetadataSuggestion() }
 
-    function acceptSeriesMetadataSuggestion() {
-        const suggestion = pendingSeriesMetadataSuggestion || ({})
-        pendingSeriesMetadataSuggestion = ({})
-        if (seriesMetadataAutofillConfirmDialog.visible) {
-            seriesMetadataAutofillConfirmDialog.close()
-        }
-        applySeriesMetadataSuggestionPatch(suggestion.patch || {})
-        if (applySeriesMetadataEdit()) {
-            seriesMetaDialog.close()
-        }
-    }
+    function findSeriesKeyForIssueId(issueId, fallbackKey) { return metadataDialogController.findSeriesKeyForIssueId(issueId, fallbackKey) }
 
-    function skipSeriesMetadataSuggestion() {
-        pendingSeriesMetadataSuggestion = ({})
-        if (seriesMetadataAutofillConfirmDialog.visible) {
-            seriesMetadataAutofillConfirmDialog.close()
-        }
-        if (applySeriesMetadataEdit()) {
-            seriesMetaDialog.close()
-        }
-    }
-
-    function findSeriesKeyForIssueId(issueId, fallbackKey) {
-        const targetId = Number(issueId || 0)
-        const fallback = String(fallbackKey || "").trim()
-        if (targetId < 1) return fallback
-
-        const groups = libraryModel.seriesGroups()
-        for (let i = 0; i < groups.length; i += 1) {
-            const group = groups[i] || {}
-            const groupKey = String(group.seriesKey || "").trim()
-            if (groupKey.length < 1) continue
-            const rows = libraryModel.issuesForSeries(groupKey, "__all__", "all", "")
-            for (let j = 0; j < rows.length; j += 1) {
-                const id = Number((rows[j] || {}).id || 0)
-                if (id === targetId) {
-                    return groupKey
-                }
-            }
-        }
-        return fallback
-    }
-
-    function applySeriesMetadataEdit() {
-        const keys = Array.isArray(editingSeriesKeys) && editingSeriesKeys.length > 0
-            ? editingSeriesKeys.slice(0)
-            : [String(editingSeriesKey || "").trim()]
-        const normalizedKeys = keys
-            .map(function(k) { return String(k || "").trim() })
-            .filter(function(k) { return k.length > 0 })
-        if (normalizedKeys.length < 1) {
-            seriesMetaDialog.errorText = "Series context is missing."
-            return false
-        }
-
-        const key = normalizedKeys[0]
-        const multiSelection = normalizedKeys.length > 1
-        const editMode = String(editingSeriesDialogMode || "").trim().toLowerCase()
-        const mergeMode = editMode === "merge" && multiSelection
-        const bulkMode = editMode === "bulk" && multiSelection
-        const ids = []
-        const leadIssueByKey = ({})
-        for (let k = 0; k < normalizedKeys.length; k += 1) {
-            const seriesKey = normalizedKeys[k]
-            const issues = libraryModel.issuesForSeries(seriesKey, "__all__", "all", "")
-            for (let i = 0; i < issues.length; i += 1) {
-                const id = Number((issues[i] || {}).id || 0)
-                if (id > 0) {
-                    ids.push(id)
-                    if (!leadIssueByKey[seriesKey]) {
-                        leadIssueByKey[seriesKey] = id
-                    }
-                }
-            }
-        }
-
-        if (ids.length < 1) {
-            seriesMetaDialog.errorText = "No issues found for selected series."
-            return false
-        }
-        const dedupMap = ({})
-        const dedupIds = []
-        for (let i = 0; i < ids.length; i += 1) {
-            const id = Number(ids[i] || 0)
-            if (id < 1 || dedupMap[id] === true) continue
-            dedupMap[id] = true
-            dedupIds.push(id)
-        }
-
-        const seriesRawValue = String(seriesMetaSeriesField.text || "").trim()
-        const volumeValue = String(seriesMetaVolumeField.text || "").trim()
-        const seriesValue = mergeMode
-            ? String(seriesRawValue || "").trim()
-            : normalizeSeriesNameForSave(seriesRawValue, volumeValue)
-        const seriesTitleValue = String(seriesMetaTitleField.text || "").trim()
-        const summaryValue = String(seriesMetaSummaryField.text || "").trim()
-        const yearValue = String(seriesMetaYearField.text || "").trim()
-        const monthValue = seriesMetaMonthNumberFromName(seriesMetaMonthCombo.currentText)
-        const genresValue = String(seriesMetaGenresField.text || "").trim()
-        const publisherValue = String(seriesMetaPublisherField.text || "").trim()
-        const resolvedPublisherValue = displayPublisherName(publisherValue)
-        const ageRatingValue = String(seriesMetaAgeRatingCombo.currentText || "").trim()
-        startupController.startupLog(
-            "seriesDialog save key=" + key
-            + " keys=" + String(normalizedKeys.length)
-            + " ids=" + String(dedupIds.length)
-            + " mode=" + editMode
-            + " multi=" + String(multiSelection)
-            + " series=\"" + seriesValue + "\""
-            + " seriesTitle=\"" + seriesTitleValue + "\""
-            + " volume=\"" + volumeValue + "\""
-            + " genres=\"" + genresValue + "\""
-            + " publisher=\"" + publisherValue + "\""
-            + " year=\"" + yearValue + "\""
-            + " month=\"" + monthValue + "\""
-            + " ageRating=\"" + ageRatingValue + "\""
-            + " summaryLen=" + String(summaryValue.length)
-        )
-
-        const values = {}
-        const applyMap = {}
-        if (mergeMode) {
-            if (seriesValue.length < 1) {
-                seriesMetaDialog.errorText = "Enter a series name to merge into."
-                return false
-            }
-            values.series = seriesValue
-            applyMap.series = true
-        } else if (bulkMode) {
-            if (monthValue.length > 0) {
-                values.month = monthValue
-                applyMap.month = true
-            }
-            if (publisherValue.length > 0) {
-                values.publisher = publisherValue
-                applyMap.publisher = true
-            }
-            if (ageRatingValue.length > 0) {
-                values.ageRating = ageRatingValue
-                applyMap.ageRating = true
-            }
-            if (Object.keys(applyMap).length < 1
-                    && summaryValue.length < 1
-                    && seriesTitleValue.length < 1
-                    && yearValue.length < 1
-                    && genresValue.length < 1) {
-                seriesMetaDialog.errorText = "Enter at least one field for bulk edit."
-                return false
-            }
-        } else {
-            values.series = seriesValue
-            values.month = monthValue
-            values.volume = volumeValue
-            values.publisher = publisherValue
-            values.ageRating = ageRatingValue
-
-            applyMap.series = true
-            applyMap.month = true
-            applyMap.volume = true
-            applyMap.publisher = true
-            applyMap.ageRating = true
-        }
-
-        const result = libraryModel.bulkUpdateMetadata(dedupIds, values, applyMap)
-        if (result.length > 0) {
-            startupController.startupLog("seriesDialog bulkUpdate error: " + result)
-            seriesMetaDialog.errorText = result
-            return false
-        }
-
-        if (!multiSelection) {
-            const verifyId = Number(dedupIds[0] || 0)
-            const verify = libraryModel.loadComicMetadata(verifyId)
-            if (verify && verify.error) {
-                startupController.startupLog("seriesDialog verify error: " + String(verify.error || "unknown"))
-                seriesMetaDialog.errorText = String(verify.error || "Save verification failed.")
-                return false
-            }
-
-            const mismatched =
-                String(verify.series || "").trim() !== seriesValue
-                || String(verify.volume || "").trim() !== volumeValue
-                || String(verify.publisher || "").trim() !== publisherValue
-                || String(verify.ageRating || "").trim() !== ageRatingValue
-                || Number(verify.month || 0) !== Number(monthValue || 0)
-            if (mismatched) {
-                startupController.startupLog(
-                    "seriesDialog verify mismatch"
-                    + " verifySeries=\"" + String(verify.series || "") + "\""
-                    + " verifyVolume=\"" + String(verify.volume || "") + "\""
-                    + " verifyPublisher=\"" + String(verify.publisher || "") + "\""
-                    + " verifyYear=\"" + String(verify.year || "") + "\""
-                    + " verifyMonth=\"" + String(verify.month || "") + "\""
-                    + " verifyAgeRating=\"" + String(verify.ageRating || "") + "\""
-                )
-                seriesMetaDialog.errorText = "Metadata save verification mismatch. Please retry."
-                scheduleModelReconcile(true)
-                return false
-            }
-
-            const resolvedSeriesKey = findSeriesKeyForIssueId(verifyId, key)
-            const resolvedSeriesTitle = String(libraryModel.groupTitleForKey(resolvedSeriesKey) || "").trim()
-            const targetSeriesKey = String(resolvedSeriesKey || key).trim()
-            const sourceSeriesMetadata = libraryModel.seriesMetadataForKey(key) || {}
-            const seriesMetaSaveResult = libraryModel.setSeriesMetadataForKey(targetSeriesKey, {
-                seriesTitle: seriesTitleValue,
-                summary: summaryValue,
-                year: yearValue,
-                month: monthValue,
-                genres: genresValue,
-                volume: volumeValue,
-                publisher: resolvedPublisherValue,
-                ageRating: ageRatingValue
-            })
-            if (seriesMetaSaveResult.length > 0) {
-                startupController.startupLog("seriesDialog series metadata save error: " + seriesMetaSaveResult)
-                seriesMetaDialog.errorText = seriesMetaSaveResult
-                return false
-            }
-            if (targetSeriesKey !== key) {
-                const preserveHeaderError = heroSeriesController.preserveHeaderOverridesIfNeeded(targetSeriesKey, sourceSeriesMetadata)
-                if (preserveHeaderError.length > 0) {
-                    seriesMetaDialog.errorText = preserveHeaderError
-                    return false
-                }
-                libraryModel.removeSeriesMetadataForKey(key)
-            }
-            startupController.startupLog("seriesDialog save success targetKey=" + targetSeriesKey)
-            seriesMetaDialog.errorText = ""
-            editingSeriesKey = ""
-            editingSeriesKeys = []
-            editingSeriesTitle = ""
-
-            refreshSeriesList()
-            const effectiveSeriesKey = String(resolvedSeriesKey || key).trim()
-            if (effectiveSeriesKey.length > 0) {
-                selectedSeriesTitle = resolvedSeriesTitle.length > 0
-                    ? resolvedSeriesTitle
-                    : String(libraryModel.groupTitleForKey(effectiveSeriesKey) || selectedSeriesTitle)
-                selectedSeriesKey = effectiveSeriesKey
-                const selection = {}
-                selection[effectiveSeriesKey] = true
-                selectedSeriesKeys = selection
-                seriesSelectionAnchorIndex = indexForSeriesKey(effectiveSeriesKey)
-                refreshVolumeList()
-                heroSeriesController.resolveHeroMediaForSelectedSeries()
-                heroSeriesController.applyDraftSeriesData(
-                    String(selectedSeriesTitle || seriesValue || "-"),
-                    summaryValue.length > 0 ? summaryValue : "-",
-                    yearValue.length > 0 ? yearValue : "-",
-                    volumeValue.length > 0 ? volumeValue : "-",
-                    resolvedPublisherValue.length > 0 ? resolvedPublisherValue : "-",
-                    genresValue.length > 0 ? genresValue : "-"
-                )
-                heroSeriesController.refreshSeriesData()
-                refreshIssuesGridData()
-            } else {
-                scheduleModelReconcile(true)
-            }
-            startupController.requestSnapshotSave()
-            return true
-        }
-
-        if (mergeMode) {
-            const primaryLeadId = Number(leadIssueByKey[key] || 0)
-            const primaryTargetSeriesKey = primaryLeadId > 0
-                ? String(findSeriesKeyForIssueId(primaryLeadId, key) || key).trim()
-                : key
-            const primarySourceMetadata = libraryModel.seriesMetadataForKey(key) || {}
-            if (primaryTargetSeriesKey !== key) {
-                const preserveHeaderError = heroSeriesController.preserveHeaderOverridesIfNeeded(
-                    primaryTargetSeriesKey,
-                    primarySourceMetadata
-                )
-                if (preserveHeaderError.length > 0) {
-                    seriesMetaDialog.errorText = preserveHeaderError
-                    return false
-                }
-                const primarySeriesMetaSaveResult = libraryModel.setSeriesMetadataForKey(primaryTargetSeriesKey, {
-                    seriesTitle: String(primarySourceMetadata.seriesTitle || "").trim(),
-                    summary: String(primarySourceMetadata.summary || "").trim(),
-                    year: String(primarySourceMetadata.year || "").trim(),
-                    month: String(primarySourceMetadata.month || "").trim(),
-                    genres: String(primarySourceMetadata.genres || "").trim(),
-                    volume: String(primarySourceMetadata.volume || "").trim(),
-                    publisher: String(primarySourceMetadata.publisher || "").trim(),
-                    ageRating: String(primarySourceMetadata.ageRating || "").trim()
-                })
-                if (primarySeriesMetaSaveResult.length > 0) {
-                    startupController.startupLog("seriesDialog merge metadata save error: " + primarySeriesMetaSaveResult)
-                    seriesMetaDialog.errorText = primarySeriesMetaSaveResult
-                    return false
-                }
-            }
-            for (let i = 0; i < normalizedKeys.length; i += 1) {
-                const sourceKey = normalizedKeys[i]
-                if (sourceKey === primaryTargetSeriesKey) continue
-                libraryModel.removeSeriesMetadataForKey(sourceKey)
-            }
-        } else if (summaryValue.length > 0
-                || seriesTitleValue.length > 0
-                || yearValue.length > 0
-                || genresValue.length > 0) {
-            for (let i = 0; i < normalizedKeys.length; i += 1) {
-                const sourceKey = normalizedKeys[i]
-                const leadId = Number(leadIssueByKey[sourceKey] || 0)
-                const resolvedKey = leadId > 0 ? findSeriesKeyForIssueId(leadId, sourceKey) : sourceKey
-                const targetSeriesKey = String(resolvedKey || sourceKey).trim()
-                const sourceSeriesMetadata = libraryModel.seriesMetadataForKey(sourceKey) || {}
-                const nextSeriesTitle = seriesTitleValue.length > 0
-                    ? seriesTitleValue
-                    : String(sourceSeriesMetadata.seriesTitle || "").trim()
-                const nextSummary = summaryValue.length > 0
-                    ? summaryValue
-                    : String(sourceSeriesMetadata.summary || "").trim()
-                const nextSeriesYear = yearValue.length > 0
-                    ? yearValue
-                    : String(sourceSeriesMetadata.year || "").trim()
-                const nextSeriesMonth = monthValue.length > 0
-                    ? monthValue
-                    : String(sourceSeriesMetadata.month || "").trim()
-                const nextSeriesGenres = genresValue.length > 0
-                    ? genresValue
-                    : String(sourceSeriesMetadata.genres || "").trim()
-                const nextSeriesVolume = volumeValue.length > 0
-                    ? volumeValue
-                    : String(sourceSeriesMetadata.volume || "").trim()
-                const nextSeriesPublisher = resolvedPublisherValue.length > 0
-                    ? resolvedPublisherValue
-                    : String(sourceSeriesMetadata.publisher || "").trim()
-                const nextSeriesAgeRating = ageRatingValue.length > 0
-                    ? ageRatingValue
-                    : String(sourceSeriesMetadata.ageRating || "").trim()
-                const seriesMetaValues = {}
-                if (nextSeriesTitle.length > 0) seriesMetaValues.seriesTitle = nextSeriesTitle
-                if (nextSummary.length > 0) seriesMetaValues.summary = nextSummary
-                if (nextSeriesYear.length > 0) seriesMetaValues.year = nextSeriesYear
-                if (nextSeriesMonth.length > 0) seriesMetaValues.month = nextSeriesMonth
-                if (nextSeriesGenres.length > 0) seriesMetaValues.genres = nextSeriesGenres
-                if (!bulkMode && nextSeriesVolume.length > 0) seriesMetaValues.volume = nextSeriesVolume
-                if (nextSeriesPublisher.length > 0) seriesMetaValues.publisher = nextSeriesPublisher
-                if (nextSeriesAgeRating.length > 0) seriesMetaValues.ageRating = nextSeriesAgeRating
-                const seriesMetaSaveResult = libraryModel.setSeriesMetadataForKey(targetSeriesKey, seriesMetaValues)
-                if (seriesMetaSaveResult.length > 0) {
-                    startupController.startupLog("seriesDialog series metadata save error: " + seriesMetaSaveResult)
-                    seriesMetaDialog.errorText = seriesMetaSaveResult
-                    return false
-                }
-                if (targetSeriesKey !== sourceKey) {
-                    const preserveHeaderError = heroSeriesController.preserveHeaderOverridesIfNeeded(targetSeriesKey, sourceSeriesMetadata)
-                    if (preserveHeaderError.length > 0) {
-                        seriesMetaDialog.errorText = preserveHeaderError
-                        return false
-                    }
-                    libraryModel.removeSeriesMetadataForKey(sourceKey)
-                }
-            }
-        }
-        startupController.startupLog("seriesDialog bulk save success mode=" + editMode + " keys=" + String(normalizedKeys.length))
-
-        seriesMetaDialog.errorText = ""
-        editingSeriesKey = ""
-        editingSeriesKeys = []
-        editingSeriesTitle = ""
-        editingSeriesDialogMode = "single"
-        scheduleModelReconcile(true)
-        startupController.requestSnapshotSave()
-        return true
-    }
+    function applySeriesMetadataEdit() { return metadataDialogController.applySeriesMetadataEdit() }
 
     function dismissGridOverlayMenusForScroll() {
         gridOverlayMenusSuppressed = true

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.7.18 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.7.19 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -172,6 +172,9 @@ qt_add_qml_module(comic_pile_qt
         qml/controllers/ReaderSessionController.qml
         qml/controllers/ReaderPopupStateController.qml
         qml/controllers/NavigationSurfaceController.qml
+        qml/controllers/LibraryBrowseController.qml
+        qml/controllers/SeriesSelectionController.qml
+        qml/controllers/MetadataDialogController.qml
         qml/controllers/ReaderSpreadLayout.js
         qml/controllers/ImportController.qml
         qml/controllers/ImportSessionController.qml
