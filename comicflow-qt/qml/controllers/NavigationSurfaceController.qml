@@ -58,9 +58,18 @@ Item {
             : ""
         if (rememberedComicId > 0 && typeof libraryModelRef.navigationTargetForComic === "function") {
             const rememberedTarget = libraryModelRef.navigationTargetForComic(rememberedComicId) || ({})
-            if (Boolean(rememberedTarget.ok)
-                    && (rememberedSeriesKey.length < 1
-                        || String(rememberedTarget.seriesKey || "").trim() === rememberedSeriesKey)) {
+            if (Boolean(rememberedTarget.ok)) {
+                const resolvedSeriesKey = String(rememberedTarget.seriesKey || "").trim()
+                if (root
+                        && resolvedSeriesKey.length > 0
+                        && resolvedSeriesKey !== rememberedSeriesKey
+                        && typeof root.rememberContinueReadingTarget === "function") {
+                    root.rememberContinueReadingTarget(
+                        Number(rememberedTarget.comicId || rememberedComicId),
+                        resolvedSeriesKey,
+                        String(rememberedTarget.displayTitle || rememberedTarget.title || "").trim()
+                    )
+                }
                 return rememberedTarget
             }
             return {
@@ -271,52 +280,23 @@ Item {
     function nextUnread() {
         if (!libraryModelRef) return
 
-        const root = rootObject
-        let continueTarget = ({})
-        const rememberedComicId = root ? Number(root.continueReadingComicId || -1) : -1
-        const rememberedSeriesKey = root ? String(root.continueReadingSeriesKey || "").trim() : ""
-        if (rememberedComicId > 0 && typeof libraryModelRef.navigationTargetForComic === "function") {
-            const rememberedTarget = libraryModelRef.navigationTargetForComic(rememberedComicId) || ({})
-            if (Boolean(rememberedTarget.ok)
-                    && (rememberedSeriesKey.length < 1
-                        || String(rememberedTarget.seriesKey || "").trim() === rememberedSeriesKey)) {
-                continueTarget = rememberedTarget
-            }
-        }
-        const selectedSeriesKey = root
-            ? String(root.selectedSeriesKey || "").trim()
-            : ""
-
-        let target = ({})
-        if (selectedSeriesKey.length > 0) {
-            const afterComicId = Boolean(continueTarget.ok)
-                && String(continueTarget.seriesKey || "").trim() === selectedSeriesKey
-                ? Number(continueTarget.comicId || -1)
-                : -1
-            target = libraryModelRef.nextUnreadTarget(selectedSeriesKey, afterComicId) || ({})
-            if (!Boolean(target.ok)) {
-                showNavigationMessage(
-                    "Next unread",
-                    String(target.message || "No next unread issue is queued for this series.")
-                )
-                return
-            }
-        } else if (Boolean(continueTarget.ok)) {
-            target = libraryModelRef.nextUnreadTarget(
-                String(continueTarget.seriesKey || "").trim(),
-                Number(continueTarget.comicId || -1)
-            ) || ({})
-            if (!Boolean(target.ok)) {
-                showNavigationMessage(
-                    "Next unread",
-                    String(target.message || "No next unread issue is queued right now.")
-                )
-                return
-            }
-        } else {
+        const continueTarget = resolveContinueReadingTarget() || ({})
+        if (!Boolean(continueTarget.ok)) {
             showNavigationMessage(
                 "Next unread",
-                "Select a series or start reading first."
+                String(continueTarget.message || "No active reading session is available yet.")
+            )
+            return
+        }
+
+        const target = libraryModelRef.nextUnreadTarget(
+            String(continueTarget.seriesKey || "").trim(),
+            Number(continueTarget.comicId || -1)
+        ) || ({})
+        if (!Boolean(target.ok)) {
+            showNavigationMessage(
+                "Next unread",
+                String(target.message || "No next unread issue is queued right now.")
             )
             return
         }
