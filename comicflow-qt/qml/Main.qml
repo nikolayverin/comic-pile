@@ -316,6 +316,8 @@ ApplicationWindow {
     readonly property int firstRunDropZoneHighlightWidth: 318
     readonly property int firstRunDropZoneStep1HighlightHeight: 212
     readonly property int firstRunDropZoneStep2HighlightHeight: 654
+    readonly property int firstRunStep3HighlightWidth: 1122
+    readonly property int firstRunStep3HighlightHeight: 362
     readonly property int firstRunDropZoneHighlightRadius: 20
     StartupController {
         id: startupController
@@ -2205,7 +2207,9 @@ ApplicationWindow {
 
         Rectangle {
             id: dropZoneHighlight
-            x: Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
+            x: root.firstRunOnboardingStep === 3
+                ? root.width - root.firstRunStep3HighlightWidth
+                : Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
             y: root.firstRunOnboardingStep === 1
                 ? Math.round(
                     root.height
@@ -2215,9 +2219,13 @@ ApplicationWindow {
                     - root.firstRunDropZoneStep1HighlightHeight
                 )
                 : root.topBarHeight
-            width: root.firstRunDropZoneHighlightWidth
+            width: root.firstRunOnboardingStep === 3
+                ? root.firstRunStep3HighlightWidth
+                : root.firstRunDropZoneHighlightWidth
             height: root.firstRunOnboardingStep === 1
                 ? root.firstRunDropZoneStep1HighlightHeight
+                : root.firstRunOnboardingStep === 3
+                    ? root.firstRunStep3HighlightHeight
                 : root.firstRunDropZoneStep2HighlightHeight
             radius: root.firstRunDropZoneHighlightRadius
             color: "transparent"
@@ -2287,12 +2295,20 @@ ApplicationWindow {
         Image {
             id: onboardingStep1Bubble
             anchors.left: parent.left
-            anchors.leftMargin: root.firstRunOnboardingStep === 1 ? 334 : 336
+            anchors.leftMargin: root.firstRunOnboardingStep === 1
+                ? 334
+                : root.firstRunOnboardingStep === 2
+                    ? 336
+                    : 496
             anchors.top: parent.top
-            anchors.topMargin: root.firstRunOnboardingStep === 1 ? (root.height - 146 - height) : 92
+            anchors.topMargin: root.firstRunOnboardingStep === 1 ? (root.height - 146 - height)
+                : root.firstRunOnboardingStep === 2 ? 92
+                : 432
             source: root.firstRunOnboardingStep === 1
                 ? uiTokens.onboardingStep1Bubble
-                : uiTokens.onboardingStep2Bubble
+                : root.firstRunOnboardingStep === 2
+                    ? uiTokens.onboardingStep2Bubble
+                    : uiTokens.onboardingStep3Bubble
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -2301,9 +2317,14 @@ ApplicationWindow {
             id: onboardingNavigationBlockFull
             width: 182
             height: 23
-            x: onboardingStep1Bubble.x + 367 - (width / 2)
-            y: onboardingStep1Bubble.y + onboardingStep1Bubble.height - 125 - (height / 2)
-            visible: root.firstRunOnboardingStep === 2
+            x: onboardingStep1Bubble.x
+                + (root.firstRunOnboardingStep === 2 ? 367 : 603)
+                - (width / 2)
+            y: onboardingStep1Bubble.y
+                + onboardingStep1Bubble.height
+                - (root.firstRunOnboardingStep === 2 ? 125 : 154)
+                - (height / 2)
+            visible: root.firstRunOnboardingStep === 2 || root.firstRunOnboardingStep === 3
 
             Item {
                 id: onboardingBackButtonHitbox
@@ -2326,7 +2347,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.firstRunOnboardingStep = 1
+                    onClicked: root.firstRunOnboardingStep = root.firstRunOnboardingStep === 3 ? 2 : 1
                 }
             }
 
@@ -2351,6 +2372,10 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        if (root.firstRunOnboardingStep === 2)
+                            root.firstRunOnboardingStep = 3
+                    }
                 }
             }
 
@@ -2415,11 +2440,15 @@ ApplicationWindow {
             radius: 16
             color: onboardingCloseMouseArea.containsMouse ? "#303030" : "#000000"
             x: onboardingStep1Bubble.x
-                + (root.firstRunOnboardingStep === 1 ? 487 : 504)
+                + (root.firstRunOnboardingStep === 1 ? 487
+                    : root.firstRunOnboardingStep === 2 ? 504
+                    : 749)
                 - (width / 2)
             y: onboardingStep1Bubble.y
                 + onboardingStep1Bubble.height
-                - (root.firstRunOnboardingStep === 1 ? 584 : 339)
+                - (root.firstRunOnboardingStep === 1 ? 584
+                    : root.firstRunOnboardingStep === 2 ? 339
+                    : 367)
                 - (height / 2)
 
             Rectangle {
