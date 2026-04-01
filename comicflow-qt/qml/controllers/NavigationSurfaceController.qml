@@ -65,7 +65,18 @@ Item {
     function clearSeriesViewFilters() {
         const root = rootObject
         if (!root) return
-        root.selectedVolumeKey = "__all__"
+        if (typeof root.applySelectedSeriesContext === "function") {
+            const context = root.selectedSeriesContext || ({})
+            root.applySelectedSeriesContext(
+                String(context.seriesKey || ""),
+                String(context.seriesTitle || ""),
+                "__all__",
+                AppText.libraryAllVolumes
+            )
+        } else {
+            root.selectedVolumeKey = "__all__"
+            root.selectedVolumeTitle = AppText.libraryAllVolumes
+        }
         root.libraryReadStatusFilter = "all"
         root.librarySearchText = ""
     }
@@ -148,8 +159,9 @@ Item {
         }
 
         const targetSeriesKey = String(pendingIssueTarget.seriesKey || "").trim()
+        const selectedContext = root.selectedSeriesContext || ({})
         if (targetSeriesKey.length > 0
-                && String(root.selectedSeriesKey || "").trim() !== targetSeriesKey) {
+                && String(selectedContext.seriesKey || "").trim() !== targetSeriesKey) {
             return false
         }
 

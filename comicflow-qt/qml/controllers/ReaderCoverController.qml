@@ -290,7 +290,8 @@ Item {
         const root = rootObject
         if (!root) return -1
 
-        const selectedTitle = String(root.selectedSeriesTitle || "").trim()
+        const selectionContext = root.selectedSeriesContext || ({})
+        const selectedTitle = String(selectionContext.seriesTitle || "").trim()
         if (selectedTitle.length < 1) return -1
 
         const rows = Array.isArray(root.issuesGridData) ? root.issuesGridData : []
@@ -307,7 +308,8 @@ Item {
         const root = rootObject
         if (!root || !libraryModelRef) return
 
-        const key = String(root.selectedSeriesKey || "")
+        const selectionContext = root.selectedSeriesContext || ({})
+        const key = String(selectionContext.seriesKey || "")
         if (key.length < 1) {
             root.heroCoverComicId = -1
             return
@@ -336,7 +338,8 @@ Item {
         const root = rootObject
         if (!root || !libraryModelRef) return
 
-        const key = String(root.selectedSeriesKey || "").trim()
+        const selectionContext = root.selectedSeriesContext || ({})
+        const key = String(selectionContext.seriesKey || "").trim()
         if (key.length < 1) {
             root.heroBackgroundRequestId = -1
             root.heroBackgroundSeriesKey = ""
@@ -971,7 +974,8 @@ Item {
             if (requestId !== root.heroBackgroundRequestId) return
 
             root.heroBackgroundRequestId = -1
-            if (String(root.selectedSeriesKey || "").trim() !== String(seriesKey || "").trim()) {
+            const selectionContext = root.selectedSeriesContext || ({})
+            if (String(selectionContext.seriesKey || "").trim() !== String(seriesKey || "").trim()) {
                 return
             }
 

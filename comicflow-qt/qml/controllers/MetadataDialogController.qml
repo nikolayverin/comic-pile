@@ -163,7 +163,8 @@ Item {
         const root = activeRoot()
         if (!root || !libraryModelRef || !popupControllerRef) return
 
-        const key = String(seriesKey || root.selectedSeriesKey || "").trim()
+        const selectionContext = root.selectedSeriesContext || ({})
+        const key = String(seriesKey || selectionContext.seriesKey || "").trim()
         if (key.length < 1) {
             popupControllerRef.showActionResult(AppText.metadataSelectSeriesFirst, true)
             return
@@ -184,7 +185,7 @@ Item {
         if (multiSelected) {
             editingSeriesTitle = String(targetKeys.length) + " series selected"
         } else {
-            editingSeriesTitle = String(seriesTitle || root.selectedSeriesTitle || "").trim()
+            editingSeriesTitle = String(seriesTitle || selectionContext.seriesTitle || "").trim()
             if (editingSeriesTitle.length < 1) {
                 editingSeriesTitle = String(libraryModelRef.groupTitleForKey(key) || "")
             }
@@ -626,10 +627,22 @@ Item {
             root.refreshSeriesList()
             const effectiveSeriesKey = String(resolvedSeriesKey || key).trim()
             if (effectiveSeriesKey.length > 0) {
-                root.selectedSeriesTitle = resolvedSeriesTitle.length > 0
+                const nextSeriesTitle = resolvedSeriesTitle.length > 0
                     ? resolvedSeriesTitle
                     : String(libraryModelRef.groupTitleForKey(effectiveSeriesKey) || root.selectedSeriesTitle)
-                root.selectedSeriesKey = effectiveSeriesKey
+                if (typeof root.applySelectedSeriesContext === "function") {
+                    root.applySelectedSeriesContext(
+                        effectiveSeriesKey,
+                        nextSeriesTitle,
+                        "__all__",
+                        AppText.libraryAllVolumes
+                    )
+                } else {
+                    root.selectedSeriesTitle = nextSeriesTitle
+                    root.selectedSeriesKey = effectiveSeriesKey
+                    root.selectedVolumeKey = "__all__"
+                    root.selectedVolumeTitle = AppText.libraryAllVolumes
+                }
                 const selection = {}
                 selection[effectiveSeriesKey] = true
                 root.selectedSeriesKeys = selection

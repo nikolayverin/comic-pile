@@ -1,5 +1,6 @@
 import QtQuick
 import "../components/AppText.js" as AppText
+import "../components/SeriesContext.js" as SeriesContext
 
 Item {
     id: controller
@@ -23,6 +24,13 @@ Item {
     property string selectedSeriesTitle: ""
     property string selectedVolumeKey: "__all__"
     property string selectedVolumeTitle: AppText.libraryAllVolumes
+    readonly property var selectedSeriesContext: SeriesContext.selectedContext(
+        selectedSeriesKey,
+        selectedSeriesTitle,
+        selectedVolumeKey,
+        selectedVolumeTitle,
+        AppText.libraryAllVolumes
+    )
     property string sidebarSearchText: ""
     property string sidebarQuickFilterKey: ""
     property var lastImportSessionComicIds: []
@@ -35,6 +43,20 @@ Item {
 
     function activeRoot() {
         return rootObject
+    }
+
+    function applySelectedSeriesContext(seriesKey, seriesTitle, volumeKey, volumeTitle) {
+        const context = SeriesContext.selectedContext(
+            seriesKey,
+            seriesTitle,
+            volumeKey,
+            volumeTitle,
+            AppText.libraryAllVolumes
+        )
+        selectedSeriesKey = context.seriesKey
+        selectedSeriesTitle = context.seriesTitle
+        selectedVolumeKey = context.volumeKey
+        selectedVolumeTitle = context.volumeTitle
     }
 
     function refreshQuickFilterCounts() {
@@ -186,13 +208,10 @@ Item {
             if (typeof root.clearImportSeriesFocusState === "function") {
                 root.clearImportSeriesFocusState()
             }
-            selectedSeriesKey = ""
-            selectedSeriesTitle = ""
+            applySelectedSeriesContext("", "", "__all__", AppText.libraryAllVolumes)
             const emptySelection = {}
             root.selectedSeriesKeys = emptySelection
             root.seriesSelectionAnchorIndex = -1
-            selectedVolumeKey = "__all__"
-            selectedVolumeTitle = AppText.libraryAllVolumes
             if (volumeListModelRef) {
                 volumeListModelRef.clear()
             }
@@ -223,7 +242,7 @@ Item {
         for (let i = 0; i < seriesListModelRef.count; i += 1) {
             const item = seriesListModelRef.get(i)
             if (item.seriesKey === selectedSeriesKey) {
-                selectedSeriesTitle = item.seriesTitle
+                applySelectedSeriesContext(item.seriesKey, item.seriesTitle, selectedVolumeKey, selectedVolumeTitle)
                 if (typeof root.isSeriesSelected === "function" && !root.isSeriesSelected(selectedSeriesKey)) {
                     const next = Object.assign({}, root.selectedSeriesKeys)
                     next[String(selectedSeriesKey)] = true
@@ -238,8 +257,12 @@ Item {
             }
         }
 
-        selectedSeriesTitle = seriesListModelRef.get(0).seriesTitle
-        selectedSeriesKey = seriesListModelRef.get(0).seriesKey
+        applySelectedSeriesContext(
+            seriesListModelRef.get(0).seriesKey,
+            seriesListModelRef.get(0).seriesTitle,
+            "__all__",
+            AppText.libraryAllVolumes
+        )
         const nextSelection = {}
         nextSelection[String(selectedSeriesKey)] = true
         root.selectedSeriesKeys = nextSelection
@@ -252,20 +275,24 @@ Item {
 
     function applyVolumeSelectionByIndex(index) {
         if (!volumeListModelRef || index < 0 || index >= volumeListModelRef.count) {
-            selectedVolumeKey = "__all__"
-            selectedVolumeTitle = AppText.libraryAllVolumes
+            applySelectedSeriesContext(selectedSeriesKey, selectedSeriesTitle, "__all__", AppText.libraryAllVolumes)
             return
         }
         const item = volumeListModelRef.get(index)
-        selectedVolumeKey = String(item.volumeKey || "__all__")
-        selectedVolumeTitle = String(item.volumeTitle || AppText.libraryAllVolumes)
+        applySelectedSeriesContext(
+            selectedSeriesKey,
+            selectedSeriesTitle,
+            String(item.volumeKey || "__all__"),
+            String(item.volumeTitle || AppText.libraryAllVolumes)
+        )
     }
 
     function refreshVolumeList() {
         if (!libraryModelRef || !volumeListModelRef) return
-        const previousKey = selectedVolumeKey
-        const groups = selectedSeriesKey.length > 0
-            ? libraryModelRef.volumeGroupsForSeries(selectedSeriesKey)
+        const currentContext = selectedSeriesContext
+        const previousKey = String(currentContext.volumeKey || "__all__")
+        const groups = currentContext.hasSeries
+            ? libraryModelRef.volumeGroupsForSeries(currentContext.seriesKey)
             : []
 
         volumeListModelRef.clear()
@@ -344,7 +371,8 @@ Item {
         const root = activeRoot()
         if (!root || !libraryModelRef || !navigationSurfaceControllerRef) return
 
-        if (selectedSeriesKey.length < 1) {
+        const currentContext = selectedSeriesContext
+        if (!currentContext.hasSeries) {
             if (root.startupSnapshotApplied && root.startupHydrationInProgress && root.issuesGridData.length > 0) {
                 startupControllerRef.startupLog("refreshIssuesGridData keep snapshot: selectedSeriesKey empty during hydration")
                 return
@@ -355,8 +383,8 @@ Item {
 
         const previousIssues = Array.isArray(root.issuesGridData) ? root.issuesGridData.slice(0) : []
         const liveIssues = libraryModelRef.issuesForSeries(
-            selectedSeriesKey,
-            selectedVolumeKey,
+            currentContext.seriesKey,
+            currentContext.volumeKey,
             libraryReadStatusFilter,
             librarySearchText
         )
@@ -366,13 +394,13 @@ Item {
             root.startupSnapshotApplied
                 && !root.startupHydrationInProgress
                 && liveIssues.length < 1
-                && selectedVolumeKey === "__all__"
+                && currentContext.volumeKey === "__all__"
                 && String(librarySearchText || "").trim().length < 1
                 && String(libraryReadStatusFilter || "all") === "all"
                 && !root.startupSnapshotLiveReloadRequested
         ) {
             root.startupSnapshotLiveReloadRequested = true
-            startupControllerRef.startupLog("refreshIssuesGridData request live reload for key=" + String(selectedSeriesKey))
+            startupControllerRef.startupLog("refreshIssuesGridData request live reload for key=" + String(currentContext.seriesKey))
             libraryModelRef.reload()
         }
         if (root.startupSnapshotApplied && root.startupHydrationInProgress) {

@@ -214,8 +214,9 @@ Item {
         const rootRef = root()
         if (!rootRef || !libraryModelRef) return
 
-        const key = String(rootRef.selectedSeriesKey || "")
-        if (key.length < 1) {
+        const context = rootRef.selectedSeriesContext || ({})
+        const key = String(context.seriesKey || "")
+        if (!Boolean(context.hasSeries)) {
             rootRef.heroCustomCoverSource = ""
             rootRef.heroCustomBackgroundSource = ""
             setHeroSeriesData(emptyHeroSeriesData(""))
@@ -223,7 +224,7 @@ Item {
         }
 
         let rows = libraryModelRef.issuesForSeries(key, "__all__", "all", "")
-        let seriesTitle = String(rootRef.selectedSeriesTitle || "")
+        let seriesTitle = String(context.seriesTitle || "")
         if (seriesTitle.length < 1) {
             seriesTitle = String(libraryModelRef.groupTitleForKey(key) || "")
         }
@@ -322,8 +323,8 @@ Item {
         }
 
         let volumeResolved = "-"
-        if (String(rootRef.selectedVolumeKey || "__all__") !== "__all__") {
-            const selectedVolume = String(rootRef.selectedVolumeTitle || "").trim()
+        if (Boolean(context.hasSpecificVolume)) {
+            const selectedVolume = String(context.volumeTitle || "").trim()
             if (selectedVolume.length > 0) {
                 volumeResolved = selectedVolume
             }

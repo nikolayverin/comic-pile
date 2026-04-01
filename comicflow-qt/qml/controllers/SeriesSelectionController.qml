@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -85,8 +86,16 @@ Item {
         const root = activeRoot()
         if (!root) return
 
-        root.selectedSeriesKey = String(seriesKey || "")
-        root.selectedSeriesTitle = String(seriesTitle || "")
+        const key = String(seriesKey || "")
+        const title = String(seriesTitle || "")
+        if (typeof root.applySelectedSeriesContext === "function") {
+            root.applySelectedSeriesContext(key, title, "__all__", AppText.libraryAllVolumes)
+        } else {
+            root.selectedSeriesKey = key
+            root.selectedSeriesTitle = title
+            root.selectedVolumeKey = "__all__"
+            root.selectedVolumeTitle = AppText.libraryAllVolumes
+        }
         seriesSelectionAnchorIndex = Number(itemIndex) >= 0 ? Math.floor(Number(itemIndex)) : -1
 
         if (typeof root.refreshVolumeList === "function") {
@@ -115,8 +124,14 @@ Item {
         if (hadQuickFilter) {
             root.sidebarQuickFilterKey = ""
         }
-        root.selectedSeriesTitle = title
-        root.selectedSeriesKey = key
+        if (typeof root.applySelectedSeriesContext === "function") {
+            root.applySelectedSeriesContext(key, title, "__all__", AppText.libraryAllVolumes)
+        } else {
+            root.selectedSeriesTitle = title
+            root.selectedSeriesKey = key
+            root.selectedVolumeKey = "__all__"
+            root.selectedVolumeTitle = AppText.libraryAllVolumes
+        }
 
         const next = {}
         if (key.length > 0) next[key] = true
@@ -178,8 +193,14 @@ Item {
                 if (key.length > 0) next[key] = true
                 selectedSeriesKeys = next
             }
-            root.selectedSeriesTitle = title
-            root.selectedSeriesKey = key
+            if (typeof root.applySelectedSeriesContext === "function") {
+                root.applySelectedSeriesContext(key, title, "__all__", AppText.libraryAllVolumes)
+            } else {
+                root.selectedSeriesTitle = title
+                root.selectedSeriesKey = key
+                root.selectedVolumeKey = "__all__"
+                root.selectedVolumeTitle = AppText.libraryAllVolumes
+            }
             if (String(root.sidebarQuickFilterKey || "").trim().length > 0) {
                 root.sidebarQuickFilterKey = ""
             }

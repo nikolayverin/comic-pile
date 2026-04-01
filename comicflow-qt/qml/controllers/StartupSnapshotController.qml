@@ -235,6 +235,7 @@ Item {
     function buildStartupSnapshotPayload() {
         const root = rootObject
         if (!root || !libraryModelRef) return ""
+        const selectionContext = root.selectedSeriesContext || ({})
 
         const seriesItems = []
         const maxSeries = Math.max(0, Number(root.startupSnapshotMaxSeries || 0))
@@ -284,18 +285,18 @@ Item {
             }
         }
 
-        const selectedSeriesTitle = String(root.selectedSeriesTitle || "")
-        const snapshotHeroTitle = root.selectedSeriesKey
+        const selectedSeriesTitle = String(selectionContext.seriesTitle || "")
+        const snapshotHeroTitle = selectionContext.hasSeries
             ? selectedSeriesTitle
             : String((root.heroSeriesData || {}).seriesTitle || "")
         const payload = {
             version: root.startupSnapshotVersion,
             dbPath: String(libraryModelRef.dbPath || ""),
             inventorySignature: root.startupInventorySignature || {},
-            selectedSeriesKey: String(root.selectedSeriesKey || ""),
+            selectedSeriesKey: String(selectionContext.seriesKey || ""),
             selectedSeriesTitle: selectedSeriesTitle,
-            selectedVolumeKey: String(root.selectedVolumeKey || "__all__"),
-            selectedVolumeTitle: String(root.selectedVolumeTitle || AppText.libraryAllVolumes),
+            selectedVolumeKey: String(selectionContext.volumeKey || "__all__"),
+            selectedVolumeTitle: String(selectionContext.volumeTitle || AppText.libraryAllVolumes),
             sidebarQuickFilterKey: String(root.sidebarQuickFilterKey || ""),
             lastImportSessionComicIds: Array.isArray(root.lastImportSessionComicIds)
                 ? root.lastImportSessionComicIds
@@ -489,10 +490,19 @@ Item {
         }
         startupController.startupLog("restoreSnapshot step=series_applied count=" + String(seriesListModel.count))
 
-        root.selectedSeriesKey = String(parsed.selectedSeriesKey || "")
-        root.selectedSeriesTitle = String(parsed.selectedSeriesTitle || "")
-        root.selectedVolumeKey = String(parsed.selectedVolumeKey || "__all__")
-        root.selectedVolumeTitle = String(parsed.selectedVolumeTitle || AppText.libraryAllVolumes)
+        if (typeof root.applySelectedSeriesContext === "function") {
+            root.applySelectedSeriesContext(
+                String(parsed.selectedSeriesKey || ""),
+                String(parsed.selectedSeriesTitle || ""),
+                String(parsed.selectedVolumeKey || "__all__"),
+                String(parsed.selectedVolumeTitle || AppText.libraryAllVolumes)
+            )
+        } else {
+            root.selectedSeriesKey = String(parsed.selectedSeriesKey || "")
+            root.selectedSeriesTitle = String(parsed.selectedSeriesTitle || "")
+            root.selectedVolumeKey = String(parsed.selectedVolumeKey || "__all__")
+            root.selectedVolumeTitle = String(parsed.selectedVolumeTitle || AppText.libraryAllVolumes)
+        }
         root.heroCoverComicId = Number(parsed.heroCoverComicId || -1)
         const restoredSelection = {}
         if (root.selectedSeriesKey.length > 0) {

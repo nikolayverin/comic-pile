@@ -249,6 +249,7 @@ ApplicationWindow {
     readonly property bool readerCanGoNextPage: readerSessionController.canGoNextPage
     property alias selectedSeriesKey: libraryBrowseController.selectedSeriesKey
     property alias selectedSeriesTitle: libraryBrowseController.selectedSeriesTitle
+    readonly property var selectedSeriesContext: libraryBrowseController.selectedSeriesContext
     property alias selectedSeriesKeys: seriesSelectionController.selectedSeriesKeys
     property alias seriesSelectionAnchorIndex: seriesSelectionController.seriesSelectionAnchorIndex
     property alias selectedVolumeKey: libraryBrowseController.selectedVolumeKey
@@ -695,10 +696,19 @@ ApplicationWindow {
     }
 
     function issuesGridMatchesSelectedSeries() {
-        const selectedTitle = String(selectedSeriesTitle || "").trim()
+        const context = selectedSeriesContext || ({})
+        const selectedTitle = String(context.seriesTitle || "").trim()
         if (selectedTitle.length < 1 || issuesGridData.length < 1) return false
         const gridTitle = displaySeriesTitleForIssue(issuesGridData[0])
         return gridTitle.length > 0 && gridTitle === selectedTitle
+    }
+
+    function applySelectedSeriesContext(seriesKey, seriesTitle, volumeKey, volumeTitle) {
+        if (!libraryBrowseController
+                || typeof libraryBrowseController.applySelectedSeriesContext !== "function") {
+            return
+        }
+        libraryBrowseController.applySelectedSeriesContext(seriesKey, seriesTitle, volumeKey, volumeTitle)
     }
 
 
@@ -1389,12 +1399,9 @@ ApplicationWindow {
 
         if (mode === "Last import" && lastImportCount > 0) {
             sidebarQuickFilterKey = "last_import"
-            selectedSeriesKey = ""
-            selectedSeriesTitle = ""
+            applySelectedSeriesContext("", "", "__all__", AppText.libraryAllVolumes)
             selectedSeriesKeys = ({})
             seriesSelectionAnchorIndex = -1
-            selectedVolumeKey = "__all__"
-            selectedVolumeTitle = AppText.libraryAllVolumes
             volumeListModel.clear()
             clearSelection()
             setGridScrollToTop()
@@ -1411,8 +1418,12 @@ ApplicationWindow {
 
         const firstItem = seriesListModel.get(0)
         sidebarQuickFilterKey = ""
-        selectedSeriesTitle = String((firstItem && firstItem.seriesTitle) || "")
-        selectedSeriesKey = String((firstItem && firstItem.seriesKey) || "")
+        applySelectedSeriesContext(
+            String((firstItem && firstItem.seriesKey) || ""),
+            String((firstItem && firstItem.seriesTitle) || ""),
+            "__all__",
+            AppText.libraryAllVolumes
+        )
         const nextSelection = {}
         if (selectedSeriesKey.length > 0) {
             nextSelection[selectedSeriesKey] = true
