@@ -6,6 +6,7 @@
 #include "storage/archivepacking.h"
 #include "storage/archivesupportutils.h"
 #include "storage/comicinfoarchive.h"
+#include "storage/comicsmodelutils.h"
 #include "storage/deletestagingops.h"
 #include "storage/duplicaterestoreresolver.h"
 #include "storage/importduplicateclassifier.h"
@@ -881,11 +882,11 @@ QString ComicsListModel::predictedPendingImportTargetPath(
     }
 
     const QString effectiveSeries = valueFromMap(createValues, QStringLiteral("series"));
-    const QString effectiveSeriesKey = normalizeSeriesKey(effectiveSeries);
+    const QString effectiveSeriesKey = ComicModelUtils::normalizeSeriesKey(effectiveSeries);
     QString folderSeriesName = effectiveSeries;
     const QString inferredFolderSeriesName = ComicImportMatching::guessSeriesFromFilename(effectiveSeries);
     if (!ComicImportMatching::isWeakSeriesName(inferredFolderSeriesName)
-        && normalizeSeriesKey(inferredFolderSeriesName) == effectiveSeriesKey) {
+        && ComicModelUtils::normalizeSeriesKey(inferredFolderSeriesName) == effectiveSeriesKey) {
         folderSeriesName = inferredFolderSeriesName;
     }
 
@@ -894,7 +895,7 @@ QString ComicsListModel::predictedPendingImportTargetPath(
         if (row.filePath.trimmed().isEmpty()) continue;
         const QString relativeDir = ComicLibraryLayout::relativeDirUnderRoot(libraryPath, row.filePath);
         if (relativeDir.isEmpty()) continue;
-        ComicLibraryLayout::registerSeriesFolderAssignment(folderState, normalizeSeriesKey(row.series), relativeDir);
+        ComicLibraryLayout::registerSeriesFolderAssignment(folderState, ComicModelUtils::normalizeSeriesKey(row.series), relativeDir);
     }
     for (auto it = simulatedDeferredImportFolders.constBegin(); it != simulatedDeferredImportFolders.constEnd(); ++it) {
         ComicLibraryLayout::registerSeriesFolderAssignment(folderState, it.key(), it.value());
@@ -968,7 +969,7 @@ QString ComicsListModel::createComicFromLibrary(
     }
 
     const QString readStatusInput = valueFromMap(values, "readStatus", "read_status");
-    const QString readStatus = normalizeReadStatus(readStatusInput);
+    const QString readStatus = ComicModelUtils::normalizeReadStatus(readStatusInput);
     if (readStatusInput.length() > 0 && readStatus.isEmpty()) {
         return QString("Read status must be one of: unread, in_progress, read.");
     }
@@ -982,7 +983,7 @@ QString ComicsListModel::createComicFromLibrary(
     }
 
     const QString libraryPath = QDir(m_dataRoot).filePath("Library");
-    const QString resolvedFilePath = resolveLibraryFilePath(libraryPath, inputRef);
+    const QString resolvedFilePath = ComicModelUtils::resolveLibraryFilePath(libraryPath, inputRef);
     if (resolvedFilePath.isEmpty()) {
         return QString("File not found in Database/Library: %1").arg(inputRef);
     }
@@ -994,7 +995,7 @@ QString ComicsListModel::createComicFromLibrary(
         resolvedFilename,
         QStringLiteral("archive")
     );
-    const QString candidateSeriesKey = normalizeSeriesKey(series);
+    const QString candidateSeriesKey = ComicModelUtils::normalizeSeriesKey(series);
     auto purgeSeriesHeroCacheKeys = [this](const QSet<QString> &seriesKeys) {
         for (const QString &seriesKey : seriesKeys) {
             if (!seriesKey.trimmed().isEmpty()) {
@@ -1004,7 +1005,7 @@ QString ComicsListModel::createComicFromLibrary(
     };
     const bool allowMetadataRestore = ComicImportWorkflow::shouldAllowMetadataRestoreForImport(values, candidateSeriesKey);
     const bool relaxWeakLiveDuplicateChecks = ComicImportWorkflow::hasNarrowImportSeriesContext(values, candidateSeriesKey);
-    const QString candidateVolumeKey = normalizeVolumeKey(volume);
+    const QString candidateVolumeKey = ComicModelUtils::normalizeVolumeKey(volume);
     QString candidateIssueValue = issueNumber;
     if (candidateIssueValue.isEmpty()) {
         candidateIssueValue = ComicImportMatching::guessIssueNumberFromFilename(resolvedFilename);
@@ -1125,7 +1126,7 @@ QString ComicsListModel::createComicFromLibrary(
 
             QSet<QString> seriesHeroKeysToPurge;
             const QString existingSeriesKey = candidate.seriesKey.trimmed().isEmpty()
-                ? normalizeSeriesKey(candidate.series)
+                ? ComicModelUtils::normalizeSeriesKey(candidate.series)
                 : candidate.seriesKey.trimmed();
             if (!existingSeriesKey.isEmpty()) {
                 seriesHeroKeysToPurge.insert(existingSeriesKey);
@@ -1364,7 +1365,7 @@ QString ComicsListModel::createComicFromLibrary(
         insertQuery.addBindValue(storedFilePath);
         insertQuery.addBindValue(resolvedFilename);
         insertQuery.addBindValue(series);
-        insertQuery.addBindValue(normalizeSeriesKey(series));
+        insertQuery.addBindValue(ComicModelUtils::normalizeSeriesKey(series));
         insertQuery.addBindValue(volume);
         insertQuery.addBindValue(title);
         insertQuery.addBindValue(issueNumber);
@@ -1515,14 +1516,14 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     createValues = ComicImportMatching::applyPassportDefaults(createValues, passport);
 
     const QString effectiveSeries = valueFromMap(createValues, "series");
-    const QString effectiveSeriesKey = normalizeSeriesKey(effectiveSeries);
+    const QString effectiveSeriesKey = ComicModelUtils::normalizeSeriesKey(effectiveSeries);
     if (!deferReload) {
         m_importState.deferredFolderBySeriesKey.clear();
     }
     QString folderSeriesName = effectiveSeries;
     const QString inferredFolderSeriesName = ComicImportMatching::guessSeriesFromFilename(effectiveSeries);
     if (!ComicImportMatching::isWeakSeriesName(inferredFolderSeriesName)
-        && normalizeSeriesKey(inferredFolderSeriesName) == effectiveSeriesKey) {
+        && ComicModelUtils::normalizeSeriesKey(inferredFolderSeriesName) == effectiveSeriesKey) {
         folderSeriesName = inferredFolderSeriesName;
     }
     ComicLibraryLayout::SeriesFolderState folderState;
@@ -1530,7 +1531,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         if (row.filePath.trimmed().isEmpty()) continue;
         const QString relativeDir = ComicLibraryLayout::relativeDirUnderRoot(libraryPath, row.filePath);
         if (relativeDir.isEmpty()) continue;
-        ComicLibraryLayout::registerSeriesFolderAssignment(folderState, normalizeSeriesKey(row.series), relativeDir);
+        ComicLibraryLayout::registerSeriesFolderAssignment(folderState, ComicModelUtils::normalizeSeriesKey(row.series), relativeDir);
     }
     for (auto it = m_importState.deferredFolderBySeriesKey.constBegin(); it != m_importState.deferredFolderBySeriesKey.constEnd(); ++it) {
         ComicLibraryLayout::registerSeriesFolderAssignment(folderState, it.key(), it.value());

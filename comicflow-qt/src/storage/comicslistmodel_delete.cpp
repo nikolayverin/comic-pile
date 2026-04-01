@@ -1,6 +1,7 @@
 #include "storage/comicslistmodel.h"
 
 #include "common/scopedsqlconnectionremoval.h"
+#include "storage/comicsmodelutils.h"
 #include "storage/deletestagingops.h"
 #include "storage/importmatching.h"
 #include "storage/issuefileops.h"
@@ -285,7 +286,7 @@ QString ComicsListModel::deleteSeriesKeyForComic(int comicId) const
         return {};
     }
 
-    return ComicImportMatching::normalizeSeriesKey(series);
+    return ComicModelUtils::normalizeSeriesKey(series);
 }
 
 QString ComicsListModel::deleteComicFilesKeepRecord(int comicId)
@@ -519,7 +520,7 @@ QString ComicsListModel::pruneEquivalentDetachedGhostRowsForComic(int comicId)
 
     const QString currentSeriesKey = current.seriesKey.trimmed();
     const QString currentIssueKey = ComicImportMatching::normalizeIssueKey(current.issue);
-    const QString currentVolumeKey = normalizeVolumeKey(current.volume);
+    const QString currentVolumeKey = ComicModelUtils::normalizeVolumeKey(current.volume);
     const QString currentStrictSignature = effectiveStrictSignature(current);
     const QString currentLooseSignature = effectiveLooseSignature(current);
 
@@ -568,7 +569,7 @@ QString ComicsListModel::pruneEquivalentDetachedGhostRowsForComic(int comicId)
             if (ComicImportMatching::normalizeIssueKey(candidate.issue) != currentIssueKey) {
                 continue;
             }
-            if (normalizeVolumeKey(candidate.volume) != currentVolumeKey) {
+            if (ComicModelUtils::normalizeVolumeKey(candidate.volume) != currentVolumeKey) {
                 continue;
             }
 

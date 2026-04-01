@@ -4,6 +4,7 @@
 #include "storage/archivesupportutils.h"
 #include "storage/comicinfoarchive.h"
 #include "storage/comicinfoops.h"
+#include "storage/comicsmodelutils.h"
 #include "storage/deletestagingops.h"
 #include "storage/duplicaterestoreresolver.h"
 #include "storage/importduplicateclassifier.h"
@@ -873,7 +874,7 @@ QVariant ComicsListModel::data(const QModelIndex &index, int role) const
     case DisplayTitleRole:
         if (!row.series.isEmpty()) return row.series;
         if (!row.title.isEmpty()) return row.title;
-        return baseNameWithoutExtension(row.filename);
+        return ComicModelUtils::baseNameWithoutExtension(row.filename);
     case DisplaySubtitleRole:
         return buildSubtitle(row);
     default:
@@ -979,7 +980,7 @@ void ComicsListModel::reload()
             row.filename = record.filename;
             row.series = record.series;
             row.volume = record.volume;
-            row.volumeGroupKey = normalizeVolumeKey(row.volume);
+            row.volumeGroupKey = ComicModelUtils::normalizeVolumeKey(row.volume);
             row.title = record.title;
             row.issueNumber = record.issueNumber;
             row.publisher = record.publisher;
@@ -997,7 +998,7 @@ void ComicsListModel::reload()
             row.characters = record.characters;
             row.genres = record.genres;
             row.ageRating = record.ageRating;
-            row.readStatus = normalizeReadStatus(record.readStatus);
+            row.readStatus = ComicModelUtils::normalizeReadStatus(record.readStatus);
             if (row.readStatus.isEmpty()) row.readStatus = QString("unread");
             row.currentPage = record.currentPage;
             row.bookmarkPage = record.bookmarkPage;
@@ -1013,7 +1014,7 @@ void ComicsListModel::reload()
             }
             row.filePath = resolvedPath;
 
-            const QString normalizedSeriesKey = normalizeSeriesKey(row.series);
+            const QString normalizedSeriesKey = ComicModelUtils::normalizeSeriesKey(row.series);
             if (row.volumeGroupKey == QString("__no_volume__")) {
                 row.seriesGroupKey = normalizedSeriesKey;
             } else {
@@ -1220,7 +1221,7 @@ QVariantList ComicsListModel::issuesForSeries(
     const QString requestedVolumeKey = volumeKey.trimmed().isEmpty()
         ? QString("__all__")
         : volumeKey.trimmed();
-    const QString normalizedStatusFilter = normalizeReadStatus(readStatusFilter);
+    const QString normalizedStatusFilter = ComicModelUtils::normalizeReadStatus(readStatusFilter);
     const bool filterByReadStatus = readStatusFilter.trimmed().compare(QString("all"), Qt::CaseInsensitive) != 0
         && !normalizedStatusFilter.isEmpty();
     const QString searchNeedle = searchText.trimmed().toLower();
@@ -1229,7 +1230,7 @@ QVariantList ComicsListModel::issuesForSeries(
     for (const ComicRow &row : m_rows) {
         if (row.seriesGroupKey != requestedSeriesKey) continue;
         if (requestedVolumeKey != QString("__all__") && row.volumeGroupKey != requestedVolumeKey) continue;
-        if (filterByReadStatus && normalizeReadStatus(row.readStatus) != normalizedStatusFilter) continue;
+        if (filterByReadStatus && ComicModelUtils::normalizeReadStatus(row.readStatus) != normalizedStatusFilter) continue;
 
         if (!searchNeedle.isEmpty()) {
             const QString haystack = (
@@ -1432,7 +1433,7 @@ QString ComicsListModel::archivePathForComicId(int comicId) const
 
     const QString cachedPath = m_readerState.archivePathById.value(comicId).trimmed();
     if (!cachedPath.isEmpty()) {
-        const QString resolvedCachedPath = resolveStoredArchivePathForDataRoot(
+        const QString resolvedCachedPath = ComicModelUtils::resolveStoredArchivePathForDataRoot(
             m_dataRoot,
             cachedPath,
             QString()
@@ -1442,7 +1443,7 @@ QString ComicsListModel::archivePathForComicId(int comicId) const
 
     for (const ComicRow &row : m_rows) {
         if (row.id != comicId) continue;
-        const QString resolvedRowPath = resolveStoredArchivePathForDataRoot(
+        const QString resolvedRowPath = ComicModelUtils::resolveStoredArchivePathForDataRoot(
             m_dataRoot,
             row.filePath,
             row.filename
@@ -1509,7 +1510,7 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         return result;
     }
     QString existingFilename = metadata.value(QStringLiteral("filename")).toString().trimmed();
-    const QString existingFilePath = resolveStoredArchivePathForDataRoot(
+    const QString existingFilePath = ComicModelUtils::resolveStoredArchivePathForDataRoot(
         m_dataRoot,
         metadata.value(QStringLiteral("filePath")).toString(),
         existingFilename
@@ -1976,127 +1977,9 @@ bool ComicsListModel::openDatabaseConnection(QSqlDatabase &db, const QString &co
     return ComicStorageSqlite::openDatabaseConnection(db, m_dbPath, connectionName, errorText);
 }
 
-QString ComicsListModel::normalizeSeriesKey(const QString &value)
-{
-    return ComicImportMatching::normalizeSeriesKey(value);
-}
-
-QString ComicsListModel::normalizeVolumeKey(const QString &value)
-{
-    return ComicImportMatching::normalizeVolumeKey(value);
-}
-
-QString ComicsListModel::normalizeReadStatus(const QString &value)
-{
-    QString normalized = value.trimmed().toLower();
-    if (normalized.isEmpty()) return QString("unread");
-
-    normalized.replace('-', '_');
-    normalized.replace(' ', '_');
-    if (normalized == QString("inprogress")) normalized = QString("in_progress");
-
-    if (normalized == QString("unread") || normalized == QString("in_progress") || normalized == QString("read")) {
-        return normalized;
-    }
-
-    return {};
-}
-
-QString ComicsListModel::makeGroupTitle(const QString &groupKey)
-{
-    if (groupKey.trimmed().isEmpty() || groupKey == QString("unknown-series")) {
-        return QString("Unknown Series");
-    }
-
-    QStringList words = groupKey.split(' ', Qt::SkipEmptyParts);
-    for (QString &word : words) {
-        if (word.isEmpty()) continue;
-        word[0] = word[0].toUpper();
-    }
-    return words.join(' ');
-}
-
-QString ComicsListModel::resolveLibraryFilePath(const QString &libraryPath, const QString &inputFilename)
-{
-    const QDir libraryDir(libraryPath);
-    if (!libraryDir.exists()) return {};
-
-    const QString rawInput = inputFilename.trimmed();
-    if (rawInput.isEmpty()) return {};
-
-    const QString normalizedInput = QDir::fromNativeSeparators(rawInput);
-    const QFileInfo inputInfo(normalizedInput);
-
-    if (inputInfo.isAbsolute()) {
-        if (inputInfo.exists() && inputInfo.isFile()
-            && isPathInsideDirectory(inputInfo.absoluteFilePath(), libraryDir.absolutePath())) {
-            return QDir::toNativeSeparators(inputInfo.absoluteFilePath());
-        }
-    }
-
-    const QFileInfo directRelative(libraryDir.filePath(normalizedInput));
-    if (directRelative.exists() && directRelative.isFile()) {
-        return QDir::toNativeSeparators(directRelative.absoluteFilePath());
-    }
-
-    const QString inputFileName = QFileInfo(normalizedInput).fileName().trimmed();
-    if (inputFileName.isEmpty()) return {};
-    const QString inputRelativeKey = QDir::cleanPath(normalizedInput).toLower();
-
-    QString filenameMatchPath;
-    QDirIterator iterator(
-        libraryDir.absolutePath(),
-        QDir::Files | QDir::NoDotAndDotDot,
-        QDirIterator::Subdirectories
-    );
-    while (iterator.hasNext()) {
-        const QString candidatePath = iterator.next();
-        const QFileInfo candidateInfo(candidatePath);
-        const QString candidateName = candidateInfo.fileName();
-        if (candidateName.isEmpty()) continue;
-
-        const QString relative = QDir::cleanPath(libraryDir.relativeFilePath(candidateInfo.absoluteFilePath()));
-        if (!inputRelativeKey.isEmpty() && relative.toLower() == inputRelativeKey) {
-            return QDir::toNativeSeparators(candidateInfo.absoluteFilePath());
-        }
-
-        bool nameMatches = candidateName.compare(inputFileName, Qt::CaseInsensitive) == 0;
-        if (!nameMatches) {
-            const int dashIndex = candidateName.indexOf('-');
-            if (dashIndex > 0 && dashIndex + 1 < candidateName.length()) {
-                const QString originalName = candidateName.mid(dashIndex + 1);
-                nameMatches = originalName.compare(inputFileName, Qt::CaseInsensitive) == 0;
-            }
-        }
-        if (!nameMatches) continue;
-        if (filenameMatchPath.isEmpty()) {
-            filenameMatchPath = candidateInfo.absoluteFilePath();
-        }
-    }
-
-    if (!filenameMatchPath.isEmpty()) {
-        return QDir::toNativeSeparators(filenameMatchPath);
-    }
-    return {};
-}
-
-QString ComicsListModel::resolveStoredArchivePathForDataRoot(
-    const QString &dataRoot,
-    const QString &storedFilePath,
-    const QString &storedFilename
-)
-{
-    return ComicStoragePaths::resolveStoredArchivePath(dataRoot, storedFilePath, storedFilename);
-}
-
 QString ComicsListModel::resolveDataRoot() const
 {
     return ComicDataRootSettings::resolveActiveDataRootPath();
-}
-
-QString ComicsListModel::baseNameWithoutExtension(const QString &filename)
-{
-    return QFileInfo(filename).completeBaseName();
 }
 
 QString ComicsListModel::buildSubtitle(const ComicRow &row)

@@ -1,6 +1,7 @@
 #include "storage/comicslistmodel.h"
 
 #include "storage/archivepacking.h"
+#include "storage/comicsmodelutils.h"
 #include "storage/imagepreparationops.h"
 #include "storage/readercacheutils.h"
 #include "storage/readerpayloadutils.h"
@@ -36,13 +37,13 @@ QVariantMap ComicsListModel::loadReaderSessionPayload(
         };
     }
 
-    QString archivePath = resolveStoredArchivePathForDataRoot(
+    QString archivePath = ComicModelUtils::resolveStoredArchivePathForDataRoot(
         dataRoot,
         record.filePath,
         record.filename
     );
     if (archivePath.isEmpty() && !record.filename.isEmpty()) {
-        const QString fallbackPath = resolveLibraryFilePath(
+        const QString fallbackPath = ComicModelUtils::resolveLibraryFilePath(
             QDir(dataRoot).filePath(QStringLiteral("Library")),
             record.filename
         );
@@ -348,7 +349,7 @@ QVariantMap ComicsListModel::buildIssueNavigationTarget(const ComicRow &row) con
     const QString displayTitle = row.title.trimmed().isEmpty()
         ? row.filename.trimmed()
         : row.title.trimmed();
-    const QString normalizedReadStatus = normalizeReadStatus(row.readStatus);
+    const QString normalizedReadStatus = ComicModelUtils::normalizeReadStatus(row.readStatus);
     const bool hasBookmark = row.bookmarkPage > 0;
     const bool hasProgress = row.currentPage > 0 && normalizedReadStatus != QStringLiteral("read");
     const int startPageIndex = hasBookmark
@@ -381,7 +382,7 @@ QVariantMap ComicsListModel::continueReadingTarget() const
     QString bestBookmarkTimestamp;
 
     auto progressRank = [](const ComicRow &row) {
-        const QString normalizedStatus = normalizeReadStatus(row.readStatus);
+        const QString normalizedStatus = ComicModelUtils::normalizeReadStatus(row.readStatus);
         if (normalizedStatus == QStringLiteral("in_progress")) {
             return 2;
         }
@@ -392,7 +393,7 @@ QVariantMap ComicsListModel::continueReadingTarget() const
     };
 
     for (const ComicRow &row : m_rows) {
-        const QString normalizedStatus = normalizeReadStatus(row.readStatus);
+        const QString normalizedStatus = ComicModelUtils::normalizeReadStatus(row.readStatus);
         const bool hasBookmark = row.bookmarkPage > 0;
         const bool hasProgress = row.currentPage > 0 && normalizedStatus != QStringLiteral("read");
         if (!hasBookmark && !hasProgress) {
@@ -503,7 +504,7 @@ QVariantMap ComicsListModel::nextUnreadTarget(const QString &preferredSeriesKey,
         }
 
         seriesFound = true;
-        const QString normalizedStatus = normalizeReadStatus(row.readStatus);
+        const QString normalizedStatus = ComicModelUtils::normalizeReadStatus(row.readStatus);
         const bool unread = normalizedStatus != QStringLiteral("read");
 
         if (afterComicSeen) {

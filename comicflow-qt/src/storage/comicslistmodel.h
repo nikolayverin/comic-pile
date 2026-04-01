@@ -355,9 +355,6 @@ private:
     void pumpQueuedCoverGeneration();
     void startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGeneration &job);
     void pumpQueuedSeriesHeroGeneration();
-    static QString normalizeSeriesKey(const QString &value);
-    static QString normalizeVolumeKey(const QString &value);
-    static QString normalizeReadStatus(const QString &value);
     QString predictedPendingImportTargetPath(
         const QVariantMap &entry,
         QHash<QString, QString> &simulatedDeferredImportFolders
@@ -406,15 +403,7 @@ private:
     void updateReaderProgressCache(int comicId, int currentPage, const QString &readStatus);
     void updateReaderBookmarkCache(int comicId, int bookmarkPage);
     void updateReaderFavoriteCache(int comicId, bool favoriteActive);
-    static QString makeGroupTitle(const QString &groupKey);
-    static QString resolveLibraryFilePath(const QString &libraryPath, const QString &inputFilename);
-    static QString resolveStoredArchivePathForDataRoot(
-        const QString &dataRoot,
-        const QString &storedFilePath,
-        const QString &storedFilename
-    );
     QString resolveDataRoot() const;
-    static QString baseNameWithoutExtension(const QString &filename);
     static QString buildSubtitle(const ComicRow &row);
     int compareRows(const ComicRow &left, const ComicRow &right) const;
     QString importArchiveAndCreateIssueInternal(

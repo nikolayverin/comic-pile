@@ -2,6 +2,7 @@
 
 #include "storage/comicslistmodel.h"
 
+#include "storage/comicsmodelutils.h"
 #include "storage/imagepreparationops.h"
 #include "storage/importmatching.h"
 #include "storage/librarymutationops.h"
@@ -311,7 +312,7 @@ QString ComicsListModel::bulkUpdateMetadata(
     }
 
     const QString readStatusInput = valueFromMap(values, QStringLiteral("readStatus"), QStringLiteral("read_status"));
-    plan.readStatus = normalizeReadStatus(readStatusInput);
+    plan.readStatus = ComicModelUtils::normalizeReadStatus(readStatusInput);
     if (plan.applyReadStatus && !readStatusInput.isEmpty() && plan.readStatus.isEmpty()) {
         return QStringLiteral("Read status must be one of: unread, in_progress, read.");
     }
@@ -376,10 +377,10 @@ QString ComicsListModel::bulkUpdateMetadata(
         }
         if (plan.applyVolume) {
             row.volume = plan.volume;
-            row.volumeGroupKey = normalizeVolumeKey(row.volume);
+            row.volumeGroupKey = ComicModelUtils::normalizeVolumeKey(row.volume);
         }
         if (plan.applySeries || plan.applyVolume) {
-            const QString normalizedSeriesKey = normalizeSeriesKey(row.series);
+            const QString normalizedSeriesKey = ComicModelUtils::normalizeSeriesKey(row.series);
             if (row.volumeGroupKey == QStringLiteral("__no_volume__")) {
                 row.seriesGroupKey = normalizedSeriesKey;
             } else {
@@ -520,7 +521,7 @@ QVariantMap ComicsListModel::buildRetainedSeriesMetadata(const QString &seriesKe
     }
 
     if (retainedSeriesTitle.isEmpty()) {
-        const QString groupTitle = makeGroupTitle(normalizedKey).trimmed();
+        const QString groupTitle = ComicModelUtils::makeGroupTitle(normalizedKey).trimmed();
         if (!groupTitle.isEmpty() && !isWeakSeriesName(groupTitle)) {
             retainedSeriesTitle = groupTitle;
         }
@@ -682,12 +683,12 @@ QVariantMap ComicsListModel::loadComicMetadata(int comicId) const
 
 QString ComicsListModel::normalizeSeriesKeyForLookup(const QString &value) const
 {
-    return normalizeSeriesKey(value);
+    return ComicModelUtils::normalizeSeriesKey(value);
 }
 
 QString ComicsListModel::groupTitleForKey(const QString &groupKey) const
 {
-    return makeGroupTitle(groupKey);
+    return ComicModelUtils::makeGroupTitle(groupKey);
 }
 
 QVariantMap ComicsListModel::seriesMetadataForKey(const QString &seriesKey) const
