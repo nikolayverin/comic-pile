@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Window
 import "../components/AppText.js" as AppText
 import "../components/AppErrorMapper.js" as AppErrorMapper
+import "../components/AppMessagePayload.js" as AppMessagePayload
 
 Item {
     id: controller
@@ -26,13 +27,14 @@ Item {
     property var deleteConfirmDialogRef: null
     property var deleteErrorDialogRef: null
 
-    property string actionResultMessage: ""
-    property string actionResultTitle: AppText.popupActionErrorTitle
-    property string actionResultDetailsText: ""
-    property string actionResultSecondaryText: ""
-    property string actionResultSecondaryPath: ""
-    property string actionResultSecondaryAction: ""
+    property var actionResultPayload: AppMessagePayload.payload({})
     property var criticalPopupAttentionTarget: null
+    readonly property string actionResultMessage: String((actionResultPayload || {}).body || "")
+    readonly property string actionResultTitle: String((actionResultPayload || {}).title || AppText.popupActionErrorTitle)
+    readonly property string actionResultDetailsText: String((actionResultPayload || {}).details || "")
+    readonly property string actionResultSecondaryText: String((actionResultPayload || {}).actionLabel || "")
+    readonly property string actionResultSecondaryPath: String((actionResultPayload || {}).filePath || "")
+    readonly property string actionResultSecondaryAction: String((actionResultPayload || {}).actionKey || "")
     readonly property bool actionResultSecondaryVisible: actionResultSecondaryText.length > 0
 
     readonly property bool anyManagedModalPopupVisible: Boolean(importConflictDialogRef && importConflictDialogRef.visible)
@@ -132,22 +134,7 @@ Item {
     }
 
     function applyActionResultPayload(payload) {
-        const next = payload || ({})
-        actionResultTitle = String(next.title || AppText.popupActionErrorTitle).trim()
-        if (actionResultTitle.length < 1) {
-            actionResultTitle = AppText.popupActionErrorTitle
-        }
-        actionResultMessage = String(next.message || "").trim()
-        if (actionResultMessage.length < 1) {
-            actionResultMessage = "Unknown error."
-        }
-        actionResultDetailsText = String(next.detailsText || "").trim()
-        actionResultSecondaryPath = String(next.filePath || "").trim()
-        actionResultSecondaryAction = String(next.actionKey || "").trim()
-        actionResultSecondaryText = String(next.buttonText || "").trim()
-        if (actionResultSecondaryPath.length < 1 && actionResultSecondaryAction.length < 1) {
-            actionResultSecondaryText = ""
-        }
+        actionResultPayload = AppMessagePayload.payload(payload || ({}))
     }
 
     function showMappedActionResult(payload) {
@@ -190,7 +177,7 @@ Item {
     }
 
     function showActionResultWithAction(message, detailsText, buttonText, actionKey) {
-        const explicitTitle = String(actionResultTitle || "").trim()
+        const explicitTitle = String((actionResultPayload || {}).title || "").trim()
         showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
             message,
             explicitTitle.length > 0 ? explicitTitle : AppText.popupActionErrorTitle,
@@ -275,12 +262,14 @@ Item {
     }
 
     function handleActionResultDialogClosed() {
-        actionResultTitle = AppText.popupActionErrorTitle
-        actionResultMessage = ""
-        actionResultDetailsText = ""
-        actionResultSecondaryText = ""
-        actionResultSecondaryPath = ""
-        actionResultSecondaryAction = ""
+        actionResultPayload = AppMessagePayload.payload({
+            title: AppText.popupActionErrorTitle,
+            body: "",
+            details: "",
+            actionLabel: "",
+            actionKey: "",
+            filePath: ""
+        })
     }
 
     function handleSeriesMetadataDialogClosed() {

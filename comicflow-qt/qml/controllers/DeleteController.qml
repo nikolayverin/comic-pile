@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/AppMessagePayload.js" as AppMessagePayload
 
 Item {
     id: controller
@@ -16,18 +17,19 @@ Item {
     property var seriesDeleteConfirmDialogRef: null
 
     property int pendingDeleteId: -1
-    property string deleteErrorHeadline: ""
-    property string deleteErrorReasonText: ""
-    property string deleteErrorDetailsText: ""
-    property string deleteErrorSystemText: ""
-    property string deleteErrorRawText: ""
-    property string deleteErrorPrimaryPath: ""
+    property var deleteErrorPayload: AppMessagePayload.payload({})
     property var deleteErrorFailedPaths: []
     property string deleteRetryMode: ""
     property int deleteRetryComicId: -1
     property var deleteRetrySeriesKeys: []
     property bool deleteRetryInProgress: false
     property string deleteRetryStatusText: ""
+    readonly property string deleteErrorHeadline: String((deleteErrorPayload || {}).title || "")
+    readonly property string deleteErrorReasonText: String((deleteErrorPayload || {}).body || "")
+    readonly property string deleteErrorDetailsText: String((deleteErrorPayload || {}).details || "")
+    readonly property string deleteErrorSystemText: String((deleteErrorPayload || {}).systemText || "")
+    readonly property string deleteErrorRawText: String((deleteErrorPayload || {}).rawText || "")
+    readonly property string deleteErrorPrimaryPath: String((deleteErrorPayload || {}).primaryPath || "")
     property string pendingSeriesKey: ""
     property string pendingSeriesTitle: ""
     property var pendingSeriesKeys: []
@@ -222,23 +224,19 @@ Item {
         }
 
         return {
-            headline: isBulk ? "Couldn't remove some files" : "Couldn't remove file",
-            reasonText: reasonText,
-            detailsText: detailsText,
+            title: isBulk ? "Couldn't remove some files" : "Couldn't remove file",
+            body: reasonText,
+            details: detailsText,
             systemText: systemText,
             primaryPath: primaryPath,
-            failedPaths: paths
+            failedPaths: paths,
+            severity: "error"
         }
     }
 
     function clearDeleteFailureContext() {
         deleteRetryTimer.stop()
-        deleteErrorHeadline = ""
-        deleteErrorReasonText = ""
-        deleteErrorDetailsText = ""
-        deleteErrorSystemText = ""
-        deleteErrorRawText = ""
-        deleteErrorPrimaryPath = ""
+        deleteErrorPayload = AppMessagePayload.payload({})
         deleteErrorFailedPaths = []
         deleteRetryMode = ""
         deleteRetryComicId = -1
@@ -267,13 +265,16 @@ Item {
         const parsed = parseDeleteFailureItems(raw)
         const copy = classifyDeleteFailureCopy(parsed, raw)
 
-        deleteErrorHeadline = String(copy.headline || "")
-        deleteErrorReasonText = String(copy.reasonText || "")
-        deleteErrorDetailsText = String(copy.detailsText || "")
-        deleteErrorSystemText = String(copy.systemText || "")
-        deleteErrorPrimaryPath = String(copy.primaryPath || "")
+        deleteErrorPayload = AppMessagePayload.payload({
+            title: String(copy.title || ""),
+            body: String(copy.body || ""),
+            details: String(copy.details || ""),
+            systemText: String(copy.systemText || ""),
+            primaryPath: String(copy.primaryPath || ""),
+            rawText: raw,
+            severity: "error"
+        })
         deleteErrorFailedPaths = Array.isArray(copy.failedPaths) ? copy.failedPaths.slice(0) : []
-        deleteErrorRawText = raw
 
         const ctx = retryContext || ({})
         deleteRetryMode = String(ctx.mode || "")

@@ -6,11 +6,12 @@ import "AppText.js" as AppText
 PopupDialogWindow {
     id: dialog
 
-    property string dialogTitle: AppText.popupActionErrorTitle
-    property string message: ""
-    property string detailsText: ""
-    property string secondaryActionText: ""
-    property bool secondaryActionVisible: false
+    property var payload: ({})
+    property string dialogTitle: String((payload || {}).title || AppText.popupActionErrorTitle)
+    property string message: String((payload || {}).body || (payload || {}).message || "")
+    property string detailsText: String((payload || {}).details || (payload || {}).detailsText || "")
+    property string secondaryActionText: String((payload || {}).actionLabel || (payload || {}).buttonText || "")
+    property bool secondaryActionVisible: secondaryActionText.length > 0
     readonly property int textColumnMinWidth: 120
     readonly property int textColumnMaxWidth: 420
     readonly property int footerTopGap: 16

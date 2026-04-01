@@ -240,11 +240,7 @@ Item {
         id: actionResultDialog
         hostWidth: root.width
         hostHeight: root.height
-        dialogTitle: popupController.actionResultTitle
-        message: root.actionResultMessage
-        detailsText: popupController.actionResultDetailsText
-        secondaryActionText: popupController.actionResultSecondaryText
-        secondaryActionVisible: popupController.actionResultSecondaryVisible
+        payload: popupController.actionResultPayload
         onClosed: popupController.handleActionResultDialogClosed()
         onSecondaryRequested: popupController.triggerActionResultSecondary()
     }
@@ -375,11 +371,7 @@ Item {
         id: deleteErrorDialog
         hostWidth: root.width
         hostHeight: root.height
-        headline: root.deleteErrorHeadline
-        reasonText: root.deleteErrorReasonText
-        detailsText: root.deleteErrorDetailsText
-        systemText: root.deleteErrorSystemText
-        primaryPath: root.deleteErrorPrimaryPath
+        payload: deleteController.deleteErrorPayload
         retryActive: root.deleteRetryInProgress
         retryStatusText: root.deleteRetryStatusText
         onClosed: popupController.handleDeleteErrorDialogClosed()

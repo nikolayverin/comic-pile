@@ -6,11 +6,12 @@ import "AppText.js" as AppText
 PopupDialogWindow {
     id: dialog
 
-    property string headline: ""
-    property string reasonText: ""
-    property string detailsText: ""
-    property string systemText: ""
-    property string primaryPath: ""
+    property var payload: ({})
+    property string headline: String((payload || {}).title || "")
+    property string reasonText: String((payload || {}).body || (payload || {}).message || "")
+    property string detailsText: String((payload || {}).details || (payload || {}).detailsText || "")
+    property string systemText: String((payload || {}).systemText || "")
+    property string primaryPath: String((payload || {}).primaryPath || (payload || {}).filePath || "")
     property bool retryActive: false
     property string retryStatusText: ""
     readonly property int textColumnMinWidth: 120

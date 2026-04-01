@@ -1,29 +1,22 @@
 .pragma library
 
 .import "AppText.js" as AppText
+.import "AppMessagePayload.js" as AppMessagePayload
 
 function normalizedText(value) {
     return String(value || "").trim()
 }
 
 function defaultActionResultPayload(message, titleOverride, detailsText, buttonText, actionKey, filePath) {
-    const resolvedTitle = normalizedText(titleOverride) || AppText.popupActionErrorTitle
-    const resolvedMessage = normalizedText(message) || "Unknown error."
-    const resolvedDetails = normalizedText(detailsText)
-    const resolvedActionKey = normalizedText(actionKey)
-    const resolvedFilePath = normalizedText(filePath)
-    const resolvedButtonText = resolvedActionKey.length > 0 || resolvedFilePath.length > 0
-        ? normalizedText(buttonText)
-        : ""
-
-    return {
-        title: resolvedTitle,
-        message: resolvedMessage,
-        detailsText: resolvedDetails,
-        buttonText: resolvedButtonText,
-        actionKey: resolvedActionKey,
-        filePath: resolvedFilePath
-    }
+    return AppMessagePayload.payload({
+        title: normalizedText(titleOverride) || AppText.popupActionErrorTitle,
+        body: normalizedText(message) || "Unknown error.",
+        details: normalizedText(detailsText),
+        actionLabel: normalizedText(buttonText),
+        actionKey: normalizedText(actionKey),
+        filePath: normalizedText(filePath),
+        severity: "error"
+    })
 }
 
 function lowerText(value) {
