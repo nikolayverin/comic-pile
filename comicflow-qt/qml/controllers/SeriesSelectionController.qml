@@ -61,6 +61,48 @@ Item {
         selectedSeriesKeys = next
     }
 
+    function firstSelectedSeriesFromModel() {
+        if (!seriesListModelRef || seriesListModelRef.count < 1) {
+            return { key: "", title: "", index: -1 }
+        }
+
+        for (let i = 0; i < seriesListModelRef.count; i += 1) {
+            const item = seriesListModelRef.get(i)
+            const key = String(item.seriesKey || "")
+            if (selectedSeriesKeys[key] === true) {
+                return {
+                    key: key,
+                    title: String(item.seriesTitle || ""),
+                    index: i
+                }
+            }
+        }
+
+        return { key: "", title: "", index: -1 }
+    }
+
+    function applyPrimarySeriesSelection(seriesKey, seriesTitle, itemIndex, clearIssueSelection, scrollToTop) {
+        const root = activeRoot()
+        if (!root) return
+
+        root.selectedSeriesKey = String(seriesKey || "")
+        root.selectedSeriesTitle = String(seriesTitle || "")
+        seriesSelectionAnchorIndex = Number(itemIndex) >= 0 ? Math.floor(Number(itemIndex)) : -1
+
+        if (typeof root.refreshVolumeList === "function") {
+            root.refreshVolumeList()
+        }
+        if (clearIssueSelection === true && typeof root.clearSelection === "function") {
+            root.clearSelection()
+        }
+        if (scrollToTop === true && typeof root.setGridScrollToTop === "function") {
+            root.setGridScrollToTop()
+        }
+        if (mainLibraryPaneRef) {
+            mainLibraryPaneRef.heroCollapseOffset = 0
+        }
+    }
+
     function selectSeries(seriesKey, seriesTitle, indexValue) {
         const root = activeRoot()
         if (!root) return
@@ -123,6 +165,7 @@ Item {
         const title = String(seriesTitle || "")
         const index = Number(itemIndex || 0)
         const shiftPressed = (Number(modifiers || 0) & Qt.ShiftModifier) !== 0
+        const ctrlPressed = (Number(modifiers || 0) & Qt.ControlModifier) !== 0
 
         if (shiftPressed && selectedSeriesCount() > 0) {
             const anchor = seriesSelectionAnchorIndex >= 0
@@ -152,6 +195,37 @@ Item {
             if (mainLibraryPaneRef) {
                 mainLibraryPaneRef.heroCollapseOffset = 0
             }
+            return
+        }
+
+        if (ctrlPressed) {
+            root.seriesMenuDismissToken += 1
+            if (String(root.sidebarQuickFilterKey || "").trim().length > 0) {
+                root.sidebarQuickFilterKey = ""
+            }
+
+            const next = Object.assign({}, selectedSeriesKeys || ({}))
+            const currentlySelected = next[key] === true
+            if (currentlySelected) {
+                delete next[key]
+            } else if (key.length > 0) {
+                next[key] = true
+            }
+            selectedSeriesKeys = next
+
+            if (!currentlySelected && key.length > 0) {
+                applyPrimarySeriesSelection(key, title, index, true, true)
+                return
+            }
+
+            const fallback = firstSelectedSeriesFromModel()
+            applyPrimarySeriesSelection(
+                fallback.key,
+                fallback.title,
+                fallback.index,
+                true,
+                true
+            )
             return
         }
 
