@@ -1613,6 +1613,10 @@ ApplicationWindow {
         readerSessionController.openReader(comicId, title)
     }
 
+    function openReaderTarget(target) {
+        readerSessionController.openReaderTarget(target)
+    }
+
     function loadReaderPage(pageIndex) {
         readerSessionController.loadReaderPage(pageIndex)
     }

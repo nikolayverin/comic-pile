@@ -1,5 +1,6 @@
 import QtQuick
 import "../components/AppErrorMapper.js" as AppErrorMapper
+import "../components/ReadingTarget.js" as ReadingTarget
 
 Item {
     id: controller
@@ -277,6 +278,16 @@ Item {
         return String(fallbackSeriesKey || "").trim()
     }
 
+    function navigationTargetForComic(comicId, fallbackMessage) {
+        if (!libraryModelRef || typeof libraryModelRef.navigationTargetForComic !== "function") {
+            return ReadingTarget.invalidTarget(fallbackMessage || "Issue target is unavailable.")
+        }
+        return ReadingTarget.normalize(
+            libraryModelRef.navigationTargetForComic(Number(comicId || 0)) || ({}),
+            fallbackMessage || "Issue target is unavailable."
+        )
+    }
+
     function displaySeriesTitleForIssue(issue) {
         const row = issue || {}
         const series = String(row.series || "").trim()
@@ -477,6 +488,19 @@ Item {
         readerDisplayModeController.beginPageMetricsRequest(root.readerComicId)
     }
 
+    function beginReaderSessionForTarget(target, openPopup, startPageOverride, persistGuardPageIndex) {
+        const normalizedTarget = ReadingTarget.normalize(target || ({}), "Issue target is unavailable.")
+        if (!Boolean(normalizedTarget.ok)) return false
+        beginReaderSession(
+            normalizedTarget.comicId,
+            normalizedTarget.displayTitle,
+            openPopup,
+            startPageOverride,
+            persistGuardPageIndex
+        )
+        return true
+    }
+
     function readerIssueRows() {
         const root = rootObject
         if (!root) return []
@@ -526,9 +550,8 @@ Item {
         const targetComicId = Number(targetRow.id || 0)
         if (targetComicId < 1) return
         persistReaderProgress(false)
-        beginReaderSession(
-            targetComicId,
-            String(targetRow.title || targetRow.filename || ("Issue #" + targetComicId)),
+        beginReaderSessionForTarget(
+            navigationTargetForComic(targetComicId, "Issue target is unavailable."),
             false,
             -1,
             -1
@@ -584,9 +607,8 @@ Item {
             }
         }
 
-        beginReaderSession(
-            targetComicId,
-            String(targetRow.title || targetRow.filename || ("Issue #" + targetComicId)),
+        beginReaderSessionForTarget(
+            navigationTargetForComic(targetComicId, "Issue target is unavailable."),
             false
         )
     }
@@ -685,6 +707,17 @@ Item {
 
     function openReader(comicId, title) {
         beginReaderSession(comicId, title, true, -1, -1)
+    }
+
+    function openReaderTarget(target) {
+        const normalizedTarget = ReadingTarget.normalize(target || ({}), "Issue target is unavailable.")
+        if (!Boolean(normalizedTarget.ok)) return false
+        return beginReaderSessionForTarget(
+            normalizedTarget,
+            true,
+            normalizedTarget.startPageIndex,
+            normalizedTarget.startPageIndex
+        )
     }
 
     function loadReaderPage(pageIndex) {
@@ -821,9 +854,8 @@ Item {
             }
         }
 
-        beginReaderSession(
-            targetComicId,
-            String(targetRow.title || targetRow.filename || ("Issue #" + targetComicId)),
+        beginReaderSessionForTarget(
+            navigationTargetForComic(targetComicId, "Issue target is unavailable."),
             false,
             0,
             0
@@ -844,9 +876,8 @@ Item {
         if (targetComicId < 1) return
 
         // Use a large temporary override so the previous issue opens on its last page.
-        beginReaderSession(
-            targetComicId,
-            String(targetRow.title || targetRow.filename || ("Issue #" + targetComicId)),
+        beginReaderSessionForTarget(
+            navigationTargetForComic(targetComicId, "Issue target is unavailable."),
             false,
             1000000,
             1000000

@@ -1,6 +1,7 @@
 import QtQuick
 import "../components/AppText.js" as AppText
 import "../components/AppErrorMapper.js" as AppErrorMapper
+import "../components/ReadingTarget.js" as ReadingTarget
 
 Item {
     id: controller
@@ -58,8 +59,11 @@ Item {
     function resolveContinueReadingTarget() {
         return readingContinuationControllerRef
             && typeof readingContinuationControllerRef.resolveContinueReadingTarget === "function"
-            ? (readingContinuationControllerRef.resolveContinueReadingTarget() || ({ ok: false, message: AppText.navigationNoActiveReadingSession }))
-            : ({ ok: false, message: AppText.navigationNoActiveReadingSession })
+            ? ReadingTarget.normalize(
+                readingContinuationControllerRef.resolveContinueReadingTarget() || ({}),
+                AppText.navigationNoActiveReadingSession
+            )
+            : ReadingTarget.invalidTarget(AppText.navigationNoActiveReadingSession)
     }
 
     function clearSeriesViewFilters() {
@@ -140,6 +144,10 @@ Item {
 
         if (openReaderAfterReveal && typeof root.openReader === "function") {
             Qt.callLater(function() {
+                if (typeof root.openReaderTarget === "function") {
+                    root.openReaderTarget(target)
+                    return
+                }
                 root.openReader(targetComicId, displayTitle)
             })
         }
@@ -185,7 +193,17 @@ Item {
     }
 
     function queueIssueTargetReveal(target) {
-        pendingIssueTarget = target || null
+        pendingIssueTarget = target
+            ? Object.assign(
+                {},
+                ReadingTarget.normalize(target, AppText.navigationRevealIssueUnavailable),
+                {
+                    openReader: Boolean(target.openReader),
+                    failureTitle: String(target.failureTitle || AppText.popupActionErrorTitle),
+                    failureMessage: String(target.failureMessage || AppText.navigationRevealIssueUnavailable)
+                }
+            )
+            : null
         pendingIssueResolveAttempts = 12
         pendingIssueResolveTimer.restart()
         tryResolvePendingIssueTarget()
@@ -195,26 +213,38 @@ Item {
         const root = rootObject
         if (!root) return
 
-        const comicId = Number((target || {}).comicId || 0)
-        const seriesKey = String((target || {}).seriesKey || "").trim()
-        if (comicId < 1 || seriesKey.length < 1) {
+        const normalizedTarget = ReadingTarget.normalize(
+            target || ({}),
+            failureMessage || AppText.navigationIssueUnavailable
+        )
+        const comicId = Number(normalizedTarget.comicId || 0)
+        const seriesKey = String(normalizedTarget.seriesKey || "").trim()
+        if (!Boolean(normalizedTarget.ok)) {
             showNavigationMessage(
                 String(failureTitle || AppText.popupActionErrorTitle),
-                String((target || {}).message || failureMessage || AppText.navigationIssueUnavailable)
+                String(normalizedTarget.message || failureMessage || AppText.navigationIssueUnavailable)
             )
             return
         }
 
         clearSeriesViewFilters()
-        const seriesTitle = String((target || {}).seriesTitle || "").trim()
+        const seriesTitle = String(normalizedTarget.seriesTitle || "").trim()
         if (typeof root.selectSeries === "function") {
             root.selectSeries(seriesKey, seriesTitle, resolveSeriesIndex(seriesKey))
         }
 
         queueIssueTargetReveal({
-            comicId: comicId,
-            seriesKey: seriesKey,
-            displayTitle: String((target || {}).displayTitle || "").trim(),
+            comicId: normalizedTarget.comicId,
+            anchorComicId: normalizedTarget.anchorComicId,
+            seriesKey: normalizedTarget.seriesKey,
+            seriesTitle: normalizedTarget.seriesTitle,
+            displayTitle: normalizedTarget.displayTitle,
+            title: normalizedTarget.title,
+            startPageIndex: normalizedTarget.startPageIndex,
+            currentPage: normalizedTarget.currentPage,
+            bookmarkPage: normalizedTarget.bookmarkPage,
+            hasBookmark: normalizedTarget.hasBookmark,
+            hasProgress: normalizedTarget.hasProgress,
             openReader: true,
             failureTitle: String(failureTitle || AppText.popupActionErrorTitle),
             failureMessage: String(
@@ -257,8 +287,11 @@ Item {
 
         const target = readingContinuationControllerRef
             && typeof readingContinuationControllerRef.nextUnreadTarget === "function"
-            ? (readingContinuationControllerRef.nextUnreadTarget() || ({}))
-            : ({})
+            ? ReadingTarget.normalize(
+                readingContinuationControllerRef.nextUnreadTarget() || ({}),
+                AppText.navigationNoNextUnread
+            )
+            : ReadingTarget.invalidTarget(AppText.navigationNoNextUnread)
         if (!Boolean(target.ok)) {
             showNavigationMessage(
                 AppText.navigationNextUnreadTitle,

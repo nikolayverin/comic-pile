@@ -99,6 +99,19 @@ Item {
         refreshIssueNavigationState()
     }
 
+    function openReaderTarget(target) {
+        if (readerCoverControllerRef && typeof readerCoverControllerRef.openReaderTarget === "function") {
+            readerCoverControllerRef.openReaderTarget(target)
+        } else if (readerCoverControllerRef && typeof readerCoverControllerRef.openReader === "function") {
+            const normalizedTarget = target && typeof target === "object" ? target : {}
+            readerCoverControllerRef.openReader(
+                Number(normalizedTarget.comicId || -1),
+                String(normalizedTarget.displayTitle || normalizedTarget.title || "")
+            )
+        }
+        refreshIssueNavigationState()
+    }
+
     function loadReaderPage(pageIndex) {
         if (readerCoverControllerRef && typeof readerCoverControllerRef.loadReaderPage === "function") {
             readerCoverControllerRef.loadReaderPage(pageIndex)

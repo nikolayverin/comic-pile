@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.7.26 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.7.27 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -233,6 +233,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupContentGeometry.qml
         qml/components/MetadataDropdownField.qml
         qml/components/MetadataTextUtils.js
+        qml/components/ReadingTarget.js
         qml/components/SeriesContext.js
         qml/components/AppText.js
         qml/components/AppErrorMapper.js

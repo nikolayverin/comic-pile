@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/ReadingTarget.js" as ReadingTarget
 
 Item {
     id: controller
@@ -11,10 +12,7 @@ Item {
 
     property int continueReadingComicId: -1
     property string continueReadingSeriesKey: ""
-    property var resolvedContinueReadingTarget: ({
-        ok: false,
-        message: "No active reading session is available yet."
-    })
+    property var resolvedContinueReadingTarget: ReadingTarget.invalidTarget(emptyStoredTargetMessage())
 
     readonly property bool continueReadingAvailable: Boolean(resolvedContinueReadingTarget.ok)
 
@@ -69,32 +67,23 @@ Item {
     }
 
     function setResolvedTarget(target) {
-        resolvedContinueReadingTarget = target || ({
-            ok: false,
-            message: emptyStoredTargetMessage()
-        })
+        resolvedContinueReadingTarget = ReadingTarget.forContinueReading(target, emptyStoredTargetMessage())
         return resolvedContinueReadingTarget
     }
 
     function fallbackContinueReadingTarget() {
         if (!libraryModelRef || typeof libraryModelRef.continueReadingTarget !== "function") {
-            return ({
-                ok: false,
-                message: emptyStoredTargetMessage()
-            })
+            return ReadingTarget.invalidTarget(emptyStoredTargetMessage())
         }
-        return libraryModelRef.continueReadingTarget() || ({
-            ok: false,
-            message: emptyStoredTargetMessage()
-        })
+        return ReadingTarget.forContinueReading(
+            libraryModelRef.continueReadingTarget() || ({}),
+            emptyStoredTargetMessage()
+        )
     }
 
     function resolveContinueReadingTarget() {
         if (!libraryModelRef) {
-            return setResolvedTarget({
-                ok: false,
-                message: emptyStoredTargetMessage()
-            })
+            return setResolvedTarget(ReadingTarget.invalidTarget(emptyStoredTargetMessage()))
         }
 
         const storedComicId = Number(continueReadingComicId || -1)
@@ -102,7 +91,10 @@ Item {
         let hadStoredTarget = storedComicId > 0
 
         if (storedComicId > 0 && typeof libraryModelRef.navigationTargetForComic === "function") {
-            const rememberedTarget = libraryModelRef.navigationTargetForComic(storedComicId) || ({})
+            const rememberedTarget = ReadingTarget.forContinueReading(
+                libraryModelRef.navigationTargetForComic(storedComicId) || ({}),
+                invalidStoredTargetMessage()
+            )
             if (Boolean(rememberedTarget.ok)) {
                 const resolvedSeriesKey = String(rememberedTarget.seriesKey || "").trim()
                 if (resolvedSeriesKey !== storedSeriesKey || storedComicId !== Number(rememberedTarget.comicId || storedComicId)) {
@@ -126,12 +118,11 @@ Item {
             return setResolvedTarget(fallbackTarget)
         }
 
-        return setResolvedTarget({
-            ok: false,
-            message: hadStoredTarget
+        return setResolvedTarget(ReadingTarget.invalidTarget(
+            hadStoredTarget
                 ? invalidStoredTargetMessage()
                 : emptyStoredTargetMessage()
-        })
+        ))
     }
 
     function nextUnreadTarget() {
@@ -140,18 +131,15 @@ Item {
             return currentTarget
         }
         if (!libraryModelRef || typeof libraryModelRef.nextUnreadTarget !== "function") {
-            return ({
-                ok: false,
-                message: "No active reading session is available yet."
-            })
+            return ReadingTarget.invalidTarget(emptyStoredTargetMessage())
         }
-        return libraryModelRef.nextUnreadTarget(
-            String(currentTarget.seriesKey || "").trim(),
-            Number(currentTarget.anchorComicId || currentTarget.comicId || -1)
-        ) || ({
-            ok: false,
-            message: "No next unread issue is queued right now."
-        })
+        return ReadingTarget.normalize(
+            libraryModelRef.nextUnreadTarget(
+                String(currentTarget.seriesKey || "").trim(),
+                Number(currentTarget.anchorComicId || currentTarget.comicId || -1)
+            ) || ({}),
+            "No next unread issue is queued right now."
+        )
     }
 
     function loadPersistedContinueReadingTarget() {
