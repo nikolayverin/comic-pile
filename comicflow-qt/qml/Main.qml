@@ -318,7 +318,22 @@ ApplicationWindow {
     readonly property int firstRunDropZoneStep2HighlightHeight: 654
     readonly property int firstRunStep3HighlightWidth: 1122
     readonly property int firstRunStep3HighlightHeight: 362
+    readonly property int firstRunStep4HighlightWidth: 1122
+    readonly property int firstRunStep4HighlightHeight: 494
     readonly property int firstRunDropZoneHighlightRadius: 20
+
+    onFirstRunOnboardingStepChanged: {
+        console.log("[onboarding] step changed:", firstRunOnboardingStep)
+        if (firstRunOnboardingStep === 4) {
+            console.log(
+                "[onboarding] step4 geometry:",
+                "highlight=", dropZoneHighlight.x, dropZoneHighlight.y, dropZoneHighlight.width, dropZoneHighlight.height,
+                "bubble=", onboardingStep1Bubble.x, onboardingStep1Bubble.y, onboardingStep1Bubble.width, onboardingStep1Bubble.height,
+                "menu=", onboardingNavigationBlockFull.x, onboardingNavigationBlockFull.y, onboardingNavigationBlockFull.width, onboardingNavigationBlockFull.height,
+                "close=", onboardingCloseButton.x, onboardingCloseButton.y, onboardingCloseButton.width, onboardingCloseButton.height
+            )
+        }
+    }
     StartupController {
         id: startupController
         rootObject: root
@@ -2209,6 +2224,8 @@ ApplicationWindow {
             id: dropZoneHighlight
             x: root.firstRunOnboardingStep === 3
                 ? root.width - root.firstRunStep3HighlightWidth
+                : root.firstRunOnboardingStep === 4
+                    ? root.width - root.firstRunStep4HighlightWidth
                 : Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
             y: root.firstRunOnboardingStep === 1
                 ? Math.round(
@@ -2218,14 +2235,20 @@ ApplicationWindow {
                     - ((root.firstRunDropZoneHeight - root.firstRunDropZoneStep1HighlightHeight) / 2)
                     - root.firstRunDropZoneStep1HighlightHeight
                 )
+                : root.firstRunOnboardingStep === 4
+                    ? root.height - root.footerHeight - root.firstRunStep4HighlightHeight
                 : root.topBarHeight
             width: root.firstRunOnboardingStep === 3
                 ? root.firstRunStep3HighlightWidth
+                : root.firstRunOnboardingStep === 4
+                    ? root.firstRunStep4HighlightWidth
                 : root.firstRunDropZoneHighlightWidth
             height: root.firstRunOnboardingStep === 1
                 ? root.firstRunDropZoneStep1HighlightHeight
                 : root.firstRunOnboardingStep === 3
                     ? root.firstRunStep3HighlightHeight
+                : root.firstRunOnboardingStep === 4
+                    ? root.firstRunStep4HighlightHeight
                 : root.firstRunDropZoneStep2HighlightHeight
             radius: root.firstRunDropZoneHighlightRadius
             color: "transparent"
@@ -2299,16 +2322,22 @@ ApplicationWindow {
                 ? 334
                 : root.firstRunOnboardingStep === 2
                     ? 336
-                    : 496
+                    : root.firstRunOnboardingStep === 3
+                        ? 496
+                        : 355
             anchors.top: parent.top
             anchors.topMargin: root.firstRunOnboardingStep === 1 ? (root.height - 146 - height)
                 : root.firstRunOnboardingStep === 2 ? 92
-                : 432
+                : root.firstRunOnboardingStep === 3
+                    ? 432
+                    : dropZoneHighlight.y - height
             source: root.firstRunOnboardingStep === 1
                 ? uiTokens.onboardingStep1Bubble
                 : root.firstRunOnboardingStep === 2
                     ? uiTokens.onboardingStep2Bubble
-                    : uiTokens.onboardingStep3Bubble
+                    : root.firstRunOnboardingStep === 3
+                        ? uiTokens.onboardingStep3Bubble
+                        : uiTokens.onboardingStep4Bubble
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -2318,13 +2347,19 @@ ApplicationWindow {
             width: 182
             height: 23
             x: onboardingStep1Bubble.x
-                + (root.firstRunOnboardingStep === 2 ? 367 : 603)
+                + (root.firstRunOnboardingStep === 2 ? 367
+                    : root.firstRunOnboardingStep === 3 ? 603
+                    : 671)
                 - (width / 2)
             y: onboardingStep1Bubble.y
                 + onboardingStep1Bubble.height
-                - (root.firstRunOnboardingStep === 2 ? 125 : 154)
+                - (root.firstRunOnboardingStep === 2 ? 125
+                    : root.firstRunOnboardingStep === 3 ? 154
+                    : 92)
                 - (height / 2)
-            visible: root.firstRunOnboardingStep === 2 || root.firstRunOnboardingStep === 3
+            visible: root.firstRunOnboardingStep === 2
+                || root.firstRunOnboardingStep === 3
+                || root.firstRunOnboardingStep === 4
 
             Item {
                 id: onboardingBackButtonHitbox
@@ -2347,7 +2382,14 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.firstRunOnboardingStep = root.firstRunOnboardingStep === 3 ? 2 : 1
+                    onClicked: {
+                        if (root.firstRunOnboardingStep === 4)
+                            root.firstRunOnboardingStep = 3
+                        else if (root.firstRunOnboardingStep === 3)
+                            root.firstRunOnboardingStep = 2
+                        else
+                            root.firstRunOnboardingStep = 1
+                    }
                 }
             }
 
@@ -2375,6 +2417,8 @@ ApplicationWindow {
                     onClicked: {
                         if (root.firstRunOnboardingStep === 2)
                             root.firstRunOnboardingStep = 3
+                        else if (root.firstRunOnboardingStep === 3)
+                            root.firstRunOnboardingStep = 4
                     }
                 }
             }
@@ -2442,13 +2486,15 @@ ApplicationWindow {
             x: onboardingStep1Bubble.x
                 + (root.firstRunOnboardingStep === 1 ? 487
                     : root.firstRunOnboardingStep === 2 ? 504
-                    : 749)
+                    : root.firstRunOnboardingStep === 3 ? 749
+                    : 856)
                 - (width / 2)
             y: onboardingStep1Bubble.y
                 + onboardingStep1Bubble.height
                 - (root.firstRunOnboardingStep === 1 ? 584
                     : root.firstRunOnboardingStep === 2 ? 339
-                    : 367)
+                    : root.firstRunOnboardingStep === 3 ? 367
+                    : 364)
                 - (height / 2)
 
             Rectangle {
