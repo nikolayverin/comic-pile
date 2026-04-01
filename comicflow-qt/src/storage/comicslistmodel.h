@@ -1,6 +1,7 @@
 #pragma once
 
 #include "storage/deletestagingops.h"
+#include "storage/importruntimeutils.h"
 #include "storage/readerruntimeutils.h"
 
 #include <QAbstractListModel>
@@ -319,16 +320,6 @@ private:
         QStringList candidateArchivePaths;
     };
 
-    struct ImportWorkflowState {
-        QHash<QString, QString> deferredFolderBySeriesKey;
-        QString lastAction;
-        int lastComicId = -1;
-        int lastDuplicateId = -1;
-        QString lastDuplicateTier;
-        int lastRestoreCandidateCount = 0;
-        int lastRestoreCandidateId = -1;
-    };
-
     struct ArtworkRuntimeState {
         QHash<QString, QList<int>> pendingImageRequestIdsByKey;
         QHash<QString, QList<int>> pendingSeriesHeroRequestIdsByKey;
@@ -466,7 +457,6 @@ private:
     QVariantMap buildRetainedIssueMetadata(int comicId) const;
     QString preserveRetainedSeriesMetadata(const QString &seriesKey);
     QString preserveRetainedIssueMetadata(int comicId);
-    void resetLastImportOutcome();
     QString deleteSeriesKeyForComic(int comicId) const;
     void invalidateAllReaderAsyncState();
     void clearReaderRuntimeStateForComic(int comicId);
@@ -480,7 +470,7 @@ private:
     QString m_lastMutationKind;
     QVector<ComicRow> m_rows;
     ComicReaderRuntime::ReaderRuntimeState m_readerState;
-    ImportWorkflowState m_importState;
+    ComicImportRuntime::ImportWorkflowState m_importState;
     ArtworkRuntimeState m_artworkState;
     int m_nextAsyncRequestId = 1;
     int m_reloadValidationGeneration = 0;

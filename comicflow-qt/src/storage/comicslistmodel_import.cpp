@@ -10,6 +10,7 @@
 #include "storage/duplicaterestoreresolver.h"
 #include "storage/importduplicateclassifier.h"
 #include "storage/importmatching.h"
+#include "storage/importruntimeutils.h"
 #include "storage/importworkflowutils.h"
 #include "storage/libraryschemamanager.h"
 #include "storage/librarylayoututils.h"
@@ -915,7 +916,7 @@ QString ComicsListModel::createComicFromLibrary(
     const QVariantMap &values
 )
 {
-    resetLastImportOutcome();
+    ComicImportRuntime::resetOutcome(m_importState);
 
     const QString inputRef = filename.trimmed();
     if (inputRef.isEmpty()) {
@@ -1120,8 +1121,7 @@ QString ComicsListModel::createComicFromLibrary(
                 return restoreError;
             }
 
-            m_importState.lastAction = QString("restored");
-            m_importState.lastComicId = candidate.id;
+            ComicImportRuntime::recordRestored(m_importState, candidate.id);
 
             QSet<QString> seriesHeroKeysToPurge;
             const QString existingSeriesKey = candidate.seriesKey.trimmed().isEmpty()
@@ -1153,9 +1153,7 @@ QString ComicsListModel::createComicFromLibrary(
                 }
             }
 
-            m_importState.lastAction = QStringLiteral("restore_conflict");
-            m_importState.lastRestoreCandidateCount = uniqueCandidateIds.size();
-            m_importState.lastRestoreCandidateId = -1;
+            ComicImportRuntime::recordRestoreConflict(m_importState, uniqueCandidateIds.size());
             db.close();
 
             return QStringLiteral(
@@ -1175,9 +1173,11 @@ QString ComicsListModel::createComicFromLibrary(
                 }
             }
 
-            m_importState.lastAction = QStringLiteral("restore_review_required");
-            m_importState.lastRestoreCandidateCount = std::max(1, static_cast<int>(uniqueCandidateIds.size()));
-            m_importState.lastRestoreCandidateId = candidateId;
+            ComicImportRuntime::recordRestoreReviewRequired(
+                m_importState,
+                static_cast<int>(uniqueCandidateIds.size()),
+                candidateId
+            );
             db.close();
 
             return QStringLiteral(
@@ -1336,9 +1336,11 @@ QString ComicsListModel::createComicFromLibrary(
             return liveDuplicateError;
         }
         if (liveDuplicate.hasMatch() && (!allowImportAsNew || liveDuplicate.tier == ImportDuplicateClassifier::Tier::Exact)) {
-            m_importState.lastAction = QStringLiteral("duplicate");
-            m_importState.lastDuplicateId = liveDuplicate.candidate.id;
-            m_importState.lastDuplicateTier = ImportDuplicateClassifier::tierKey(liveDuplicate.tier);
+            ComicImportRuntime::recordDuplicate(
+                m_importState,
+                liveDuplicate.candidate.id,
+                ImportDuplicateClassifier::tierKey(liveDuplicate.tier)
+            );
             db.close();
 
             if (liveDuplicate.tier == ImportDuplicateClassifier::Tier::VeryLikely) {
@@ -1403,8 +1405,7 @@ QString ComicsListModel::createComicFromLibrary(
             return error;
         }
 
-        m_importState.lastAction = QString("created");
-        m_importState.lastComicId = insertQuery.lastInsertId().toInt();
+        ComicImportRuntime::recordCreated(m_importState, insertQuery.lastInsertId().toInt());
 
         db.close();
     }
@@ -1428,63 +1429,59 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     QVariantMap *outResult
 )
 {
-    auto setOutError = [&](const QString &code, const QString &message) {
+    auto setOutError = [&](const QString &code, const QString &message, const QString &sourcePath = QString()) {
         if (!outResult) return;
-        outResult->clear();
-        outResult->insert("ok", false);
-        outResult->insert("code", code);
-        outResult->insert("error", message);
+        *outResult = ComicImportRuntime::makeFailureResult(code, message, sourcePath);
     };
 
-    auto setOutSuccess = [&](const QString &action, int comicId, const QString &finalFilename, const QString &finalFilePath, bool createdArchiveFile, const QString &normalizedSourcePath) {
+    auto setOutSuccess = [&](const QString &finalFilename, const QString &finalFilePath, bool createdArchiveFile, const QString &normalizedSourcePath) {
         if (!outResult) return;
-        outResult->clear();
-        outResult->insert("ok", true);
-        outResult->insert("code", action);
-        outResult->insert("comicId", comicId);
-        outResult->insert("filename", finalFilename);
-        outResult->insert("filePath", QDir::toNativeSeparators(QFileInfo(finalFilePath).absoluteFilePath()));
-        outResult->insert("createdArchiveFile", createdArchiveFile);
-        outResult->insert("sourcePath", normalizedSourcePath);
+        *outResult = ComicImportRuntime::makeSuccessResult(
+            m_importState,
+            finalFilename,
+            finalFilePath,
+            createdArchiveFile,
+            normalizedSourcePath
+        );
     };
 
-    resetLastImportOutcome();
+    ComicImportRuntime::resetOutcome(m_importState);
 
     const QString normalizedSourcePath = normalizeInputFilePath(sourcePath);
     if (normalizedSourcePath.isEmpty()) {
         const QString error = QString("Import file path is required.");
-        setOutError("invalid_input", error);
+        setOutError("invalid_input", error, normalizedSourcePath);
         return error;
     }
 
     const QFileInfo sourceInfo(normalizedSourcePath);
     if (!sourceInfo.exists() || !sourceInfo.isFile()) {
         const QString error = QString("Import file not found: %1").arg(sourcePath.trimmed());
-        setOutError("file_not_found", error);
+        setOutError("file_not_found", error, normalizedSourcePath);
         return error;
     }
 
     const QString extension = normalizeArchiveExtension(sourceInfo.suffix());
     if (!isImportArchiveExtensionSupported(extension)) {
         const QString error = QString("Supported import formats: %1").arg(formatSupportedArchiveList());
-        setOutError("unsupported_format", error);
+        setOutError("unsupported_format", error, normalizedSourcePath);
         return error;
     }
     if (isSevenZipExtension(extension) && !isCbrBackendAvailable()) {
         const QString error = cbrBackendMissingMessage();
-        setOutError("cbr_backend_missing", error);
+        setOutError("cbr_backend_missing", error, normalizedSourcePath);
         return error;
     }
     if (isDjvuExtension(extension) && resolveDjVuExecutable().isEmpty()) {
         const QString error = djvuBackendMissingMessage();
-        setOutError("djvu_backend_missing", error);
+        setOutError("djvu_backend_missing", error, normalizedSourcePath);
         return error;
     }
 
     if (!isPdfExtension(extension) && !isDjvuExtension(extension)) {
         const QString archiveValidationError = validateArchiveImageEntries(sourceInfo.absoluteFilePath());
         if (!archiveValidationError.isEmpty()) {
-            setOutError(archiveValidationCode(archiveValidationError), archiveValidationError);
+            setOutError(archiveValidationCode(archiveValidationError), archiveValidationError, normalizedSourcePath);
             return archiveValidationError;
         }
     }
@@ -1494,7 +1491,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     if (!libraryDir.exists()) {
         if (!QDir().mkpath(libraryPath)) {
             const QString error = QString("Failed to create Library folder: %1").arg(libraryPath);
-            setOutError("library_dir_create_failed", error);
+            setOutError("library_dir_create_failed", error, normalizedSourcePath);
             return error;
         }
         libraryDir = QDir(libraryPath);
@@ -1546,14 +1543,14 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     QDir seriesDir(seriesFolderPath);
     if (!seriesDir.exists() && !QDir().mkpath(seriesFolderPath)) {
         const QString error = QStringLiteral("Failed to create series folder: %1").arg(seriesFolderPath);
-        setOutError("series_dir_create_failed", error);
+        setOutError("series_dir_create_failed", error, normalizedSourcePath);
         return error;
     }
 
     const QString targetFilename = ComicImportWorkflow::ensureTargetCbzFilename(filenameHint, sourceInfo.fileName());
     if (targetFilename.isEmpty()) {
         const QString error = QString("Invalid archive filename.");
-        setOutError("invalid_filename", error);
+        setOutError("invalid_filename", error, normalizedSourcePath);
         return error;
     }
 
@@ -1576,7 +1573,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         QString duplicateOpenError;
         QSqlDatabase duplicateDb;
         if (!openDatabaseConnection(duplicateDb, duplicateConnectionName, duplicateOpenError)) {
-            setOutError("duplicate_check_failed", duplicateOpenError);
+            setOutError("duplicate_check_failed", duplicateOpenError, normalizedSourcePath);
             return duplicateOpenError;
         }
 
@@ -1611,24 +1608,28 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         );
         duplicateDb.close();
         if (!liveDuplicateError.isEmpty()) {
-            setOutError(QStringLiteral("duplicate_check_failed"), liveDuplicateError);
+            setOutError(QStringLiteral("duplicate_check_failed"), liveDuplicateError, normalizedSourcePath);
             return liveDuplicateError;
         }
         if (liveDuplicate.hasMatch() && (!allowImportAsNew || liveDuplicate.tier == ImportDuplicateClassifier::Tier::Exact)) {
-            m_importState.lastAction = QStringLiteral("duplicate");
-            m_importState.lastDuplicateId = liveDuplicate.candidate.id;
-            m_importState.lastDuplicateTier = ImportDuplicateClassifier::tierKey(liveDuplicate.tier);
+            ComicImportRuntime::recordDuplicate(
+                m_importState,
+                liveDuplicate.candidate.id,
+                ImportDuplicateClassifier::tierKey(liveDuplicate.tier)
+            );
             QString duplicateError = QStringLiteral("Issue already exists in DB (id %1). Use replace instead.").arg(liveDuplicate.candidate.id);
             if (liveDuplicate.tier == ImportDuplicateClassifier::Tier::VeryLikely) {
                 duplicateError = QStringLiteral("Likely duplicate issue found in DB (id %1).").arg(liveDuplicate.candidate.id);
             } else if (liveDuplicate.tier == ImportDuplicateClassifier::Tier::Weak) {
                 duplicateError = QStringLiteral("Suspicious duplicate issue found in DB (id %1).").arg(liveDuplicate.candidate.id);
             }
-            setOutError(QStringLiteral("duplicate"), duplicateError);
             if (outResult) {
-                outResult->insert(QStringLiteral("existingId"), liveDuplicate.candidate.id);
-                outResult->insert(QStringLiteral("duplicateTier"), ImportDuplicateClassifier::tierKey(liveDuplicate.tier));
-                outResult->insert(QStringLiteral("sourcePath"), normalizedSourcePath);
+                *outResult = ComicImportRuntime::makeCreateFailureResult(
+                    m_importState,
+                    QStringLiteral("duplicate"),
+                    duplicateError,
+                    normalizedSourcePath
+                );
             }
             return duplicateError;
         }
@@ -1640,7 +1641,7 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
 
         QString normalizeError;
         if (!normalizeArchiveToCbz(sourceInfo.absoluteFilePath(), finalFilePath, normalizeError)) {
-            setOutError("archive_normalize_failed", normalizeError);
+            setOutError("archive_normalize_failed", normalizeError, normalizedSourcePath);
             return normalizeError;
         }
         createdArchiveFile = true;
@@ -1655,48 +1656,18 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
             ComicDeleteOps::cleanupEmptyLibraryDirs(libraryPath, { QFileInfo(finalFilePath).absolutePath() });
         }
 
-        if (m_importState.lastAction == QString("duplicate") && m_importState.lastDuplicateId > 0) {
-            if (outResult) {
-                outResult->clear();
-                outResult->insert("ok", false);
-                outResult->insert("code", "duplicate");
-                outResult->insert("error", createError);
-                outResult->insert("existingId", m_importState.lastDuplicateId);
-                outResult->insert("duplicateTier", m_importState.lastDuplicateTier);
-                outResult->insert("sourcePath", normalizedSourcePath);
-            }
-        } else if (m_importState.lastAction == QStringLiteral("restore_conflict")) {
-            if (outResult) {
-                outResult->clear();
-                outResult->insert("ok", false);
-                outResult->insert("code", "restore_conflict");
-                outResult->insert("error", createError);
-                outResult->insert("restoreCandidateCount", m_importState.lastRestoreCandidateCount);
-                outResult->insert("sourcePath", normalizedSourcePath);
-            }
-        } else if (m_importState.lastAction == QStringLiteral("restore_review_required")) {
-            if (outResult) {
-                outResult->clear();
-                outResult->insert("ok", false);
-                outResult->insert("code", "restore_review_required");
-                outResult->insert("error", createError);
-                outResult->insert("restoreCandidateCount", m_importState.lastRestoreCandidateCount);
-                if (m_importState.lastRestoreCandidateId > 0) {
-                    outResult->insert("existingId", m_importState.lastRestoreCandidateId);
-                }
-                outResult->insert("sourcePath", normalizedSourcePath);
-            }
-        } else {
-            setOutError("create_issue_failed", createError);
+        if (outResult) {
+            *outResult = ComicImportRuntime::makeCreateFailureResult(
+                m_importState,
+                QStringLiteral("create_issue_failed"),
+                createError,
+                normalizedSourcePath
+            );
         }
         return createError;
     }
 
-    const QString action = m_importState.lastAction.trimmed().isEmpty()
-        ? QString("created")
-        : m_importState.lastAction;
-    const int importedComicId = m_importState.lastComicId;
-    setOutSuccess(action, importedComicId, finalFilename, finalFilePath, createdArchiveFile, normalizedSourcePath);
+    setOutSuccess(finalFilename, finalFilePath, createdArchiveFile, normalizedSourcePath);
 
     return {};
 }
@@ -1710,15 +1681,15 @@ QString ComicsListModel::importImageFolderAndCreateIssueInternal(
 {
     auto setOutError = [&](const QString &code, const QString &message, const QString &normalizedFolderPath) {
         if (!outResult) return;
-        outResult->clear();
-        outResult->insert(QStringLiteral("ok"), false);
-        outResult->insert(QStringLiteral("code"), code);
-        outResult->insert(QStringLiteral("error"), message);
-        outResult->insert(QStringLiteral("sourcePath"), normalizedFolderPath);
-        outResult->insert(QStringLiteral("sourceType"), QStringLiteral("image_folder"));
+        *outResult = ComicImportRuntime::makeFailureResult(
+            code,
+            message,
+            normalizedFolderPath,
+            QStringLiteral("image_folder")
+        );
     };
 
-    resetLastImportOutcome();
+    ComicImportRuntime::resetOutcome(m_importState);
 
     const QString normalizedFolderPath = normalizeInputFilePath(folderPath);
     if (normalizedFolderPath.isEmpty()) {

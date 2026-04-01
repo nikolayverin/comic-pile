@@ -776,7 +776,7 @@ ComicsListModel::ComicsListModel(QObject *parent)
     m_dbPath = QDir(m_dataRoot).filePath("library.db");
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_paths_ready"));
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_services_ready"));
-    resetLastImportOutcome();
+    ComicImportRuntime::resetOutcome(m_importState);
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_begin"));
     const QString schemaError = LibrarySchemaManager(m_dbPath).ensureSchemaUpToDate();
     if (!schemaError.isEmpty()) {
@@ -792,16 +792,6 @@ ComicsListModel::ComicsListModel(QObject *parent)
         QDir(m_dataRoot).filePath(QStringLiteral("Library"))
     );
     appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_end"));
-}
-
-void ComicsListModel::resetLastImportOutcome()
-{
-    m_importState.lastAction.clear();
-    m_importState.lastComicId = -1;
-    m_importState.lastDuplicateId = -1;
-    m_importState.lastDuplicateTier.clear();
-    m_importState.lastRestoreCandidateCount = 0;
-    m_importState.lastRestoreCandidateId = -1;
 }
 
 int ComicsListModel::rowCount(const QModelIndex &parent) const
