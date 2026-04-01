@@ -349,7 +349,7 @@ Rectangle {
                 id: addFilesDropHighlight
                 anchors.fill: parent
                 opacity: (
-                    (rootObject && rootObject.firstRunOnboardingActive)
+                    (rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
                     || dropZoneMouseArea.containsMouse
                     || (rootObject ? rootObject.addFilesDropActive : false)
                 ) ? 1.0 : 0.0
@@ -384,13 +384,15 @@ Rectangle {
                 source: uiTokensRef ? uiTokensRef.dropZoneBorder : ""
                 fillMode: Image.Stretch
                 smooth: true
-                visible: !(rootObject && rootObject.firstRunOnboardingActive)
+                visible: !(rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
             }
 
             Canvas {
                 id: onboardingDropZoneBorder
                 anchors.fill: parent
-                visible: rootObject ? rootObject.firstRunOnboardingActive : false
+                visible: rootObject
+                    ? (rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
+                    : false
                 contextType: "2d"
 
                 onPaint: {
@@ -441,7 +443,7 @@ Rectangle {
                 anchors.topMargin: 20
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: uiTokensRef
-                    ? ((rootObject && rootObject.firstRunOnboardingActive)
+                    ? ((rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
                         ? uiTokensRef.dropZoneWhiteIcon
                         : uiTokensRef.dropZoneIcon)
                     : ""
@@ -460,7 +462,7 @@ Rectangle {
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropTitle : 16
                 font.bold: true
-                color: rootObject && rootObject.firstRunOnboardingActive
+                color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                     ? "#FFFFFF"
                     : (rootObject ? rootObject.dropZoneTextColor : "white")
                 z: 1
@@ -478,7 +480,7 @@ Rectangle {
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropTitle : 16
                 font.bold: true
-                color: rootObject && rootObject.firstRunOnboardingActive
+                color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                     ? "transparent"
                     : (rootObject ? rootObject.uiTextShadow : "transparent")
                 text: dropZoneTitle.text
@@ -495,7 +497,7 @@ Rectangle {
                 wrapMode: Text.WordWrap
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
-                color: rootObject && rootObject.firstRunOnboardingActive
+                color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                     ? "#FFFFFF"
                     : (rootObject ? rootObject.dropZoneTextColor : "white")
                 z: 1
@@ -511,7 +513,7 @@ Rectangle {
                 wrapMode: Text.WordWrap
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
-                color: rootObject && rootObject.firstRunOnboardingActive
+                color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                     ? "transparent"
                     : (rootObject ? rootObject.uiTextShadow : "transparent")
                 text: dropZoneSubtitle.text

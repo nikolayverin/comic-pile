@@ -55,6 +55,7 @@ QtObject {
     readonly property string onboardingNextButton: "qrc:/qt/qml/ComicPile/assets/ui/onboarding/next.png"
     readonly property string onboardingSlash: "qrc:/qt/qml/ComicPile/assets/ui/onboarding/slash.png"
     readonly property string onboardingStep1Bubble: "qrc:/qt/qml/ComicPile/assets/ui/onboarding/step-1.png"
+    readonly property string onboardingStep2Bubble: "qrc:/qt/qml/ComicPile/assets/ui/onboarding/step-2.png"
     readonly property string gridTile: "qrc:/qt/qml/ComicPile/assets/ui/grid-tile.png"
     readonly property string heroSlice: "qrc:/qt/qml/ComicPile/assets/ui/hero-9-slice.png"
     readonly property string coverShading: "qrc:/qt/qml/ComicPile/assets/ui/cover-shading.png"
