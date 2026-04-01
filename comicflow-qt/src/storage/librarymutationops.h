@@ -3,6 +3,7 @@
 #include <QHash>
 #include <QSet>
 #include <QString>
+#include <QVariantMap>
 #include <QVector>
 
 namespace ComicLibraryMutationOps {
@@ -83,5 +84,9 @@ BulkMetadataUpdateOutcome applyBulkMetadataUpdate(
     const QVector<BulkMetadataRuntimeRow> &runtimeRows,
     const BulkMetadataUpdatePlan &plan
 );
+
+QString setSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey, const QVariantMap &values);
+QString removeSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey);
+QString setIssueMetadataKnowledge(const QString &dbPath, const QVariantMap &values);
 
 } // namespace ComicLibraryMutationOps

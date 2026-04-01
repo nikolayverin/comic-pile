@@ -589,7 +589,7 @@ QString ComicsListModel::preserveRetainedSeriesMetadata(const QString &seriesKey
 
     const QVariantMap retainedValues = buildRetainedSeriesMetadata(normalizedKey);
     if (retainedValues.isEmpty()) {
-        return ComicLibraryQueries::setSeriesMetadataForKey(m_dbPath, normalizedKey, {
+        return ComicLibraryMutationOps::setSeriesMetadataForKey(m_dbPath, normalizedKey, {
             { QStringLiteral("headerCoverPath"), QString() },
             { QStringLiteral("headerBackgroundPath"), QString() }
         });
@@ -597,7 +597,7 @@ QString ComicsListModel::preserveRetainedSeriesMetadata(const QString &seriesKey
     QVariantMap valuesToPersist = retainedValues;
     valuesToPersist.insert(QStringLiteral("headerCoverPath"), QString());
     valuesToPersist.insert(QStringLiteral("headerBackgroundPath"), QString());
-    return ComicLibraryQueries::setSeriesMetadataForKey(m_dbPath, normalizedKey, valuesToPersist);
+    return ComicLibraryMutationOps::setSeriesMetadataForKey(m_dbPath, normalizedKey, valuesToPersist);
 }
 
 QVariantMap ComicsListModel::buildRetainedIssueMetadata(int comicId) const
@@ -665,7 +665,7 @@ QString ComicsListModel::preserveRetainedIssueMetadata(int comicId)
     if (retainedValues.isEmpty()) {
         return {};
     }
-    return ComicLibraryQueries::setIssueMetadataKnowledge(m_dbPath, retainedValues);
+    return ComicLibraryMutationOps::setIssueMetadataKnowledge(m_dbPath, retainedValues);
 }
 
 QVariantMap ComicsListModel::loadComicMetadata(int comicId) const
@@ -829,7 +829,7 @@ QVariantMap ComicsListModel::seriesMetadataSuggestion(const QVariantMap &values,
 
 QString ComicsListModel::setSeriesMetadataForKey(const QString &seriesKey, const QVariantMap &values)
 {
-    const QString writeError = ComicLibraryQueries::setSeriesMetadataForKey(m_dbPath, seriesKey, values);
+    const QString writeError = ComicLibraryMutationOps::setSeriesMetadataForKey(m_dbPath, seriesKey, values);
     if (!writeError.isEmpty()) {
         return writeError;
     }
@@ -1067,7 +1067,7 @@ QVariantMap ComicsListModel::saveSeriesHeaderImages(
         nextBackgroundStored = relativePathWithinDataRoot(m_dataRoot, nextBackgroundPath);
     }
 
-    const QString writeError = ComicLibraryQueries::setSeriesMetadataForKey(m_dbPath, key, {
+    const QString writeError = ComicLibraryMutationOps::setSeriesMetadataForKey(m_dbPath, key, {
         { QStringLiteral("headerCoverPath"), nextCoverStored },
         { QStringLiteral("headerBackgroundPath"), nextBackgroundStored }
     });
@@ -1092,7 +1092,7 @@ QVariantMap ComicsListModel::saveSeriesHeaderImages(
 
 QString ComicsListModel::removeSeriesMetadataForKey(const QString &seriesKey)
 {
-    const QString writeError = ComicLibraryQueries::removeSeriesMetadataForKey(m_dbPath, seriesKey);
+    const QString writeError = ComicLibraryMutationOps::removeSeriesMetadataForKey(m_dbPath, seriesKey);
     if (!writeError.isEmpty()) {
         return writeError;
     }

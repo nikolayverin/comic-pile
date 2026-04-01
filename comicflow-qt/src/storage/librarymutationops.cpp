@@ -6,6 +6,7 @@
 #include "storage/deletestagingops.h"
 #include "storage/importmatching.h"
 #include "storage/librarylayoututils.h"
+#include "storage/libraryschemamanager.h"
 #include "storage/sqliteconnectionutils.h"
 #include "storage/storedpathutils.h"
 
@@ -23,6 +24,161 @@ namespace {
 QString trimOrEmpty(const QVariant &value)
 {
     return value.toString().trimmed();
+}
+
+QString valueFromMap(const QVariantMap &map, const QString &key)
+{
+    return map.value(key).toString().trimmed();
+}
+
+struct SeriesMetadataRecord {
+    QString seriesTitle;
+    QString summary;
+    QString seriesYear;
+    QString seriesMonth;
+    QString genres;
+    QString volume;
+    QString publisher;
+    QString ageRating;
+    QString headerCoverPath;
+    QString headerBackgroundPath;
+};
+
+bool normalizeSeriesMetadataYear(const QString &input, QString &normalizedYear, QString &errorText)
+{
+    const QString trimmed = input.trimmed();
+    if (trimmed.isEmpty()) {
+        normalizedYear.clear();
+        return true;
+    }
+
+    bool ok = false;
+    const int parsedYear = trimmed.toInt(&ok);
+    if (!ok || parsedYear < 0 || parsedYear > 9999) {
+        errorText = QStringLiteral("Series year must be between 0 and 9999.");
+        return false;
+    }
+
+    normalizedYear = QString::number(parsedYear);
+    return true;
+}
+
+bool normalizeOptionalMonth(
+    const QString &input,
+    const QString &label,
+    QString &normalizedMonth,
+    QString &errorText
+)
+{
+    const QString trimmed = input.trimmed();
+    if (trimmed.isEmpty()) {
+        normalizedMonth.clear();
+        return true;
+    }
+
+    bool ok = false;
+    const int parsedMonth = trimmed.toInt(&ok);
+    if (!ok || parsedMonth < 1 || parsedMonth > 12) {
+        errorText = QStringLiteral("%1 must be between 1 and 12.").arg(label);
+        return false;
+    }
+
+    normalizedMonth = QString::number(parsedMonth);
+    return true;
+}
+
+bool loadSeriesMetadataRecord(
+    QSqlDatabase &db,
+    const QString &seriesKey,
+    SeriesMetadataRecord &recordOut,
+    QString &errorText
+)
+{
+    QSqlQuery query(db);
+    query.prepare(
+        QStringLiteral(
+            "SELECT COALESCE(series_title, ''), COALESCE(series_summary, ''), "
+            "CASE WHEN COALESCE(series_year, 0) = 0 THEN '' ELSE CAST(series_year AS TEXT) END, "
+            "CASE WHEN COALESCE(series_month, 0) = 0 THEN '' ELSE CAST(series_month AS TEXT) END, "
+            "COALESCE(series_genres, ''), COALESCE(series_volume, ''), COALESCE(series_publisher, ''), "
+            "COALESCE(series_age_rating, ''), COALESCE(series_header_cover_path, ''), "
+            "COALESCE(series_header_background_path, '') "
+            "FROM series_metadata WHERE series_group_key = ? LIMIT 1"
+        )
+    );
+    query.addBindValue(seriesKey);
+    if (!query.exec()) {
+        errorText = QStringLiteral("Failed to read series metadata: %1").arg(query.lastError().text());
+        return false;
+    }
+
+    recordOut = {};
+    if (query.next()) {
+        recordOut.seriesTitle = trimOrEmpty(query.value(0));
+        recordOut.summary = trimOrEmpty(query.value(1));
+        recordOut.seriesYear = trimOrEmpty(query.value(2));
+        recordOut.seriesMonth = trimOrEmpty(query.value(3));
+        recordOut.genres = trimOrEmpty(query.value(4));
+        recordOut.volume = trimOrEmpty(query.value(5));
+        recordOut.publisher = trimOrEmpty(query.value(6));
+        recordOut.ageRating = trimOrEmpty(query.value(7));
+        recordOut.headerCoverPath = trimOrEmpty(query.value(8));
+        recordOut.headerBackgroundPath = trimOrEmpty(query.value(9));
+    }
+    return true;
+}
+
+bool writeSeriesMetadataRecord(
+    QSqlDatabase &db,
+    const QString &seriesKey,
+    const SeriesMetadataRecord &record,
+    QString &errorText
+)
+{
+    QSqlQuery query(db);
+    if (record.seriesTitle.isEmpty()
+        && record.summary.isEmpty()
+        && record.seriesYear.isEmpty()
+        && record.seriesMonth.isEmpty()
+        && record.genres.isEmpty()
+        && record.volume.isEmpty()
+        && record.publisher.isEmpty()
+        && record.ageRating.isEmpty()
+        && record.headerCoverPath.isEmpty()
+        && record.headerBackgroundPath.isEmpty()) {
+        query.prepare(QStringLiteral("DELETE FROM series_metadata WHERE series_group_key = ?"));
+        query.addBindValue(seriesKey);
+        if (!query.exec()) {
+            errorText = QStringLiteral("Failed to remove series metadata: %1").arg(query.lastError().text());
+            return false;
+        }
+        return true;
+    }
+
+    query.prepare(
+        QStringLiteral(
+            "INSERT OR REPLACE INTO series_metadata "
+            "(series_group_key, series_title, series_summary, series_year, series_month, series_genres, "
+            "series_volume, series_publisher, series_age_rating, series_header_cover_path, "
+            "series_header_background_path, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))"
+        )
+    );
+    query.addBindValue(seriesKey);
+    query.addBindValue(record.seriesTitle);
+    query.addBindValue(record.summary);
+    query.addBindValue(record.seriesYear.isEmpty() ? QVariant() : QVariant(record.seriesYear.toInt()));
+    query.addBindValue(record.seriesMonth.isEmpty() ? QVariant() : QVariant(record.seriesMonth.toInt()));
+    query.addBindValue(record.genres);
+    query.addBindValue(record.volume);
+    query.addBindValue(record.publisher);
+    query.addBindValue(record.ageRating);
+    query.addBindValue(record.headerCoverPath);
+    query.addBindValue(record.headerBackgroundPath);
+    if (!query.exec()) {
+        errorText = QStringLiteral("Failed to save series metadata: %1").arg(query.lastError().text());
+        return false;
+    }
+    return true;
 }
 
 struct BulkUpdateSnapshot {
@@ -193,6 +349,232 @@ using SeriesFolderState = ComicLibraryLayout::SeriesFolderState;
 } // namespace
 
 namespace ComicLibraryMutationOps {
+
+QString setSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey, const QVariantMap &values)
+{
+    const QString key = seriesKey.trimmed();
+    if (key.isEmpty()) return QStringLiteral("Series key is required.");
+
+    const bool hasSeriesTitle = values.contains(QStringLiteral("seriesTitle"));
+    const bool hasSummary = values.contains(QStringLiteral("summary"));
+    const bool hasYear = values.contains(QStringLiteral("year"));
+    const bool hasMonth = values.contains(QStringLiteral("month"));
+    const bool hasGenres = values.contains(QStringLiteral("genres"));
+    const bool hasVolume = values.contains(QStringLiteral("volume"));
+    const bool hasPublisher = values.contains(QStringLiteral("publisher"));
+    const bool hasAgeRating = values.contains(QStringLiteral("ageRating"));
+    const bool hasHeaderCoverPath = values.contains(QStringLiteral("headerCoverPath"));
+    const bool hasHeaderBackgroundPath = values.contains(QStringLiteral("headerBackgroundPath"));
+    if (!hasSeriesTitle && !hasSummary && !hasYear && !hasMonth && !hasGenres
+        && !hasVolume && !hasPublisher && !hasAgeRating
+        && !hasHeaderCoverPath && !hasHeaderBackgroundPath) {
+        return {};
+    }
+
+    const QString connectionName = QStringLiteral("comic_pile_series_metadata_write_%1")
+        .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
+    QString openError;
+    QSqlDatabase db;
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
+        return openError;
+    }
+
+    QString schemaError;
+    if (!LibrarySchemaManager::ensureSeriesMetadataTable(db, schemaError)) {
+        db.close();
+        return schemaError;
+    }
+
+    SeriesMetadataRecord record;
+    QString readError;
+    if (!loadSeriesMetadataRecord(db, key, record, readError)) {
+        db.close();
+        return readError;
+    }
+
+    if (hasSeriesTitle) record.seriesTitle = valueFromMap(values, QStringLiteral("seriesTitle"));
+    if (hasSummary) record.summary = valueFromMap(values, QStringLiteral("summary"));
+    if (hasYear) {
+        QString normalizedYear;
+        QString yearError;
+        if (!normalizeSeriesMetadataYear(valueFromMap(values, QStringLiteral("year")), normalizedYear, yearError)) {
+            db.close();
+            return yearError;
+        }
+        record.seriesYear = normalizedYear;
+    }
+    if (hasMonth) {
+        QString normalizedMonth;
+        QString monthError;
+        if (!normalizeOptionalMonth(valueFromMap(values, QStringLiteral("month")), QStringLiteral("Series month"), normalizedMonth, monthError)) {
+            db.close();
+            return monthError;
+        }
+        record.seriesMonth = normalizedMonth;
+    }
+    if (hasGenres) record.genres = valueFromMap(values, QStringLiteral("genres"));
+    if (hasVolume) record.volume = valueFromMap(values, QStringLiteral("volume"));
+    if (hasPublisher) record.publisher = valueFromMap(values, QStringLiteral("publisher"));
+    if (hasAgeRating) record.ageRating = valueFromMap(values, QStringLiteral("ageRating"));
+    if (hasHeaderCoverPath) record.headerCoverPath = valueFromMap(values, QStringLiteral("headerCoverPath"));
+    if (hasHeaderBackgroundPath) record.headerBackgroundPath = valueFromMap(values, QStringLiteral("headerBackgroundPath"));
+
+    QString writeError;
+    if (!writeSeriesMetadataRecord(db, key, record, writeError)) {
+        db.close();
+        return writeError;
+    }
+
+    db.close();
+    return {};
+}
+
+QString removeSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey)
+{
+    const QString key = seriesKey.trimmed();
+    if (key.isEmpty()) return QStringLiteral("Series key is required.");
+
+    const QString connectionName = QStringLiteral("comic_pile_series_metadata_remove_%1")
+        .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
+    QString openError;
+    QSqlDatabase db;
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
+        return openError;
+    }
+
+    QString schemaError;
+    if (!LibrarySchemaManager::ensureSeriesMetadataTable(db, schemaError)) {
+        db.close();
+        return schemaError;
+    }
+
+    SeriesMetadataRecord emptyRecord;
+    QString writeError;
+    if (!writeSeriesMetadataRecord(db, key, emptyRecord, writeError)) {
+        db.close();
+        return writeError;
+    }
+
+    db.close();
+    return {};
+}
+
+QString setIssueMetadataKnowledge(const QString &dbPath, const QVariantMap &values)
+{
+    const QString seriesName = valueFromMap(values, QStringLiteral("series"));
+    const QString volume = valueFromMap(values, QStringLiteral("volume"));
+    const QString issueNumber = valueFromMap(values, QStringLiteral("issueNumber"));
+    const QString seriesNameKey = ComicImportMatching::normalizeSeriesKey(seriesName);
+    const QString normalizedVolumeKey = ComicImportMatching::normalizeVolumeKey(volume);
+    const QString seriesGroupKey = seriesNameKey.isEmpty()
+        ? QString()
+        : (normalizedVolumeKey == QStringLiteral("__no_volume__")
+            ? seriesNameKey
+            : QStringLiteral("%1::vol::%2").arg(seriesNameKey, normalizedVolumeKey));
+    const QString issueKey = ComicImportMatching::normalizeIssueKey(issueNumber);
+    if (seriesGroupKey.isEmpty() || issueKey.isEmpty()) {
+        return {};
+    }
+
+    const QString title = valueFromMap(values, QStringLiteral("title"));
+    const QString publisher = valueFromMap(values, QStringLiteral("publisher"));
+    const QString ageRating = valueFromMap(values, QStringLiteral("ageRating"));
+    const QString writer = valueFromMap(values, QStringLiteral("writer"));
+    const QString penciller = valueFromMap(values, QStringLiteral("penciller"));
+    const QString inker = valueFromMap(values, QStringLiteral("inker"));
+    const QString colorist = valueFromMap(values, QStringLiteral("colorist"));
+    const QString letterer = valueFromMap(values, QStringLiteral("letterer"));
+    const QString coverArtist = valueFromMap(values, QStringLiteral("coverArtist"));
+    const QString editor = valueFromMap(values, QStringLiteral("editor"));
+    const QString storyArc = valueFromMap(values, QStringLiteral("storyArc"));
+    const QString characters = valueFromMap(values, QStringLiteral("characters"));
+    const bool hasSupportingData = !title.isEmpty()
+        || !publisher.isEmpty()
+        || !valueFromMap(values, QStringLiteral("year")).isEmpty()
+        || !valueFromMap(values, QStringLiteral("month")).isEmpty()
+        || !ageRating.isEmpty()
+        || !writer.isEmpty()
+        || !penciller.isEmpty()
+        || !inker.isEmpty()
+        || !colorist.isEmpty()
+        || !letterer.isEmpty()
+        || !coverArtist.isEmpty()
+        || !editor.isEmpty()
+        || !storyArc.isEmpty()
+        || !characters.isEmpty();
+    if (!hasSupportingData) {
+        return {};
+    }
+
+    QString normalizedYear;
+    QString yearError;
+    if (!normalizeSeriesMetadataYear(valueFromMap(values, QStringLiteral("year")), normalizedYear, yearError)) {
+        return yearError;
+    }
+
+    QString normalizedMonth;
+    QString monthError;
+    if (!normalizeOptionalMonth(valueFromMap(values, QStringLiteral("month")), QStringLiteral("Issue month"), normalizedMonth, monthError)) {
+        return monthError;
+    }
+
+    const QString connectionName = QStringLiteral("comic_pile_issue_metadata_knowledge_write_%1")
+        .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
+    const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
+    QString openError;
+    QSqlDatabase db;
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
+        return openError;
+    }
+
+    QString schemaError;
+    if (!LibrarySchemaManager::ensureIssueMetadataKnowledgeTable(db, schemaError)) {
+        db.close();
+        return schemaError;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(
+        QStringLiteral(
+            "INSERT OR REPLACE INTO issue_metadata_knowledge ("
+            "series_name_key, series_group_key, series_title, series_volume, issue_key, issue_number, "
+            "issue_title, issue_publisher, issue_year, issue_month, issue_age_rating, issue_writer, "
+            "issue_penciller, issue_inker, issue_colorist, issue_letterer, issue_cover_artist, "
+            "issue_editor, issue_story_arc, issue_characters, updated_at"
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))"
+        )
+    );
+    query.addBindValue(seriesNameKey);
+    query.addBindValue(seriesGroupKey);
+    query.addBindValue(seriesName);
+    query.addBindValue(volume);
+    query.addBindValue(issueKey);
+    query.addBindValue(issueNumber);
+    query.addBindValue(title);
+    query.addBindValue(publisher);
+    query.addBindValue(normalizedYear.isEmpty() ? QVariant() : QVariant(normalizedYear.toInt()));
+    query.addBindValue(normalizedMonth.isEmpty() ? QVariant() : QVariant(normalizedMonth.toInt()));
+    query.addBindValue(ageRating);
+    query.addBindValue(writer);
+    query.addBindValue(penciller);
+    query.addBindValue(inker);
+    query.addBindValue(colorist);
+    query.addBindValue(letterer);
+    query.addBindValue(coverArtist);
+    query.addBindValue(editor);
+    query.addBindValue(storyArc);
+    query.addBindValue(characters);
+    if (!query.exec()) {
+        const QString error = QStringLiteral("Failed to save issue knowledge: %1").arg(query.lastError().text());
+        db.close();
+        return error;
+    }
+
+    db.close();
+    return {};
+}
 
 BulkMetadataUpdateOutcome applyBulkMetadataUpdate(
     const QString &dbPath,
