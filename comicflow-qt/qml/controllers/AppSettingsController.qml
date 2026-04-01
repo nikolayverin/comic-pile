@@ -1,7 +1,6 @@
 import QtQuick
 import QtCore
 import "../components/SettingsCatalog.js" as SettingsCatalog
-import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -35,10 +34,17 @@ Item {
     readonly property bool defaultSafetyConfirmBeforeDeletingSeries: SettingsCatalog.defaultSafetyConfirmBeforeDeletingSeries
     readonly property bool defaultSafetyConfirmBeforeReplace: SettingsCatalog.defaultSafetyConfirmBeforeReplace
     readonly property bool defaultSafetyConfirmBeforeDeletingPage: SettingsCatalog.defaultSafetyConfirmBeforeDeletingPage
-    readonly property var appearanceSettingDescriptors: SettingsCatalog.appearanceSettingDescriptors
+    readonly property var settingDescriptors: SettingsCatalog.settingDescriptors
 
-    function normalizeChoice(value, allowedValues, fallbackValue) {
+    function normalizeChoice(value, allowedValues, fallbackValue, aliases) {
         const normalizedValue = String(value || "").trim()
+        const aliasEntries = Array.isArray(aliases) ? aliases : []
+        for (let i = 0; i < aliasEntries.length; i += 1) {
+            const entry = aliasEntries[i] || {}
+            if (String(entry.from || "") === normalizedValue) {
+                return String(entry.to || fallbackValue || "")
+            }
+        }
         const source = Array.isArray(allowedValues) ? allowedValues : []
         for (let i = 0; i < source.length; i += 1) {
             const allowed = String(source[i] || "")
@@ -78,23 +84,34 @@ Item {
         if (normalization === "trimmed_string") {
             return String(value || "").trim()
         }
-        return normalizeChoice(value, entry.options || [], defaultValue)
+        return normalizeChoice(value, entry.options || [], defaultValue, entry.aliases || [])
+    }
+
+    function configuredSettingDescriptor(valueKey) {
+        return settingDescriptor(settingDescriptors, valueKey)
     }
 
     function appearanceSettingDescriptor(valueKey) {
-        return settingDescriptor(appearanceSettingDescriptors, valueKey)
+        const descriptor = configuredSettingDescriptor(valueKey)
+        return descriptor && String(descriptor.valueKey || "").indexOf("appearance_") === 0
+            ? descriptor
+            : null
     }
 
-    function normalizeAppearanceSettingValue(valueKey, value, fallbackValue) {
-        const descriptor = appearanceSettingDescriptor(valueKey)
+    function normalizeSettingValue(valueKey, value, fallbackValue) {
+        const descriptor = configuredSettingDescriptor(valueKey)
         if (!descriptor) {
             return fallbackValue
         }
         return normalizeConfiguredSetting(descriptor, value, fallbackValue)
     }
 
-    function syncAppearanceSetting(valueKey) {
-        const descriptor = appearanceSettingDescriptor(valueKey)
+    function normalizeAppearanceSettingValue(valueKey, value, fallbackValue) {
+        return normalizeSettingValue(valueKey, value, fallbackValue)
+    }
+
+    function syncConfiguredSetting(valueKey) {
+        const descriptor = configuredSettingDescriptor(valueKey)
         if (!descriptor) return
 
         const propertyName = String(descriptor.controllerProperty || "").trim()
@@ -112,60 +129,32 @@ Item {
         }
     }
 
+    function syncAppearanceSetting(valueKey) {
+        syncConfiguredSetting(valueKey)
+    }
+
     function normalizeGeneralDefaultReadingMode(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.generalDefaultReadingModeOptions,
-            defaultGeneralDefaultReadingMode
-        )
+        return normalizeSettingValue("general_default_reading_mode", value, defaultGeneralDefaultReadingMode)
     }
 
     function normalizeGeneralAfterImport(value) {
-        const normalized = String(value || "").trim()
-        if (normalized === "Open Last Import") {
-            return "Open last import"
-        }
-        return normalizeChoice(
-            normalized,
-            SettingsCatalog.generalAfterImportOptions,
-            defaultGeneralAfterImport
-        )
+        return normalizeSettingValue("general_after_import", value, defaultGeneralAfterImport)
     }
 
     function normalizeGeneralDefaultViewAfterLaunch(value) {
-        const normalized = String(value || "").trim()
-        if (normalized === "Last Import") {
-            return AppText.sidebarQuickFilterLastImport
-        }
-        return normalizeChoice(
-            normalized,
-            SettingsCatalog.generalDefaultViewAfterLaunchOptions,
-            defaultGeneralDefaultViewAfterLaunch
-        )
+        return normalizeSettingValue("general_default_view_after_launch", value, defaultGeneralDefaultViewAfterLaunch)
     }
 
     function normalizeReaderDefaultReadingMode(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.readerDefaultReadingModeOptions,
-            defaultReaderDefaultReadingMode
-        )
+        return normalizeSettingValue("reader_default_reading_mode", value, defaultReaderDefaultReadingMode)
     }
 
     function normalizeReaderMagnifierSize(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.readerMagnifierSizeOptions,
-            defaultReaderMagnifierSize
-        )
+        return normalizeSettingValue("reader_magnifier_size", value, defaultReaderMagnifierSize)
     }
 
     function normalizeReaderPageEdgeBehavior(value) {
-        return normalizeChoice(
-            value,
-            SettingsCatalog.readerPageEdgeBehaviorOptions,
-            defaultReaderPageEdgeBehavior
-        )
+        return normalizeSettingValue("reader_page_edge_behavior", value, defaultReaderPageEdgeBehavior)
     }
 
     function normalizedReaderViewMode(currentMode) {
@@ -182,172 +171,30 @@ Item {
 
     function settingValue(valueKey, fallbackValue) {
         const key = String(valueKey || "")
-        if (key === "general_default_reading_mode") {
-            return normalizeGeneralDefaultReadingMode(generalDefaultReadingMode)
-        }
-        if (key === "general_after_import") {
-            return normalizeGeneralAfterImport(generalAfterImport)
-        }
-        if (key === "general_default_view_after_launch") {
-            return normalizeGeneralDefaultViewAfterLaunch(generalDefaultViewAfterLaunch)
-        }
-        if (key === "general_open_reader_fullscreen_by_default") {
-            return normalizeBoolean(generalOpenReaderFullscreenByDefault, fallbackValue)
-        }
-        if (key === "reader_remember_last_reader_mode") {
-            return normalizeBoolean(readerRememberLastReaderMode, fallbackValue)
-        }
-        if (key === "reader_default_reading_mode") {
-            return normalizeReaderDefaultReadingMode(readerDefaultReadingMode)
-        }
-        if (key === "reader_magnifier_size") {
-            return normalizeReaderMagnifierSize(readerMagnifierSize)
-        }
-        if (key === "reader_page_edge_behavior") {
-            return normalizeReaderPageEdgeBehavior(readerPageEdgeBehavior)
-        }
-        if (key === "reader_show_bookmark_ribbon_on_grid_covers") {
-            return normalizeBoolean(readerShowBookmarkRibbonOnGridCovers, fallbackValue)
-        }
-        if (key === "reader_auto_open_bookmarked_page_instead_of_last_page") {
-            return normalizeBoolean(readerAutoOpenBookmarkedPageInsteadOfLastPage, fallbackValue)
-        }
-        if (key === "reader_show_action_notifications") {
-            return normalizeBoolean(readerShowActionNotifications, fallbackValue)
-        }
-        if (key === "import_double_click_archive_into_library") {
-            return normalizeBoolean(importDoubleClickArchiveIntoLibrary, fallbackValue)
-        }
-        if (key === "import_treat_image_folders_as_issues") {
-            return normalizeBoolean(importTreatImageFoldersAsIssues, fallbackValue)
-        }
-        const appearanceDescriptor = appearanceSettingDescriptor(key)
-        if (appearanceDescriptor) {
+        const descriptor = configuredSettingDescriptor(key)
+        if (descriptor) {
             return normalizeConfiguredSetting(
-                appearanceDescriptor,
-                controller[String(appearanceDescriptor.controllerProperty || "").trim()],
+                descriptor,
+                controller[String(descriptor.controllerProperty || "").trim()],
                 fallbackValue
             )
-        }
-        if (key === "safety_confirm_before_deleting_files") {
-            return normalizeBoolean(safetyConfirmBeforeDeletingFiles, fallbackValue)
-        }
-        if (key === "safety_confirm_before_deleting_series") {
-            return normalizeBoolean(safetyConfirmBeforeDeletingSeries, fallbackValue)
-        }
-        if (key === "safety_confirm_before_replace") {
-            return normalizeBoolean(safetyConfirmBeforeReplace, fallbackValue)
-        }
-        if (key === "safety_confirm_before_deleting_page") {
-            return normalizeBoolean(safetyConfirmBeforeDeletingPage, fallbackValue)
         }
         return fallbackValue
     }
 
     function setSettingValue(valueKey, nextValue) {
         const key = String(valueKey || "")
-        if (key === "general_default_reading_mode") {
-            generalDefaultReadingMode = normalizeGeneralDefaultReadingMode(nextValue)
-            return
-        }
-        if (key === "general_after_import") {
-            generalAfterImport = normalizeGeneralAfterImport(nextValue)
-            return
-        }
-        if (key === "general_default_view_after_launch") {
-            generalDefaultViewAfterLaunch = normalizeGeneralDefaultViewAfterLaunch(nextValue)
-            return
-        }
-        if (key === "general_open_reader_fullscreen_by_default") {
-            generalOpenReaderFullscreenByDefault = normalizeBoolean(nextValue, defaultGeneralOpenReaderFullscreenByDefault)
-            return
-        }
-        if (key === "reader_remember_last_reader_mode") {
-            readerRememberLastReaderMode = normalizeBoolean(nextValue, defaultReaderRememberLastReaderMode)
-            return
-        }
-        if (key === "reader_default_reading_mode") {
-            readerDefaultReadingMode = normalizeReaderDefaultReadingMode(nextValue)
-            return
-        }
-        if (key === "reader_magnifier_size") {
-            readerMagnifierSize = normalizeReaderMagnifierSize(nextValue)
-            return
-        }
-        if (key === "reader_page_edge_behavior") {
-            readerPageEdgeBehavior = normalizeReaderPageEdgeBehavior(nextValue)
-            return
-        }
-        if (key === "reader_show_bookmark_ribbon_on_grid_covers") {
-            readerShowBookmarkRibbonOnGridCovers = normalizeBoolean(nextValue, defaultReaderShowBookmarkRibbonOnGridCovers)
-            return
-        }
-        if (key === "reader_auto_open_bookmarked_page_instead_of_last_page") {
-            readerAutoOpenBookmarkedPageInsteadOfLastPage = normalizeBoolean(
-                nextValue,
-                defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
-            )
-            return
-        }
-        if (key === "reader_show_action_notifications") {
-            readerShowActionNotifications = normalizeBoolean(
-                nextValue,
-                defaultReaderShowActionNotifications
-            )
-            return
-        }
-        if (key === "import_double_click_archive_into_library") {
-            importDoubleClickArchiveIntoLibrary = normalizeBoolean(
-                nextValue,
-                defaultImportDoubleClickArchiveIntoLibrary
-            )
-            return
-        }
-        if (key === "import_treat_image_folders_as_issues") {
-            importTreatImageFoldersAsIssues = normalizeBoolean(
-                nextValue,
-                defaultImportTreatImageFoldersAsIssues
-            )
-            return
-        }
-        const appearanceDescriptor = appearanceSettingDescriptor(key)
-        if (appearanceDescriptor) {
-            const propertyName = String(appearanceDescriptor.controllerProperty || "").trim()
+        const descriptor = configuredSettingDescriptor(key)
+        if (descriptor) {
+            const propertyName = String(descriptor.controllerProperty || "").trim()
             if (propertyName.length > 0) {
                 controller[propertyName] = normalizeConfiguredSetting(
-                    appearanceDescriptor,
+                    descriptor,
                     nextValue,
-                    appearanceDescriptor.defaultValue
+                    descriptor.defaultValue
                 )
             }
             return
-        }
-        if (key === "safety_confirm_before_deleting_files") {
-            safetyConfirmBeforeDeletingFiles = normalizeBoolean(
-                nextValue,
-                defaultSafetyConfirmBeforeDeletingFiles
-            )
-            return
-        }
-        if (key === "safety_confirm_before_deleting_series") {
-            safetyConfirmBeforeDeletingSeries = normalizeBoolean(
-                nextValue,
-                defaultSafetyConfirmBeforeDeletingSeries
-            )
-            return
-        }
-        if (key === "safety_confirm_before_replace") {
-            safetyConfirmBeforeReplace = normalizeBoolean(
-                nextValue,
-                defaultSafetyConfirmBeforeReplace
-            )
-            return
-        }
-        if (key === "safety_confirm_before_deleting_page") {
-            safetyConfirmBeforeDeletingPage = normalizeBoolean(
-                nextValue,
-                defaultSafetyConfirmBeforeDeletingPage
-            )
         }
     }
 
@@ -394,45 +241,68 @@ Item {
         property bool safetyConfirmBeforeDeletingPage: controller.defaultSafetyConfirmBeforeDeletingPage
     }
 
-    property string generalDefaultReadingMode: normalizeGeneralDefaultReadingMode(settingsStore.generalDefaultReadingMode)
-    property bool generalOpenReaderFullscreenByDefault: normalizeBoolean(
+    property string generalDefaultReadingMode: normalizeSettingValue(
+        "general_default_reading_mode",
+        settingsStore.generalDefaultReadingMode,
+        defaultGeneralDefaultReadingMode
+    )
+    property bool generalOpenReaderFullscreenByDefault: normalizeSettingValue(
+        "general_open_reader_fullscreen_by_default",
         settingsStore.generalOpenReaderFullscreenByDefault,
         defaultGeneralOpenReaderFullscreenByDefault
     )
-    property string generalAfterImport: normalizeGeneralAfterImport(settingsStore.generalAfterImport)
-    property string generalDefaultViewAfterLaunch: normalizeGeneralDefaultViewAfterLaunch(
-        settingsStore.generalDefaultViewAfterLaunch
+    property string generalAfterImport: normalizeSettingValue(
+        "general_after_import",
+        settingsStore.generalAfterImport,
+        defaultGeneralAfterImport
     )
-    property bool readerRememberLastReaderMode: normalizeBoolean(
+    property string generalDefaultViewAfterLaunch: normalizeSettingValue(
+        "general_default_view_after_launch",
+        settingsStore.generalDefaultViewAfterLaunch,
+        defaultGeneralDefaultViewAfterLaunch
+    )
+    property bool readerRememberLastReaderMode: normalizeSettingValue(
+        "reader_remember_last_reader_mode",
         settingsStore.readerRememberLastReaderMode,
         defaultReaderRememberLastReaderMode
     )
-    property string readerDefaultReadingMode: normalizeReaderDefaultReadingMode(
-        settingsStore.readerDefaultReadingMode
+    property string readerDefaultReadingMode: normalizeSettingValue(
+        "reader_default_reading_mode",
+        settingsStore.readerDefaultReadingMode,
+        defaultReaderDefaultReadingMode
     )
-    property string readerMagnifierSize: normalizeReaderMagnifierSize(
-        settingsStore.readerMagnifierSize
+    property string readerMagnifierSize: normalizeSettingValue(
+        "reader_magnifier_size",
+        settingsStore.readerMagnifierSize,
+        defaultReaderMagnifierSize
     )
-    property string readerPageEdgeBehavior: normalizeReaderPageEdgeBehavior(
-        settingsStore.readerPageEdgeBehavior
+    property string readerPageEdgeBehavior: normalizeSettingValue(
+        "reader_page_edge_behavior",
+        settingsStore.readerPageEdgeBehavior,
+        defaultReaderPageEdgeBehavior
     )
-    property bool readerShowBookmarkRibbonOnGridCovers: normalizeBoolean(
+    property bool readerShowBookmarkRibbonOnGridCovers: normalizeSettingValue(
+        "reader_show_bookmark_ribbon_on_grid_covers",
         settingsStore.readerShowBookmarkRibbonOnGridCovers,
         defaultReaderShowBookmarkRibbonOnGridCovers
     )
-    property bool readerAutoOpenBookmarkedPageInsteadOfLastPage: normalizeBoolean(
+    property bool readerAutoOpenBookmarkedPageInsteadOfLastPage: normalizeSettingValue(
+        "reader_auto_open_bookmarked_page_instead_of_last_page",
         settingsStore.readerAutoOpenBookmarkedPageInsteadOfLastPage,
         defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
     )
-    property bool readerShowActionNotifications: normalizeBoolean(
+    property bool readerShowActionNotifications: normalizeSettingValue(
+        "reader_show_action_notifications",
         settingsStore.readerShowActionNotifications,
         defaultReaderShowActionNotifications
     )
-    property bool importDoubleClickArchiveIntoLibrary: normalizeBoolean(
+    property bool importDoubleClickArchiveIntoLibrary: normalizeSettingValue(
+        "import_double_click_archive_into_library",
         settingsStore.importDoubleClickArchiveIntoLibrary,
         defaultImportDoubleClickArchiveIntoLibrary
     )
-    property bool importTreatImageFoldersAsIssues: normalizeBoolean(
+    property bool importTreatImageFoldersAsIssues: normalizeSettingValue(
+        "import_treat_image_folders_as_issues",
         settingsStore.importTreatImageFoldersAsIssues,
         defaultImportTreatImageFoldersAsIssues
     )
@@ -476,172 +346,52 @@ Item {
         settingsStore.appearanceLibraryBackgroundTileSize,
         defaultAppearanceLibraryBackgroundTileSize
     )
-    property bool safetyConfirmBeforeDeletingFiles: normalizeBoolean(
+    property bool safetyConfirmBeforeDeletingFiles: normalizeSettingValue(
+        "safety_confirm_before_deleting_files",
         settingsStore.safetyConfirmBeforeDeletingFiles,
         defaultSafetyConfirmBeforeDeletingFiles
     )
-    property bool safetyConfirmBeforeDeletingSeries: normalizeBoolean(
+    property bool safetyConfirmBeforeDeletingSeries: normalizeSettingValue(
+        "safety_confirm_before_deleting_series",
         settingsStore.safetyConfirmBeforeDeletingSeries,
         defaultSafetyConfirmBeforeDeletingSeries
     )
-    property bool safetyConfirmBeforeReplace: normalizeBoolean(
+    property bool safetyConfirmBeforeReplace: normalizeSettingValue(
+        "safety_confirm_before_replace",
         settingsStore.safetyConfirmBeforeReplace,
         defaultSafetyConfirmBeforeReplace
     )
-    property bool safetyConfirmBeforeDeletingPage: normalizeBoolean(
+    property bool safetyConfirmBeforeDeletingPage: normalizeSettingValue(
+        "safety_confirm_before_deleting_page",
         settingsStore.safetyConfirmBeforeDeletingPage,
         defaultSafetyConfirmBeforeDeletingPage
     )
 
-    onGeneralDefaultReadingModeChanged: {
-        const normalized = normalizeGeneralDefaultReadingMode(generalDefaultReadingMode)
-        if (generalDefaultReadingMode !== normalized) {
-            generalDefaultReadingMode = normalized
-            return
-        }
-        if (settingsStore.generalDefaultReadingMode !== normalized) {
-            settingsStore.generalDefaultReadingMode = normalized
-        }
-    }
+    onGeneralDefaultReadingModeChanged: syncConfiguredSetting("general_default_reading_mode")
 
-    onGeneralOpenReaderFullscreenByDefaultChanged: {
-        const normalized = normalizeBoolean(
-            generalOpenReaderFullscreenByDefault,
-            defaultGeneralOpenReaderFullscreenByDefault
-        )
-        if (generalOpenReaderFullscreenByDefault !== normalized) {
-            generalOpenReaderFullscreenByDefault = normalized
-            return
-        }
-        if (settingsStore.generalOpenReaderFullscreenByDefault !== normalized) {
-            settingsStore.generalOpenReaderFullscreenByDefault = normalized
-        }
-    }
+    onGeneralOpenReaderFullscreenByDefaultChanged: syncConfiguredSetting("general_open_reader_fullscreen_by_default")
 
-    onGeneralAfterImportChanged: {
-        const normalized = normalizeGeneralAfterImport(generalAfterImport)
-        if (generalAfterImport !== normalized) {
-            generalAfterImport = normalized
-            return
-        }
-        if (settingsStore.generalAfterImport !== normalized) {
-            settingsStore.generalAfterImport = normalized
-        }
-    }
+    onGeneralAfterImportChanged: syncConfiguredSetting("general_after_import")
 
-    onGeneralDefaultViewAfterLaunchChanged: {
-        const normalized = normalizeGeneralDefaultViewAfterLaunch(generalDefaultViewAfterLaunch)
-        if (generalDefaultViewAfterLaunch !== normalized) {
-            generalDefaultViewAfterLaunch = normalized
-            return
-        }
-        if (settingsStore.generalDefaultViewAfterLaunch !== normalized) {
-            settingsStore.generalDefaultViewAfterLaunch = normalized
-        }
-    }
+    onGeneralDefaultViewAfterLaunchChanged: syncConfiguredSetting("general_default_view_after_launch")
 
-    onReaderRememberLastReaderModeChanged: {
-        const normalized = normalizeBoolean(
-            readerRememberLastReaderMode,
-            defaultReaderRememberLastReaderMode
-        )
-        if (readerRememberLastReaderMode !== normalized) {
-            readerRememberLastReaderMode = normalized
-            return
-        }
-        if (settingsStore.readerRememberLastReaderMode !== normalized) {
-            settingsStore.readerRememberLastReaderMode = normalized
-        }
-    }
+    onReaderRememberLastReaderModeChanged: syncConfiguredSetting("reader_remember_last_reader_mode")
 
-    onReaderDefaultReadingModeChanged: {
-        const normalized = normalizeReaderDefaultReadingMode(readerDefaultReadingMode)
-        if (readerDefaultReadingMode !== normalized) {
-            readerDefaultReadingMode = normalized
-            return
-        }
-        if (settingsStore.readerDefaultReadingMode !== normalized) {
-            settingsStore.readerDefaultReadingMode = normalized
-        }
-    }
+    onReaderDefaultReadingModeChanged: syncConfiguredSetting("reader_default_reading_mode")
 
-    onReaderMagnifierSizeChanged: {
-        const normalized = normalizeReaderMagnifierSize(readerMagnifierSize)
-        if (readerMagnifierSize !== normalized) {
-            readerMagnifierSize = normalized
-            return
-        }
-        if (settingsStore.readerMagnifierSize !== normalized) {
-            settingsStore.readerMagnifierSize = normalized
-        }
-    }
+    onReaderMagnifierSizeChanged: syncConfiguredSetting("reader_magnifier_size")
 
-    onReaderPageEdgeBehaviorChanged: {
-        const normalized = normalizeReaderPageEdgeBehavior(readerPageEdgeBehavior)
-        if (readerPageEdgeBehavior !== normalized) {
-            readerPageEdgeBehavior = normalized
-            return
-        }
-        if (settingsStore.readerPageEdgeBehavior !== normalized) {
-            settingsStore.readerPageEdgeBehavior = normalized
-        }
-    }
+    onReaderPageEdgeBehaviorChanged: syncConfiguredSetting("reader_page_edge_behavior")
 
-    onReaderShowBookmarkRibbonOnGridCoversChanged: {
-        const normalized = normalizeBoolean(
-            readerShowBookmarkRibbonOnGridCovers,
-            defaultReaderShowBookmarkRibbonOnGridCovers
-        )
-        if (readerShowBookmarkRibbonOnGridCovers !== normalized) {
-            readerShowBookmarkRibbonOnGridCovers = normalized
-            return
-        }
-        if (settingsStore.readerShowBookmarkRibbonOnGridCovers !== normalized) {
-            settingsStore.readerShowBookmarkRibbonOnGridCovers = normalized
-        }
-    }
+    onReaderShowBookmarkRibbonOnGridCoversChanged: syncConfiguredSetting("reader_show_bookmark_ribbon_on_grid_covers")
 
-    onReaderAutoOpenBookmarkedPageInsteadOfLastPageChanged: {
-        const normalized = normalizeBoolean(
-            readerAutoOpenBookmarkedPageInsteadOfLastPage,
-            defaultReaderAutoOpenBookmarkedPageInsteadOfLastPage
-        )
-        if (readerAutoOpenBookmarkedPageInsteadOfLastPage !== normalized) {
-            readerAutoOpenBookmarkedPageInsteadOfLastPage = normalized
-            return
-        }
-        if (settingsStore.readerAutoOpenBookmarkedPageInsteadOfLastPage !== normalized) {
-            settingsStore.readerAutoOpenBookmarkedPageInsteadOfLastPage = normalized
-        }
-    }
+    onReaderAutoOpenBookmarkedPageInsteadOfLastPageChanged: syncConfiguredSetting("reader_auto_open_bookmarked_page_instead_of_last_page")
 
-    onImportDoubleClickArchiveIntoLibraryChanged: {
-        const normalized = normalizeBoolean(
-            importDoubleClickArchiveIntoLibrary,
-            defaultImportDoubleClickArchiveIntoLibrary
-        )
-        if (importDoubleClickArchiveIntoLibrary !== normalized) {
-            importDoubleClickArchiveIntoLibrary = normalized
-            return
-        }
-        if (settingsStore.importDoubleClickArchiveIntoLibrary !== normalized) {
-            settingsStore.importDoubleClickArchiveIntoLibrary = normalized
-        }
-    }
+    onReaderShowActionNotificationsChanged: syncConfiguredSetting("reader_show_action_notifications")
 
-    onImportTreatImageFoldersAsIssuesChanged: {
-        const normalized = normalizeBoolean(
-            importTreatImageFoldersAsIssues,
-            defaultImportTreatImageFoldersAsIssues
-        )
-        if (importTreatImageFoldersAsIssues !== normalized) {
-            importTreatImageFoldersAsIssues = normalized
-            return
-        }
-        if (settingsStore.importTreatImageFoldersAsIssues !== normalized) {
-            settingsStore.importTreatImageFoldersAsIssues = normalized
-        }
-    }
+    onImportDoubleClickArchiveIntoLibraryChanged: syncConfiguredSetting("import_double_click_archive_into_library")
+
+    onImportTreatImageFoldersAsIssuesChanged: syncConfiguredSetting("import_treat_image_folders_as_issues")
 
     onAppearanceLibraryBackgroundChanged: {
         syncAppearanceSetting("appearance_library_background")
@@ -675,59 +425,11 @@ Item {
         syncAppearanceSetting("appearance_library_background_tile_size")
     }
 
-    onSafetyConfirmBeforeDeletingFilesChanged: {
-        const normalized = normalizeBoolean(
-            safetyConfirmBeforeDeletingFiles,
-            defaultSafetyConfirmBeforeDeletingFiles
-        )
-        if (safetyConfirmBeforeDeletingFiles !== normalized) {
-            safetyConfirmBeforeDeletingFiles = normalized
-            return
-        }
-        if (settingsStore.safetyConfirmBeforeDeletingFiles !== normalized) {
-            settingsStore.safetyConfirmBeforeDeletingFiles = normalized
-        }
-    }
+    onSafetyConfirmBeforeDeletingFilesChanged: syncConfiguredSetting("safety_confirm_before_deleting_files")
 
-    onSafetyConfirmBeforeDeletingSeriesChanged: {
-        const normalized = normalizeBoolean(
-            safetyConfirmBeforeDeletingSeries,
-            defaultSafetyConfirmBeforeDeletingSeries
-        )
-        if (safetyConfirmBeforeDeletingSeries !== normalized) {
-            safetyConfirmBeforeDeletingSeries = normalized
-            return
-        }
-        if (settingsStore.safetyConfirmBeforeDeletingSeries !== normalized) {
-            settingsStore.safetyConfirmBeforeDeletingSeries = normalized
-        }
-    }
+    onSafetyConfirmBeforeDeletingSeriesChanged: syncConfiguredSetting("safety_confirm_before_deleting_series")
 
-    onSafetyConfirmBeforeReplaceChanged: {
-        const normalized = normalizeBoolean(
-            safetyConfirmBeforeReplace,
-            defaultSafetyConfirmBeforeReplace
-        )
-        if (safetyConfirmBeforeReplace !== normalized) {
-            safetyConfirmBeforeReplace = normalized
-            return
-        }
-        if (settingsStore.safetyConfirmBeforeReplace !== normalized) {
-            settingsStore.safetyConfirmBeforeReplace = normalized
-        }
-    }
+    onSafetyConfirmBeforeReplaceChanged: syncConfiguredSetting("safety_confirm_before_replace")
 
-    onSafetyConfirmBeforeDeletingPageChanged: {
-        const normalized = normalizeBoolean(
-            safetyConfirmBeforeDeletingPage,
-            defaultSafetyConfirmBeforeDeletingPage
-        )
-        if (safetyConfirmBeforeDeletingPage !== normalized) {
-            safetyConfirmBeforeDeletingPage = normalized
-            return
-        }
-        if (settingsStore.safetyConfirmBeforeDeletingPage !== normalized) {
-            settingsStore.safetyConfirmBeforeDeletingPage = normalized
-        }
-    }
+    onSafetyConfirmBeforeDeletingPageChanged: syncConfiguredSetting("safety_confirm_before_deleting_page")
 }

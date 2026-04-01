@@ -361,6 +361,140 @@ var appearanceSettingDescriptors = [
     }
 ]
 
+var settingDescriptors = [
+    {
+        valueKey: "general_default_reading_mode",
+        controllerProperty: "generalDefaultReadingMode",
+        storeProperty: "generalDefaultReadingMode",
+        defaultValue: defaultSettingsState.general_default_reading_mode,
+        normalization: "choice",
+        options: generalDefaultReadingModeOptions
+    },
+    {
+        valueKey: "general_open_reader_fullscreen_by_default",
+        controllerProperty: "generalOpenReaderFullscreenByDefault",
+        storeProperty: "generalOpenReaderFullscreenByDefault",
+        defaultValue: defaultSettingsState.general_open_reader_fullscreen_by_default,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "general_after_import",
+        controllerProperty: "generalAfterImport",
+        storeProperty: "generalAfterImport",
+        defaultValue: defaultSettingsState.general_after_import,
+        normalization: "choice",
+        options: generalAfterImportOptions,
+        aliases: [
+            { from: "Open Last Import", to: "Open last import" }
+        ]
+    },
+    {
+        valueKey: "general_default_view_after_launch",
+        controllerProperty: "generalDefaultViewAfterLaunch",
+        storeProperty: "generalDefaultViewAfterLaunch",
+        defaultValue: defaultSettingsState.general_default_view_after_launch,
+        normalization: "choice",
+        options: generalDefaultViewAfterLaunchOptions,
+        aliases: [
+            { from: "Last Import", to: "Last import" }
+        ]
+    },
+    {
+        valueKey: "reader_remember_last_reader_mode",
+        controllerProperty: "readerRememberLastReaderMode",
+        storeProperty: "readerRememberLastReaderMode",
+        defaultValue: defaultSettingsState.reader_remember_last_reader_mode,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "reader_default_reading_mode",
+        controllerProperty: "readerDefaultReadingMode",
+        storeProperty: "readerDefaultReadingMode",
+        defaultValue: defaultSettingsState.reader_default_reading_mode,
+        normalization: "choice",
+        options: readerDefaultReadingModeOptions
+    },
+    {
+        valueKey: "reader_magnifier_size",
+        controllerProperty: "readerMagnifierSize",
+        storeProperty: "readerMagnifierSize",
+        defaultValue: defaultSettingsState.reader_magnifier_size,
+        normalization: "choice",
+        options: readerMagnifierSizeOptions
+    },
+    {
+        valueKey: "reader_page_edge_behavior",
+        controllerProperty: "readerPageEdgeBehavior",
+        storeProperty: "readerPageEdgeBehavior",
+        defaultValue: defaultSettingsState.reader_page_edge_behavior,
+        normalization: "choice",
+        options: readerPageEdgeBehaviorOptions
+    },
+    {
+        valueKey: "reader_show_bookmark_ribbon_on_grid_covers",
+        controllerProperty: "readerShowBookmarkRibbonOnGridCovers",
+        storeProperty: "readerShowBookmarkRibbonOnGridCovers",
+        defaultValue: defaultSettingsState.reader_show_bookmark_ribbon_on_grid_covers,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "reader_auto_open_bookmarked_page_instead_of_last_page",
+        controllerProperty: "readerAutoOpenBookmarkedPageInsteadOfLastPage",
+        storeProperty: "readerAutoOpenBookmarkedPageInsteadOfLastPage",
+        defaultValue: defaultSettingsState.reader_auto_open_bookmarked_page_instead_of_last_page,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "reader_show_action_notifications",
+        controllerProperty: "readerShowActionNotifications",
+        storeProperty: "readerShowActionNotifications",
+        defaultValue: defaultSettingsState.reader_show_action_notifications,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "import_double_click_archive_into_library",
+        controllerProperty: "importDoubleClickArchiveIntoLibrary",
+        storeProperty: "importDoubleClickArchiveIntoLibrary",
+        defaultValue: defaultSettingsState.import_double_click_archive_into_library,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "import_treat_image_folders_as_issues",
+        controllerProperty: "importTreatImageFoldersAsIssues",
+        storeProperty: "importTreatImageFoldersAsIssues",
+        defaultValue: defaultSettingsState.import_treat_image_folders_as_issues,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "safety_confirm_before_deleting_files",
+        controllerProperty: "safetyConfirmBeforeDeletingFiles",
+        storeProperty: "safetyConfirmBeforeDeletingFiles",
+        defaultValue: defaultSettingsState.safety_confirm_before_deleting_files,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "safety_confirm_before_deleting_series",
+        controllerProperty: "safetyConfirmBeforeDeletingSeries",
+        storeProperty: "safetyConfirmBeforeDeletingSeries",
+        defaultValue: defaultSettingsState.safety_confirm_before_deleting_series,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "safety_confirm_before_replace",
+        controllerProperty: "safetyConfirmBeforeReplace",
+        storeProperty: "safetyConfirmBeforeReplace",
+        defaultValue: defaultSettingsState.safety_confirm_before_replace,
+        normalization: "boolean"
+    },
+    {
+        valueKey: "safety_confirm_before_deleting_page",
+        controllerProperty: "safetyConfirmBeforeDeletingPage",
+        storeProperty: "safetyConfirmBeforeDeletingPage",
+        defaultValue: defaultSettingsState.safety_confirm_before_deleting_page,
+        normalization: "boolean"
+    }
+].concat(appearanceSettingDescriptors)
+
 function defaultSettingValue(valueKey) {
     const key = String(valueKey || "")
     return defaultSettingsState[key]
