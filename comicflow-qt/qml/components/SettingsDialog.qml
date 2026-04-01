@@ -79,7 +79,7 @@ PopupDialogWindow {
     title: ""
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: 820
-    height: 340
+    height: 345
 
     onOpened: {
         const requested = String(requestedSection || "").trim()
