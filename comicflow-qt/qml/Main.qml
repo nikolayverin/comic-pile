@@ -308,6 +308,13 @@ ApplicationWindow {
     property string pendingImportPostReloadAction: ""
     property bool pendingConfiguredLaunchViewApply: true
     property string lastPresentedLibraryLoadError: ""
+    property bool firstRunOnboardingActive: true
+    readonly property int firstRunDropZoneWidth: 274
+    readonly property int firstRunDropZoneHeight: 173
+    readonly property int firstRunDropZoneBottomMargin: 19
+    readonly property int firstRunDropZoneHighlightWidth: 318
+    readonly property int firstRunDropZoneHighlightHeight: 212
+    readonly property int firstRunDropZoneHighlightRadius: 20
     StartupController {
         id: startupController
         rootObject: root
@@ -2141,6 +2148,284 @@ ApplicationWindow {
         seriesHeaderControllerRef: seriesHeaderController
         libraryModelRef: libraryModel
         failedImportItemsModelRef: failedImportItemsModel
+    }
+
+    Item {
+        id: firstRunOnboardingOverlay
+        anchors.fill: parent
+        visible: root.firstRunOnboardingActive
+        z: 3000
+
+        Canvas {
+            id: firstRunOverlayCanvas
+            anchors.fill: parent
+            contextType: "2d"
+
+            onPaint: {
+                const ctx = getContext("2d")
+                ctx.reset()
+
+                ctx.fillStyle = popupStyleTokens.overlayColor
+                ctx.fillRect(0, 0, width, height)
+
+                const holeX = Math.round(dropZoneHighlight.x)
+                const holeY = Math.round(dropZoneHighlight.y)
+                const holeW = Math.round(dropZoneHighlight.width)
+                const holeH = Math.round(dropZoneHighlight.height)
+                const radius = Math.max(0, Math.round(dropZoneHighlight.radius))
+
+                ctx.save()
+                ctx.globalCompositeOperation = "destination-out"
+                ctx.beginPath()
+                ctx.moveTo(holeX + radius, holeY)
+                ctx.lineTo(holeX + holeW - radius, holeY)
+                ctx.quadraticCurveTo(holeX + holeW, holeY, holeX + holeW, holeY + radius)
+                ctx.lineTo(holeX + holeW, holeY + holeH - radius)
+                ctx.quadraticCurveTo(holeX + holeW, holeY + holeH, holeX + holeW - radius, holeY + holeH)
+                ctx.lineTo(holeX + radius, holeY + holeH)
+                ctx.quadraticCurveTo(holeX, holeY + holeH, holeX, holeY + holeH - radius)
+                ctx.lineTo(holeX, holeY + radius)
+                ctx.quadraticCurveTo(holeX, holeY, holeX + radius, holeY)
+                ctx.closePath()
+                ctx.fill()
+                ctx.restore()
+            }
+
+            onWidthChanged: requestPaint()
+            onHeightChanged: requestPaint()
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+            hoverEnabled: true
+        }
+
+        Rectangle {
+            id: dropZoneHighlight
+            x: Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
+            y: Math.round(
+                root.height
+                - root.footerHeight
+                - root.firstRunDropZoneBottomMargin
+                - ((root.firstRunDropZoneHeight - root.firstRunDropZoneHighlightHeight) / 2)
+                - root.firstRunDropZoneHighlightHeight
+            )
+            width: root.firstRunDropZoneHighlightWidth
+            height: root.firstRunDropZoneHighlightHeight
+            radius: root.firstRunDropZoneHighlightRadius
+            color: "transparent"
+            border.width: 2
+            border.color: "#FFFFFF"
+
+            onXChanged: firstRunOverlayCanvas.requestPaint()
+            onYChanged: firstRunOverlayCanvas.requestPaint()
+            onWidthChanged: firstRunOverlayCanvas.requestPaint()
+            onHeightChanged: firstRunOverlayCanvas.requestPaint()
+            onRadiusChanged: firstRunOverlayCanvas.requestPaint()
+        }
+
+        Item {
+            id: onboardingDropZoneContent
+            x: Math.round((root.sidebarWidth - root.firstRunDropZoneWidth) / 2)
+            y: Math.round(
+                root.height
+                - root.footerHeight
+                - root.firstRunDropZoneBottomMargin
+                - root.firstRunDropZoneHeight
+            )
+            width: root.firstRunDropZoneWidth
+            height: root.firstRunDropZoneHeight
+
+            Image {
+                width: 52
+                height: 55
+                anchors.top: parent.top
+                anchors.topMargin: 20
+                anchors.horizontalCenter: parent.horizontalCenter
+                source: uiTokens.dropZoneWhiteIcon
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+            }
+
+            Text {
+                id: onboardingDropZoneTitle
+                anchors.top: parent.top
+                anchors.topMargin: 85
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - 28
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                font.family: root.uiFontFamily
+                font.pixelSize: root.fontPxDropTitle
+                font.bold: true
+                color: "#FFFFFF"
+                text: AppText.sidebarDropZoneTitle
+            }
+
+            Text {
+                anchors.top: onboardingDropZoneTitle.bottom
+                anchors.topMargin: 8
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: parent.width - 28
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.WordWrap
+                font.family: root.uiFontFamily
+                font.pixelSize: root.fontPxDropSubtitle
+                color: "#FFFFFF"
+                text: AppText.sidebarDropZoneSubtitle
+            }
+        }
+
+        Image {
+            id: onboardingStep1Bubble
+            anchors.left: parent.left
+            anchors.leftMargin: 334
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 146
+            source: uiTokens.onboardingStep1Bubble
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+        }
+
+        Item {
+            id: onboardingNavigationBlock
+            width: 182
+            height: 23
+            x: onboardingStep1Bubble.x + 294 - (width / 2)
+            y: onboardingStep1Bubble.y + onboardingStep1Bubble.height - 290 - (height / 2)
+            visible: false
+
+            Item {
+                id: onboardingBackButtonHitbox
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 84
+                height: 21
+
+                Image {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: onboardingBackMouseArea.containsMouse ? -2 : 0
+                    source: uiTokens.onboardingBackButton
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                }
+
+                MouseArea {
+                    id: onboardingBackMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                }
+            }
+
+            Item {
+                id: onboardingNextButtonHitbox
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: 76
+                height: 21
+
+                Image {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: onboardingNextMouseArea.containsMouse ? -2 : 0
+                    source: uiTokens.onboardingNextButton
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                }
+
+                MouseArea {
+                    id: onboardingNextMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                }
+            }
+
+            Image {
+                x: 95 - (width / 2)
+                y: height - 14 - (height / 2)
+                source: uiTokens.onboardingSlash
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+            }
+        }
+
+        Item {
+            id: onboardingNavigationBlockCompact
+            width: 94
+            height: 23
+            x: onboardingStep1Bubble.x + 294 - (width / 2)
+            y: onboardingStep1Bubble.y + onboardingStep1Bubble.height - 290 - (height / 2)
+
+            Image {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                source: uiTokens.onboardingSlash
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+            }
+
+            Item {
+                id: onboardingCompactNextButtonHitbox
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: 76
+                height: 21
+
+                Image {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: onboardingCompactNextMouseArea.containsMouse ? -2 : 0
+                    source: uiTokens.onboardingNextButton
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                }
+
+                MouseArea {
+                    id: onboardingCompactNextMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                }
+            }
+        }
+
+        Rectangle {
+            id: onboardingCloseButton
+            width: 32
+            height: 32
+            radius: 16
+            color: "#000000"
+            x: onboardingStep1Bubble.x + 487 - (width / 2)
+            y: onboardingStep1Bubble.y + onboardingStep1Bubble.height - 584 - (height / 2)
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 14
+                height: 2
+                radius: 1
+                color: "#FFFFFF"
+                rotation: 45
+            }
+
+            Rectangle {
+                anchors.centerIn: parent
+                width: 14
+                height: 2
+                radius: 1
+                color: "#FFFFFF"
+                rotation: -45
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.firstRunOnboardingActive = false
+            }
+        }
     }
 
     Connections {

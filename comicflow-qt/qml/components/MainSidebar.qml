@@ -348,7 +348,11 @@ Rectangle {
             Item {
                 id: addFilesDropHighlight
                 anchors.fill: parent
-                opacity: (dropZoneMouseArea.containsMouse || (rootObject ? rootObject.addFilesDropActive : false)) ? 1.0 : 0.0
+                opacity: (
+                    (rootObject && rootObject.firstRunOnboardingActive)
+                    || dropZoneMouseArea.containsMouse
+                    || (rootObject ? rootObject.addFilesDropActive : false)
+                ) ? 1.0 : 0.0
                 Behavior on opacity {
                     NumberAnimation {
                         duration: rootObject ? rootObject.motionBaseMs : 180
@@ -380,6 +384,53 @@ Rectangle {
                 source: uiTokensRef ? uiTokensRef.dropZoneBorder : ""
                 fillMode: Image.Stretch
                 smooth: true
+                visible: !(rootObject && rootObject.firstRunOnboardingActive)
+            }
+
+            Canvas {
+                id: onboardingDropZoneBorder
+                anchors.fill: parent
+                visible: rootObject ? rootObject.firstRunOnboardingActive : false
+                contextType: "2d"
+
+                onPaint: {
+                    const ctx = getContext("2d")
+                    ctx.reset()
+                    ctx.clearRect(0, 0, width, height)
+
+                    const lineWidth = 2
+                    const inset = 1
+                    const radius = 18
+                    const dashLength = 8
+                    const gapLength = 6
+                    const left = inset
+                    const top = inset
+                    const right = width - inset
+                    const bottom = height - inset
+
+                    ctx.strokeStyle = "#FFFFFF"
+                    ctx.lineWidth = lineWidth
+                    ctx.setLineDash([dashLength, gapLength])
+                    ctx.lineCap = "butt"
+                    ctx.lineJoin = "round"
+
+                    ctx.beginPath()
+                    ctx.moveTo(left + radius, top)
+                    ctx.lineTo(right - radius, top)
+                    ctx.quadraticCurveTo(right, top, right, top + radius)
+                    ctx.lineTo(right, bottom - radius)
+                    ctx.quadraticCurveTo(right, bottom, right - radius, bottom)
+                    ctx.lineTo(left + radius, bottom)
+                    ctx.quadraticCurveTo(left, bottom, left, bottom - radius)
+                    ctx.lineTo(left, top + radius)
+                    ctx.quadraticCurveTo(left, top, left + radius, top)
+                    ctx.closePath()
+                    ctx.stroke()
+                }
+
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+                Component.onCompleted: requestPaint()
             }
 
             Image {
@@ -389,7 +440,11 @@ Rectangle {
                 anchors.top: parent.top
                 anchors.topMargin: 20
                 anchors.horizontalCenter: parent.horizontalCenter
-                source: uiTokensRef ? uiTokensRef.dropZoneIcon : ""
+                source: uiTokensRef
+                    ? ((rootObject && rootObject.firstRunOnboardingActive)
+                        ? uiTokensRef.dropZoneWhiteIcon
+                        : uiTokensRef.dropZoneIcon)
+                    : ""
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }
@@ -405,7 +460,9 @@ Rectangle {
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropTitle : 16
                 font.bold: true
-                color: rootObject ? rootObject.dropZoneTextColor : "white"
+                color: rootObject && rootObject.firstRunOnboardingActive
+                    ? "#FFFFFF"
+                    : (rootObject ? rootObject.dropZoneTextColor : "white")
                 z: 1
                 text: AppText.sidebarDropZoneTitle
             }
@@ -421,7 +478,9 @@ Rectangle {
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropTitle : 16
                 font.bold: true
-                color: rootObject ? rootObject.uiTextShadow : "transparent"
+                color: rootObject && rootObject.firstRunOnboardingActive
+                    ? "transparent"
+                    : (rootObject ? rootObject.uiTextShadow : "transparent")
                 text: dropZoneTitle.text
                 z: 0
             }
@@ -436,7 +495,9 @@ Rectangle {
                 wrapMode: Text.WordWrap
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
-                color: rootObject ? rootObject.dropZoneTextColor : "white"
+                color: rootObject && rootObject.firstRunOnboardingActive
+                    ? "#FFFFFF"
+                    : (rootObject ? rootObject.dropZoneTextColor : "white")
                 z: 1
                 text: AppText.sidebarDropZoneSubtitle
             }
@@ -450,7 +511,9 @@ Rectangle {
                 wrapMode: Text.WordWrap
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
-                color: rootObject ? rootObject.uiTextShadow : "transparent"
+                color: rootObject && rootObject.firstRunOnboardingActive
+                    ? "transparent"
+                    : (rootObject ? rootObject.uiTextShadow : "transparent")
                 text: dropZoneSubtitle.text
                 z: 0
             }

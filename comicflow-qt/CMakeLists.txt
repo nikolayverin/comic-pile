@@ -324,6 +324,10 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/cover-bookmark.png
         assets/ui/cover-read.png
         assets/ui/cover-read-cancel.png
+        assets/ui/onboarding/back.png
+        assets/ui/onboarding/next.png
+        assets/ui/onboarding/slash.png
+        assets/ui/onboarding/step-1.png
         assets/ui/grid-backgrounds/4-grid-tile-blueprint-256px.png
         assets/ui/grid-backgrounds/5-grid-tile-linen-512px.png
         assets/ui/grid-backgrounds/6-grid-tile-felt-512px.png
