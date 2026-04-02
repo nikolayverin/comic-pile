@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Window
 import "../components/AppText.js" as AppText
 import "../components/AppErrorMapper.js" as AppErrorMapper
@@ -115,6 +116,51 @@ Item {
             deleteConfirmDialogRef,
             deleteErrorDialogRef
         ]
+    }
+
+    function activeManagedPopup() {
+        const list = managedModalPopups()
+        for (let i = 0; i < list.length; i += 1) {
+            const popup = list[i]
+            if (popup && popup.visible) {
+                return popup
+            }
+        }
+        return null
+    }
+
+    function popupAllowsOutsideDismiss(popup) {
+        if (!popup) return false
+        const closePolicy = Number(popup.closePolicy || 0)
+        return Boolean(closePolicy & Popup.CloseOnPressOutside)
+            || Boolean(closePolicy & Popup.CloseOnPressOutsideParent)
+    }
+
+    function requestPopupDismiss(popup) {
+        if (!popup) return
+        if (typeof popup.closeRequested === "function") {
+            popup.closeRequested()
+            return
+        }
+        if (typeof popup.cancelRequested === "function") {
+            popup.cancelRequested()
+            return
+        }
+        if (typeof popup.close === "function") {
+            popup.close()
+        }
+    }
+
+    function handleManagedOutsideClick() {
+        const popup = activeManagedPopup()
+        if (!popup) return
+        if (popupAllowsOutsideDismiss(popup)) {
+            requestPopupDismiss(popup)
+            return
+        }
+        if (typeof popup.forceActiveFocus === "function") {
+            popup.forceActiveFocus()
+        }
     }
 
     function closeAllManagedPopups(exceptPopup) {

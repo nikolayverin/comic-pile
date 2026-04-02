@@ -6,7 +6,11 @@ import "AppText.js" as AppText
 Popup {
     id: metadataDialog
     ThemeColors { id: themeColors }
-    modal: true
+    PopupCloseBehavior {
+        id: closeBehavior
+        closePolicy: metadataDialog.closePolicy
+    }
+    modal: false
     focus: true
     closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     PopupStyle { id: popupStyle }
@@ -15,21 +19,6 @@ Popup {
     width: popupStyle.issueMetadataWidth
     height: popupStyle.issueMetadataHeight
     padding: 0
-
-    Overlay.modal: Rectangle {
-        color: popupStyle.overlayColor
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                const closeOnOutside = Boolean(metadataDialog.closePolicy & Popup.CloseOnPressOutside)
-                    || Boolean(metadataDialog.closePolicy & Popup.CloseOnPressOutsideParent)
-                if (closeOnOutside) {
-                    metadataDialog.close()
-                }
-            }
-        }
-    }
 
     property real hostWidth: 0
     property real hostHeight: 0

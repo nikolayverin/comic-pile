@@ -57,6 +57,14 @@ Item {
     property alias seriesMetaAgeRatingCombo: seriesMetaDialog.ageRatingCombo
     property alias seriesMetaSummaryField: seriesMetaDialog.summaryField
 
+    PopupModalOverlay {
+        anchors.fill: parent
+        visible: root.anyManagedModalPopupVisible
+        z: 900
+        overlayColor: popupStyleTokens.overlayColor
+        onOutsideClicked: popupController.handleManagedOutsideClick()
+    }
+
     ImportProgressOverlay {
         id: importModalOverlay
         active: root.importInProgress

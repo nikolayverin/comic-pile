@@ -43,12 +43,6 @@ PopupDialogWindow {
         }
     }
 
-    Shortcut {
-        sequences: [StandardKey.Cancel]
-        enabled: dialog.visible && !dialog.busy
-        onActivated: dialog.secondaryRequested()
-    }
-
     PopupBodyColumn {
         id: confirmLayout
         popupStyle: dialog.popupStyle

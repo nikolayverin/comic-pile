@@ -8,8 +8,12 @@ Popup {
     id: seriesMetaDialog
 
     ThemeColors { id: themeColors }
+    PopupCloseBehavior {
+        id: closeBehavior
+        closePolicy: seriesMetaDialog.closePolicy
+    }
 
-    modal: true
+    modal: false
     focus: true
     closePolicy: Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     x: Math.round((hostWidth - width) / 2)
@@ -17,21 +21,6 @@ Popup {
     width: popupStyle.seriesMetadataWidth
     height: popupStyle.seriesMetadataHeight
     padding: 0
-
-    Overlay.modal: Rectangle {
-        color: popupStyle.overlayColor
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                const closeOnOutside = Boolean(seriesMetaDialog.closePolicy & Popup.CloseOnPressOutside)
-                    || Boolean(seriesMetaDialog.closePolicy & Popup.CloseOnPressOutsideParent)
-                if (closeOnOutside) {
-                    seriesMetaDialog.close()
-                }
-            }
-        }
-    }
 
     property real hostWidth: 0
     property real hostHeight: 0

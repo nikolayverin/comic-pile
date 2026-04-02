@@ -5,9 +5,13 @@ Popup {
     id: root
 
     ThemeColors { id: themeColors }
+    PopupCloseBehavior {
+        id: closeBehavior
+        closePolicy: root.closePolicy
+    }
 
     parent: Overlay.overlay
-    modal: true
+    modal: false
     focus: true
     padding: 0
 
@@ -44,6 +48,19 @@ Popup {
         }
     }
 
+    function requestPopupDismiss(reason) {
+        const dismissReason = String(reason || "dismiss")
+        root.tracePopup("dismiss requested reason=" + dismissReason)
+        root.closeRequested()
+        Qt.callLater(function() {
+            if (!root.visible) return
+            root.tracePopup("dismiss kept popup visible -> restore focus")
+            if (typeof root.forceActiveFocus === "function") {
+                root.forceActiveFocus()
+            }
+        })
+    }
+
     x: Math.round((hostWidth - width) / 2)
     y: Math.round((hostHeight - height) / 2)
 
@@ -74,32 +91,10 @@ Popup {
     Shortcut {
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && Boolean(root.closePolicy & Popup.CloseOnEscape)
+        enabled: root.visible && closeBehavior.closeOnEscape
         onActivated: {
-            root.tracePopup("escape shortcut -> close")
-            root.close()
-        }
-    }
-
-    Overlay.modal: Rectangle {
-        color: root.popupStyle.overlayColor
-
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.LeftButton
-            onClicked: {
-                const closeOnOutside = Boolean(root.closePolicy & Popup.CloseOnPressOutside)
-                    || Boolean(root.closePolicy & Popup.CloseOnPressOutsideParent)
-                root.tracePopup(
-                    "overlay clicked"
-                    + " closeOnOutside=" + String(closeOnOutside)
-                    + " visible=" + String(root.visible)
-                )
-                if (closeOnOutside) {
-                    root.tracePopup("outside click -> close")
-                    root.close()
-                }
-            }
+            root.tracePopup("escape shortcut")
+            root.requestPopupDismiss("escape")
         }
     }
 
