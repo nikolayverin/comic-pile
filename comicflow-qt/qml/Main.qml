@@ -529,6 +529,11 @@ ApplicationWindow {
     property bool suspendSidebarSearchRefresh: false
     property bool modelReconcilePending: false
     property bool suspendSelectionDrivenRefresh: false
+    property bool selectionDrivenRefreshQueued: false
+    property string settledSelectionSeriesKey: ""
+    property string settledSelectionSeriesTitle: ""
+    property string settledSelectionVolumeKey: "__all__"
+    property string settledSelectionVolumeTitle: AppText.libraryAllVolumes
     property alias startupReconcileCompleted: startupState.startupReconcileCompleted
     property alias startupHydrationInProgress: startupState.startupHydrationInProgress
     property alias startupAwaitingFirstModelSignal: startupState.startupAwaitingFirstModelSignal
@@ -744,6 +749,48 @@ ApplicationWindow {
             return
         }
         libraryBrowseController.applySelectedSeriesContext(seriesKey, seriesTitle, volumeKey, volumeTitle)
+    }
+
+    function settleSelectionDrivenRefresh() {
+        selectionDrivenRefreshQueued = false
+        if (restoringStartupSnapshot || suspendSelectionDrivenRefresh) return
+
+        const context = currentSelectedSeriesContext()
+        const seriesKey = String(context.seriesKey || "")
+        const seriesTitle = String(context.seriesTitle || "")
+        const volumeKey = String(context.volumeKey || "__all__")
+        const volumeTitle = String(context.volumeTitle || AppText.libraryAllVolumes)
+        const seriesKeyChanged = seriesKey !== settledSelectionSeriesKey
+        const seriesTitleChanged = seriesTitle !== settledSelectionSeriesTitle
+        const volumeKeyChanged = volumeKey !== settledSelectionVolumeKey
+        const volumeTitleChanged = volumeTitle !== settledSelectionVolumeTitle
+
+        if (!seriesKeyChanged && !seriesTitleChanged && !volumeKeyChanged && !volumeTitleChanged) {
+            return
+        }
+
+        settledSelectionSeriesKey = seriesKey
+        settledSelectionSeriesTitle = seriesTitle
+        settledSelectionVolumeKey = volumeKey
+        settledSelectionVolumeTitle = volumeTitle
+
+        if (seriesKeyChanged) {
+            heroSeriesController.resolveHeroMediaForSelectedSeries()
+        }
+        heroSeriesController.refreshSeriesData()
+        if (seriesKeyChanged || volumeKeyChanged) {
+            scheduleIssuesGridRefresh(true)
+        }
+        startupController.requestSnapshotSave()
+    }
+
+    function scheduleSelectionDrivenRefresh() {
+        if (restoringStartupSnapshot || suspendSelectionDrivenRefresh) return
+        if (selectionDrivenRefreshQueued) return
+        selectionDrivenRefreshQueued = true
+        Qt.callLater(function() {
+            settleSelectionDrivenRefresh()
+        })
     }
 
 
@@ -1866,18 +1913,19 @@ ApplicationWindow {
     }
 
     onSelectedSeriesKeyChanged: {
-        if (restoringStartupSnapshot || suspendSelectionDrivenRefresh) return
-        heroSeriesController.resolveHeroMediaForSelectedSeries()
-        heroSeriesController.refreshSeriesData()
-        scheduleIssuesGridRefresh(true)
-        startupController.requestSnapshotSave()
+        scheduleSelectionDrivenRefresh()
+    }
+
+    onSelectedSeriesTitleChanged: {
+        scheduleSelectionDrivenRefresh()
     }
 
     onSelectedVolumeKeyChanged: {
-        if (restoringStartupSnapshot || suspendSelectionDrivenRefresh) return
-        heroSeriesController.refreshSeriesData()
-        scheduleIssuesGridRefresh(true)
-        startupController.requestSnapshotSave()
+        scheduleSelectionDrivenRefresh()
+    }
+
+    onSelectedVolumeTitleChanged: {
+        scheduleSelectionDrivenRefresh()
     }
 
     onLibraryReadStatusFilterChanged: {
