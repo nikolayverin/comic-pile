@@ -17,6 +17,12 @@ Item {
         return rootObject
     }
 
+    function traceHero(message) {
+        const rootRef = root()
+        if (!rootRef || typeof rootRef.runtimeDebugLog !== "function") return
+        rootRef.runtimeDebugLog("hero-series", String(message || ""))
+    }
+
     function emptyHeroSeriesData(seriesTitle) {
         return {
             seriesTitle: String(seriesTitle || ""),
@@ -153,6 +159,7 @@ Item {
     }
 
     function resolveHeroMediaForSelectedSeries() {
+        traceHero("resolve media for selected series")
         if (!readerCoverControllerRef) return
         if (typeof readerCoverControllerRef.resolveHeroCoverForSelectedSeries === "function") {
             readerCoverControllerRef.resolveHeroCoverForSelectedSeries()
@@ -218,6 +225,12 @@ Item {
             ? rootRef.currentSelectedSeriesContext()
             : (rootRef.selectedSeriesContext || ({}))
         const key = String(context.seriesKey || "")
+        traceHero(
+            "refresh series data"
+            + " seriesKey=" + key
+            + " seriesTitle=" + String(context.seriesTitle || "")
+            + " hasSeries=" + String(Boolean(context.hasSeries))
+        )
         if (!Boolean(context.hasSeries)) {
             rootRef.heroCustomCoverSource = ""
             rootRef.heroCustomBackgroundSource = ""
@@ -236,6 +249,11 @@ Item {
         }
 
         const rowCount = Number(rows && rows.length ? rows.length : 0)
+        traceHero(
+            "hero rows"
+            + " seriesKey=" + key
+            + " rowCount=" + String(rowCount)
+        )
         if (rowCount < 1) {
             if (startupControllerRef && typeof startupControllerRef.startupLog === "function") {
                 startupControllerRef.startupLog("heroData empty rows for key=" + key)

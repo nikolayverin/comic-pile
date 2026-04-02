@@ -19,6 +19,12 @@ Item {
     property int pendingReaderPersistGuardComicId: -1
     property int pendingReaderPersistGuardPageIndex: -1
 
+    function traceReader(message) {
+        const root = rootObject
+        if (!root || typeof root.runtimeDebugLog !== "function") return
+        root.runtimeDebugLog("reader-session", String(message || ""))
+    }
+
     function normalizedBookmarkPageIndex(value) {
         const parsed = Number(value)
         return isNaN(parsed) ? -1 : parsed
@@ -712,11 +718,23 @@ Item {
     }
 
     function openReader(comicId, title) {
+        traceReader(
+            "open reader"
+            + " comicId=" + String(comicId || -1)
+            + " title=" + String(title || "")
+        )
         beginReaderSession(comicId, title, true, -1, -1)
     }
 
     function openReaderTarget(target) {
         const normalizedTarget = ReadingTarget.normalize(target || ({}), "Issue target is unavailable.")
+        traceReader(
+            "open reader target"
+            + " ok=" + String(Boolean(normalizedTarget.ok))
+            + " comicId=" + String(normalizedTarget.comicId || -1)
+            + " seriesKey=" + String(normalizedTarget.seriesKey || "")
+            + " startPageIndex=" + String(normalizedTarget.startPageIndex || 0)
+        )
         if (!Boolean(normalizedTarget.ok)) return false
         return beginReaderSessionForTarget(
             normalizedTarget,
@@ -760,11 +778,16 @@ Item {
         const bookmarkPageIndex = bookmarkBelongsToCurrentIssue
             ? normalizedBookmarkPageIndex(root.readerBookmarkPageIndex)
             : -1
-        const targetPersistPage = bookmarkPageIndex >= 0
-            ? (bookmarkPageIndex + 1)
-            : (root.readerPageIndex + 1)
+        const targetPersistPage = root.readerPageIndex + 1
 
         const saveError = libraryModelRef.saveReaderProgress(root.readerComicId, targetPersistPage)
+        traceReader(
+            "persist progress"
+            + " comicId=" + String(root.readerComicId || -1)
+            + " targetPage=" + String(targetPersistPage)
+            + " bookmarkPageIndex=" + String(bookmarkPageIndex)
+            + " saveError=" + String(saveError || "")
+        )
         if (saveError.length > 0) {
             if (typeof root.queueSilentReaderProgressSave === "function") {
                 root.queueSilentReaderProgressSave(
@@ -785,16 +808,28 @@ Item {
         if (root.readerFinalizing) return
         root.readerFinalizing = true
 
-        if (Number(root.readerComicId || 0) > 0 && typeof root.rememberContinueReadingTarget === "function") {
-            root.rememberContinueReadingTarget(
-                root.readerComicId,
-                root.readerSeriesKey,
-                root.readerTitle
+        clearPendingPopupOpen()
+        const finalizedComicId = Number(root.readerComicId || 0)
+        const finalizedSeriesKey = String(root.readerSeriesKey || "").trim()
+        const finalizedReaderTitle = String(root.readerTitle || "").trim()
+        if (libraryModelRef && typeof libraryModelRef.appendStartupDebugLog === "function") {
+            libraryModelRef.appendStartupDebugLog(
+                "[continue-reading] finalize reader"
+                + " comicId=" + String(finalizedComicId)
+                + " seriesKey=" + finalizedSeriesKey
+                + " pageIndex=" + String(root.readerPageIndex || 0)
+                + " pageCount=" + String(root.readerPageCount || 0)
+                + " bookmarkPageIndex=" + String(root.readerBookmarkPageIndex || -1)
             )
         }
-
-        clearPendingPopupOpen()
         const persisted = persistReaderProgress(showErrorDialog === true)
+        if (finalizedComicId > 0 && typeof root.rememberContinueReadingTarget === "function") {
+            root.rememberContinueReadingTarget(
+                finalizedComicId,
+                finalizedSeriesKey,
+                finalizedReaderTitle
+            )
+        }
         if (persisted) {
             scheduleReaderGridRefresh()
         }

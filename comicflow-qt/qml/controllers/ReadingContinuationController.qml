@@ -16,6 +16,18 @@ Item {
 
     readonly property bool continueReadingAvailable: Boolean(resolvedContinueReadingTarget.ok)
 
+    function traceContinueReading(message) {
+        const root = rootObject
+        if (root && typeof root.runtimeDebugLog === "function") {
+            root.runtimeDebugLog("continue-reading", String(message || ""))
+            return
+        }
+        if (!libraryModelRef || typeof libraryModelRef.appendStartupDebugLog !== "function") {
+            return
+        }
+        libraryModelRef.appendStartupDebugLog("[continue-reading] " + String(message || ""))
+    }
+
     function invalidStoredTargetMessage() {
         return "The last reading issue is no longer available."
     }
@@ -55,6 +67,13 @@ Item {
             : ""
         const changed = continueReadingComicId !== nextComicId
             || continueReadingSeriesKey !== nextSeriesKey
+        traceContinueReading(
+            "remember target"
+            + " comicId=" + String(nextComicId)
+            + " seriesKey=" + nextSeriesKey
+            + " changed=" + String(changed)
+            + " persist=" + String(persistState !== false)
+        )
         continueReadingComicId = nextComicId
         continueReadingSeriesKey = nextSeriesKey
         if (changed && persistState !== false && libraryModelRef
@@ -64,10 +83,21 @@ Item {
                 seriesKey: continueReadingSeriesKey
             })
         }
+        resolveContinueReadingTarget()
     }
 
     function setResolvedTarget(target) {
         resolvedContinueReadingTarget = ReadingTarget.forContinueReading(target, emptyStoredTargetMessage())
+        traceContinueReading(
+            "resolved target"
+            + " ok=" + String(Boolean(resolvedContinueReadingTarget.ok))
+            + " comicId=" + String(resolvedContinueReadingTarget.comicId || -1)
+            + " seriesKey=" + String(resolvedContinueReadingTarget.seriesKey || "")
+            + " startPageIndex=" + String(resolvedContinueReadingTarget.startPageIndex || 0)
+            + " currentPage=" + String(resolvedContinueReadingTarget.currentPage || 0)
+            + " bookmarkPage=" + String(resolvedContinueReadingTarget.bookmarkPage || 0)
+            + " message=" + String(resolvedContinueReadingTarget.message || "")
+        )
         return resolvedContinueReadingTarget
     }
 
@@ -89,11 +119,24 @@ Item {
         const storedComicId = Number(continueReadingComicId || -1)
         const storedSeriesKey = String(continueReadingSeriesKey || "").trim()
         let hadStoredTarget = storedComicId > 0
+        traceContinueReading(
+            "resolve request"
+            + " storedComicId=" + String(storedComicId)
+            + " storedSeriesKey=" + storedSeriesKey
+        )
 
         if (storedComicId > 0 && typeof libraryModelRef.navigationTargetForComic === "function") {
             const rememberedTarget = ReadingTarget.forContinueReading(
                 libraryModelRef.navigationTargetForComic(storedComicId) || ({}),
                 invalidStoredTargetMessage()
+            )
+            traceContinueReading(
+                "resolve stored candidate"
+                + " ok=" + String(Boolean(rememberedTarget.ok))
+                + " comicId=" + String(rememberedTarget.comicId || -1)
+                + " seriesKey=" + String(rememberedTarget.seriesKey || "")
+                + " currentPage=" + String(rememberedTarget.currentPage || 0)
+                + " bookmarkPage=" + String(rememberedTarget.bookmarkPage || 0)
             )
             if (Boolean(rememberedTarget.ok)) {
                 const resolvedSeriesKey = String(rememberedTarget.seriesKey || "").trim()
@@ -109,6 +152,14 @@ Item {
         }
 
         const fallbackTarget = fallbackContinueReadingTarget()
+        traceContinueReading(
+            "resolve fallback candidate"
+            + " ok=" + String(Boolean(fallbackTarget.ok))
+            + " comicId=" + String(fallbackTarget.comicId || -1)
+            + " seriesKey=" + String(fallbackTarget.seriesKey || "")
+            + " currentPage=" + String(fallbackTarget.currentPage || 0)
+            + " bookmarkPage=" + String(fallbackTarget.bookmarkPage || 0)
+        )
         if (Boolean(fallbackTarget.ok)) {
             rememberContinueReadingTarget(
                 Number(fallbackTarget.comicId || -1),

@@ -18,6 +18,12 @@ Item {
         return rootObject
     }
 
+    function traceSelection(message) {
+        const root = activeRoot()
+        if (!root || typeof root.runtimeDebugLog !== "function") return
+        root.runtimeDebugLog("series-selection", String(message || ""))
+    }
+
     function isSeriesSelected(seriesKey) {
         return selectedSeriesKeys[String(seriesKey || "")] === true
     }
@@ -88,6 +94,14 @@ Item {
 
         const key = String(seriesKey || "")
         const title = String(seriesTitle || "")
+        traceSelection(
+            "apply primary"
+            + " seriesKey=" + key
+            + " title=" + title
+            + " index=" + String(itemIndex)
+            + " clearIssueSelection=" + String(clearIssueSelection === true)
+            + " scrollToTop=" + String(scrollToTop === true)
+        )
         if (typeof root.applySelectedSeriesContext === "function") {
             root.applySelectedSeriesContext(key, title, "__all__", AppText.libraryAllVolumes)
         } else {
@@ -121,6 +135,14 @@ Item {
         const title = String(seriesTitle || "")
         const sameSeries = key.length > 0 && key === String(root.selectedSeriesKey || "")
         const hadQuickFilter = String(root.sidebarQuickFilterKey || "").trim().length > 0
+        traceSelection(
+            "select series"
+            + " seriesKey=" + key
+            + " title=" + title
+            + " index=" + String(indexValue)
+            + " sameSeries=" + String(sameSeries)
+            + " hadQuickFilter=" + String(hadQuickFilter)
+        )
         if (hadQuickFilter) {
             root.sidebarQuickFilterKey = ""
         }
@@ -181,6 +203,14 @@ Item {
         const index = Number(itemIndex || 0)
         const shiftPressed = (Number(modifiers || 0) & Qt.ShiftModifier) !== 0
         const ctrlPressed = (Number(modifiers || 0) & Qt.ControlModifier) !== 0
+        traceSelection(
+            "select with modifiers"
+            + " seriesKey=" + key
+            + " title=" + title
+            + " index=" + String(index)
+            + " shift=" + String(shiftPressed)
+            + " ctrl=" + String(ctrlPressed)
+        )
 
         if (shiftPressed && selectedSeriesCount() > 0) {
             const anchor = seriesSelectionAnchorIndex >= 0

@@ -44,6 +44,18 @@ Item {
         return orderedItems
     }
 
+    function traceContinueReading(message) {
+        const root = rootObject
+        if (root && typeof root.runtimeDebugLog === "function") {
+            root.runtimeDebugLog("continue-reading", String(message || ""))
+            return
+        }
+        if (!libraryModelRef || typeof libraryModelRef.appendStartupDebugLog !== "function") {
+            return
+        }
+        libraryModelRef.appendStartupDebugLog("[continue-reading] " + String(message || ""))
+    }
+
     function showNavigationMessage(title, message) {
         if (!popupControllerRef || typeof popupControllerRef.showMappedActionResult !== "function") {
             return
@@ -117,12 +129,41 @@ Item {
         pendingIssueResolveTimer.stop()
     }
 
+    function openPendingIssueTargetDirectly(target) {
+        const root = rootObject
+        if (!root || !target) return false
+        traceContinueReading(
+            "open direct"
+            + " comicId=" + String(target.comicId || -1)
+            + " seriesKey=" + String(target.seriesKey || "")
+            + " startPageIndex=" + String(target.startPageIndex || 0)
+        )
+        if (typeof root.openReaderTarget === "function") {
+            root.openReaderTarget(target)
+            return true
+        }
+        if (typeof root.openReader === "function") {
+            root.openReader(
+                Number(target.comicId || 0),
+                String(target.displayTitle || target.title || "")
+            )
+            return true
+        }
+        return false
+    }
+
     function revealIssueTargetInGrid(target) {
         const root = rootObject
         if (!root || !target) return false
 
         const targetComicId = Number(target.comicId || 0)
         const targetIndex = issueIndexInGrid(targetComicId)
+        traceContinueReading(
+            "reveal in grid"
+            + " comicId=" + String(targetComicId)
+            + " targetIndex=" + String(targetIndex)
+            + " gridCount=" + String((root.issuesGridData || []).length || 0)
+        )
         if (targetIndex < 0) {
             return false
         }
@@ -172,8 +213,23 @@ Item {
         const selectedContext = typeof root.currentSelectedSeriesContext === "function"
             ? root.currentSelectedSeriesContext()
             : (root.selectedSeriesContext || ({}))
+        traceContinueReading(
+            "resolve pending"
+            + " comicId=" + String(pendingIssueTarget.comicId || -1)
+            + " targetSeriesKey=" + targetSeriesKey
+            + " selectedSeriesKey=" + String(selectedContext.seriesKey || "")
+            + " attempts=" + String(pendingIssueResolveAttempts)
+        )
         if (targetSeriesKey.length > 0
                 && String(selectedContext.seriesKey || "").trim() !== targetSeriesKey) {
+            pendingIssueResolveAttempts -= 1
+            if (pendingIssueResolveAttempts > 0) {
+                return false
+            }
+            if (Boolean(pendingIssueTarget.openReader) && openPendingIssueTargetDirectly(pendingIssueTarget)) {
+                finishPendingIssueTarget()
+                return true
+            }
             return false
         }
 
@@ -184,6 +240,11 @@ Item {
         pendingIssueResolveAttempts -= 1
         if (pendingIssueResolveAttempts > 0) {
             return false
+        }
+
+        if (Boolean(pendingIssueTarget.openReader) && openPendingIssueTargetDirectly(pendingIssueTarget)) {
+            finishPendingIssueTarget()
+            return true
         }
 
         const title = String(pendingIssueTarget.failureTitle || AppText.popupActionErrorTitle).trim()
@@ -209,6 +270,12 @@ Item {
             )
             : null
         pendingIssueResolveAttempts = 12
+        traceContinueReading(
+            "queue reveal"
+            + " comicId=" + String((pendingIssueTarget || {}).comicId || -1)
+            + " seriesKey=" + String((pendingIssueTarget || {}).seriesKey || "")
+            + " startPageIndex=" + String((pendingIssueTarget || {}).startPageIndex || 0)
+        )
         pendingIssueResolveTimer.restart()
         tryResolvePendingIssueTarget()
     }
@@ -223,6 +290,15 @@ Item {
         )
         const comicId = Number(normalizedTarget.comicId || 0)
         const seriesKey = String(normalizedTarget.seriesKey || "").trim()
+        traceContinueReading(
+            "open issue target"
+            + " ok=" + String(Boolean(normalizedTarget.ok))
+            + " comicId=" + String(comicId)
+            + " seriesKey=" + seriesKey
+            + " startPageIndex=" + String(normalizedTarget.startPageIndex || 0)
+            + " currentPage=" + String(normalizedTarget.currentPage || 0)
+            + " bookmarkPage=" + String(normalizedTarget.bookmarkPage || 0)
+        )
         if (!Boolean(normalizedTarget.ok)) {
             showNavigationMessage(
                 String(failureTitle || AppText.popupActionErrorTitle),
@@ -238,6 +314,7 @@ Item {
         }
 
         queueIssueTargetReveal({
+            ok: true,
             comicId: normalizedTarget.comicId,
             anchorComicId: normalizedTarget.anchorComicId,
             seriesKey: normalizedTarget.seriesKey,
@@ -262,6 +339,13 @@ Item {
         if (!libraryModelRef) return
 
         const target = resolveContinueReadingTarget() || ({})
+        traceContinueReading(
+            "button continue"
+            + " ok=" + String(Boolean(target.ok))
+            + " comicId=" + String(target.comicId || -1)
+            + " seriesKey=" + String(target.seriesKey || "")
+            + " startPageIndex=" + String(target.startPageIndex || 0)
+        )
         if (!Boolean(target.ok)) {
             showNavigationMessage(
                 AppText.navigationContinueReadingTitle,

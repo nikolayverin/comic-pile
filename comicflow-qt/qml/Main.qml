@@ -605,6 +605,14 @@ ApplicationWindow {
         startupController.startupLog(message)
     }
 
+    function runtimeDebugLog(category, message) {
+        const tag = String(category || "").trim()
+        const text = String(message || "").trim()
+        if (tag.length < 1 || text.length < 1) return
+        if (!libraryModel || typeof libraryModel.appendStartupDebugLog !== "function") return
+        libraryModel.appendStartupDebugLog("[" + tag + "] " + text)
+    }
+
     function isSelected(id) {
         return selectedIds[String(id)] === true
     }

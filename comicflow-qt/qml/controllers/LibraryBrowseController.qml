@@ -45,6 +45,12 @@ Item {
         return rootObject
     }
 
+    function traceBrowse(message) {
+        const root = activeRoot()
+        if (!root || typeof root.runtimeDebugLog !== "function") return
+        root.runtimeDebugLog("library-browse", String(message || ""))
+    }
+
     function applySelectedSeriesContext(seriesKey, seriesTitle, volumeKey, volumeTitle) {
         const context = SeriesContext.selectedContext(
             seriesKey,
@@ -52,6 +58,13 @@ Item {
             volumeKey,
             volumeTitle,
             AppText.libraryAllVolumes
+        )
+        traceBrowse(
+            "apply context"
+            + " seriesKey=" + String(context.seriesKey || "")
+            + " seriesTitle=" + String(context.seriesTitle || "")
+            + " volumeKey=" + String(context.volumeKey || "")
+            + " volumeTitle=" + String(context.volumeTitle || "")
         )
         selectedSeriesKey = context.seriesKey
         selectedSeriesTitle = context.seriesTitle
@@ -153,6 +166,7 @@ Item {
         const root = activeRoot()
         const key = String(filterKey || "").trim().toLowerCase()
         if (key.length < 1 || !root) return
+        traceBrowse("select quick filter key=" + key)
         sidebarQuickFilterKey = key
         if (typeof root.clearSelection === "function") {
             root.clearSelection()
@@ -174,6 +188,11 @@ Item {
         if (!root || !libraryModelRef || !seriesListModelRef) return
 
         const groups = libraryModelRef.seriesGroups().slice(0)
+        traceBrowse(
+            "refresh series list"
+            + " groups=" + String(groups.length || 0)
+            + " sidebarSearch=" + String(sidebarSearchText || "")
+        )
         if (
             root.startupSnapshotApplied
                 && root.startupHydrationInProgress
@@ -304,6 +323,12 @@ Item {
         const groups = currentContext.hasSeries
             ? libraryModelRef.volumeGroupsForSeries(currentContext.seriesKey)
             : []
+        traceBrowse(
+            "refresh volume list"
+            + " seriesKey=" + String(currentContext.seriesKey || "")
+            + " previousVolumeKey=" + previousKey
+            + " groups=" + String(groups.length || 0)
+        )
 
         volumeListModelRef.clear()
 
@@ -360,6 +385,12 @@ Item {
         if (!root || !libraryModelRef || !navigationSurfaceControllerRef) return
         const activeQuickFilterKey = String(sidebarQuickFilterKey || "").trim().toLowerCase()
         const liveIssues = libraryModelRef.issuesForQuickFilter(activeQuickFilterKey, lastImportSessionComicIds)
+        traceBrowse(
+            "refresh quick filter grid"
+            + " key=" + activeQuickFilterKey
+            + " count=" + String(liveIssues.length || 0)
+            + " preserveSplitScroll=" + String(shouldPreserveSplitScroll === true)
+        )
         root.issuesGridData = navigationSurfaceControllerRef.applyIssueOrder(liveIssues)
         if (typeof root.primeVisibleIssueCoverSourcesFromCache === "function") {
             root.primeVisibleIssueCoverSourcesFromCache()
@@ -382,6 +413,13 @@ Item {
         if (!root || !libraryModelRef || !navigationSurfaceControllerRef) return
 
         const currentContext = currentSelectedSeriesContext()
+        traceBrowse(
+            "refresh series grid"
+            + " seriesKey=" + String(currentContext.seriesKey || "")
+            + " volumeKey=" + String(currentContext.volumeKey || "")
+            + " readFilter=" + String(libraryReadStatusFilter || "")
+            + " search=" + String(librarySearchText || "")
+        )
         if (!currentContext.hasSeries) {
             if (root.startupSnapshotApplied && root.startupHydrationInProgress && root.issuesGridData.length > 0) {
                 startupControllerRef.startupLog("refreshIssuesGridData keep snapshot: selectedSeriesKey empty during hydration")
@@ -397,6 +435,11 @@ Item {
             currentContext.volumeKey,
             libraryReadStatusFilter,
             librarySearchText
+        )
+        traceBrowse(
+            "series grid live issues"
+            + " seriesKey=" + String(currentContext.seriesKey || "")
+            + " count=" + String(liveIssues.length || 0)
         )
         const orderedIssues = navigationSurfaceControllerRef.applyIssueOrder(liveIssues)
         const liveIssueListChanged = !startupControllerRef.issueListsEquivalentByIdAndOrder(previousIssues, orderedIssues)
