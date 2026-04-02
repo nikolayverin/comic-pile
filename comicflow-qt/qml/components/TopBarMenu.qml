@@ -69,6 +69,7 @@ Rectangle {
     signal maximizeRestoreRequested()
     signal closeRequested()
     signal settingsRequested()
+    signal aboutRequested()
     signal continueReadingRequested()
     signal nextUnreadRequested()
     signal seriesInfoRequested()
@@ -498,9 +499,14 @@ Rectangle {
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenu, visible)
         menuItems: [
             { text: "Help", action: "help", enabled: false },
-            { text: "About", action: "about", enabled: false },
+            { text: "About", action: "about", enabled: true },
             { text: "What's new", action: "whats_new", enabled: false }
         ]
+        onItemTriggered: function(index, action) {
+            if (action === "about") {
+                root.aboutRequested()
+            }
+        }
     }
 
 }

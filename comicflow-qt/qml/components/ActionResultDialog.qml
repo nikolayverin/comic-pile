@@ -38,6 +38,8 @@ PopupDialogWindow {
     }
 
     popupStyle: styleTokens
+    debugName: "action-result-dialog"
+    debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     titleTopMargin: 12
     title: dialog.dialogTitle
     showCloseButton: false

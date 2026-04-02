@@ -26,6 +26,8 @@ PopupDialogWindow {
     signal primaryRequested()
     signal secondaryRequested()
 
+    debugName: "popup-confirm-dialog"
+    debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: Math.max(dialogWidth, confirmFooter.requiredDialogWidth)
     height: Math.min(

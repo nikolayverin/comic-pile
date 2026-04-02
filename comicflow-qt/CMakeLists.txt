@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.11.2 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.12.0 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -115,6 +115,11 @@ set(_comicpile_core_sources
 qt_add_executable(comic_pile_qt
     src/main.cpp
     ${_comicpile_core_sources}
+)
+
+set_source_files_properties(
+    ../assets-UI/256x256.png
+    PROPERTIES QT_RESOURCE_ALIAS assets/ui/about-app-icon-256.png
 )
 
 target_compile_definitions(comic_pile_qt PRIVATE
@@ -253,6 +258,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/SettingsCheckbox.qml
         qml/components/SettingsChoiceDropdown.qml
         qml/components/SettingsAppearanceSection.qml
+        qml/components/AboutDialog.qml
         qml/components/SettingsDialog.qml
         qml/components/SettingsRadioGroup.qml
         qml/components/SettingsSegmentedChoice.qml
@@ -324,6 +330,7 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/cover-bookmark.png
         assets/ui/cover-read.png
         assets/ui/cover-read-cancel.png
+        ../assets-UI/256x256.png
         assets/ui/onboarding/back.png
         assets/ui/onboarding/next.png
         assets/ui/onboarding/slash.png

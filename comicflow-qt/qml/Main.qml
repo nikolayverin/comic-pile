@@ -196,6 +196,7 @@ ApplicationWindow {
     readonly property var replaceArchiveConfirmDialog: mainDialogHost.replaceArchiveConfirmDialogRef
     readonly property var seriesMetaDialog: mainDialogHost.seriesMetaDialogRef
     readonly property var settingsDialog: mainDialogHost.settingsDialogRef
+    readonly property var aboutDialog: mainDialogHost.aboutDialogRef
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
     readonly property var deleteConfirmDialog: mainDialogHost.deleteConfirmDialogRef
     readonly property var deleteErrorDialog: mainDialogHost.deleteErrorDialogRef
@@ -449,6 +450,7 @@ ApplicationWindow {
         actionResultDialogRef: actionResultDialog
         seriesMetaDialogRef: seriesMetaDialog
         settingsDialogRef: settingsDialog
+        aboutDialogRef: aboutDialog
         replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
         seriesHeaderDialogRef: seriesHeaderDialog
         deleteConfirmDialogRef: deleteConfirmDialog
@@ -862,6 +864,10 @@ ApplicationWindow {
             return
         }
         popupController.openExclusivePopup(settingsDialog)
+    }
+
+    function openAboutDialog() {
+        popupController.openExclusivePopup(aboutDialog)
     }
 
     function presentLibraryLoadError(messageText) {
@@ -1981,6 +1987,7 @@ ApplicationWindow {
             onAddFolderRequested: root.quickAddFolderFromDialog()
             onAddIssueRequested: root.quickAddFilesFromDialog()
             onSettingsRequested: root.openSettingsDialog("")
+            onAboutRequested: root.openAboutDialog()
             onRefreshRequested: libraryModel.reload()
             onExitRequested: root.close()
             onToggleFullscreenRequested: {

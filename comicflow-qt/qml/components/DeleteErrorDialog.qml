@@ -45,6 +45,8 @@ PopupDialogWindow {
     }
 
     popupStyle: styleTokens
+    debugName: "delete-error-dialog"
+    debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     titleTopMargin: 12
     title: dialog.headline.length > 0 ? dialog.headline : AppText.popupDeleteErrorTitle
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent

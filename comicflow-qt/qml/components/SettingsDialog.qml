@@ -76,6 +76,8 @@ PopupDialogWindow {
     }
 
     popupStyle: styleTokens
+    debugName: "settings-dialog"
+    debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     title: ""
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: 820

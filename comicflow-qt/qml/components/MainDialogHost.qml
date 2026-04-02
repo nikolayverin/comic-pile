@@ -43,6 +43,7 @@ Item {
     property alias replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
     property alias seriesMetaDialogRef: seriesMetaDialog
     property alias settingsDialogRef: settingsDialog
+    property alias aboutDialogRef: aboutDialog
     property alias seriesHeaderDialogRef: seriesHeaderDialog
     property alias deleteConfirmDialogRef: deleteConfirmDialog
     property alias deleteErrorDialogRef: deleteErrorDialog
@@ -333,6 +334,12 @@ Item {
         onCheckStorageAccessRequested: root.checkStorageAccessFromSettings()
         onReloadLibraryRequested: root.reloadLibraryFromSettings()
         onResetSettingsRequested: root.resetSettingsToDefaults()
+    }
+
+    AboutDialog {
+        id: aboutDialog
+        hostWidth: root.width
+        hostHeight: root.height
     }
 
     SeriesHeaderDialog {
