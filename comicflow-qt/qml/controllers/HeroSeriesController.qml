@@ -214,7 +214,9 @@ Item {
         const rootRef = root()
         if (!rootRef || !libraryModelRef) return
 
-        const context = rootRef.selectedSeriesContext || ({})
+        const context = typeof rootRef.currentSelectedSeriesContext === "function"
+            ? rootRef.currentSelectedSeriesContext()
+            : (rootRef.selectedSeriesContext || ({}))
         const key = String(context.seriesKey || "")
         if (!Boolean(context.hasSeries)) {
             rootRef.heroCustomCoverSource = ""

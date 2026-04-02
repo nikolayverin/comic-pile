@@ -163,7 +163,9 @@ Item {
         const root = activeRoot()
         if (!root || !libraryModelRef || !popupControllerRef) return
 
-        const selectionContext = root.selectedSeriesContext || ({})
+        const selectionContext = typeof root.currentSelectedSeriesContext === "function"
+            ? root.currentSelectedSeriesContext()
+            : (root.selectedSeriesContext || ({}))
         const key = String(seriesKey || selectionContext.seriesKey || "").trim()
         if (key.length < 1) {
             popupControllerRef.showActionResult(AppText.metadataSelectSeriesFirst, true)

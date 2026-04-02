@@ -301,7 +301,9 @@ Item {
         const root = rootObject
         if (!root) return -1
 
-        const selectionContext = root.selectedSeriesContext || ({})
+        const selectionContext = typeof root.currentSelectedSeriesContext === "function"
+            ? root.currentSelectedSeriesContext()
+            : (root.selectedSeriesContext || ({}))
         const selectedTitle = String(selectionContext.seriesTitle || "").trim()
         if (selectedTitle.length < 1) return -1
 
@@ -319,7 +321,9 @@ Item {
         const root = rootObject
         if (!root || !libraryModelRef) return
 
-        const selectionContext = root.selectedSeriesContext || ({})
+        const selectionContext = typeof root.currentSelectedSeriesContext === "function"
+            ? root.currentSelectedSeriesContext()
+            : (root.selectedSeriesContext || ({}))
         const key = String(selectionContext.seriesKey || "")
         if (key.length < 1) {
             root.heroCoverComicId = -1
@@ -349,7 +353,9 @@ Item {
         const root = rootObject
         if (!root || !libraryModelRef) return
 
-        const selectionContext = root.selectedSeriesContext || ({})
+        const selectionContext = typeof root.currentSelectedSeriesContext === "function"
+            ? root.currentSelectedSeriesContext()
+            : (root.selectedSeriesContext || ({}))
         const key = String(selectionContext.seriesKey || "").trim()
         if (key.length < 1) {
             root.heroBackgroundRequestId = -1

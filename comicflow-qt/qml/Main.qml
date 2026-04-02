@@ -7,6 +7,7 @@ import "components/AppText.js" as AppText
 import "components/PublisherCatalog.js" as PublisherCatalog
 import "components/SettingsCatalog.js" as SettingsCatalog
 import "components/AppErrorMapper.js" as AppErrorMapper
+import "components/SeriesContext.js" as SeriesContext
 import "controllers"
 
 ApplicationWindow {
@@ -322,18 +323,6 @@ ApplicationWindow {
     readonly property int firstRunStep4HighlightHeight: 494
     readonly property int firstRunDropZoneHighlightRadius: 20
 
-    onFirstRunOnboardingStepChanged: {
-        console.log("[onboarding] step changed:", firstRunOnboardingStep)
-        if (firstRunOnboardingStep === 4) {
-            console.log(
-                "[onboarding] step4 geometry:",
-                "highlight=", dropZoneHighlight.x, dropZoneHighlight.y, dropZoneHighlight.width, dropZoneHighlight.height,
-                "bubble=", onboardingStep1Bubble.x, onboardingStep1Bubble.y, onboardingStep1Bubble.width, onboardingStep1Bubble.height,
-                "menu=", onboardingNavigationBlockFull.x, onboardingNavigationBlockFull.y, onboardingNavigationBlockFull.width, onboardingNavigationBlockFull.height,
-                "close=", onboardingCloseButton.x, onboardingCloseButton.y, onboardingCloseButton.width, onboardingCloseButton.height
-            )
-        }
-    }
     StartupController {
         id: startupController
         rootObject: root
@@ -721,8 +710,18 @@ ApplicationWindow {
         return series + " - Vol. " + volume
     }
 
+    function currentSelectedSeriesContext() {
+        return SeriesContext.selectedContext(
+            selectedSeriesKey,
+            selectedSeriesTitle,
+            selectedVolumeKey,
+            selectedVolumeTitle,
+            AppText.libraryAllVolumes
+        )
+    }
+
     function issuesGridMatchesSelectedSeries() {
-        const context = selectedSeriesContext || ({})
+        const context = currentSelectedSeriesContext()
         const selectedTitle = String(context.seriesTitle || "").trim()
         if (selectedTitle.length < 1 || issuesGridData.length < 1) return false
         const gridTitle = displaySeriesTitleForIssue(issuesGridData[0])

@@ -59,6 +59,16 @@ Item {
         selectedVolumeTitle = context.volumeTitle
     }
 
+    function currentSelectedSeriesContext() {
+        return SeriesContext.selectedContext(
+            selectedSeriesKey,
+            selectedSeriesTitle,
+            selectedVolumeKey,
+            selectedVolumeTitle,
+            AppText.libraryAllVolumes
+        )
+    }
+
     function refreshQuickFilterCounts() {
         if (!libraryModelRef) return
         quickFilterLastImportCount = libraryModelRef.quickFilterIssueCount("last_import", lastImportSessionComicIds)
@@ -289,7 +299,7 @@ Item {
 
     function refreshVolumeList() {
         if (!libraryModelRef || !volumeListModelRef) return
-        const currentContext = selectedSeriesContext
+        const currentContext = currentSelectedSeriesContext()
         const previousKey = String(currentContext.volumeKey || "__all__")
         const groups = currentContext.hasSeries
             ? libraryModelRef.volumeGroupsForSeries(currentContext.seriesKey)
@@ -371,7 +381,7 @@ Item {
         const root = activeRoot()
         if (!root || !libraryModelRef || !navigationSurfaceControllerRef) return
 
-        const currentContext = selectedSeriesContext
+        const currentContext = currentSelectedSeriesContext()
         if (!currentContext.hasSeries) {
             if (root.startupSnapshotApplied && root.startupHydrationInProgress && root.issuesGridData.length > 0) {
                 startupControllerRef.startupLog("refreshIssuesGridData keep snapshot: selectedSeriesKey empty during hydration")

@@ -70,7 +70,9 @@ Item {
         const root = rootObject
         if (!root) return
         if (typeof root.applySelectedSeriesContext === "function") {
-            const context = root.selectedSeriesContext || ({})
+            const context = typeof root.currentSelectedSeriesContext === "function"
+                ? root.currentSelectedSeriesContext()
+                : (root.selectedSeriesContext || ({}))
             root.applySelectedSeriesContext(
                 String(context.seriesKey || ""),
                 String(context.seriesTitle || ""),
@@ -167,7 +169,9 @@ Item {
         }
 
         const targetSeriesKey = String(pendingIssueTarget.seriesKey || "").trim()
-        const selectedContext = root.selectedSeriesContext || ({})
+        const selectedContext = typeof root.currentSelectedSeriesContext === "function"
+            ? root.currentSelectedSeriesContext()
+            : (root.selectedSeriesContext || ({}))
         if (targetSeriesKey.length > 0
                 && String(selectedContext.seriesKey || "").trim() !== targetSeriesKey) {
             return false
