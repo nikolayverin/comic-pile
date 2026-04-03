@@ -72,7 +72,6 @@ Rectangle {
     signal aboutRequested()
     signal continueReadingRequested()
     signal nextUnreadRequested()
-    signal seriesInfoRequested()
     gradient: Gradient {
         orientation: Gradient.Vertical
         GradientStop { position: 0.0; color: root.topColor }
@@ -279,12 +278,6 @@ Rectangle {
             text: "Next unread"
             fontFamily: root.uiFontFamily
             onClicked: root.nextUnreadRequested()
-        }
-
-        NavigationHelperButton {
-            text: "Show series Info"
-            fontFamily: root.uiFontFamily
-            onClicked: root.seriesInfoRequested()
         }
     }
 

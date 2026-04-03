@@ -462,8 +462,6 @@ ApplicationWindow {
         rootObject: root
         libraryModelRef: libraryModel
         popupControllerRef: popupController
-        appSettingsRef: appSettingsController
-        mainLibraryPaneRef: mainLibraryPane
         issuesFlick: root.activeIssuesFlick
         readingContinuationControllerRef: readingContinuationController
     }
@@ -2031,7 +2029,6 @@ ApplicationWindow {
             windowCornerRadius: root.windowCornerRadius
             onContinueReadingRequested: navigationSurfaceController.continueReading()
             onNextUnreadRequested: navigationSurfaceController.nextUnread()
-            onSeriesInfoRequested: navigationSurfaceController.toggleSeriesInfo()
             onAddFilesRequested: root.quickAddFilesFromDialog()
             onAddFolderRequested: root.quickAddFolderFromDialog()
             onAddIssueRequested: root.quickAddFilesFromDialog()

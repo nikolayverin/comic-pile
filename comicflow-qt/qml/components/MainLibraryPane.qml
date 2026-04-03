@@ -37,14 +37,6 @@ Rectangle {
         rightPane.setAbsoluteSplitScroll(targetValue)
     }
 
-    function seriesInfoRequiresReveal() {
-        return rightPane.seriesInfoRequiresReveal()
-    }
-
-    function revealSeriesInfo() {
-        rightPane.revealSeriesInfo()
-    }
-
     Item {
         id: rightPane
         anchors.fill: parent
@@ -123,7 +115,7 @@ readonly property real heroLayoutHeight: heroSectionVisible
     ? Math.max(0, root.heroBlockHeight - heroCollapseOffset)
     : 0
 readonly property real heroVisualHeight: heroSectionVisible
-    ? Math.max(heroLayoutHeight, manualHeroRevealHeight)
+    ? heroLayoutHeight
     : 0
 readonly property real heroCollapseRange: heroSectionVisible
     ? Math.max(0, root.heroBlockHeight - heroMinHeight)
@@ -153,24 +145,18 @@ property real smoothScrollValue: 0
 property real smoothScrollTarget: 0
 property bool smoothScrollActive: false
 property bool smoothScrollApplying: false
-property real manualHeroRevealHeight: 0
-readonly property bool manualHeroRevealActive: manualHeroRevealHeight > 0.5
 
 onWidthChanged: scheduleResolvedOverflowSync()
 onHeightChanged: scheduleResolvedOverflowSync()
 onQuickFilterModeChanged: {
     heroCollapseAnimation.stop()
-    manualHeroRevealAnimation.stop()
     stopSmoothScroll()
     heroCollapseOffset = 0
-    manualHeroRevealHeight = 0
 }
 onHeroSectionVisibleChanged: {
     heroCollapseAnimation.stop()
-    manualHeroRevealAnimation.stop()
     stopSmoothScroll()
     heroCollapseOffset = 0
-    manualHeroRevealHeight = 0
     scheduleResolvedOverflowSync()
 }
 
@@ -199,26 +185,6 @@ function stopSmoothScroll() {
     smoothScrollAnimation.stop()
     smoothScrollTarget = currentSplitScroll
     smoothScrollActive = false
-}
-
-function animateManualHeroReveal(targetHeight) {
-    const clamped = Math.max(0, Math.min(root.heroBlockHeight, Number(targetHeight || 0)))
-    manualHeroRevealAnimation.stop()
-    manualHeroRevealAnimation.to = clamped
-    manualHeroRevealAnimation.start()
-}
-
-function seriesInfoRequiresReveal() {
-    return heroSectionVisible
-        && !manualHeroRevealActive
-        && heroCollapseOffset > 0.5
-}
-
-function revealSeriesInfo() {
-    if (!heroSectionVisible) return
-    manualHeroRevealAnimation.stop()
-    manualHeroRevealHeight = 0
-    animateHeroTo(0)
 }
 
 function animateHeroTo(targetOffset) {
@@ -268,10 +234,6 @@ function applySplitScroll(deltaPixels) {
     const delta = Number(deltaPixels || 0)
     if (Math.abs(delta) < 0.1) return
     root.dismissGridOverlayMenusForScroll()
-    if (manualHeroRevealActive && delta < 0) {
-        manualHeroRevealAnimation.stop()
-        manualHeroRevealHeight = 0
-    }
     const base = smoothScrollActive ? smoothScrollTarget : currentSplitScroll
     animateSplitScrollTo(base + delta)
 }
@@ -280,14 +242,6 @@ NumberAnimation {
     id: heroCollapseAnimation
     target: rightPane
     property: "heroCollapseOffset"
-    duration: root.motionBaseMs
-    easing.type: Easing.InOutQuad
-}
-
-NumberAnimation {
-    id: manualHeroRevealAnimation
-    target: rightPane
-    property: "manualHeroRevealHeight"
     duration: root.motionBaseMs
     easing.type: Easing.InOutQuad
 }
@@ -1154,7 +1108,7 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         height: root.gridNotchDepth
-        visible: rightPane.heroSectionVisible && !rightPane.manualHeroRevealActive
+        visible: rightPane.heroSectionVisible
         z: 5
 
         Rectangle {
