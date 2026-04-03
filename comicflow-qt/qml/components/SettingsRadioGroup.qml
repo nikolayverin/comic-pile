@@ -17,7 +17,7 @@ Item {
     property int optionSpacing: 8
     property int optionGap: 10
     readonly property var normalizedOptions: buildNormalizedOptions()
-    readonly property int maxTextWidth: calculateMaxTextWidth()
+    property int maxTextWidth: 0
 
     signal activated(int index, string text)
 
@@ -42,15 +42,20 @@ Item {
         return []
     }
 
-    function calculateMaxTextWidth() {
+    function refreshTextMetrics() {
         let maxWidth = 0
         const source = normalizedOptions
         for (let i = 0; i < source.length; i += 1) {
             widthMeasure.text = String(source[i] || "")
-            maxWidth = Math.max(maxWidth, Math.ceil(widthMeasure.width))
+            maxWidth = Math.max(maxWidth, Math.ceil(widthMeasure.advanceWidth))
         }
-        return maxWidth
+        maxTextWidth = maxWidth
     }
+
+    onNormalizedOptionsChanged: refreshTextMetrics()
+    onUiFontFamilyChanged: refreshTextMetrics()
+    onTextPixelSizeChanged: refreshTextMetrics()
+    Component.onCompleted: refreshTextMetrics()
 
     Column {
         anchors.fill: parent

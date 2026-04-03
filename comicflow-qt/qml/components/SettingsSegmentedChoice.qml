@@ -23,9 +23,9 @@ Item {
     readonly property int buttonRadius: Math.round(buttonHeight / 2)
     readonly property int trackRadius: Math.round(trackHeight / 2)
     readonly property var normalizedOptions: buildNormalizedOptions()
-    readonly property var segmentWidths: buildSegmentWidths()
+    property var segmentWidths: []
     readonly property int resolvedCurrentIndex: resolveCurrentIndex()
-    readonly property int totalButtonsWidth: sumSegmentWidths()
+    property int totalButtonsWidth: 0
 
     signal activated(int index, string text)
 
@@ -48,23 +48,18 @@ Item {
         return []
     }
 
-    function buildSegmentWidths() {
+    function refreshSegmentMetrics() {
         const widths = []
+        let total = 0
         const source = normalizedOptions
         for (let i = 0; i < source.length; i += 1) {
             widthMeasure.text = String(source[i] || "")
-            widths.push(Math.ceil(widthMeasure.width) + (horizontalTextPadding * 2))
+            const segmentWidth = Math.ceil(widthMeasure.advanceWidth) + (horizontalTextPadding * 2)
+            widths.push(segmentWidth)
+            total += segmentWidth
         }
-        return widths
-    }
-
-    function sumSegmentWidths() {
-        let total = 0
-        const source = segmentWidths
-        for (let i = 0; i < source.length; i += 1) {
-            total += Number(source[i] || 0)
-        }
-        return total
+        segmentWidths = widths
+        totalButtonsWidth = total
     }
 
     function segmentXAt(index) {
@@ -93,6 +88,11 @@ Item {
         }
         return indexOfCurrentText()
     }
+
+    onNormalizedOptionsChanged: refreshSegmentMetrics()
+    onUiFontFamilyChanged: refreshSegmentMetrics()
+    onTextPixelSizeChanged: refreshSegmentMetrics()
+    Component.onCompleted: refreshSegmentMetrics()
 
     Rectangle {
         anchors.fill: parent
