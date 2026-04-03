@@ -538,6 +538,213 @@ int main(int argc, char *argv[])
     }
     printStepResult(QStringLiteral("Metadata load"), true);
 
+    model.reload();
+    const QVariantMap navigationTarget = model.navigationTargetForComic(comicId);
+    const QString smokeSeriesKey = navigationTarget.value(QStringLiteral("seriesKey")).toString();
+    if (!navigationTarget.value(QStringLiteral("ok")).toBool()
+        || navigationTarget.value(QStringLiteral("comicId")).toInt() != comicId
+        || smokeSeriesKey.isEmpty()) {
+        printStepResult(QStringLiteral("Navigation target"), false, QStringLiteral("Created issue did not resolve to a navigation target."));
+        return 1;
+    }
+    printStepResult(QStringLiteral("Navigation target"), true);
+
+    const QString continueStatePath = QDir(dataRoot)
+        .filePath(QStringLiteral(".runtime/continue-reading-state.json"));
+    if (!model.readContinueReadingState().isEmpty()) {
+        printStepResult(QStringLiteral("Continue reading state"), false, QStringLiteral("Expected empty persisted continue-reading state at startup."));
+        return 1;
+    }
+    if (!model.writeContinueReadingState({
+            { QStringLiteral("comicId"), comicId },
+            { QStringLiteral("seriesKey"), smokeSeriesKey },
+        })) {
+        printStepResult(QStringLiteral("Continue reading state"), false, QStringLiteral("Failed to persist continue-reading state."));
+        return 1;
+    }
+    const QVariantMap persistedContinueState = model.readContinueReadingState();
+    if (persistedContinueState.value(QStringLiteral("comicId")).toInt() != comicId
+        || persistedContinueState.value(QStringLiteral("seriesKey")).toString() != smokeSeriesKey
+        || !QFileInfo::exists(continueStatePath)) {
+        printStepResult(QStringLiteral("Continue reading state"), false, QStringLiteral("Persisted continue-reading state did not round-trip."));
+        return 1;
+    }
+    if (!model.writeContinueReadingState({
+            { QStringLiteral("comicId"), -1 },
+            { QStringLiteral("seriesKey"), QString() },
+        })) {
+        printStepResult(QStringLiteral("Continue reading state clear"), false, QStringLiteral("Failed to clear continue-reading state."));
+        return 1;
+    }
+    if (!model.readContinueReadingState().isEmpty() || QFileInfo::exists(continueStatePath)) {
+        printStepResult(QStringLiteral("Continue reading state clear"), false, QStringLiteral("Continue-reading state file still exists after clear."));
+        return 1;
+    }
+    printStepResult(QStringLiteral("Continue reading state"), true);
+
+    const QString readingFlowIncomingOne = QDir(incomingDirPath).filePath(QStringLiteral("reading-flow-001.%1").arg(ext));
+    const QString readingFlowIncomingTwo = QDir(incomingDirPath).filePath(QStringLiteral("reading-flow-002.%1").arg(ext));
+    const QString readingFlowIncomingThree = QDir(incomingDirPath).filePath(QStringLiteral("reading-flow-003.%1").arg(ext));
+    if (!copyFileStrict(seedArchivePath, readingFlowIncomingOne, setupError)
+        || !copyFileStrict(seedArchivePath, readingFlowIncomingTwo, setupError)
+        || !copyFileStrict(seedArchivePath, readingFlowIncomingThree, setupError)) {
+        printStepResult(QStringLiteral("Reading flow setup"), false, setupError);
+        return 1;
+    }
+
+    auto importReadingFlowIssue = [&](const QString &sourcePath,
+                                      const QString &issueNumber,
+                                      const QString &title,
+                                      int &comicIdOut,
+                                      QString &errorOut) -> bool {
+        const QVariantMap importResult = model.importArchiveAndCreateIssueEx(
+            sourcePath,
+            QStringLiteral("reading-flow-%1.cbz").arg(issueNumber),
+            {
+                { QStringLiteral("series"), QStringLiteral("Reading Flow") },
+                { QStringLiteral("volume"), QStringLiteral("1") },
+                { QStringLiteral("issueNumber"), issueNumber },
+                { QStringLiteral("title"), title },
+                { QStringLiteral("deferReload"), true },
+            }
+        );
+        if (!importResult.value(QStringLiteral("ok")).toBool()) {
+            errorOut = importResult.value(QStringLiteral("error")).toString();
+            return false;
+        }
+        comicIdOut = importResult.value(QStringLiteral("comicId")).toInt();
+        if (comicIdOut < 1) {
+            errorOut = QStringLiteral("Imported issue did not return a valid comic id.");
+            return false;
+        }
+        return true;
+    };
+
+    int readingFlowOneId = 0;
+    int readingFlowTwoId = 0;
+    int readingFlowThreeId = 0;
+    QString readingFlowError;
+    if (!importReadingFlowIssue(
+            readingFlowIncomingOne,
+            QStringLiteral("1"),
+            QStringLiteral("Reading Flow #1"),
+            readingFlowOneId,
+            readingFlowError)
+        || !importReadingFlowIssue(
+            readingFlowIncomingTwo,
+            QStringLiteral("2"),
+            QStringLiteral("Reading Flow #2"),
+            readingFlowTwoId,
+            readingFlowError)
+        || !importReadingFlowIssue(
+            readingFlowIncomingThree,
+            QStringLiteral("3"),
+            QStringLiteral("Reading Flow #3"),
+            readingFlowThreeId,
+            readingFlowError)) {
+        printStepResult(QStringLiteral("Reading flow setup"), false, readingFlowError);
+        return 1;
+    }
+
+    model.reload();
+    const QVariantMap readingFlowAnchorTarget = model.navigationTargetForComic(readingFlowOneId);
+    const QString readingFlowSeriesKey = readingFlowAnchorTarget.value(QStringLiteral("seriesKey")).toString();
+    if (!readingFlowAnchorTarget.value(QStringLiteral("ok")).toBool()
+        || readingFlowAnchorTarget.value(QStringLiteral("comicId")).toInt() != readingFlowOneId
+        || readingFlowSeriesKey.isEmpty()) {
+        printStepResult(QStringLiteral("Reading flow setup"), false, QStringLiteral("Failed to resolve the reading-flow navigation anchor."));
+        return 1;
+    }
+    const QVariantMap noActiveReadingTarget = model.continueReadingTarget();
+    if (noActiveReadingTarget.value(QStringLiteral("ok")).toBool()) {
+        printStepResult(QStringLiteral("Continue reading target ranking"), false, QStringLiteral("Expected no active reading target before progress or bookmarks."));
+        return 1;
+    }
+
+    if (!model.saveReaderProgress(readingFlowOneId, 7).isEmpty()) {
+        printStepResult(QStringLiteral("Continue reading target ranking"), false, QStringLiteral("Failed to save reader progress for issue #1."));
+        return 1;
+    }
+    QVariantMap continueTarget = model.continueReadingTarget();
+    if (!continueTarget.value(QStringLiteral("ok")).toBool()
+        || continueTarget.value(QStringLiteral("comicId")).toInt() != readingFlowOneId
+        || continueTarget.value(QStringLiteral("seriesKey")).toString() != readingFlowSeriesKey
+        || continueTarget.value(QStringLiteral("startPageIndex")).toInt() != 6
+        || !continueTarget.value(QStringLiteral("hasProgress")).toBool()
+        || continueTarget.value(QStringLiteral("hasBookmark")).toBool()) {
+        printStepResult(QStringLiteral("Continue reading target ranking"), false, QStringLiteral("Progress-only continue target did not resolve to issue #1."));
+        return 1;
+    }
+
+    if (!model.saveReaderBookmark(readingFlowTwoId, 3).isEmpty()) {
+        printStepResult(QStringLiteral("Continue reading target ranking"), false, QStringLiteral("Failed to save bookmark for issue #2."));
+        return 1;
+    }
+    continueTarget = model.continueReadingTarget();
+    if (!continueTarget.value(QStringLiteral("ok")).toBool()
+        || continueTarget.value(QStringLiteral("comicId")).toInt() != readingFlowTwoId
+        || continueTarget.value(QStringLiteral("startPageIndex")).toInt() != 2
+        || !continueTarget.value(QStringLiteral("hasBookmark")).toBool()) {
+        printStepResult(QStringLiteral("Continue reading target ranking"), false, QStringLiteral("Bookmark should outrank plain reading progress."));
+        return 1;
+    }
+
+    if (!model.saveReaderBookmark(readingFlowTwoId, 0).isEmpty()
+        || !model.saveReaderProgress(readingFlowThreeId, 11).isEmpty()) {
+        printStepResult(QStringLiteral("Continue reading target ranking"), false, QStringLiteral("Failed to update progress state for ranking fallback."));
+        return 1;
+    }
+    continueTarget = model.continueReadingTarget();
+    if (!continueTarget.value(QStringLiteral("ok")).toBool()
+        || continueTarget.value(QStringLiteral("comicId")).toInt() != readingFlowThreeId
+        || continueTarget.value(QStringLiteral("startPageIndex")).toInt() != 10
+        || !continueTarget.value(QStringLiteral("hasProgress")).toBool()
+        || continueTarget.value(QStringLiteral("hasBookmark")).toBool()) {
+        printStepResult(QStringLiteral("Continue reading target ranking"), false, QStringLiteral("Highest in-progress issue should win when no bookmarks remain."));
+        return 1;
+    }
+    printStepResult(QStringLiteral("Continue reading target ranking"), true);
+
+    if (!model.updateComicMetadata(readingFlowOneId, {
+            { QStringLiteral("readStatus"), QStringLiteral("read") },
+            { QStringLiteral("currentPage"), QStringLiteral("0") },
+        }).isEmpty()
+        || !model.updateComicMetadata(readingFlowTwoId, {
+            { QStringLiteral("readStatus"), QStringLiteral("unread") },
+            { QStringLiteral("currentPage"), QStringLiteral("0") },
+        }).isEmpty()
+        || !model.updateComicMetadata(readingFlowThreeId, {
+            { QStringLiteral("readStatus"), QStringLiteral("read") },
+            { QStringLiteral("currentPage"), QStringLiteral("0") },
+        }).isEmpty()) {
+        printStepResult(QStringLiteral("Next unread target"), false, QStringLiteral("Failed to prepare read-status ordering for next unread."));
+        return 1;
+    }
+    model.reload();
+
+    QVariantMap nextUnreadTarget = model.nextUnreadTarget(readingFlowSeriesKey, readingFlowOneId);
+    if (!nextUnreadTarget.value(QStringLiteral("ok")).toBool()
+        || nextUnreadTarget.value(QStringLiteral("comicId")).toInt() != readingFlowTwoId
+        || nextUnreadTarget.value(QStringLiteral("seriesKey")).toString() != readingFlowSeriesKey) {
+        printStepResult(QStringLiteral("Next unread target"), false, QStringLiteral("Expected issue #2 as the next unread target after issue #1."));
+        return 1;
+    }
+
+    nextUnreadTarget = model.nextUnreadTarget(readingFlowSeriesKey, -1);
+    if (!nextUnreadTarget.value(QStringLiteral("ok")).toBool()
+        || nextUnreadTarget.value(QStringLiteral("comicId")).toInt() != readingFlowTwoId) {
+        printStepResult(QStringLiteral("Next unread target"), false, QStringLiteral("Expected first unread issue when no anchor comic is provided."));
+        return 1;
+    }
+
+    nextUnreadTarget = model.nextUnreadTarget(readingFlowSeriesKey, readingFlowTwoId);
+    if (nextUnreadTarget.value(QStringLiteral("ok")).toBool()
+        || !nextUnreadTarget.value(QStringLiteral("message")).toString().contains(QStringLiteral("No next unread issue"), Qt::CaseInsensitive)) {
+        printStepResult(QStringLiteral("Next unread target"), false, QStringLiteral("Expected no queued next unread issue after the last unread item."));
+        return 1;
+    }
+    printStepResult(QStringLiteral("Next unread target"), true);
+
     QString coverImageSource;
     QString coverError;
     {

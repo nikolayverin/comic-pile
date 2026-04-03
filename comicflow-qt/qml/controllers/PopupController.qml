@@ -62,6 +62,23 @@ Item {
         return rootObject
     }
 
+    function tracePopupLayer(message) {
+        const rootRef = root()
+        if (!rootRef || typeof rootRef.runtimeDebugLog !== "function") return
+        rootRef.runtimeDebugLog("popup-layer", String(message || ""))
+    }
+
+    function popupDebugLabel(popup) {
+        if (!popup) return "unknown-popup"
+        const explicitName = String(popup.debugName || "").trim()
+        if (explicitName.length > 0) return explicitName
+        const titleText = String(popup.title || "").trim()
+        if (titleText.length > 0) return titleText
+        const objectLabel = String(popup.objectName || "").trim()
+        if (objectLabel.length > 0) return objectLabel
+        return "unnamed-popup"
+    }
+
     function visibleCriticalPopup() {
         if (importModalOverlayRef && importModalOverlayRef.visible) return importModalOverlayRef.dialogItem
         if (importConflictDialogRef && importConflictDialogRef.visible) return importConflictDialogRef
@@ -138,6 +155,7 @@ Item {
 
     function requestPopupDismiss(popup) {
         if (!popup) return
+        tracePopupLayer("dismiss request popup=" + popupDebugLabel(popup))
         if (typeof popup.closeRequested === "function") {
             popup.closeRequested()
             return
@@ -153,11 +171,22 @@ Item {
 
     function handleManagedOutsideClick() {
         const popup = activeManagedPopup()
-        if (!popup) return
-        if (popupAllowsOutsideDismiss(popup)) {
+        if (!popup) {
+            tracePopupLayer("outside click ignored activePopup=none")
+            return
+        }
+        const popupLabel = popupDebugLabel(popup)
+        const allowsDismiss = popupAllowsOutsideDismiss(popup)
+        tracePopupLayer(
+            "outside click activePopup=" + popupLabel
+            + " allowDismiss=" + String(allowsDismiss)
+        )
+        if (allowsDismiss) {
+            tracePopupLayer("outside click -> dismiss popup=" + popupLabel)
             requestPopupDismiss(popup)
             return
         }
+        tracePopupLayer("outside click -> restore focus popup=" + popupLabel)
         if (typeof popup.forceActiveFocus === "function") {
             popup.forceActiveFocus()
         }

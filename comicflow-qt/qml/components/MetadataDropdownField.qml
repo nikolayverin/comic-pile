@@ -217,6 +217,8 @@ FocusScope {
 
     ContextMenuPopup {
         id: dropdownPopup
+        debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
+        debugName: "metadata-dropdown"
         uiFontFamily: popupMenuStyle.uiFontFamily
         uiFontPixelSize: popupMenuStyle.uiFontPixelSize
         backgroundColor: popupMenuStyle.backgroundColor

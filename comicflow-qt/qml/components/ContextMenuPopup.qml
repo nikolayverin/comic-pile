@@ -36,6 +36,8 @@ Popup {
     property real placementAnchorCenterX: 0
     property real placementAnchorLeftX: 0
     property real placementAnchorYValue: 0
+    property var debugLogTarget: null
+    property string debugName: ""
 
     readonly property int chromeHeight: showArrow ? arrowHeight : 0
     readonly property var visibleMenuItems: menuList.visibleMenuItems
@@ -107,11 +109,13 @@ Popup {
 
     onActiveFocusChanged: {
         if (closeOnFocusLoss && !activeFocus && visible) {
+            traceMenuPopup("focus lost -> close")
             close()
         }
     }
 
     onVisibleChanged: {
+        traceMenuPopup("visible=" + String(visible))
         if (visible) {
             Qt.callLater(function() {
                 if (root.visible) {
@@ -210,6 +214,22 @@ Popup {
         arrowCenterX = Math.max(minX, Math.min(maxX, localX))
     }
 
+    function popupDebugLabel() {
+        const explicitName = String(debugName || "").trim()
+        if (explicitName.length > 0) return explicitName
+        const objectLabel = String(objectName || "").trim()
+        if (objectLabel.length > 0) return objectLabel
+        return "unnamed-context-menu"
+    }
+
+    function traceMenuPopup(message) {
+        const target = debugLogTarget
+        if (!target || typeof target.appendStartupDebugLog !== "function") return
+        target.appendStartupDebugLog(
+            "[popup-layer] " + popupDebugLabel() + " " + String(message || "")
+        )
+    }
+
     Item {
         id: outsideDismissLayer
         parent: root.visible ? root.parent : null
@@ -225,6 +245,7 @@ Popup {
             acceptedButtons: Qt.AllButtons
             onPressed: function(mouse) {
                 mouse.accepted = true
+                root.traceMenuPopup("outside press dismiss")
                 root.close()
             }
         }
@@ -279,10 +300,14 @@ Popup {
 
                 onItemTriggered: function(index, item) {
                     const actionName = String((item || {}).action || "")
+                    root.traceMenuPopup("item triggered action=" + actionName)
                     root.close()
                     root.itemTriggered(index, actionName)
                 }
             }
         }
     }
+
+    onOpened: traceMenuPopup("opened")
+    onClosed: traceMenuPopup("closed")
 }

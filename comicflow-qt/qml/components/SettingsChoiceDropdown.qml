@@ -129,6 +129,8 @@ Item {
 
     ContextMenuPopup {
         id: dropdownPopup
+        debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
+        debugName: "settings-choice-dropdown"
         uiFontFamily: popupMenuStyle.uiFontFamily
         uiFontPixelSize: 13
         backgroundColor: popupMenuStyle.backgroundColor

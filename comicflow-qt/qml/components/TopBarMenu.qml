@@ -467,6 +467,8 @@ Rectangle {
     ContextMenuPopup {
         id: fileMenuPopup
         parent: Overlay.overlay
+        debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
+        debugName: "topbar-file-menu"
         showArrow: true
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(fileMenuPopup, visible)
         menuItems: [
@@ -488,6 +490,8 @@ Rectangle {
     ContextMenuPopup {
         id: helpMenu
         parent: Overlay.overlay
+        debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
+        debugName: "topbar-help-menu"
         showArrow: true
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenu, visible)
         menuItems: [

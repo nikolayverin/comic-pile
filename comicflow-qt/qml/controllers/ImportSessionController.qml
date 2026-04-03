@@ -63,6 +63,18 @@ Item {
         return rootObject
     }
 
+    function traceImport(message) {
+        const rootRef = root()
+        if (rootRef && typeof rootRef.runtimeDebugLog === "function") {
+            rootRef.runtimeDebugLog("import-batch", String(message || ""))
+            return
+        }
+        if (!libraryModelRef || typeof libraryModelRef.appendStartupDebugLog !== "function") {
+            return
+        }
+        libraryModelRef.appendStartupDebugLog("[import-batch] " + String(message || ""))
+    }
+
     function cloneVariantMap(sourceValues) {
         const rootRef = root()
         return rootRef && typeof rootRef.cloneVariantMap === "function"
@@ -263,6 +275,12 @@ Item {
         const type = String(entry.type || "")
         const comicId = Number(entry.comicId || 0)
         if (comicId < 1 || !libraryModelRef) return
+        traceImport(
+            "rollback begin"
+            + " type=" + type
+            + " comicId=" + String(comicId)
+            + " label=" + rollbackDisplayName(entry)
+        )
 
         const oldImportSignals = cloneVariantMap(entry.oldImportSignals)
         let rollbackError = ""
@@ -316,15 +334,35 @@ Item {
         }
 
         if (rollbackError.length > 0) {
+            traceImport(
+                "rollback failed"
+                + " type=" + type
+                + " comicId=" + String(comicId)
+                + " error=" + rollbackError
+            )
             pushImportFailure(
                 "[rollback] issue " + String(comicId),
                 AppText.importRollbackFailedPrefix + rollbackError,
                 "runtime_error"
             )
+            return
         }
+        traceImport(
+            "rollback done"
+            + " type=" + type
+            + " comicId=" + String(comicId)
+        )
     }
 
     function finalizeImportBatch(cancelled) {
+        traceImport(
+            "finalize batch"
+            + " cancelled=" + String(cancelled === true)
+            + " imported=" + String(importImportedCount)
+            + " errors=" + String(importErrorCount)
+            + " rollbackOps=" + String(importBatchRollbackOps.length)
+            + " pendingDeleteCount=" + String(importPendingOldFileDeletes.length)
+        )
         importBatchTimer.stop()
         importConflictActionTimer.stop()
         importCleanupTimer.stop()
@@ -388,6 +426,12 @@ Item {
         importCleanupCurrentFileName = importCleanupQueue.length > 0
             ? rollbackDisplayName(importCleanupQueue[0])
             : ""
+        traceImport(
+            "cleanup begin"
+            + " rollbackOps=" + String(importCleanupQueue.length)
+            + " imported=" + String(importImportedCount)
+            + " errors=" + String(importErrorCount)
+        )
 
         if (importCleanupQueue.length < 1) {
             finalizeImportBatch(true)
@@ -415,6 +459,14 @@ Item {
             const duplicateTier = String(effectiveResult.duplicateTier || "").trim().toLowerCase()
             if ((code === "duplicate" || code === "restore_review_required")
                 && Number(effectiveResult.existingId || 0) > 0) {
+                traceImport(
+                    "step blocked"
+                    + " code=" + code
+                    + " file=" + fileNameFromPath(sourcePath)
+                    + " sourceType=" + String(effectiveResult.sourceType || context.sourceType || "archive")
+                    + " existingId=" + String(Number(effectiveResult.existingId || 0))
+                    + " duplicateTier=" + duplicateTier
+                )
                 if (code === "duplicate"
                     && duplicateTier === "exact"
                     && (importConflictBatchAction === "skip_all" || importConflictBatchAction === "replace_all")) {
@@ -448,6 +500,12 @@ Item {
                 return
             }
 
+            traceImport(
+                "step failed"
+                + " code=" + code
+                + " file=" + fileNameFromPath(sourcePath)
+                + " error=" + errorText
+            )
             pushImportFailure(sourcePath, errorText, code)
             advanceCompletedImportBytes(queuedFileSizeBytes)
             cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
@@ -462,6 +520,15 @@ Item {
         importImportedCount += 1
         rememberLastImportComicId(Number(effectiveResult.comicId || 0))
         registerBatchRollbackOp(effectiveResult, "", { newFilePath: String(effectiveResult.filePath || "") })
+        const successCode = String(effectiveResult.code || "created").trim().toLowerCase() || "created"
+        if (successCode !== "created") {
+            traceImport(
+                "step ok"
+                + " code=" + successCode
+                + " comicId=" + String(Number(effectiveResult.comicId || 0))
+                + " file=" + fileNameFromPath(sourcePath)
+            )
+        }
         advanceCompletedImportBytes(queuedFileSizeBytes)
         cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
 
@@ -1171,6 +1238,12 @@ Item {
         importErrors = []
         importFailedPaths = []
         clearPendingImportStepContext()
+        traceImport(
+            "batch begin"
+            + " total=" + String(importTotal)
+            + " totalBytes=" + String(Math.round(importTotalBytes))
+            + " firstFile=" + importCurrentFileName
+        )
         importBatchTimer.start()
         return true
     }
@@ -1304,6 +1377,13 @@ Item {
         if (!importInProgress || importCancelRequested || importCleanupActive) return
         importCancelRequested = true
         importLifecycleState = "cancelling"
+        traceImport(
+            "cancel requested"
+            + " processed=" + String(importProcessed)
+            + "/" + String(importTotal)
+            + " imported=" + String(importImportedCount)
+            + " errors=" + String(importErrorCount)
+        )
         if (importPausedForConflict) {
             beginImportCleanup()
         }

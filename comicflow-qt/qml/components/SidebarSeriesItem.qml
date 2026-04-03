@@ -208,6 +208,8 @@ Item {
         ContextMenuPopup {
             id: seriesMenuPopup
             objectName: "seriesMenuPopup"
+            debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
+            debugName: "sidebar-series-menu"
             menuItems: root.menuItems
             uiFontFamily: root.uiFontFamily
             uiFontPixelSize: root.uiFontPixelSize

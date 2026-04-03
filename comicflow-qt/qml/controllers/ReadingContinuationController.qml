@@ -178,19 +178,34 @@ Item {
 
     function nextUnreadTarget() {
         const currentTarget = resolveContinueReadingTarget() || ({})
+        traceContinueReading(
+            "next unread request"
+            + " continueOk=" + String(Boolean(currentTarget.ok))
+            + " anchorComicId=" + String(currentTarget.anchorComicId || currentTarget.comicId || -1)
+            + " seriesKey=" + String(currentTarget.seriesKey || "")
+        )
         if (!Boolean(currentTarget.ok)) {
             return currentTarget
         }
         if (!libraryModelRef || typeof libraryModelRef.nextUnreadTarget !== "function") {
             return ReadingTarget.invalidTarget(emptyStoredTargetMessage())
         }
-        return ReadingTarget.normalize(
+        const nextTarget = ReadingTarget.normalize(
             libraryModelRef.nextUnreadTarget(
                 String(currentTarget.seriesKey || "").trim(),
                 Number(currentTarget.anchorComicId || currentTarget.comicId || -1)
             ) || ({}),
             "No next unread issue is queued right now."
         )
+        traceContinueReading(
+            "next unread result"
+            + " ok=" + String(Boolean(nextTarget.ok))
+            + " comicId=" + String(nextTarget.comicId || -1)
+            + " seriesKey=" + String(nextTarget.seriesKey || "")
+            + " startPageIndex=" + String(nextTarget.startPageIndex || 0)
+            + " message=" + String(nextTarget.message || "")
+        )
+        return nextTarget
     }
 
     function loadPersistedContinueReadingTarget() {
