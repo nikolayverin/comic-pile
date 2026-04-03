@@ -37,6 +37,14 @@ Rectangle {
         rightPane.setAbsoluteSplitScroll(targetValue)
     }
 
+    function seriesInfoRequiresReveal() {
+        return rightPane.seriesInfoRequiresReveal()
+    }
+
+    function revealSeriesInfo() {
+        rightPane.revealSeriesInfo()
+    }
+
     Item {
         id: rightPane
         anchors.fill: parent
@@ -198,6 +206,19 @@ function animateManualHeroReveal(targetHeight) {
     manualHeroRevealAnimation.stop()
     manualHeroRevealAnimation.to = clamped
     manualHeroRevealAnimation.start()
+}
+
+function seriesInfoRequiresReveal() {
+    return heroSectionVisible
+        && !manualHeroRevealActive
+        && heroCollapseOffset > 0.5
+}
+
+function revealSeriesInfo() {
+    if (!heroSectionVisible) return
+    manualHeroRevealAnimation.stop()
+    manualHeroRevealHeight = 0
+    animateHeroTo(0)
 }
 
 function animateHeroTo(targetOffset) {

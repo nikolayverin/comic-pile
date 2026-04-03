@@ -13,6 +13,7 @@ Item {
     property var libraryModelRef: null
     property var popupControllerRef: null
     property var appSettingsRef: null
+    property var mainLibraryPaneRef: null
     property var issuesFlick: null
     property var readingContinuationControllerRef: null
 
@@ -397,7 +398,20 @@ Item {
 
     function toggleSeriesInfo() {
         if (!appSettingsRef) return
-        appSettingsRef.appearanceShowHeroBlock = !Boolean(appSettingsRef.appearanceShowHeroBlock)
+        if (!Boolean(appSettingsRef.appearanceShowHeroBlock)) {
+            appSettingsRef.appearanceShowHeroBlock = true
+            return
+        }
+
+        const pane = mainLibraryPaneRef
+        if (pane && typeof pane.seriesInfoRequiresReveal === "function" && pane.seriesInfoRequiresReveal()) {
+            if (typeof pane.revealSeriesInfo === "function") {
+                pane.revealSeriesInfo()
+                return
+            }
+        }
+
+        appSettingsRef.appearanceShowHeroBlock = false
     }
 
     function toggleIssueOrder() {

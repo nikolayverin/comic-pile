@@ -463,6 +463,7 @@ ApplicationWindow {
         libraryModelRef: libraryModel
         popupControllerRef: popupController
         appSettingsRef: appSettingsController
+        mainLibraryPaneRef: mainLibraryPane
         issuesFlick: root.activeIssuesFlick
         readingContinuationControllerRef: readingContinuationController
     }
