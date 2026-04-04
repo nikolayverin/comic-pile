@@ -28,6 +28,7 @@ Item {
     property var seriesHeaderDialogRef: null
     property var deleteConfirmDialogRef: null
     property var deleteErrorDialogRef: null
+    property var secondaryLayerHostPopup: null
 
     property var actionResultPayload: AppMessagePayload.payload({})
     property var criticalPopupAttentionTarget: null
@@ -38,6 +39,13 @@ Item {
     readonly property string actionResultSecondaryPath: String((actionResultPayload || {}).filePath || "")
     readonly property string actionResultSecondaryAction: String((actionResultPayload || {}).actionKey || "")
     readonly property bool actionResultSecondaryVisible: actionResultSecondaryText.length > 0
+    readonly property bool actionResultLayered: Boolean(
+        actionResultDialogRef
+        && actionResultDialogRef.visible
+        && secondaryLayerHostPopup
+        && secondaryLayerHostPopup.visible
+    )
+    readonly property bool secondaryLayerPopupVisible: Boolean(visibleSecondaryLayerPopup())
 
     readonly property bool anyManagedModalPopupVisible: Boolean(importConflictDialogRef && importConflictDialogRef.visible)
         || Boolean(seriesDeleteConfirmDialogRef && seriesDeleteConfirmDialogRef.visible)
@@ -84,6 +92,13 @@ Item {
         if (importConflictDialogRef && importConflictDialogRef.visible) return importConflictDialogRef
         if (seriesDeleteConfirmDialogRef && seriesDeleteConfirmDialogRef.visible) return seriesDeleteConfirmDialogRef
         if (deleteConfirmDialogRef && deleteConfirmDialogRef.visible) return deleteConfirmDialogRef
+        return null
+    }
+
+    function visibleSecondaryLayerPopup() {
+        if (actionResultLayered) {
+            return actionResultDialogRef
+        }
         return null
     }
 
@@ -136,6 +151,10 @@ Item {
     }
 
     function activeManagedPopup() {
+        const layeredPopup = visibleSecondaryLayerPopup()
+        if (layeredPopup) {
+            return layeredPopup
+        }
         const list = managedModalPopups()
         for (let i = 0; i < list.length; i += 1) {
             const popup = list[i]
@@ -205,9 +224,46 @@ Item {
 
     function openExclusivePopup(targetPopup) {
         if (!targetPopup || typeof targetPopup.open !== "function") return
+        tracePopupLayer("open exclusive popup=" + popupDebugLabel(targetPopup))
+        secondaryLayerHostPopup = null
         closeAllManagedPopups(targetPopup)
         if (!targetPopup.visible) {
             targetPopup.open()
+        }
+    }
+
+    function canOpenSecondaryPopupOver(hostPopup, targetPopup) {
+        return Boolean(
+            hostPopup
+            && hostPopup.visible
+            && hostPopup === settingsDialogRef
+            && targetPopup
+            && targetPopup === actionResultDialogRef
+        )
+    }
+
+    function openPopupAbove(targetPopup, hostPopup) {
+        if (!targetPopup || typeof targetPopup.open !== "function") return
+        if (!canOpenSecondaryPopupOver(hostPopup, targetPopup)) {
+            tracePopupLayer(
+                "open second-layer fallback popup=" + popupDebugLabel(targetPopup)
+                + " host=" + popupDebugLabel(hostPopup)
+            )
+            openExclusivePopup(targetPopup)
+            return
+        }
+
+        tracePopupLayer(
+            "open second-layer popup=" + popupDebugLabel(targetPopup)
+            + " host=" + popupDebugLabel(hostPopup)
+        )
+        secondaryLayerHostPopup = hostPopup
+        if (!targetPopup.visible) {
+            targetPopup.open()
+            return
+        }
+        if (typeof targetPopup.forceActiveFocus === "function") {
+            targetPopup.forceActiveFocus()
         }
     }
 
@@ -218,6 +274,11 @@ Item {
     function showMappedActionResult(payload) {
         applyActionResultPayload(payload)
         openExclusivePopup(actionResultDialogRef)
+    }
+
+    function showMappedActionResultAbovePopup(payload, hostPopup) {
+        applyActionResultPayload(payload)
+        openPopupAbove(actionResultDialogRef, hostPopup)
     }
 
     function showActionResult(message, isError) {
@@ -340,6 +401,7 @@ Item {
     }
 
     function handleActionResultDialogClosed() {
+        secondaryLayerHostPopup = null
         actionResultPayload = AppMessagePayload.payload({
             title: AppText.popupActionErrorTitle,
             body: "",
@@ -361,6 +423,29 @@ Item {
     function handleDeleteErrorDialogClosed() {
         if (deleteControllerRef) {
             deleteControllerRef.clearDeleteFailureContext()
+        }
+    }
+
+    function handleSecondaryLayerOutsideClick() {
+        const popup = visibleSecondaryLayerPopup()
+        if (!popup) {
+            tracePopupLayer("second-layer outside click ignored activePopup=none")
+            return
+        }
+        const popupLabel = popupDebugLabel(popup)
+        const allowsDismiss = popupAllowsOutsideDismiss(popup)
+        tracePopupLayer(
+            "second-layer outside click activePopup=" + popupLabel
+            + " allowDismiss=" + String(allowsDismiss)
+        )
+        if (allowsDismiss) {
+            tracePopupLayer("second-layer outside click -> dismiss popup=" + popupLabel)
+            requestPopupDismiss(popup)
+            return
+        }
+        tracePopupLayer("second-layer outside click -> restore focus popup=" + popupLabel)
+        if (typeof popup.forceActiveFocus === "function") {
+            popup.forceActiveFocus()
         }
     }
 

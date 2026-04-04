@@ -919,7 +919,7 @@ ApplicationWindow {
 
         if (!libraryModel || typeof libraryModel.storeLibraryBackgroundImage !== "function") {
             if (showErrorPopup) {
-                popupController.showActionResult("Failed to save custom background image.", true)
+                showSettingsError("Failed to save custom background image.")
             }
             return ""
         }
@@ -927,10 +927,7 @@ ApplicationWindow {
         const result = libraryModel.storeLibraryBackgroundImage(candidatePath) || {}
         if (!Boolean(result.ok)) {
             if (showErrorPopup) {
-                popupController.showActionResult(
-                    String(result.error || "Failed to save custom background image."),
-                    true
-                )
+                showSettingsError(String(result.error || "Failed to save custom background image."))
             }
             return ""
         }
@@ -982,10 +979,29 @@ ApplicationWindow {
         popupController.openExclusivePopup(aboutDialog)
     }
 
+    function showSettingsActionResultPayload(payload) {
+        if (settingsDialog && settingsDialog.visible) {
+            popupController.showMappedActionResultAbovePopup(payload, settingsDialog)
+            return
+        }
+        popupController.showMappedActionResult(payload)
+    }
+
+    function showSettingsError(messageText, detailsText, buttonText, actionKey, filePath, titleOverride) {
+        showSettingsActionResultPayload(AppErrorMapper.defaultActionResultPayload(
+            String(messageText || ""),
+            String(titleOverride || AppText.popupActionErrorTitle),
+            String(detailsText || ""),
+            String(buttonText || ""),
+            String(actionKey || ""),
+            String(filePath || "")
+        ))
+    }
+
     function presentLibraryLoadError(messageText) {
         const message = String(messageText || "").trim()
         if (message.length < 1) return
-        popupController.showMappedActionResult(AppErrorMapper.libraryLoadFailure(message))
+        showSettingsActionResultPayload(AppErrorMapper.libraryLoadFailure(message))
     }
 
     function scheduleLibraryDataRelocationFromSettings() {
@@ -999,10 +1015,7 @@ ApplicationWindow {
 
         const result = libraryModel.scheduleDataRootRelocation(selectedPath)
         if (!Boolean((result || {}).ok)) {
-            popupController.showActionResult(
-                String((result || {}).error || AppText.mainFailedScheduleLibraryLocation),
-                true
-            )
+            showSettingsError(String((result || {}).error || AppText.mainFailedScheduleLibraryLocation))
             return
         }
 
@@ -1260,7 +1273,7 @@ ApplicationWindow {
 
         const applyError = String(libraryModel.setSevenZipExecutablePath(selectedPath) || "").trim()
         if (applyError.length > 0) {
-            popupController.showActionResult(applyError, true)
+            showSettingsError(applyError)
             return
         }
 
@@ -1303,10 +1316,7 @@ ApplicationWindow {
         const sizeBytes = fileSizeBytes(selectedPath)
         if (sizeBytes > limitBytes) {
             const label = libraryBackgroundCustomImageMode === "Tile" ? "1 MB" : "8 MB"
-            popupController.showActionResult(
-                AppText.backgroundImageTooLargeMessage(label),
-                true
-            )
+            showSettingsError(AppText.backgroundImageTooLargeMessage(label))
             return
         }
 
@@ -1325,10 +1335,7 @@ ApplicationWindow {
             if (currentPath.length > 0) {
                 const sizeBytes = fileSizeBytes(currentPath)
                 if (sizeBytes > libraryBackgroundTileImageMaxBytes) {
-                    popupController.showActionResult(
-                        AppText.mainTileModeImageLimit,
-                        true
-                    )
+                    showSettingsError(AppText.mainTileModeImageLimit)
                     return
                 }
             }

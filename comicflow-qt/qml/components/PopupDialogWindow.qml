@@ -14,6 +14,7 @@ Popup {
     modal: false
     focus: true
     padding: 0
+    z: popupStackLayer
 
     property real hostWidth: 0
     property real hostHeight: 0
@@ -25,6 +26,9 @@ Popup {
     property real titleTopMargin: -1
     property bool attentionActive: false
     property color attentionColor: themeColors.dialogAttentionColor
+    property bool surfaceShadowActive: false
+    property bool escapeShortcutEnabled: true
+    property int popupStackLayer: 0
     property int fadeDurationMs: 150
     default property alias bodyData: shell.bodyData
     property alias bodyHost: shell.bodyHost
@@ -91,7 +95,7 @@ Popup {
     Shortcut {
         sequence: "Escape"
         context: Qt.ApplicationShortcut
-        enabled: root.visible && closeBehavior.closeOnEscape
+        enabled: root.visible && root.escapeShortcutEnabled && closeBehavior.closeOnEscape
         onActivated: {
             root.tracePopup("escape shortcut")
             root.requestPopupDismiss("escape")
@@ -104,6 +108,7 @@ Popup {
         edgeColor: root.popupStyle.edgeLineColor
         attentionPulseActive: root.attentionActive
         attentionColor: root.attentionColor
+        surfaceShadowActive: root.surfaceShadowActive
     }
 
     contentItem: PopupDialogShell {

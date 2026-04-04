@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 
 Item {
     id: dialogHost
@@ -63,6 +64,15 @@ Item {
         z: 900
         overlayColor: popupStyleTokens.overlayColor
         onOutsideClicked: popupController.handleManagedOutsideClick()
+    }
+
+    PopupModalOverlay {
+        parent: Overlay.overlay
+        anchors.fill: parent
+        visible: popupController.secondaryLayerPopupVisible
+        z: 10
+        overlayColor: "transparent"
+        onOutsideClicked: popupController.handleSecondaryLayerOutsideClick()
     }
 
     ImportProgressOverlay {
@@ -250,6 +260,8 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         payload: popupController.actionResultPayload
+        popupStackLayer: popupController.actionResultLayered ? 20 : 0
+        surfaceShadowActive: popupController.actionResultLayered
         onClosed: popupController.handleActionResultDialogClosed()
         onSecondaryRequested: popupController.triggerActionResultSecondary()
     }
@@ -322,6 +334,7 @@ Item {
         id: settingsDialog
         hostWidth: root.width
         hostHeight: root.height
+        escapeShortcutEnabled: !popupController.secondaryLayerPopupVisible
         settingsController: appSettingsController
         libraryModelRef: libraryModel
         libraryBackgroundCustomImageResolvedPath: String(root.libraryBackgroundCustomImageResolvedPath || "")

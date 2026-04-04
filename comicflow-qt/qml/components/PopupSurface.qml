@@ -16,9 +16,77 @@ Rectangle {
     property real attentionGlowExponentMin: 1.45
     property real attentionGlowExponentMax: 2.9
     property real attentionGlowAnimatedExponent: attentionGlowExponentMin
+    property bool surfaceShadowActive: false
+    property color surfaceShadowColor: "#000000"
+    property int surfaceShadowSize: 44
+    property int surfaceShadowOffsetY: 6
+    property real surfaceShadowOpacity: 0.60
 
     radius: cornerRadius
     color: fillColor
+
+    Canvas {
+        id: surfaceShadow
+        visible: root.surfaceShadowActive
+        anchors.fill: parent
+        anchors.margins: -root.surfaceShadowSize
+        anchors.topMargin: -root.surfaceShadowSize
+        anchors.bottomMargin: -(root.surfaceShadowSize + root.surfaceShadowOffsetY)
+        z: -3
+        antialiasing: true
+        contextType: "2d"
+
+        function drawRoundedRect(ctx, x, y, w, h, r) {
+            const radius = Math.max(0, Math.min(r, w / 2, h / 2))
+            ctx.beginPath()
+            ctx.moveTo(x + radius, y)
+            ctx.lineTo(x + w - radius, y)
+            ctx.quadraticCurveTo(x + w, y, x + w, y + radius)
+            ctx.lineTo(x + w, y + h - radius)
+            ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h)
+            ctx.lineTo(x + radius, y + h)
+            ctx.quadraticCurveTo(x, y + h, x, y + h - radius)
+            ctx.lineTo(x, y + radius)
+            ctx.quadraticCurveTo(x, y, x + radius, y)
+            ctx.closePath()
+        }
+
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            ctx.clearRect(0, 0, width, height)
+
+            const step = 4
+            const x = root.surfaceShadowSize
+            const y = root.surfaceShadowSize + root.surfaceShadowOffsetY
+            const w = Math.max(1, root.width)
+            const h = Math.max(1, root.height)
+            const r = root.cornerRadius
+
+            for (let d = root.surfaceShadowSize; d > 0; d -= step) {
+                const t = 1 - (d / root.surfaceShadowSize)
+                const alpha = root.surfaceShadowOpacity * 0.36 * Math.pow(t, 1.55)
+                ctx.fillStyle = Qt.rgba(
+                    root.surfaceShadowColor.r,
+                    root.surfaceShadowColor.g,
+                    root.surfaceShadowColor.b,
+                    alpha
+                )
+                surfaceShadow.drawRoundedRect(ctx, x - d, y - d, w + d * 2, h + d * 2, r + d)
+                ctx.fill()
+            }
+
+            ctx.save()
+            ctx.globalCompositeOperation = "destination-out"
+            surfaceShadow.drawRoundedRect(ctx, x, y, w, h, r)
+            ctx.fill()
+            ctx.restore()
+        }
+
+        onVisibleChanged: requestPaint()
+        onWidthChanged: requestPaint()
+        onHeightChanged: requestPaint()
+    }
 
     Canvas {
         id: attentionGlow
@@ -154,11 +222,19 @@ Rectangle {
         onHeightChanged: requestPaint()
     }
 
-    onCornerRadiusChanged: topEdge.requestPaint()
+    onCornerRadiusChanged: {
+        topEdge.requestPaint()
+        surfaceShadow.requestPaint()
+    }
     onEdgeColorChanged: topEdge.requestPaint()
     onEdgeFadeFractionChanged: topEdge.requestPaint()
     onAttentionColorChanged: attentionGlow.requestPaint()
     onAttentionGlowSizeChanged: attentionGlow.requestPaint()
     onAttentionBorderWidthChanged: attentionGlow.requestPaint()
     onAttentionGlowAnimatedExponentChanged: attentionGlow.requestPaint()
+    onSurfaceShadowActiveChanged: surfaceShadow.requestPaint()
+    onSurfaceShadowColorChanged: surfaceShadow.requestPaint()
+    onSurfaceShadowSizeChanged: surfaceShadow.requestPaint()
+    onSurfaceShadowOffsetYChanged: surfaceShadow.requestPaint()
+    onSurfaceShadowOpacityChanged: surfaceShadow.requestPaint()
 }
