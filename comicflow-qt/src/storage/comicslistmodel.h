@@ -116,6 +116,8 @@ public:
     Q_INVOKABLE QString browseArchiveFolder(const QString &currentPath) const;
     Q_INVOKABLE QString browseDataRootFolder(const QString &currentPath) const;
     Q_INVOKABLE QString browseImageFile(const QString &currentPath) const;
+    Q_INVOKABLE QString resolveStoredPathAgainstDataRoot(const QString &storedPath) const;
+    Q_INVOKABLE QVariantMap storeLibraryBackgroundImage(const QString &sourcePath);
     Q_INVOKABLE QVariantList expandImportSources(const QVariantList &sourcePaths, bool recursive = true) const;
     Q_INVOKABLE QStringList listArchiveFilesInFolder(const QString &folderPath, bool recursive = true) const;
     Q_INVOKABLE qint64 fileSizeBytes(const QString &path) const;

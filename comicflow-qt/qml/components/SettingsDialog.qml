@@ -9,6 +9,8 @@ PopupDialogWindow {
     ThemeColors { id: themeColors }
 
     property var settingsController: null
+    property var libraryModelRef: null
+    property string libraryBackgroundCustomImageResolvedPath: ""
     property string sevenZipConfiguredPath: ""
     property string sevenZipDisplayPath: ""
     property bool sevenZipAvailable: false
@@ -525,6 +527,7 @@ PopupDialogWindow {
             SettingsAppearanceSection {
                 id: appearanceContent
                 dialogRef: dialog
+                libraryModelRef: dialog.libraryModelRef
                 popupStyleTokensRef: styleTokens
                 themeColorsRef: themeColors
                 visible: dialog.selectedSection === "appearance"

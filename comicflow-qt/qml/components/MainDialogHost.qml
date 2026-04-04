@@ -323,6 +323,8 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         settingsController: appSettingsController
+        libraryModelRef: libraryModel
+        libraryBackgroundCustomImageResolvedPath: String(root.libraryBackgroundCustomImageResolvedPath || "")
         sevenZipConfiguredPath: root.sevenZipConfiguredPath
         sevenZipDisplayPath: root.sevenZipEffectivePath
         sevenZipAvailable: root.cbrBackendAvailable

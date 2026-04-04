@@ -11,9 +11,12 @@
 #include "storage/storedpathutils.h"
 
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QImage>
+#include <QImageReader>
 #include <QRegularExpression>
+#include <QSaveFile>
 #include <QSet>
 #include <QUrl>
 
@@ -102,6 +105,97 @@ QString relativePathWithinDataRoot(const QString &dataRoot, const QString &absol
 QString normalizeInputFilePath(const QString &rawInput)
 {
     return ComicStoragePaths::normalizePathInput(rawInput);
+}
+
+QString libraryBackgroundStoreDirPath(const QString &dataRoot)
+{
+    return QDir(dataRoot).filePath(QStringLiteral("Backgrounds/Library"));
+}
+
+QString libraryBackgroundStoreFileBaseName()
+{
+    return QStringLiteral("custom-image");
+}
+
+QString sanitizeManagedImageExtension(const QString &input)
+{
+    QString extension = input.trimmed().toLower();
+    extension.remove(QRegularExpression(QStringLiteral("[^a-z0-9]")));
+    if (extension.isEmpty()) {
+        return QStringLiteral("png");
+    }
+    return extension;
+}
+
+QString libraryBackgroundStoreFilePath(const QString &dataRoot, const QString &extension)
+{
+    return QDir(libraryBackgroundStoreDirPath(dataRoot)).filePath(
+        QStringLiteral("%1.%2").arg(libraryBackgroundStoreFileBaseName(), sanitizeManagedImageExtension(extension))
+    );
+}
+
+void pruneLibraryBackgroundStoreVariants(const QString &dataRoot, const QString &keepAbsolutePath)
+{
+    const QDir storeDir(libraryBackgroundStoreDirPath(dataRoot));
+    if (!storeDir.exists()) {
+        return;
+    }
+
+    const QString keepFileName = QFileInfo(QDir::fromNativeSeparators(keepAbsolutePath)).fileName();
+    const QFileInfoList variants = storeDir.entryInfoList(
+        { QStringLiteral("%1.*").arg(libraryBackgroundStoreFileBaseName()) },
+        QDir::Files | QDir::NoSymLinks
+    );
+    for (const QFileInfo &variantInfo : variants) {
+        if (!keepFileName.isEmpty()
+            && variantInfo.fileName().compare(keepFileName, Qt::CaseInsensitive) == 0) {
+            continue;
+        }
+        QFile::remove(variantInfo.absoluteFilePath());
+    }
+}
+
+bool copyFileToManagedStorage(const QString &sourcePath, const QString &targetPath, QString &errorText)
+{
+    errorText.clear();
+
+    if (!ComicReaderCache::ensureDirForFile(targetPath)) {
+        errorText = QStringLiteral("Failed to create the library background storage folder.");
+        return false;
+    }
+
+    QFile sourceFile(sourcePath);
+    if (!sourceFile.open(QIODevice::ReadOnly)) {
+        errorText = QStringLiteral("Failed to open the selected background image.");
+        return false;
+    }
+
+    QSaveFile targetFile(targetPath);
+    if (!targetFile.open(QIODevice::WriteOnly)) {
+        errorText = QStringLiteral("Failed to open the managed background image file for writing.");
+        return false;
+    }
+
+    while (!sourceFile.atEnd()) {
+        const QByteArray chunk = sourceFile.read(64 * 1024);
+        if (chunk.isEmpty() && sourceFile.error() != QFile::NoError) {
+            targetFile.cancelWriting();
+            errorText = QStringLiteral("Failed to read the selected background image.");
+            return false;
+        }
+        if (!chunk.isEmpty() && targetFile.write(chunk) != chunk.size()) {
+            targetFile.cancelWriting();
+            errorText = QStringLiteral("Failed to save the managed background image.");
+            return false;
+        }
+    }
+
+    if (!targetFile.commit()) {
+        errorText = QStringLiteral("Failed to finalize the managed background image.");
+        return false;
+    }
+
+    return true;
 }
 
 QString formatSeriesGroupTitle(const QString &series, const QString &volume)
@@ -715,6 +809,63 @@ QVariantMap ComicsListModel::seriesMetadataForKey(const QString &seriesKey) cons
             : QUrl::fromLocalFile(resolvedBackgroundPath).toString()
     );
     return metadata;
+}
+
+QString ComicsListModel::resolveStoredPathAgainstDataRoot(const QString &storedPath) const
+{
+    return ComicStoragePaths::resolveStoredPathAgainstRoot(m_dataRoot, storedPath);
+}
+
+QVariantMap ComicsListModel::storeLibraryBackgroundImage(const QString &sourcePath)
+{
+    QVariantMap result;
+    result.insert(QStringLiteral("ok"), false);
+
+    const QString normalizedSourcePath = normalizeInputFilePath(sourcePath);
+    const QString absoluteSourcePath = ComicStoragePaths::absoluteExistingFilePath(normalizedSourcePath);
+    if (absoluteSourcePath.isEmpty()) {
+        result.insert(QStringLiteral("error"), QStringLiteral("Selected background image is unavailable."));
+        return result;
+    }
+
+    QImage decodedImage;
+    QString validationError;
+    if (!ComicImagePreparation::loadReadableImageFile(absoluteSourcePath, decodedImage, validationError)) {
+        result.insert(QStringLiteral("error"), validationError);
+        return result;
+    }
+    Q_UNUSED(decodedImage);
+
+    QImageReader formatReader(absoluteSourcePath);
+    QString extension = QFileInfo(absoluteSourcePath).suffix().trimmed().toLower();
+    if (extension.isEmpty()) {
+        extension = QString::fromLatin1(formatReader.format()).trimmed().toLower();
+    }
+    extension = sanitizeManagedImageExtension(extension);
+
+    const QString targetPath = QDir::toNativeSeparators(
+        QFileInfo(libraryBackgroundStoreFilePath(m_dataRoot, extension)).absoluteFilePath()
+    );
+    const bool sameFile = absoluteSourcePath.compare(targetPath, Qt::CaseInsensitive) == 0;
+
+    if (!sameFile) {
+        QString copyError;
+        if (!copyFileToManagedStorage(absoluteSourcePath, targetPath, copyError)) {
+            if (copyError.isEmpty()) {
+                copyError = QStringLiteral("Failed to save custom background image.");
+            }
+            result.insert(QStringLiteral("error"), copyError);
+            return result;
+        }
+    }
+
+    pruneLibraryBackgroundStoreVariants(m_dataRoot, targetPath);
+
+    result.insert(QStringLiteral("ok"), true);
+    result.insert(QStringLiteral("storedPath"), relativePathWithinDataRoot(m_dataRoot, targetPath));
+    result.insert(QStringLiteral("absolutePath"), targetPath);
+    result.insert(QStringLiteral("fileUrl"), QUrl::fromLocalFile(targetPath).toString());
+    return result;
 }
 
 QVariantMap ComicsListModel::seriesMetadataSuggestion(const QVariantMap &values, const QString &currentSeriesKey) const

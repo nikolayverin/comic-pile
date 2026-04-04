@@ -9,6 +9,7 @@ Item {
     property var dialogRef: null
     property var popupStyleTokensRef: null
     property var themeColorsRef: null
+    property var libraryModelRef: null
 
     signal chooseLibraryBackgroundImageRequested()
     signal libraryBackgroundImageModeRequested(string mode)
@@ -61,8 +62,13 @@ Item {
             )
             : SettingsCatalog.defaultAppearanceLibraryBackgroundTileSize
     )
+    readonly property string resolvedCustomImagePath: String(
+        dialogRef
+            ? dialogRef.libraryBackgroundCustomImageResolvedPath
+            : ""
+    )
     readonly property int tilePixelSize: backgroundTilePixelSize(customTileSize)
-    readonly property bool hasCustomImage: customImagePath.length > 0
+    readonly property bool hasCustomImage: resolvedCustomImagePath.length > 0
     readonly property bool customModeIsTile: customImageMode === "Tile"
     readonly property int backgroundSourceIndex: backgroundSourceOptionIndex(backgroundSource)
     readonly property real backgroundCardWidth: backgroundSourceCards.width > 0
@@ -224,7 +230,7 @@ Item {
                             Image {
                                 visible: root.hasCustomImage
                                 anchors.fill: parent
-                                source: root.localFileSource(root.customImagePath)
+                                source: root.localFileSource(root.resolvedCustomImagePath)
                                 fillMode: root.customImageMode === "Fit"
                                     ? Image.PreserveAspectFit
                                     : root.customImageMode === "Stretch"

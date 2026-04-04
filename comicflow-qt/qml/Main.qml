@@ -56,14 +56,17 @@ ApplicationWindow {
         appSettingsController.appearanceLibraryBackgroundTexture
             || SettingsCatalog.defaultAppearanceLibraryBackgroundTexture
     )
-    readonly property string libraryBackgroundCustomImagePath: String(
+    readonly property string libraryBackgroundCustomImageStoredPath: String(
         appSettingsController.appearanceLibraryBackgroundCustomImagePath || ""
+    )
+    readonly property string libraryBackgroundCustomImageResolvedPath: String(
+        resolveLibraryBackgroundStoredPath(libraryBackgroundCustomImageStoredPath) || ""
     )
     readonly property string libraryBackgroundCustomImageMode: String(
         appSettingsController.appearanceLibraryBackgroundImageMode || "Fill"
     )
     readonly property string libraryBackgroundCustomImageSource: String(
-        startupController.toLocalFileUrl(libraryBackgroundCustomImagePath) || ""
+        startupController.toLocalFileUrl(libraryBackgroundCustomImageResolvedPath) || ""
     )
     readonly property string libraryBackgroundTileSizeLabel: String(
         appSettingsController.appearanceLibraryBackgroundTileSize || "64x64px"
@@ -310,6 +313,7 @@ ApplicationWindow {
     property string pendingImportPostReloadAction: ""
     property bool pendingConfiguredLaunchViewApply: true
     property string lastPresentedLibraryLoadError: ""
+    property bool libraryBackgroundImageMigrationInProgress: false
     property bool firstRunOnboardingActive: true
     property int firstRunOnboardingStep: 1
     readonly property int firstRunDropZoneWidth: 274
@@ -895,6 +899,68 @@ ApplicationWindow {
         return base.replace(/[\\\/]+$/, "") + "\\" + child
     }
 
+    function looksLikeAbsoluteLocalPath(pathValue) {
+        const normalized = String(pathValue || "").trim().replace(/\//g, "\\")
+        return /^[A-Za-z]:\\/.test(normalized) || normalized.startsWith("\\\\")
+    }
+
+    function resolveLibraryBackgroundStoredPath(pathValue) {
+        const storedPath = String(pathValue || "").trim()
+        if (storedPath.length < 1) return ""
+        if (libraryModel && typeof libraryModel.resolveStoredPathAgainstDataRoot === "function") {
+            return String(libraryModel.resolveStoredPathAgainstDataRoot(storedPath) || "")
+        }
+        return storedPath
+    }
+
+    function storeLibraryBackgroundImageSelection(sourcePath, showErrorPopup) {
+        const candidatePath = String(sourcePath || "").trim()
+        if (candidatePath.length < 1) return ""
+
+        if (!libraryModel || typeof libraryModel.storeLibraryBackgroundImage !== "function") {
+            if (showErrorPopup) {
+                popupController.showActionResult("Failed to save custom background image.", true)
+            }
+            return ""
+        }
+
+        const result = libraryModel.storeLibraryBackgroundImage(candidatePath) || {}
+        if (!Boolean(result.ok)) {
+            if (showErrorPopup) {
+                popupController.showActionResult(
+                    String(result.error || "Failed to save custom background image."),
+                    true
+                )
+            }
+            return ""
+        }
+
+        return String(result.storedPath || "")
+    }
+
+    function migrateLibraryBackgroundImageSettingIfNeeded() {
+        if (libraryBackgroundImageMigrationInProgress) return
+
+        const storedPath = String(libraryBackgroundCustomImageStoredPath || "").trim()
+        if (!looksLikeAbsoluteLocalPath(storedPath)) return
+
+        const resolvedPath = String(libraryBackgroundCustomImageResolvedPath || "").trim()
+        if (resolvedPath.length < 1) return
+
+        libraryBackgroundImageMigrationInProgress = true
+        const migratedStoredPath = storeLibraryBackgroundImageSelection(resolvedPath, false)
+        libraryBackgroundImageMigrationInProgress = false
+
+        if (migratedStoredPath.length > 0 && migratedStoredPath !== storedPath) {
+            appSettingsController.setSettingValue(
+                "appearance_library_background_custom_image_path",
+                migratedStoredPath
+            )
+        }
+    }
+
+    onLibraryBackgroundCustomImageStoredPathChanged: migrateLibraryBackgroundImageSettingIfNeeded()
+
     function reloadLibraryFromSettings() {
         libraryModel.reload()
     }
@@ -1227,9 +1293,7 @@ ApplicationWindow {
     }
 
     function chooseLibraryBackgroundImageFromSettings() {
-        const currentPath = String(
-            appSettingsController.settingValue("appearance_library_background_custom_image_path", "") || ""
-        )
+        const currentPath = String(libraryBackgroundCustomImageResolvedPath || "")
         const selectedPath = String(libraryModel.browseImageFile(currentPath) || "")
         if (selectedPath.length < 1) return
 
@@ -1246,7 +1310,10 @@ ApplicationWindow {
             return
         }
 
-        appSettingsController.setSettingValue("appearance_library_background_custom_image_path", selectedPath)
+        const storedPath = storeLibraryBackgroundImageSelection(selectedPath, true)
+        if (storedPath.length < 1) return
+
+        appSettingsController.setSettingValue("appearance_library_background_custom_image_path", storedPath)
         appSettingsController.setSettingValue("appearance_library_background", "Custom image")
     }
 
@@ -1254,9 +1321,7 @@ ApplicationWindow {
         const mode = String(nextMode || "").trim()
         if (mode.length < 1) return
         if (mode === "Tile") {
-            const currentPath = String(
-                appSettingsController.settingValue("appearance_library_background_custom_image_path", "") || ""
-            )
+            const currentPath = String(libraryBackgroundCustomImageResolvedPath || "")
             if (currentPath.length > 0) {
                 const sizeBytes = fileSizeBytes(currentPath)
                 if (sizeBytes > libraryBackgroundTileImageMaxBytes) {
@@ -1902,7 +1967,10 @@ ApplicationWindow {
         onTriggered: root.processQueuedReaderProgressSave()
     }
 
-    Component.onCompleted: startupController.handleComponentCompleted()
+    Component.onCompleted: {
+        migrateLibraryBackgroundImageSettingIfNeeded()
+        startupController.handleComponentCompleted()
+    }
 
     onClosing: function(close) {
         if (popupController.blockCloseAndHighlightCriticalPopup(close)) {
