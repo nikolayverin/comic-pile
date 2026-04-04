@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Controls
 import QtQuick.Layouts
 import "AppText.js" as AppText
@@ -344,6 +345,10 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 19
+            readonly property color hoverAccentColor: "#b7b7b7"
+            readonly property bool hoverActive: !(
+                    rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
+                ) && (dropZoneMouseArea.containsMouse || dropZoneSubtitleLinkMouseArea.containsMouse)
 
             Item {
                 id: addFilesDropHighlight
@@ -449,6 +454,26 @@ Rectangle {
                     : ""
                 fillMode: Image.PreserveAspectFit
                 smooth: true
+                visible: !(uiTokensRef && addFilesDropPanel.hoverActive)
+            }
+
+            Image {
+                id: addFilesDropHoverTintSource
+                width: addFilesDropIcon.width
+                height: addFilesDropIcon.height
+                anchors.centerIn: addFilesDropIcon
+                source: uiTokensRef ? uiTokensRef.dropZoneWhiteIcon : ""
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                visible: false
+            }
+
+            MultiEffect {
+                anchors.fill: addFilesDropHoverTintSource
+                source: addFilesDropHoverTintSource
+                visible: uiTokensRef && addFilesDropPanel.hoverActive
+                colorization: 1.0
+                colorizationColor: addFilesDropPanel.hoverAccentColor
             }
 
             Text {
@@ -464,6 +489,8 @@ Rectangle {
                 font.bold: true
                 color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                     ? "#FFFFFF"
+                    : addFilesDropPanel.hoverActive
+                        ? addFilesDropPanel.hoverAccentColor
                     : (rootObject ? rootObject.dropZoneTextColor : "white")
                 z: 1
                 text: AppText.sidebarDropZoneTitle
@@ -487,37 +514,111 @@ Rectangle {
                 z: 0
             }
 
-            Text {
-                id: dropZoneSubtitle
+            Column {
+                id: dropZoneSubtitleShadow
+                anchors.top: dropZoneTitle.bottom
+                anchors.topMargin: 9
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: 0
+                z: 0
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: rootObject ? rootObject.uiFontFamily : ""
+                    font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
+                    color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
+                        ? "transparent"
+                        : (rootObject ? rootObject.uiTextShadow : "transparent")
+                    text: AppText.sidebarDropZoneSubtitleLineOne
+                }
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 0
+
+                    Text {
+                        font.family: rootObject ? rootObject.uiFontFamily : ""
+                        font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
+                        color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
+                            ? "transparent"
+                            : (rootObject ? rootObject.uiTextShadow : "transparent")
+                        text: AppText.sidebarDropZoneSubtitleLineTwoPrefix
+                    }
+
+                    Text {
+                        font.family: rootObject ? rootObject.uiFontFamily : ""
+                        font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
+                        font.underline: true
+                        color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
+                            ? "transparent"
+                            : (rootObject ? rootObject.uiTextShadow : "transparent")
+                        text: AppText.sidebarDropZoneSubtitleLink
+                    }
+                }
+            }
+
+            Column {
+                id: dropZoneSubtitleRow
                 anchors.top: dropZoneTitle.bottom
                 anchors.topMargin: 8
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 28
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-                font.family: rootObject ? rootObject.uiFontFamily : ""
-                font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
-                color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
-                    ? "#FFFFFF"
-                    : (rootObject ? rootObject.dropZoneTextColor : "white")
-                z: 1
-                text: AppText.sidebarDropZoneSubtitle
-            }
+                spacing: 0
+                z: 2
 
-            Text {
-                anchors.top: dropZoneSubtitle.top
-                anchors.topMargin: 1
-                anchors.horizontalCenter: dropZoneSubtitle.horizontalCenter
-                width: dropZoneSubtitle.width
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-                font.family: rootObject ? rootObject.uiFontFamily : ""
-                font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
-                color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
-                    ? "transparent"
-                    : (rootObject ? rootObject.uiTextShadow : "transparent")
-                text: dropZoneSubtitle.text
-                z: 0
+                Text {
+                    id: dropZoneSubtitleLineOne
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    font.family: rootObject ? rootObject.uiFontFamily : ""
+                    font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
+                    color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
+                        ? "#FFFFFF"
+                        : addFilesDropPanel.hoverActive
+                            ? addFilesDropPanel.hoverAccentColor
+                        : (rootObject ? rootObject.dropZoneTextColor : "white")
+                    text: AppText.sidebarDropZoneSubtitleLineOne
+                }
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 0
+
+                    Text {
+                        id: dropZoneSubtitleLineTwoPrefix
+                        font.family: rootObject ? rootObject.uiFontFamily : ""
+                        font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
+                        color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
+                            ? "#FFFFFF"
+                            : addFilesDropPanel.hoverActive
+                                ? addFilesDropPanel.hoverAccentColor
+                            : (rootObject ? rootObject.dropZoneTextColor : "white")
+                        text: AppText.sidebarDropZoneSubtitleLineTwoPrefix
+                    }
+
+                    Text {
+                        id: dropZoneSubtitleLink
+                        font.family: rootObject ? rootObject.uiFontFamily : ""
+                        font.pixelSize: rootObject ? rootObject.fontPxDropSubtitle : 14
+                        font.underline: true
+                        color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
+                            ? "#FFFFFF"
+                            : addFilesDropPanel.hoverActive
+                                ? addFilesDropPanel.hoverAccentColor
+                            : (rootObject ? rootObject.dropZoneTextColor : "white")
+                        text: AppText.sidebarDropZoneSubtitleLink
+
+                        MouseArea {
+                            id: dropZoneSubtitleLinkMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (rootObject) {
+                                    rootObject.openSettingsDialog("import_archives")
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             MouseArea {
