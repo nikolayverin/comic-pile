@@ -261,7 +261,6 @@ Item {
         hostHeight: root.height
         payload: popupController.actionResultPayload
         popupStackLayer: popupController.actionResultLayered ? 20 : 0
-        surfaceShadowActive: popupController.actionResultLayered
         onClosed: popupController.handleActionResultDialogClosed()
         onSecondaryRequested: popupController.triggerActionResultSecondary()
     }

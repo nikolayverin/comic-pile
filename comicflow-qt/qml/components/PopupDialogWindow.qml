@@ -26,7 +26,7 @@ Popup {
     property real titleTopMargin: -1
     property bool attentionActive: false
     property color attentionColor: themeColors.dialogAttentionColor
-    property bool surfaceShadowActive: false
+    property bool surfaceShadowActive: true
     property bool escapeShortcutEnabled: true
     property int popupStackLayer: 0
     property int fadeDurationMs: 150
