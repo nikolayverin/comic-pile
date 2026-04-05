@@ -368,7 +368,7 @@ QVariantMap buildStartupInventorySignature(const QString &dataRoot, const QStrin
             if (!info.exists() || !info.isFile()) continue;
             libraryFileCount += 1;
             libraryTotalBytes += info.size();
-            libraryLatestModifiedMs = std::max(
+            libraryLatestModifiedMs = (std::max)(
                 libraryLatestModifiedMs,
                 info.lastModified().toUTC().toMSecsSinceEpoch()
             );
