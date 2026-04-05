@@ -69,6 +69,7 @@ Rectangle {
     signal maximizeRestoreRequested()
     signal closeRequested()
     signal settingsRequested()
+    signal helpRequested()
     signal aboutRequested()
     signal quickTourRequested()
     signal continueReadingRequested()
@@ -254,7 +255,20 @@ Rectangle {
 
         TopMenuTextButton {
             labelText: "Help"
-            menuPopup: helpMenu
+            triggerDirectAction: true
+            onActionRequested: root.helpRequested()
+        }
+
+        TopMenuTextButton {
+            labelText: "Quick tour"
+            triggerDirectAction: true
+            onActionRequested: root.quickTourRequested()
+        }
+
+        TopMenuTextButton {
+            labelText: "About"
+            triggerDirectAction: true
+            onActionRequested: root.aboutRequested()
         }
 
     }
@@ -484,28 +498,6 @@ Rectangle {
                 root.addFolderRequested()
             } else if (action === "exit") {
                 root.exitRequested()
-            }
-        }
-    }
-
-    ContextMenuPopup {
-        id: helpMenu
-        parent: Overlay.overlay
-        debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
-        debugName: "topbar-help-menu"
-        showArrow: true
-        onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenu, visible)
-        menuItems: [
-            { text: "Help", action: "help", enabled: false },
-            { text: "Quick tour", action: "quick_tour", enabled: true },
-            { text: "About", action: "about", enabled: true },
-            { text: "What's new", action: "whats_new", enabled: false }
-        ]
-        onItemTriggered: function(index, action) {
-            if (action === "quick_tour") {
-                root.quickTourRequested()
-            } else if (action === "about") {
-                root.aboutRequested()
             }
         }
     }

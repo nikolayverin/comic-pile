@@ -44,6 +44,7 @@ Item {
     property alias replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
     property alias seriesMetaDialogRef: seriesMetaDialog
     property alias settingsDialogRef: settingsDialog
+    property alias helpDialogRef: helpDialog
     property alias aboutDialogRef: aboutDialog
     property alias seriesHeaderDialogRef: seriesHeaderDialog
     property alias deleteConfirmDialogRef: deleteConfirmDialog
@@ -356,6 +357,13 @@ Item {
         onCheckStorageAccessRequested: root.checkStorageAccessFromSettings()
         onReloadLibraryRequested: root.reloadLibraryFromSettings()
         onResetSettingsRequested: root.resetSettingsToDefaults()
+    }
+
+    HelpDialog {
+        id: helpDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        escapeShortcutEnabled: !popupController.secondaryLayerPopupVisible
     }
 
     AboutDialog {

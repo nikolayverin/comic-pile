@@ -199,6 +199,7 @@ ApplicationWindow {
     readonly property var replaceArchiveConfirmDialog: mainDialogHost.replaceArchiveConfirmDialogRef
     readonly property var seriesMetaDialog: mainDialogHost.seriesMetaDialogRef
     readonly property var settingsDialog: mainDialogHost.settingsDialogRef
+    readonly property var helpDialog: mainDialogHost.helpDialogRef
     readonly property var aboutDialog: mainDialogHost.aboutDialogRef
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
     readonly property var deleteConfirmDialog: mainDialogHost.deleteConfirmDialogRef
@@ -473,6 +474,7 @@ ApplicationWindow {
         actionResultDialogRef: actionResultDialog
         seriesMetaDialogRef: seriesMetaDialog
         settingsDialogRef: settingsDialog
+        helpDialogRef: helpDialog
         aboutDialogRef: aboutDialog
         replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
         seriesHeaderDialogRef: seriesHeaderDialog
@@ -992,6 +994,14 @@ ApplicationWindow {
             return
         }
         popupController.openExclusivePopup(settingsDialog)
+    }
+
+    function openHelpDialog(sectionKey) {
+        const requested = String(sectionKey || "").trim()
+        helpDialog.requestedSection = requested
+        helpDialog.expandedSectionKey = requested.length > 0 ? requested : "getting_started"
+        helpDialog.selectedSubsectionKey = helpDialog.firstSubsectionKey(helpDialog.expandedSectionKey)
+        popupController.openExclusivePopup(helpDialog)
     }
 
     function openAboutDialog() {
@@ -2144,6 +2154,7 @@ ApplicationWindow {
             onAddFolderRequested: root.quickAddFolderFromDialog()
             onAddIssueRequested: root.quickAddFilesFromDialog()
             onSettingsRequested: root.openSettingsDialog("")
+            onHelpRequested: root.openHelpDialog("")
             onQuickTourRequested: root.launchOnboarding(true)
             onAboutRequested: root.openAboutDialog()
             onRefreshRequested: libraryModel.reload()

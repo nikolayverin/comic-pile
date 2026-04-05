@@ -23,6 +23,7 @@ Item {
     property var actionResultDialogRef: null
     property var seriesMetaDialogRef: null
     property var settingsDialogRef: null
+    property var helpDialogRef: null
     property var aboutDialogRef: null
     property var replaceArchiveConfirmDialogRef: null
     property var seriesHeaderDialogRef: null
@@ -55,6 +56,7 @@ Item {
         || Boolean(actionResultDialogRef && actionResultDialogRef.visible)
         || Boolean(seriesMetaDialogRef && seriesMetaDialogRef.visible)
         || Boolean(settingsDialogRef && settingsDialogRef.visible)
+        || Boolean(helpDialogRef && helpDialogRef.visible)
         || Boolean(aboutDialogRef && aboutDialogRef.visible)
         || Boolean(replaceArchiveConfirmDialogRef && replaceArchiveConfirmDialogRef.visible)
         || Boolean(seriesHeaderDialogRef && seriesHeaderDialogRef.visible)
@@ -142,6 +144,7 @@ Item {
             actionResultDialogRef,
             seriesMetaDialogRef,
             settingsDialogRef,
+            helpDialogRef,
             aboutDialogRef,
             replaceArchiveConfirmDialogRef,
             seriesHeaderDialogRef,

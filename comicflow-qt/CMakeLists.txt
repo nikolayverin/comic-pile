@@ -256,6 +256,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/SettingsChoiceDropdown.qml
         qml/components/SettingsAppearanceSection.qml
         qml/components/AboutDialog.qml
+        qml/components/HelpDialog.qml
         qml/components/SettingsDialog.qml
         qml/components/SettingsRadioGroup.qml
         qml/components/SettingsSegmentedChoice.qml
