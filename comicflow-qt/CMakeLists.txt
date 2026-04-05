@@ -117,11 +117,6 @@ qt_add_executable(comic_pile_qt
     ${_comicpile_core_sources}
 )
 
-set_source_files_properties(
-    ../assets-UI/256x256.png
-    PROPERTIES QT_RESOURCE_ALIAS assets/ui/about-app-icon-256.png
-)
-
 target_compile_definitions(comic_pile_qt PRIVATE
     COMICPILE_APP_VERSION="${PROJECT_VERSION}"
 )
@@ -332,7 +327,7 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/cover-bookmark.png
         assets/ui/cover-read.png
         assets/ui/cover-read-cancel.png
-        ../assets-UI/256x256.png
+        assets/ui/about-app-icon-256.png
         assets/ui/onboarding/back.png
         assets/ui/onboarding/close.png
         assets/ui/onboarding/next.png
