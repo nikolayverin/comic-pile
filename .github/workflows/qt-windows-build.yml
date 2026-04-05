@@ -30,7 +30,7 @@ jobs:
           arch: "win64_msvc2019_64"
 
       - name: Configure
-      run: cmake -S comicflow-qt -B comicflow-qt/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S comicflow-qt -B comicflow-qt/build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-      run: cmake --build comicflow-qt/build --config Release
+        run: cmake --build comicflow-qt/build --config Release
