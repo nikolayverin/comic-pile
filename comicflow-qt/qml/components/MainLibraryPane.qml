@@ -27,6 +27,9 @@ Rectangle {
     readonly property var activeIssuesFlick: rightPane.activeIssuesFlick
     property alias heroCollapseOffset: rightPane.heroCollapseOffset
     readonly property real currentSplitScroll: rightPane.currentSplitScroll
+    readonly property real onboardingHeroHeight: rightPane.heroVisualHeight
+    readonly property real onboardingGridViewportY: gridViewport.y
+    readonly property real onboardingGridViewportHeight: gridViewport.height
 
     Layout.fillWidth: true
     Layout.fillHeight: true

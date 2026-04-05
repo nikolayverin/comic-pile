@@ -316,6 +316,15 @@ ApplicationWindow {
     property bool libraryBackgroundImageMigrationInProgress: false
     property bool firstRunOnboardingActive: true
     property int firstRunOnboardingStep: 1
+    readonly property int firstRunSidebarHighlightX: Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
+    readonly property int firstRunStep1HighlightY: Math.round(
+        root.height
+        - root.footerHeight
+        - root.firstRunDropZoneBottomMargin
+        - ((root.firstRunDropZoneHeight - root.firstRunDropZoneStep1HighlightHeight) / 2)
+        - root.firstRunDropZoneStep1HighlightHeight
+    )
+    readonly property int firstRunStep2HighlightHeightAdaptive: Math.max(0, firstRunStep1HighlightY - root.topBarHeight)
     readonly property int firstRunDropZoneWidth: 274
     readonly property int firstRunDropZoneHeight: 173
     readonly property int firstRunDropZoneBottomMargin: 19
@@ -324,8 +333,18 @@ ApplicationWindow {
     readonly property int firstRunDropZoneStep2HighlightHeight: 654
     readonly property int firstRunStep3HighlightWidth: 1122
     readonly property int firstRunStep3HighlightHeight: 362
+    readonly property int firstRunStep3BubbleOffsetFromHeroTop: 362
     readonly property int firstRunStep4HighlightWidth: 1122
     readonly property int firstRunStep4HighlightHeight: 494
+    readonly property int firstRunStep5BubbleLeftMargin: 65
+    readonly property int firstRunStep5BubbleTopMargin: 84
+    readonly property int firstRunStep5TopBubbleOffsetX: -324
+    readonly property int firstRunStep5BottomBubbleBottomGap: -2
+    readonly property int firstRunStep5NavOffsetXFromBubbleLeft: 243
+    readonly property int firstRunStep5NavBottomInsetFromBubbleBottom: 59
+    readonly property int firstRunStep5NavLift: 106
+    readonly property int firstRunStep5CloseOffsetXFromBubbleLeft: 771
+    readonly property int firstRunStep5CloseBottomInsetFromBubbleBottom: 384
     readonly property int firstRunDropZoneHighlightRadius: 20
 
     StartupController {
@@ -2309,11 +2328,65 @@ ApplicationWindow {
         anchors.fill: parent
         visible: root.firstRunOnboardingActive
         z: 3000
+        focus: visible
+        Keys.priority: Keys.BeforeItem
+
+        onVisibleChanged: {
+            if (visible) {
+                forceActiveFocus()
+            }
+        }
+
+        Keys.onLeftPressed: function(event) {
+            if (root.firstRunOnboardingStep === 5)
+                root.firstRunOnboardingStep = 4
+            else if (root.firstRunOnboardingStep === 4)
+                root.firstRunOnboardingStep = 3
+            else if (root.firstRunOnboardingStep === 3)
+                root.firstRunOnboardingStep = 2
+            else if (root.firstRunOnboardingStep === 2)
+                root.firstRunOnboardingStep = 1
+            event.accepted = true
+        }
+
+        Keys.onRightPressed: function(event) {
+            if (root.firstRunOnboardingStep === 1)
+                root.firstRunOnboardingStep = 2
+            else if (root.firstRunOnboardingStep === 2)
+                root.firstRunOnboardingStep = 3
+            else if (root.firstRunOnboardingStep === 3)
+                root.firstRunOnboardingStep = 4
+            else if (root.firstRunOnboardingStep === 4)
+                root.firstRunOnboardingStep = 5
+            event.accepted = true
+        }
+
+        Keys.onEscapePressed: function(event) {
+            root.firstRunOnboardingActive = false
+            root.firstRunOnboardingStep = 1
+            event.accepted = true
+        }
 
         Canvas {
             id: firstRunOverlayCanvas
             anchors.fill: parent
             contextType: "2d"
+            visible: root.firstRunOnboardingStep !== 5
+
+            function cutRoundedRect(ctx, x, y, w, h, r) {
+                const radius = Math.max(0, Math.min(r, w / 2, h / 2))
+                ctx.beginPath()
+                ctx.moveTo(x + radius, y)
+                ctx.lineTo(x + w - radius, y)
+                ctx.quadraticCurveTo(x + w, y, x + w, y + radius)
+                ctx.lineTo(x + w, y + h - radius)
+                ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h)
+                ctx.lineTo(x + radius, y + h)
+                ctx.quadraticCurveTo(x, y + h, x, y + h - radius)
+                ctx.lineTo(x, y + radius)
+                ctx.quadraticCurveTo(x, y, x + radius, y)
+                ctx.closePath()
+            }
 
             onPaint: {
                 const ctx = getContext("2d")
@@ -2322,25 +2395,26 @@ ApplicationWindow {
                 ctx.fillStyle = popupStyleTokens.overlayColor
                 ctx.fillRect(0, 0, width, height)
 
-                const holeX = Math.round(dropZoneHighlight.x)
-                const holeY = Math.round(dropZoneHighlight.y)
-                const holeW = Math.round(dropZoneHighlight.width)
-                const holeH = Math.round(dropZoneHighlight.height)
-                const radius = Math.max(0, Math.round(dropZoneHighlight.radius))
-
                 ctx.save()
                 ctx.globalCompositeOperation = "destination-out"
-                ctx.beginPath()
-                ctx.moveTo(holeX + radius, holeY)
-                ctx.lineTo(holeX + holeW - radius, holeY)
-                ctx.quadraticCurveTo(holeX + holeW, holeY, holeX + holeW, holeY + radius)
-                ctx.lineTo(holeX + holeW, holeY + holeH - radius)
-                ctx.quadraticCurveTo(holeX + holeW, holeY + holeH, holeX + holeW - radius, holeY + holeH)
-                ctx.lineTo(holeX + radius, holeY + holeH)
-                ctx.quadraticCurveTo(holeX, holeY + holeH, holeX, holeY + holeH - radius)
-                ctx.lineTo(holeX, holeY + radius)
-                ctx.quadraticCurveTo(holeX, holeY, holeX + radius, holeY)
-                ctx.closePath()
+                firstRunOverlayCanvas.cutRoundedRect(
+                    ctx,
+                    Math.round(primaryHighlight.x),
+                    Math.round(primaryHighlight.y),
+                    Math.round(primaryHighlight.width),
+                    Math.round(primaryHighlight.height),
+                    Math.max(0, Math.round(primaryHighlight.radius))
+                )
+                if (secondaryHighlight.visible) {
+                    firstRunOverlayCanvas.cutRoundedRect(
+                        ctx,
+                        Math.round(secondaryHighlight.x),
+                        Math.round(secondaryHighlight.y),
+                        Math.round(secondaryHighlight.width),
+                        Math.round(secondaryHighlight.height),
+                        Math.max(0, Math.round(secondaryHighlight.radius))
+                    )
+                }
                 ctx.fill()
                 ctx.restore()
             }
@@ -2356,40 +2430,76 @@ ApplicationWindow {
         }
 
         Rectangle {
-            id: dropZoneHighlight
+            visible: root.firstRunOnboardingStep === 5
+            x: 0
+            y: root.topBarHeight
+            width: root.width
+            height: Math.max(0, root.height - root.topBarHeight - root.footerHeight)
+            color: popupStyleTokens.overlayColor
+            z: 0
+        }
+
+        Rectangle {
+            id: primaryHighlight
             x: root.firstRunOnboardingStep === 3
-                ? root.width - root.firstRunStep3HighlightWidth
+                ? Math.round(mainLibraryPane.mapToItem(firstRunOnboardingOverlay, 0, 0).x)
                 : root.firstRunOnboardingStep === 4
-                    ? root.width - root.firstRunStep4HighlightWidth
-                : Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
+                    ? Math.round(mainLibraryPane.mapToItem(firstRunOnboardingOverlay, 0, mainLibraryPane.onboardingGridViewportY).x)
+                    : root.firstRunOnboardingStep === 5
+                        ? 0
+                    : root.firstRunSidebarHighlightX
             y: root.firstRunOnboardingStep === 1
-                ? Math.round(
-                    root.height
-                    - root.footerHeight
-                    - root.firstRunDropZoneBottomMargin
-                    - ((root.firstRunDropZoneHeight - root.firstRunDropZoneStep1HighlightHeight) / 2)
-                    - root.firstRunDropZoneStep1HighlightHeight
-                )
-                : root.firstRunOnboardingStep === 4
-                    ? root.height - root.footerHeight - root.firstRunStep4HighlightHeight
-                : root.topBarHeight
+                ? root.firstRunStep1HighlightY
+                : root.firstRunOnboardingStep === 3
+                    ? Math.round(mainLibraryPane.mapToItem(firstRunOnboardingOverlay, 0, 0).y)
+                    : root.firstRunOnboardingStep === 4
+                        ? Math.round(mainLibraryPane.mapToItem(firstRunOnboardingOverlay, 0, mainLibraryPane.onboardingGridViewportY).y)
+                        : root.firstRunOnboardingStep === 5
+                            ? 0
+                        : root.topBarHeight
             width: root.firstRunOnboardingStep === 3
-                ? root.firstRunStep3HighlightWidth
+                ? Math.round(mainLibraryPane.width)
                 : root.firstRunOnboardingStep === 4
-                    ? root.firstRunStep4HighlightWidth
-                : root.firstRunDropZoneHighlightWidth
+                    ? Math.round(mainLibraryPane.width)
+                    : root.firstRunOnboardingStep === 5
+                        ? root.width
+                    : root.firstRunDropZoneHighlightWidth
             height: root.firstRunOnboardingStep === 1
                 ? root.firstRunDropZoneStep1HighlightHeight
-                : root.firstRunOnboardingStep === 3
-                    ? root.firstRunStep3HighlightHeight
-                : root.firstRunOnboardingStep === 4
-                    ? root.firstRunStep4HighlightHeight
-                : root.firstRunDropZoneStep2HighlightHeight
-            radius: root.firstRunDropZoneHighlightRadius
+                : root.firstRunOnboardingStep === 2
+                    ? root.firstRunStep2HighlightHeightAdaptive
+                    : root.firstRunOnboardingStep === 3
+                        ? Math.round(mainLibraryPane.onboardingHeroHeight)
+                    : root.firstRunOnboardingStep === 4
+                        ? Math.round(mainLibraryPane.onboardingGridViewportHeight)
+                    : root.firstRunOnboardingStep === 5
+                        ? root.topBarHeight
+                    : root.firstRunDropZoneStep2HighlightHeight
+            radius: root.firstRunOnboardingStep === 5 ? root.windowCornerRadius : root.firstRunDropZoneHighlightRadius
             color: "transparent"
             border.width: 2
             border.color: "#FFFFFF"
 
+            onXChanged: firstRunOverlayCanvas.requestPaint()
+            onYChanged: firstRunOverlayCanvas.requestPaint()
+            onWidthChanged: firstRunOverlayCanvas.requestPaint()
+            onHeightChanged: firstRunOverlayCanvas.requestPaint()
+            onRadiusChanged: firstRunOverlayCanvas.requestPaint()
+        }
+
+        Rectangle {
+            id: secondaryHighlight
+            visible: root.firstRunOnboardingStep === 5
+            x: 0
+            y: root.height - root.footerHeight
+            width: root.width
+            height: root.footerHeight
+            radius: root.windowCornerRadius
+            color: "transparent"
+            border.width: 2
+            border.color: "#FFFFFF"
+
+            onVisibleChanged: firstRunOverlayCanvas.requestPaint()
             onXChanged: firstRunOverlayCanvas.requestPaint()
             onYChanged: firstRunOverlayCanvas.requestPaint()
             onWidthChanged: firstRunOverlayCanvas.requestPaint()
@@ -2436,43 +2546,93 @@ ApplicationWindow {
                 text: AppText.sidebarDropZoneTitle
             }
 
-            Text {
+            Column {
                 anchors.top: onboardingDropZoneTitle.bottom
                 anchors.topMargin: 8
                 anchors.horizontalCenter: parent.horizontalCenter
-                width: parent.width - 28
-                horizontalAlignment: Text.AlignHCenter
-                wrapMode: Text.WordWrap
-                font.family: root.uiFontFamily
-                font.pixelSize: root.fontPxDropSubtitle
-                color: "#FFFFFF"
-                text: AppText.sidebarDropZoneSubtitle
+                spacing: 0
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    font.family: root.uiFontFamily
+                    font.pixelSize: root.fontPxDropSubtitle
+                    color: "#FFFFFF"
+                    text: AppText.sidebarDropZoneSubtitleLineOne
+                }
+
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 0
+
+                    Text {
+                        font.family: root.uiFontFamily
+                        font.pixelSize: root.fontPxDropSubtitle
+                        color: "#FFFFFF"
+                        text: AppText.sidebarDropZoneSubtitleLineTwoPrefix
+                    }
+
+                    Text {
+                        font.family: root.uiFontFamily
+                        font.pixelSize: root.fontPxDropSubtitle
+                        font.underline: true
+                        color: "#FFFFFF"
+                        text: AppText.sidebarDropZoneSubtitleLink
+                    }
+                }
             }
         }
 
         Image {
             id: onboardingStep1Bubble
+            visible: root.firstRunOnboardingStep !== 5
             anchors.left: parent.left
             anchors.leftMargin: root.firstRunOnboardingStep === 1
                 ? 334
                 : root.firstRunOnboardingStep === 2
                     ? 336
                     : root.firstRunOnboardingStep === 3
-                        ? 496
-                        : 355
+                    ? Math.round(primaryHighlight.x + (primaryHighlight.width - width) / 2)
+                        : root.firstRunOnboardingStep === 4
+                            ? Math.round(primaryHighlight.x + (primaryHighlight.width - width) / 2)
+                        : root.firstRunStep5BubbleLeftMargin
             anchors.top: parent.top
             anchors.topMargin: root.firstRunOnboardingStep === 1 ? (root.height - 146 - height)
-                : root.firstRunOnboardingStep === 2 ? 92
+                : root.firstRunOnboardingStep === 2 ? 172
                 : root.firstRunOnboardingStep === 3
-                    ? 432
-                    : dropZoneHighlight.y - height
+                    ? Math.round(primaryHighlight.y + root.firstRunStep3BubbleOffsetFromHeroTop)
+                    : root.firstRunOnboardingStep === 4
+                        ? Math.round(primaryHighlight.y - height)
+                        : root.firstRunStep5BubbleTopMargin
             source: root.firstRunOnboardingStep === 1
                 ? uiTokens.onboardingStep1Bubble
                 : root.firstRunOnboardingStep === 2
                     ? uiTokens.onboardingStep2Bubble
                     : root.firstRunOnboardingStep === 3
                         ? uiTokens.onboardingStep3Bubble
-                        : uiTokens.onboardingStep4Bubble
+                        : root.firstRunOnboardingStep === 4
+                            ? uiTokens.onboardingStep4Bubble
+                            : ""
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+        }
+
+        Image {
+            id: onboardingStep5TopBubble
+            visible: root.firstRunOnboardingStep === 5
+            x: Math.round(primaryHighlight.x + (primaryHighlight.width - width) / 2 + root.firstRunStep5TopBubbleOffsetX)
+            y: Math.round(primaryHighlight.y + root.firstRunStep5BubbleTopMargin)
+            source: uiTokens.onboardingStep5BubbleTop
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+        }
+
+        Image {
+            id: onboardingStep5BottomBubble
+            visible: root.firstRunOnboardingStep === 5
+            x: Math.round(secondaryHighlight.x + (secondaryHighlight.width - width) / 2)
+            y: Math.round(secondaryHighlight.y - root.firstRunStep5BottomBubbleBottomGap - height)
+            source: uiTokens.onboardingStep5BubbleBottom
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -2518,7 +2678,9 @@ ApplicationWindow {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        if (root.firstRunOnboardingStep === 4)
+                        if (root.firstRunOnboardingStep === 5)
+                            root.firstRunOnboardingStep = 4
+                        else if (root.firstRunOnboardingStep === 4)
                             root.firstRunOnboardingStep = 3
                         else if (root.firstRunOnboardingStep === 3)
                             root.firstRunOnboardingStep = 2
@@ -2554,6 +2716,8 @@ ApplicationWindow {
                             root.firstRunOnboardingStep = 3
                         else if (root.firstRunOnboardingStep === 3)
                             root.firstRunOnboardingStep = 4
+                        else if (root.firstRunOnboardingStep === 4)
+                            root.firstRunOnboardingStep = 5
                     }
                 }
             }
@@ -2612,24 +2776,109 @@ ApplicationWindow {
             }
         }
 
+        Item {
+            id: onboardingNavigationBlockFinal
+            width: 182
+            height: 23
+            x: onboardingStep5BottomBubble.x + root.firstRunStep5NavOffsetXFromBubbleLeft - (width / 2)
+            y: onboardingStep5BottomBubble.y
+                + onboardingStep5BottomBubble.height
+                - root.firstRunStep5NavBottomInsetFromBubbleBottom
+                - root.firstRunStep5NavLift
+                - (height / 2)
+            visible: root.firstRunOnboardingStep === 5
+            z: 20
+            opacity: 1.0
+
+            Item {
+                id: onboardingFinalBackButtonHitbox
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                width: 84
+                height: 21
+
+                Image {
+                    anchors.left: parent.left
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: onboardingFinalBackMouseArea.containsMouse ? -2 : 0
+                    source: uiTokens.onboardingBackButton
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    z: 1
+                }
+
+                MouseArea {
+                    id: onboardingFinalBackMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.firstRunOnboardingStep = 4
+                }
+            }
+
+            Item {
+                id: onboardingFinalCloseButtonHitbox
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: 76
+                height: 21
+
+                Image {
+                    anchors.right: parent.right
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.verticalCenterOffset: onboardingFinalCloseNavMouseArea.containsMouse ? -2 : 0
+                    source: uiTokens.onboardingCloseNavButton
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    z: 1
+                }
+
+                MouseArea {
+                    id: onboardingFinalCloseNavMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        root.firstRunOnboardingActive = false
+                        root.firstRunOnboardingStep = 1
+                    }
+                }
+            }
+
+            Image {
+                x: 95 - (width / 2)
+                y: height - 10 - (height / 2)
+                source: uiTokens.onboardingSlash
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                z: 1
+            }
+        }
+
         Rectangle {
             id: onboardingCloseButton
             width: 32
             height: 32
             radius: 16
             color: onboardingCloseMouseArea.containsMouse ? "#303030" : "#000000"
-            x: onboardingStep1Bubble.x
-                + (root.firstRunOnboardingStep === 1 ? 487
-                    : root.firstRunOnboardingStep === 2 ? 504
-                    : root.firstRunOnboardingStep === 3 ? 749
-                    : 856)
+            x: root.firstRunOnboardingStep === 5
+                ? onboardingStep5BottomBubble.x + root.firstRunStep5CloseOffsetXFromBubbleLeft
+                : onboardingStep1Bubble.x
+                    + (root.firstRunOnboardingStep === 1 ? 487
+                        : root.firstRunOnboardingStep === 2 ? 504
+                        : root.firstRunOnboardingStep === 3 ? 749
+                        : 856)
                 - (width / 2)
-            y: onboardingStep1Bubble.y
-                + onboardingStep1Bubble.height
-                - (root.firstRunOnboardingStep === 1 ? 584
-                    : root.firstRunOnboardingStep === 2 ? 339
-                    : root.firstRunOnboardingStep === 3 ? 367
-                    : 364)
+            y: root.firstRunOnboardingStep === 5
+                ? onboardingStep5BottomBubble.y
+                    + onboardingStep5BottomBubble.height
+                    - root.firstRunStep5CloseBottomInsetFromBubbleBottom
+                : onboardingStep1Bubble.y
+                    + onboardingStep1Bubble.height
+                    - (root.firstRunOnboardingStep === 1 ? 584
+                        : root.firstRunOnboardingStep === 2 ? 339
+                        : root.firstRunOnboardingStep === 3 ? 367
+                        : 364)
                 - (height / 2)
 
             Rectangle {
