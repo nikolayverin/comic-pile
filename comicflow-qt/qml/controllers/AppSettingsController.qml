@@ -34,6 +34,7 @@ Item {
     readonly property bool defaultSafetyConfirmBeforeDeletingSeries: SettingsCatalog.defaultSafetyConfirmBeforeDeletingSeries
     readonly property bool defaultSafetyConfirmBeforeReplace: SettingsCatalog.defaultSafetyConfirmBeforeReplace
     readonly property bool defaultSafetyConfirmBeforeDeletingPage: SettingsCatalog.defaultSafetyConfirmBeforeDeletingPage
+    readonly property bool defaultOnboardingCompleted: false
     readonly property var settingDescriptors: SettingsCatalog.settingDescriptors
 
     function normalizeChoice(value, allowedValues, fallbackValue, aliases) {
@@ -239,6 +240,7 @@ Item {
         property bool safetyConfirmBeforeDeletingSeries: controller.defaultSafetyConfirmBeforeDeletingSeries
         property bool safetyConfirmBeforeReplace: controller.defaultSafetyConfirmBeforeReplace
         property bool safetyConfirmBeforeDeletingPage: controller.defaultSafetyConfirmBeforeDeletingPage
+        property bool onboardingCompleted: controller.defaultOnboardingCompleted
     }
 
     property string generalDefaultReadingMode: normalizeSettingValue(
@@ -366,6 +368,10 @@ Item {
         settingsStore.safetyConfirmBeforeDeletingPage,
         defaultSafetyConfirmBeforeDeletingPage
     )
+    property bool onboardingCompleted: normalizeBoolean(
+        settingsStore.onboardingCompleted,
+        defaultOnboardingCompleted
+    )
 
     onGeneralDefaultReadingModeChanged: syncConfiguredSetting("general_default_reading_mode")
 
@@ -432,4 +438,6 @@ Item {
     onSafetyConfirmBeforeReplaceChanged: syncConfiguredSetting("safety_confirm_before_replace")
 
     onSafetyConfirmBeforeDeletingPageChanged: syncConfiguredSetting("safety_confirm_before_deleting_page")
+
+    onOnboardingCompletedChanged: settingsStore.onboardingCompleted = onboardingCompleted
 }

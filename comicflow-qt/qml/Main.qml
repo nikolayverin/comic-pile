@@ -314,7 +314,7 @@ ApplicationWindow {
     property bool pendingConfiguredLaunchViewApply: true
     property string lastPresentedLibraryLoadError: ""
     property bool libraryBackgroundImageMigrationInProgress: false
-    property bool firstRunOnboardingActive: true
+    property bool firstRunOnboardingActive: false
     property int firstRunOnboardingStep: 1
     readonly property int firstRunSidebarHighlightX: Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
     readonly property int firstRunStep1HighlightY: Math.round(
@@ -996,6 +996,20 @@ ApplicationWindow {
 
     function openAboutDialog() {
         popupController.openExclusivePopup(aboutDialog)
+    }
+
+    function launchOnboarding(manualLaunch) {
+        dismissBackgroundTransientUi()
+        firstRunOnboardingStep = 1
+        firstRunOnboardingActive = true
+        if (!appSettingsController.onboardingCompleted) {
+            appSettingsController.onboardingCompleted = true
+        }
+    }
+
+    function closeOnboarding() {
+        firstRunOnboardingActive = false
+        firstRunOnboardingStep = 1
     }
 
     function showSettingsActionResultPayload(payload) {
@@ -1996,6 +2010,9 @@ ApplicationWindow {
     Component.onCompleted: {
         migrateLibraryBackgroundImageSettingIfNeeded()
         startupController.handleComponentCompleted()
+        if (!appSettingsController.onboardingCompleted) {
+            launchOnboarding(false)
+        }
     }
 
     onClosing: function(close) {
@@ -2127,6 +2144,7 @@ ApplicationWindow {
             onAddFolderRequested: root.quickAddFolderFromDialog()
             onAddIssueRequested: root.quickAddFilesFromDialog()
             onSettingsRequested: root.openSettingsDialog("")
+            onQuickTourRequested: root.launchOnboarding(true)
             onAboutRequested: root.openAboutDialog()
             onRefreshRequested: libraryModel.reload()
             onExitRequested: root.close()
@@ -2362,8 +2380,7 @@ ApplicationWindow {
         }
 
         Keys.onEscapePressed: function(event) {
-            root.firstRunOnboardingActive = false
-            root.firstRunOnboardingStep = 1
+            root.closeOnboarding()
             event.accepted = true
         }
 
@@ -2838,10 +2855,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        root.firstRunOnboardingActive = false
-                        root.firstRunOnboardingStep = 1
-                    }
+                    onClicked: root.closeOnboarding()
                 }
             }
 
@@ -2904,10 +2918,7 @@ ApplicationWindow {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    root.firstRunOnboardingActive = false
-                    root.firstRunOnboardingStep = 1
-                }
+                onClicked: root.closeOnboarding()
             }
         }
     }

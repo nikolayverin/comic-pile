@@ -70,6 +70,7 @@ Rectangle {
     signal closeRequested()
     signal settingsRequested()
     signal aboutRequested()
+    signal quickTourRequested()
     signal continueReadingRequested()
     signal nextUnreadRequested()
     gradient: Gradient {
@@ -496,11 +497,14 @@ Rectangle {
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenu, visible)
         menuItems: [
             { text: "Help", action: "help", enabled: false },
+            { text: "Quick tour", action: "quick_tour", enabled: true },
             { text: "About", action: "about", enabled: true },
             { text: "What's new", action: "whats_new", enabled: false }
         ]
         onItemTriggered: function(index, action) {
-            if (action === "about") {
+            if (action === "quick_tour") {
+                root.quickTourRequested()
+            } else if (action === "about") {
                 root.aboutRequested()
             }
         }
