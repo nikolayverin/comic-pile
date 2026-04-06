@@ -248,27 +248,9 @@ Rectangle {
         }
 
         TopMenuTextButton {
-            labelText: "Settings"
-            triggerDirectAction: true
-            onActionRequested: root.settingsRequested()
-        }
-
-        TopMenuTextButton {
+            id: helpTopMenuButton
             labelText: "Help"
-            triggerDirectAction: true
-            onActionRequested: root.helpRequested()
-        }
-
-        TopMenuTextButton {
-            labelText: "Quick tour"
-            triggerDirectAction: true
-            onActionRequested: root.quickTourRequested()
-        }
-
-        TopMenuTextButton {
-            labelText: "About"
-            triggerDirectAction: true
-            onActionRequested: root.aboutRequested()
+            menuPopup: helpMenuPopup
         }
 
     }
@@ -489,6 +471,7 @@ Rectangle {
         menuItems: [
             { text: "Add files", action: "add_files", enabled: !root.importInProgress },
             { text: "Add folder", action: "add_folder", enabled: !root.importInProgress },
+            { text: "Settings", action: "settings" },
             { text: "Exit", action: "exit" }
         ]
         onItemTriggered: function(index, action) {
@@ -496,8 +479,33 @@ Rectangle {
                 root.addFilesRequested()
             } else if (action === "add_folder") {
                 root.addFolderRequested()
+            } else if (action === "settings") {
+                root.settingsRequested()
             } else if (action === "exit") {
                 root.exitRequested()
+            }
+        }
+    }
+
+    ContextMenuPopup {
+        id: helpMenuPopup
+        parent: Overlay.overlay
+        debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
+        debugName: "topbar-help-menu"
+        showArrow: true
+        onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenuPopup, visible)
+        menuItems: [
+            { text: "Quick tour", action: "quick_tour" },
+            { text: "View Help", action: "view_help" },
+            { text: "About", action: "about" }
+        ]
+        onItemTriggered: function(index, action) {
+            if (action === "quick_tour") {
+                root.quickTourRequested()
+            } else if (action === "view_help") {
+                root.helpRequested()
+            } else if (action === "about") {
+                root.aboutRequested()
             }
         }
     }

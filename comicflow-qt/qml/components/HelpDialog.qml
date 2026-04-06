@@ -9,7 +9,7 @@ PopupDialogWindow {
 
     property string expandedSectionKey: "getting_started"
     property string contentSectionKey: "getting_started"
-    property string selectedSubsectionKey: "what_is_comic_pile"
+    property string selectedSubsectionKey: ""
     property string requestedSection: ""
     property string pendingScrollSubsectionKey: ""
     property var subsectionTargets: ({})
@@ -23,32 +23,27 @@ PopupDialogWindow {
                 {
                     key: "what_is_comic_pile",
                     label: "What is Comic Pile?",
-                    bodyHtml: "<b><i>Comic Pile</i></b> is a library and reader for local comics and manga files. You import files from your computer, organize them in the library, add series or issue details when needed, and open them in the reader.<br><br>Use it when you want one place to keep reading and manage your collection without reopening files manually every time."
-                },
-                {
-                    key: "what_do_i_do_first",
-                    label: "What do I do first?",
-                    bodyHtml: "Start with a small batch.<br><br><b>Recommended first steps:</b><br>&bull; import a few issues<br>&bull; check that they appear in the library<br>&bull; open one issue in the reader<br>&bull; close the reader and try <b><i>Continue reading</i></b><br><br>If that works, you are ready to use the app normally.",
-                    screenshotTitle: "Import entry points",
-                    screenshotHint: ""
-                },
-                {
-                    key: "quick_tour_vs_help",
-                    label: "When should I use Quick tour?",
-                    bodyHtml: "Use <b><i>Quick tour</i></b> if you want a short walkthrough of the interface.<br><br>Use <b><i>Help</i></b> when you have a question such as:<br>&bull; how do I import files?<br>&bull; why does an issue not open?<br>&bull; what does this feature do?<br><br><b>Quick tour</b> is for the first look. <b>Help</b> is for specific questions."
+                    bodyHtml: "<b><i>Comic Pile</i></b> is a library and reader for your local comics and manga files. Import files from your computer, organize them in the library, add series or issue details when needed, and open them in the reader.<br><br>Use <b><i>Comic Pile</i></b> as your personal library to keep, organize, and read comics in one place instead of handling them as separate files."
                 },
                 {
                     key: "main_areas",
                     label: "Main areas of the app",
-                    bodyHtml: "<b>Library</b> is where you browse, filter, and choose what to open.<br><br><b>Reader</b> is where you read the selected issue.<br><br><b>Settings</b> is where you change app behavior.<br><br><b>Help</b> is where you look up how something works or what to do when something goes wrong.",
+                    bodyHtml: "<b>Main menu</b><br>The <b>Top bar</b> contains the main app menus <b>File</b> and <b>Help</b>, plus reading shortcuts such as <b>Continue reading</b> and <b>Next unread</b>. Use it to open main commands without leaving the current screen.<br><br><b>Library navigation</b><br>The <b>Left sidebar</b> shows search, quick filters such as <b>Last import</b>, <b>Favorites</b>, and <b>Bookmarks</b>, and the list of series in your library. Use it to move around the library, switch between filters and series, and find what you want to open.<br><br><b>Drop zone</b><br>The <b>bottom of the left sidebar</b> contains the drop zone for files and folders. Use it to quickly add comics to the app by dropping supported files or folders into it.<br><br><b>Series spotlight</b><br>The <b>header of the right side</b> shows the currently selected series and its main details. Use it to confirm which series you are viewing before opening an issue or editing series information.<br><br><b>Issues</b><br>The <b>grid on the right side</b> shows the issues that belong to the selected series or active filter. Use it to browse the available issues and click a cover to open it in the reader.<br><br><b>Grid view controls</b><br>The <b>Bottom bar</b> contains the controls for issue order and grid density. Use them to change how the issue grid is sorted and how compact or spacious it looks.",
                     screenshotTitle: "Main interface map",
+                    screenshotHint: ""
+                },
+                {
+                    key: "what_do_i_do_first",
+                    label: "What do I do first?",
+                    bodyHtml: "Start with these simple steps:<br><br>&bull; import one issue file into the app through the <b>drop zone</b><br>&bull; make sure it appears in the interface<br>&bull; click the issue cover to open the reader<br><br>Done. You now know the basic flow of the app.",
+                    screenshotTitle: "Start by dropping files here",
                     screenshotHint: ""
                 },
                 {
                     key: "after_import",
                     label: "How do I know import worked?",
-                    bodyHtml: "After import, check three things:<br>&bull; the new issues appear in the library<br>&bull; one of them opens in the reader<br>&bull; <b><i>Last Import</i></b> shows the items you expected<br><br>If the files do not appear, or an issue appears but will not open, go to <b><i>Troubleshooting</i></b>.",
-                    screenshotTitle: "Library after first import",
+                    bodyHtml: "After import, check two things:<br>&bull; the imported series appears in <b>Library navigation</b><br>&bull; one of the imported issues appears in <b>Issues</b> and opens in <b>Reader</b> when you click its cover",
+                    screenshotTitle: "Check imported series and issue",
                     screenshotHint: ""
                 }
             ]
@@ -57,48 +52,58 @@ PopupDialogWindow {
             key: "importing_comics",
             label: "Importing comics",
             iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-download.svg",
-            leadHtml: "Use this section before a big import, or when a file does not import the way you expected.",
+            leadHtml: "",
             subsections: [
                 {
-                    key: "how_to_import",
-                    label: "How do I import comics?",
-                    bodyHtml: "You have two main choices:<br><br>&bull; <b>Add Files</b>: best when you want to import a few specific issues. If you are not sure, start here and test a small batch first.<br>&bull; <b>Add Folder</b>: best when one folder already contains many issues that belong together.<br><br><b>Safe way to import:</b><br>&bull; start with a small batch<br>&bull; wait for the import to finish<br>&bull; open one imported issue<br>&bull; only then import a larger batch"
+                    key: "import_source_types",
+                    label: "What files can I import?",
+                    bodyHtml: "Comic Pile can import many file types, not just archives.<br><br><b>Archives</b> such as <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>CB7</b>, <b>7Z</b>, <b>CBT</b>, and <b>TAR</b><br>&bull; one archive usually means one issue<br><br><b>Folders with image files</b> such as <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b>, and <b>WEBP</b><br>&bull; one folder usually means one issue made of page images<br><br><b>Multi-page documents</b> such as <b>PDF</b>, <b>DJVU</b>, and <b>DJV</b><br>&bull; one document usually means one issue<br><br>Some archive formats depend on the built-in <b>7-Zip</b> component that comes with <b>Comic Pile</b>.<br><br>This is why one source may look like a file, while another may look like a folder. Comic Pile can treat both as one issue when the structure is correct."
                 },
                 {
                     key: "file_structure",
-                    label: "What should my files look like?",
-                    bodyHtml: "Comic Pile works best when one issue is one source.<br><br><b>Good examples:</b><br>&bull; one archive file per issue, such as <b>Batman 001.cbz</b><br>&bull; one folder per issue, such as <b>Series Name/Issue 001/</b><br><br><b>Avoid this when possible:</b><br>&bull; one folder that mixes pages from several issues<br>&bull; folders full of extra files that are not pages<br>&bull; inconsistent issue naming inside the same batch",
+                    label: "How should files be prepared for import?",
+                    bodyHtml: "For reliable import, prepare each issue as one clear source.<br><br><b>Good examples:</b><br>&bull; one archive file per issue, such as <b>ComicsName 001.cbz</b><br>&bull; one folder per issue, such as <b>Series Name/Issue 001/</b><br><br><b>For image folders:</b><br>&bull; keep the pages of one issue in one folder<br>&bull; do not mix pages from different issues in the same folder<br>&bull; keep page names in reading order<br>&bull; vertical page images work best for issue covers in the grid<br>&bull; horizontal double-page spreads inside the issue still open normally in <b>Reader</b><br><br><b>Before importing, check for these common problems.</b> If you see any of them, fix them first for a more predictable result:<br>&bull; one folder that mixes pages from several issues<br>&bull; folders full of extra files that are not pages<br>&bull; inconsistent issue naming inside the same batch",
                     screenshotTitle: "Example of a clean folder structure",
                     screenshotHint: ""
                 },
                 {
                     key: "page_order",
                     label: "Page order matters",
-                    bodyHtml: "If you import image folders, page names should already be in reading order.<br><br><b>Good page names:</b><br>&bull; <b>001</b><br>&bull; <b>002</b><br>&bull; <b>003</b><br><br>Use leading zeroes. That helps avoid cases like <b>1</b>, <b>10</b>, <b>2</b>, which can put pages in the wrong order.",
-                    screenshotTitle: "Duplicate issue popup",
-                    screenshotHint: ""
+                    bodyHtml: "If you import page-based sources such as image folders or archives, page names should already be in reading order.<br><br><b>Good page names:</b><br>&bull; <b>001</b><br>&bull; <b>002</b><br>&bull; <b>003</b><br><br>Use leading zeroes. That helps avoid cases like <b>1</b>, <b>10</b>, <b>2</b>, which can put pages in the wrong order."
+                },
+                {
+                    key: "import_size",
+                    label: "Does file size matter?",
+                    bodyHtml: "Comic Pile does not use a fixed import size limit in MB.<br><br>Your files stay on your own computer, so the main difference with large sources is usually import time. Bigger archives, folders, or documents can take longer to process and appear in the app."
+                },
+                {
+                    key: "how_to_import",
+                    label: "How do I import comics?",
+                    bodyHtml: "You can import in three simple ways:<br><br>&bull; <b>Drop files or folders</b> into the <b>drop zone</b> in the left sidebar<br>&bull; <b>File -> Add files</b>: best when you want to import a few specific issues<br>&bull; <b>File -> Add folder</b>: best when one folder already contains many issues that belong together"
                 },
                 {
                     key: "duplicate_found",
                     label: "What should I do if a duplicate is found?",
-                    bodyHtml: "If Comic Pile finds a matching issue during import, it opens a decision popup.<br><br>Use <b>Keep current</b> when you want to leave the existing issue untouched.<br>Use <b>Replace</b> when the new file is the same issue and should take the place of the current file.<br>Use <b>Import as new</b> when the new file should stay as a separate issue.<br>Use <b>Skip</b> when you do not want to import that file right now.<br><br>If you are working through many exact duplicates, <b>Skip all</b> or <b>Replace all</b> applies the same choice to the rest of that batch."
+                    bodyHtml: "If Comic Pile finds a matching issue during import, it opens a decision popup.<br><br>Use <b>Keep current</b> when you want to leave the existing issue untouched.<br>Use <b>Replace</b> when the new file is the same issue and should take the place of the current file.<br>Use <b>Import as new</b> when the new file should stay as a separate issue.<br>Use <b>Skip</b> when you do not want to import that file right now.<br><br>If you are working through many exact duplicates, <b>Skip all</b> or <b>Replace all</b> applies the same choice to the rest of that batch.",
+                    screenshotTitle: "Duplicate issue popup",
+                    screenshotHint: ""
                 },
                 {
                     key: "replace_issue",
                     label: "What does Replace do?",
-                    bodyHtml: "<b>Replace</b> keeps the existing issue entry but swaps in the new file.<br><br>Use it when the new archive is a corrected or better copy of the same issue.<br><br>If you are not sure whether the new file really represents the same issue, choose <b>Import as new</b> instead.",
-                    screenshotTitle: "Import Errors popup",
-                    screenshotHint: ""
+                    bodyHtml: "<b>Replace</b> keeps the existing issue entry but swaps in the new file.<br><br>Use it when the new archive is a corrected or better copy of the same issue.<br><br>If you are not sure whether the new file really represents the same issue, choose <b>Import as new</b> instead."
                 },
                 {
                     key: "import_errors_batch",
                     label: "What should I do if Import Errors appears?",
-                    bodyHtml: "This means one or more files in the batch were not imported.<br><br>Use <b>Retry</b> after you fix the file and want to try again.<br>Use <b>Skip</b> to ignore only the current failed file.<br>Use <b>Skip all</b> to ignore the remaining failed files and finish the review faster.<br><br>If only one file fails, the problem is usually in that file. If many files fail in the same batch, check the source folder and storage access."
+                    bodyHtml: "This means one or more files in the batch were not imported.<br><br>Use <b>Retry</b> after you fix the file and want to try again.<br>Use <b>Skip</b> to ignore only the current failed file.<br>Use <b>Skip all</b> to ignore the remaining failed files and finish the review faster.<br><br>If only one file fails, the problem is usually in that file. If many files fail in the same batch, check the source folder and storage access.",
+                    screenshotTitle: "Import Errors popup",
+                    screenshotHint: ""
                 },
                 {
                     key: "last_import",
                     label: "What is Last Import?",
-                    bodyHtml: "<b><i>Last Import</i></b> shows the most recent import session.<br><br>Use it right after import if you want to confirm what was added, especially after a large batch."
+                    bodyHtml: "<b><i>Last import</i></b> is a quick filter in the left sidebar that shows the most recent import session.<br><br>Use it right after import to confirm what was added, especially after a large batch or when the current series view did not change.<br><br>Do not treat it as a permanent reading shelf. After restart, it may no longer contain the previous import session. For long-term access, open the series from the library."
                 }
             ]
         },
@@ -106,7 +111,7 @@ PopupDialogWindow {
             key: "supported_formats",
             label: "Supported formats",
             iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-book-open-text.svg",
-            leadHtml: "Check this section if you are not sure whether a file or folder can be imported.",
+            leadHtml: "",
             subsections: [
                 {
                     key: "import_formats",
@@ -116,7 +121,7 @@ PopupDialogWindow {
                 {
                     key: "cbr_note",
                     label: "What if CBR does not import?",
-                    bodyHtml: "<b>CBR</b> support depends on a working <b>7-Zip</b> setup.<br><br>If CBR files fail while CBZ or PDF files still import normally, check the <b>Import &amp; Archives</b> section in <b>Settings</b> and verify that 7-Zip is available."
+                    bodyHtml: "<b>CBR</b> support depends on a working <b>7-Zip</b> setup.<br><br>If CBR files fail while CBZ or PDF files still import normally, check <b>File -> Settings -> Import &amp; Archives</b> and verify that 7-Zip is available."
                 },
                 {
                     key: "after_import_normalization",
@@ -136,7 +141,7 @@ PopupDialogWindow {
             key: "library_data",
             label: "Library and data",
             iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-library-big.svg",
-            leadHtml: "Use this section when you move folders, replace the app build, or need to check whether Comic Pile can still reach your library files.",
+            leadHtml: "",
             subsections: [
                 {
                     key: "app_vs_data",
@@ -146,24 +151,24 @@ PopupDialogWindow {
                 {
                     key: "move_data_location",
                     label: "Can I move the library data location?",
-                    bodyHtml: "Yes. Do it through <b>Settings -> Library &amp; Data</b>.<br><br><b>Recommended steps:</b><br>&bull; open <b>Settings</b><br>&bull; go to <b>Library &amp; Data</b><br>&bull; choose the new location<br>&bull; restart when asked<br><br>Do not move the active library-data location manually while the app is using it.",
-                    screenshotTitle: "Location of Check storage access in Settings",
-                    screenshotHint: ""
+                    bodyHtml: "Yes. Do it through <b>File -> Settings -> Library &amp; Data</b>.<br><br><b>Recommended steps:</b><br>&bull; open <b>File -> Settings</b><br>&bull; go to <b>Library &amp; Data</b><br>&bull; choose the new location<br>&bull; restart when asked<br><br>Important: never move the active library-data location manually while the app is using it."
                 },
                 {
                     key: "check_storage_access",
                     label: "When should I use Check storage access?",
-                    bodyHtml: "Use <b><i>Check storage access</i></b> when files stop opening, import starts failing, or the library feels wrong after you moved folders.<br><br>It is the fastest way to check whether the current storage setup is still reachable."
+                    bodyHtml: "Use <b><i>Check storage access</i></b> from <b>File -> Settings -> Library &amp; Data</b> when files stop opening, import starts failing, or the library feels wrong after you moved folders.<br><br>It is the fastest way to check whether the current storage setup is still reachable.",
+                    screenshotTitle: "Location of Check storage access in Settings",
+                    screenshotHint: ""
                 },
                 {
-                    key: "reset_settings",
-                    label: "What should I avoid moving manually?",
-                    bodyHtml: "Avoid manually moving active library folders, storage folders, or library-data folders while Comic Pile is using them.<br><br>If you need to move storage-related content, use the app's own controls first. That is the safest way to avoid broken paths and missing-file problems."
+                    key: "edit_metadata",
+                    label: "Can I edit issue and series details?",
+                    bodyHtml: "Yes. You do not need to reimport a file just to fix library details.<br><br>Use <b>Edit</b> on an issue when you want to fix issue number, title, credits, or other issue fields.<br>Use the series menu in the left sidebar when you want to edit series-level details such as series name, volume, publisher, year, or summary."
                 },
                 {
                     key: "moved_folders_problem",
                     label: "What should I do if files stop opening after I moved folders?",
-                    bodyHtml: "Start with this order:<br>&bull; open <b>Settings -> Library &amp; Data</b><br>&bull; run <b><i>Check storage access</i></b><br>&bull; confirm that the moved location is the one the app is using now<br><br>If the problem started right after a manual move, do not keep reimporting files immediately. Check the storage setup first."
+                    bodyHtml: "Start with this order:<br>&bull; open <b>File -> Settings -> Library &amp; Data</b><br>&bull; run <b><i>Check storage access</i></b><br>&bull; confirm that the moved location is the one the app is using now<br><br>If the problem started right after a manual move, do not keep reimporting files immediately. Check the storage setup first."
                 }
             ]
         },
@@ -171,31 +176,45 @@ PopupDialogWindow {
             key: "reader",
             label: "Reader",
             iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-settings.svg",
-            leadHtml: "Use this section when you want to resume reading, move through issues more quickly, or understand why the reader behaves differently than expected.",
+            leadHtml: "",
             subsections: [
                 {
-                    key: "opening_issue",
-                    label: "Opening an issue",
-                    bodyHtml: "Open any issue from the library to start reading.<br><br>If the issue belongs to a series, you can keep moving through nearby issues from inside the reader instead of returning to the library every time.",
-                    screenshotTitle: "Reader menu and navigation controls",
+                    key: "reader_overview",
+                    label: "Reader interface overview",
+                    bodyHtml: "Open any issue from the library to start reading.<br><br>The reader has four main areas:<br>&bull; the <b>top bar</b> with issue title and icon buttons<br>&bull; the <b>page area</b> in the middle<br>&bull; the <b>side arrows</b> for previous and next page<br>&bull; the <b>bottom controls</b> for page list, <b>Read from start</b>, and <b>Mark as read</b><br><br>Comic Pile reopens an issue from your saved spot when progress already exists. If <b>Auto-open bookmarked page instead of last page</b> is enabled in <b>File -> Settings -> Reader</b>, a bookmark can open first.",
+                    screenshotTitle: "Reader layout overview",
+                    screenshotHint: ""
+                },
+                {
+                    key: "reader_top_reading_controls",
+                    label: "Reading controls in the top bar",
+                    bodyHtml: "Near the issue title, the left and right issue arrows move to the previous or next issue in the same series when available.<br><br>The icon buttons on the top bar control the reading view:<br>&bull; <b>Manga mode</b> reverses reading direction<br>&bull; <b>1 page</b> shows one page at a time<br>&bull; <b>2 pages</b> shows a two-page spread when possible<br>&bull; <b>Bookmark</b> saves or removes a bookmark for the current page<br>&bull; <b>Favorite</b> adds or removes the current issue from <b>Favorites</b>"
+                },
+                {
+                    key: "reader_tools",
+                    label: "Utility buttons in the top bar",
+                    bodyHtml: "The remaining top-bar buttons are for utility actions rather than reading mode:<br>&bull; <b>Delete page</b> removes the current page from the archive<br>&bull; <b>Settings</b> opens reader-related settings<br>&bull; <b>Theme</b> switches the reader between its dark and light look<br>&bull; <b>Fullscreen</b> expands the reader to fullscreen mode<br>&bull; <b>Magnifier</b> turns on zoom-on-hover inside the page area<br>&bull; <b>Copy</b> copies the current page image<br>&bull; <b>Info</b> opens the hotkeys popup<br>&bull; <b>Close</b> exits the reader",
+                    screenshotTitle: "Reader utility buttons",
+                    screenshotHint: ""
+                },
+                {
+                    key: "reader_bottom_controls",
+                    label: "Bottom controls and page navigation",
+                    bodyHtml: "Use the large left and right arrows on the sides of the page area to move between pages.<br><br>At the bottom of the reader:<br>&bull; <b>Read from start</b> clears the saved continue-reading spot and starts the issue again from the beginning<br>&bull; <b>Mark as read</b> marks the current issue as finished in the library, clears its bookmark, and moves to the next issue when one is available<br>&bull; in the library grid, a read issue shows the completed read state on the cover and is no longer used as a <b>Next unread</b> target<br>&bull; the <b>page counter</b> shows your current position and opens the page list when clicked<br><br>If <b>Manga mode</b> is enabled, the page-direction logic is reversed to match manga reading order.",
+                    screenshotTitle: "Reader bottom controls and page list",
+                    screenshotHint: ""
+                },
+                {
+                    key: "reader_bookmarks_favorites",
+                    label: "Bookmarks and Favorites",
+                    bodyHtml: "<b><i>Bookmarks</i></b> save a page inside one issue.<br><br>If a bookmark exists on a page that is not currently visible, the reader shows a bookmark marker near the page area. Click it to jump back to that bookmarked page.<br><br><b><i>Favorites</i></b> mark whole issues so you can find them again in the <b>Favorites</b> quick filter in the left sidebar.",
+                    screenshotTitle: "Bookmark indicator and favorites",
                     screenshotHint: ""
                 },
                 {
                     key: "continue_next_unread",
                     label: "Continue reading and Next unread",
-                    bodyHtml: "<b><i>Continue reading</i></b> takes you back to where you left off.<br><br><b><i>Next unread</i></b> opens the next unread issue from that same reading flow.<br><br>Use them when you want to keep reading without searching the library by hand."
-                },
-                {
-                    key: "bookmark_vs_continue",
-                    label: "What is the difference between a bookmark and continue reading?",
-                    bodyHtml: "A <b><i>bookmark</i></b> is a manual saved spot inside one issue.<br><br><b><i>Continue reading</i></b> uses the latest saved reading progress.<br><br>Use a bookmark when you want to mark a page on purpose. Use Continue reading when you just want to resume."
-                },
-                {
-                    key: "manga_mode",
-                    label: "Manga mode",
-                    bodyHtml: "<b><i>Manga mode</i></b> changes reading direction.<br><br>Turn it on for manga or any content that reads in the opposite direction from the default comic flow.<br><br>If page navigation suddenly feels reversed, check whether manga mode is active.",
-                    screenshotTitle: "Manga mode toggle",
-                    screenshotHint: ""
+                    bodyHtml: "<b><i>Continue reading</i></b> opens the issue Comic Pile currently uses as your reading target.<br><br>That target can come from saved progress or a bookmark.<br><br><b><i>Next unread</i></b> opens the next unread issue in the same series flow."
                 }
             ]
         },
@@ -203,17 +222,17 @@ PopupDialogWindow {
             key: "troubleshooting",
             label: "Troubleshooting",
             iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-alert-triangle.svg",
-            leadHtml: "Start here when something does not open, import fails, or the app behaves differently than you expected.",
+            leadHtml: "",
             subsections: [
                 {
                     key: "issue_does_not_open",
                     label: "The issue does not open",
-                    bodyHtml: "Try these checks in order:<br>&bull; make sure the issue is still visible in the library<br>&bull; open another issue to see whether the problem affects one file or many<br>&bull; if you moved folders recently, run <b><i>Check storage access</i></b><br><br>If only one issue fails, the problem is usually with that issue. If many issues fail, check storage first."
+                    bodyHtml: "Try these checks in order:<br>&bull; make sure the issue is still visible in the library<br>&bull; open another issue to see whether the problem affects one file or many<br>&bull; if you moved folders recently, run <b><i>Check storage access</i></b> from <b>File -> Settings -> Library &amp; Data</b><br><br>If only one issue fails, the problem is usually with that issue. If many issues fail, check storage first."
                 },
                 {
                     key: "import_failed",
                     label: "Import failed",
-                    bodyHtml: "If import fails, check these first:<br>&bull; the file type is supported<br>&bull; the archive or document opens normally outside the app<br>&bull; an image folder really contains page files<br>&bull; the file is not locked by another app<br><br>If you are not sure, try importing one known-good issue first."
+                    bodyHtml: "If import fails, check these first:<br>&bull; the file type is supported<br>&bull; the archive or document opens normally outside the app<br>&bull; an image folder really contains page files<br>&bull; the file is not locked by another app<br><br>Fix the problem file, make sure it follows the expected file-structure rules and is not broken, then try importing it again."
                 },
                 {
                     key: "import_errors_popup",
@@ -253,8 +272,8 @@ PopupDialogWindow {
     readonly property int subsectionSpacing: 6
     readonly property int bodyParagraphSpacing: 18
     readonly property int bodyListLeadGap: 10
-    readonly property int bodyListItemSpacing: 8
     readonly property int bodyListIndent: 22
+    readonly property real bodyLineHeight: 1.28
     readonly property int baseHostWidth: 1440
     readonly property int baseHostHeight: 980
     readonly property int baseDialogWidth: 1024
@@ -284,6 +303,11 @@ PopupDialogWindow {
     onOpened: {
         const requested = String(requestedSection || "").trim()
         selectSection(requested.length > 0 ? requested : "getting_started")
+        Qt.callLater(function() {
+            if (selectedSubsectionKey.length === 0) {
+                scrollToSectionStart()
+            }
+        })
     }
     onCloseRequested: close()
 
@@ -347,6 +371,9 @@ PopupDialogWindow {
 
     function scrollToSubsection(subsectionKey) {
         const key = String(subsectionKey || "")
+        if (sectionOwnsSubsection(contentSectionKey, key)) {
+            selectedSubsectionKey = key
+        }
         const index = subsectionIndexForKey(contentSectionKey, key)
         if (contentFlick && index >= 0 && contentFlick.itemAtIndex) {
             let targetItem = contentFlick.itemAtIndex(index)
@@ -382,21 +409,35 @@ PopupDialogWindow {
         contentScrollAnimation.start()
     }
 
+    function scrollToSectionStart() {
+        if (!contentFlick) return
+        contentFlick.cancelFlick()
+        contentScrollAnimation.stop()
+        if (typeof contentFlick.positionViewAtBeginning === "function") {
+            contentFlick.positionViewAtBeginning()
+        }
+        contentFlick.contentY = 0
+        Qt.callLater(function() {
+            if (!contentFlick || pendingScrollSubsectionKey.length > 0) return
+            contentFlick.cancelFlick()
+            contentScrollAnimation.stop()
+            if (typeof contentFlick.positionViewAtBeginning === "function") {
+                contentFlick.positionViewAtBeginning()
+            }
+            contentFlick.contentY = 0
+        })
+    }
+
     function selectSection(sectionKey) {
         const entry = findSection(sectionKey)
         if (!entry) return
         const nextKey = String(entry.key || "")
         contentSectionKey = nextKey
         expandedSectionKey = nextKey
-        if (!sectionOwnsSubsection(nextKey, selectedSubsectionKey)) {
-            selectedSubsectionKey = firstSubsectionKey(nextKey)
-        }
+        selectedSubsectionKey = ""
         clearSubsectionTargets()
         pendingScrollSubsectionKey = ""
-        if (contentFlick) {
-            contentScrollAnimation.stop()
-            contentFlick.contentY = 0
-        }
+        scrollToSectionStart()
     }
 
     function selectSubsection(sectionKey, subsectionKey) {
@@ -474,10 +515,15 @@ PopupDialogWindow {
                 const items = Array.isArray(block.items) ? block.items : []
                 for (let j = 0; j < items.length; j += 1) {
                     const isLastItem = j === items.length - 1
-                    const itemBottomMargin = isLastItem ? blockBottomMargin : bodyListItemSpacing
-                    html += "<p style=\"margin:0 0 " + itemBottomMargin + "px " + bodyListIndent + "px;\">&bull; "
+                    const itemBottomMargin = isLastItem ? blockBottomMargin : 0
+                    html += "<table style=\"margin:0 0 " + itemBottomMargin + "px " + bodyListIndent + "px; border-collapse:collapse;\" cellpadding=\"0\" cellspacing=\"0\">"
+                        + "<tr>"
+                        + "<td style=\"padding:0 10px 0 0; vertical-align:top; line-height:" + bodyLineHeight + ";\">&bull;</td>"
+                        + "<td style=\"padding:0; vertical-align:top; line-height:" + bodyLineHeight + ";\">"
                         + items[j]
-                        + "</p>"
+                        + "</td>"
+                        + "</tr>"
+                        + "</table>"
                 }
             }
         }
@@ -760,11 +806,15 @@ PopupDialogWindow {
                 onContentHeightChanged: {
                     if (dialog.pendingScrollSubsectionKey.length > 0) {
                         Qt.callLater(function() { dialog.scrollToSubsection(dialog.pendingScrollSubsectionKey) })
+                    } else if (dialog.selectedSubsectionKey.length === 0) {
+                        Qt.callLater(function() { dialog.scrollToSectionStart() })
                     }
                 }
                 onHeightChanged: {
                     if (dialog.pendingScrollSubsectionKey.length > 0) {
                         Qt.callLater(function() { dialog.scrollToSubsection(dialog.pendingScrollSubsectionKey) })
+                    } else if (dialog.selectedSubsectionKey.length === 0) {
+                        Qt.callLater(function() { dialog.scrollToSectionStart() })
                     }
                 }
 
@@ -788,6 +838,7 @@ PopupDialogWindow {
                         }
 
                         Text {
+                            visible: text.length > 0
                             width: parent.width
                             text: dialog.selectedSectionLeadHtml()
                             color: "#a2a2a2"
@@ -840,7 +891,7 @@ PopupDialogWindow {
                             font.family: Qt.application.font.family
                             font.pixelSize: dialog.bodyTextSize
                             wrapMode: Text.WordWrap
-                            lineHeight: 1.28
+                            lineHeight: dialog.bodyLineHeight
                             lineHeightMode: Text.ProportionalHeight
                         }
 

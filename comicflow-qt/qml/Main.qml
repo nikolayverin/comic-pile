@@ -1000,7 +1000,7 @@ ApplicationWindow {
         const requested = String(sectionKey || "").trim()
         helpDialog.requestedSection = requested
         helpDialog.expandedSectionKey = requested.length > 0 ? requested : "getting_started"
-        helpDialog.selectedSubsectionKey = helpDialog.firstSubsectionKey(helpDialog.expandedSectionKey)
+        helpDialog.selectedSubsectionKey = ""
         popupController.openExclusivePopup(helpDialog)
     }
 
