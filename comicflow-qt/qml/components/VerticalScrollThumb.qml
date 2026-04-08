@@ -11,6 +11,9 @@ Item {
     property int thumbInset: 0
     property color thumbColor: "white"
     property bool interactive: true
+    property bool draggingThumb: false
+    property real dragStartMouseY: 0
+    property real dragStartContentY: 0
 
     readonly property real resolvedVisibleRatio: {
         if (flickable && flickable.visibleArea) {
@@ -39,31 +42,33 @@ Item {
     }
 
     signal dragStarted()
+    signal dragEnded()
     signal positionRequested(real ratio)
 
     function clampRatio(value) {
         return Math.max(0, Math.min(1, Number(value || 0)))
     }
 
-    function requestPositionFromPointer(localY) {
-        const thumbHeight = resolvedThumbHeight
-        const availableTravel = Math.max(0, innerTrackHeight - thumbHeight)
-        const unclamped = localY - thumbInset - (thumbHeight / 2)
-        const clamped = Math.max(0, Math.min(availableTravel, unclamped))
-        const ratio = availableTravel > 0
-            ? (clamped / availableTravel)
-            : 0
+    function thumbTop() {
+        return thumbInset + Math.max(0, innerTrackHeight - resolvedThumbHeight) * resolvedPositionRatio
+    }
 
+    function thumbBottom() {
+        return thumbTop() + resolvedThumbHeight
+    }
+
+    function dragThumbToPointer(localY) {
         if (flickable) {
             const maxContentY = Math.max(0, Number(flickable.contentHeight || 0) - Number(flickable.height || 0))
-            if (maxContentY <= 0) {
+            const availableTravel = Math.max(0, innerTrackHeight - resolvedThumbHeight)
+            if (maxContentY <= 0 || availableTravel <= 0) {
                 return
             }
-            flickable.contentY = ratio * maxContentY
+            const deltaY = localY - dragStartMouseY
+            const desiredContentY = dragStartContentY + (deltaY * maxContentY / availableTravel)
+            flickable.contentY = Math.round(Math.max(0, Math.min(maxContentY, desiredContentY)))
             return
         }
-
-        positionRequested(ratio)
     }
 
     Rectangle {
@@ -87,13 +92,40 @@ Item {
         preventStealing: true
         cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
         onPressed: function(mouse) {
+            mouse.accepted = true
+            const thumbTopY = root.thumbTop()
+            const thumbBottomY = root.thumbBottom()
+            root.draggingThumb = mouse.y >= thumbTopY && mouse.y <= thumbBottomY
+            if (!root.draggingThumb) {
+                return
+            }
             root.dragStarted()
-            root.requestPositionFromPointer(mouse.y)
+            root.dragStartMouseY = mouse.y
+            root.dragStartContentY = root.flickable
+                ? Number(root.flickable.contentY || 0)
+                : 0
         }
         onPositionChanged: function(mouse) {
-            if (pressed) {
-                root.requestPositionFromPointer(mouse.y)
+            mouse.accepted = true
+            if (pressed && root.draggingThumb) {
+                root.dragThumbToPointer(mouse.y)
             }
+        }
+        onReleased: {
+            if (root.draggingThumb) {
+                root.dragEnded()
+            }
+            root.draggingThumb = false
+            root.dragStartMouseY = 0
+            root.dragStartContentY = 0
+        }
+        onCanceled: {
+            if (root.draggingThumb) {
+                root.dragEnded()
+            }
+            root.draggingThumb = false
+            root.dragStartMouseY = 0
+            root.dragStartContentY = 0
         }
     }
 }
