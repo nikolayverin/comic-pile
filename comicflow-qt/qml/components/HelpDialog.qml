@@ -36,6 +36,7 @@ PopupDialogWindow {
                     key: "main_areas",
                     label: "Main areas of the app",
                     bodyHtml: "<b>Main menu</b><br>The <b>Top bar</b> contains the main app menus <b>File</b> and <b>Help</b>, plus reading shortcuts such as <b>Continue reading</b> and <b>Next unread</b>. Use it to open main commands without leaving the current screen.<br><br><b>Library</b><br>The <b>Library</b> shows search, quick filters such as <b>Last import</b>, <b>Favorites</b>, and <b>Bookmarks</b>, and the list of series in your library. Use it to move around the library, switch between filters and series, and find what you want to open.<br><br><b>Drop zone</b><br>The <b>bottom of Library</b> contains the drop zone for files and folders. Use it to quickly add comics to the app by dropping supported files or folders into it.<br><br><b>Series spotlight</b><br>The <b>Series spotlight</b> shows the currently selected series and its main details. Use it to confirm which series you are viewing before opening an issue or editing series information.<br><br><b>Issues</b><br><b>Issues</b> shows the issues that belong to the selected series or active filter. Use it to browse the available issues and click a cover to open it in the reader.<br><br><b>Grid view controls</b><br>The <b>Bottom bar</b> contains the controls for issue order and grid density. Use them to change how <b>Issues</b> is sorted and how compact or spacious it looks.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/01-interface.png",
                     screenshotTitle: "Main interface map",
                     screenshotHint: ""
                 },
@@ -43,6 +44,7 @@ PopupDialogWindow {
                     key: "what_do_i_do_first",
                     label: "What do I do first?",
                     bodyHtml: "Start with these simple steps:<br><br>&bull; import one issue file into the app through the <b>drop zone</b><br>&bull; make sure it appears in the interface<br>&bull; click the issue cover to open the reader<br><br>Done. You now know the basic flow of the app.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/02-dropzone.png",
                     screenshotTitle: "Start by dropping files here",
                     screenshotHint: ""
                 },
@@ -50,6 +52,7 @@ PopupDialogWindow {
                     key: "after_import",
                     label: "How do I know import worked?",
                     bodyHtml: "After import, check two things:<br>&bull; the imported series appears in <b>Library</b><br>&bull; one of the imported issues appears in <b>Issues</b> and opens in <b>Reader</b> when you click its cover",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/03-library-issues.png",
                     screenshotTitle: "Check imported series and issue",
                     screenshotHint: ""
                 }
@@ -70,6 +73,7 @@ PopupDialogWindow {
                     key: "file_structure",
                     label: "How should files be prepared for import?",
                     bodyHtml: "For reliable import, prepare each issue as one clear source.<br><br><b>Good examples:</b><br>&bull; one archive file per issue, such as <b>ComicsName 001.cbz</b><br>&bull; one folder per issue, such as <b>Series Name/Issue 001/</b><br><br>If you import page-based sources such as image folders or archives, page names should already be in reading order.<br><br><b>Good page names:</b><br>&bull; <b>001</b><br>&bull; <b>002</b><br>&bull; <b>003</b><br><br>Use leading zeroes. That helps avoid cases like <b>1</b>, <b>10</b>, and <b>2</b>, which can put pages in the wrong order.<br><br><b>For image folders:</b><br>&bull; keep the pages of one issue in one folder<br>&bull; do not mix pages from different issues in the same folder<br>&bull; keep page names in reading order<br>&bull; vertical page images work best for issue covers in the grid<br>&bull; horizontal double-page spreads inside the issue still open normally in <b>Reader</b><br><br><b>Before importing, check for these common problems.</b> If you see any of them, fix them first for a more predictable result:<br>&bull; one folder that mixes pages from several issues<br>&bull; folders full of extra files that are not pages<br>&bull; inconsistent issue naming inside the same batch",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/04-file-naming.png",
                     screenshotTitle: "Example of a clean folder structure",
                     screenshotHint: ""
                 },
@@ -86,16 +90,19 @@ PopupDialogWindow {
                 {
                     key: "duplicate_found",
                     label: "What happens if Comic Pile finds a matching issue during import?",
-                    bodyHtml: "If Comic Pile finds a match during import, it opens a review popup before anything is changed.<br><br>In that popup, you will see two references:<br><br>&bull; the file you are importing, shown under <b>Incoming archive</b><br>&bull; the issue already in your library, shown under <b>Existing record</b><br><br>The names can look identical or very similar when the match is close.<br><br><b>1. Exact duplicate</b><br>This appears when Comic Pile is confident that the imported file matches an issue that already exists in your library.<br><br>In this popup, decide whether to:<br><br>&bull; keep the existing issue with <b>Keep current</b><br>&bull; replace it with the new file using <b>Replace</b><br>&bull; apply the same choice to the remaining exact duplicates with <b>Skip all</b> or <b>Replace all</b>, if those actions appear",
-                    screenshotTitle: "Exact duplicate review popup",
-                    bodyHtmlAfterScreenshot: "<b>2. Related match</b><br>This appears when Comic Pile finds something that looks close to an existing issue, but the match is not exact enough to treat it as a confirmed duplicate.<br><br>In this popup, decide whether to:<br><br>&bull; keep the new file as a separate issue with <b>Import as new</b><br>&bull; leave it out of the import for now with <b>Skip</b><br>&bull; replace the existing issue with <b>Replace existing</b>, if that option appears",
-                    screenshotTitleAfter: "Related match review popup",
+                    bodyHtml: "If Comic Pile finds a match during import, it opens a review popup before anything is changed.<br><br>In that popup, you will see two references:<br><br>&bull; the file you are importing, shown under <b>Incoming archive</b><br>&bull; the issue already in your library, shown under <b>Existing record</b><br><br>The names can look identical or very similar when the match is close.<br><br><b>1. Exact duplicate</b><br>If Comic Pile is confident that the imported file matches an issue that already exists in your library, it opens the <b>Issue Already Exists</b> popup.<br><br>In that popup, decide whether to:<br><br>&bull; keep the existing issue with <b>Keep current</b><br>&bull; replace it with the new file using <b>Replace</b><br>&bull; apply the same choice to the remaining exact duplicates with <b>Skip all</b> or <b>Replace all</b>, if those actions appear",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/05-popup.png",
+                    screenshotTitle: "Issue Already Exists popup for exact duplicates",
+                    bodyHtmlAfterScreenshot: "<b>2. Related match</b><br>If Comic Pile finds something that looks close to an existing issue, but the match is not exact enough to treat it as a confirmed duplicate, it opens the <b>Possible Duplicate Found</b> popup.<br><br>In that popup, decide whether to:<br><br>&bull; keep the new file as a separate issue with <b>Import as new</b><br>&bull; leave it out of the import for now with <b>Skip</b><br>&bull; replace the existing issue with <b>Replace existing</b>, if that option appears",
+                    screenshotSourceAfter: "qrc:/qt/qml/ComicPile/assets/ui/help/06-popup.png",
+                    screenshotTitleAfter: "Possible Duplicate Found popup for related matches",
                     screenshotHint: ""
                 },
                 {
                     key: "import_errors_batch",
                     label: "What should I do if Comic Pile shows Import Errors during import?",
                     bodyHtml: "If Comic Pile shows an <b>Import Errors</b> popup during import, one or more files in the current batch could not be imported.<br><br>Use <b>Retry</b> after you fix the file and want Comic Pile to try it again.<br>Use <b>Skip</b> to leave out only the current failed file.<br>Use <b>Skip all</b> to leave out the remaining failed files and finish the current batch faster.<br><br>If only one file fails, the problem is usually in that file. If many files fail in the same batch, check the source folder and storage access.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/07-popup.png",
                     screenshotTitle: "Import Errors popup during import",
                     screenshotHint: ""
                 },
@@ -156,6 +163,7 @@ PopupDialogWindow {
                     key: "check_storage_access",
                     label: "When should I use Check storage access?",
                     bodyHtml: "Use <b><i>Check storage access</i></b> when the problem looks related to file access or the current library location.<br><br><b>Typical cases:</b><br>&bull; files stop opening<br>&bull; many issues suddenly stop opening at once<br>&bull; import starts failing because the app cannot access the current storage location<br><br><b>If files stop opening, start with this order:</b><br>&bull; open <b>File -> Settings -> Library &amp; Data</b><br>&bull; run <b><i>Check storage access</i></b><br>&bull; confirm that the current library data location is the one the app is using now<br><br>This check quickly tests whether the current library data location, database, library folder, and runtime folder are still reachable and writable. If everything works normally, you usually do not need to run it.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/08-settings-check.png",
                     screenshotTitle: "Location of Check storage access in Settings",
                     screenshotHint: ""
                 },
@@ -1132,10 +1140,60 @@ PopupDialogWindow {
                                 Item {
                                     visible: contentSectionBlock.hasScreenshotCard
                                     width: parent.width
-                                    height: screenshotCardBackground.height
+                                    height: contentSectionBlock.hasScreenshotSource
+                                        ? screenshotInlineColumn.implicitHeight
+                                        : screenshotCardBackground.height
+
+                                    Column {
+                                        id: screenshotInlineColumn
+                                        visible: contentSectionBlock.hasScreenshotSource
+                                        width: parent.width
+                                        spacing: 10
+
+                                        Item {
+                                            width: parent.width
+                                            height: screenshotImage.height
+
+                                            Image {
+                                                id: screenshotImage
+                                                readonly property real naturalWidth: Math.max(
+                                                    0,
+                                                    Number(sourceSize.width || implicitWidth || 0)
+                                                )
+                                                readonly property real naturalHeight: Math.max(
+                                                    0,
+                                                    Number(sourceSize.height || implicitHeight || 0)
+                                                )
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                source: String(modelData.screenshotSource || "")
+                                                asynchronous: true
+                                                smooth: true
+                                                fillMode: Image.PreserveAspectFit
+                                                width: naturalWidth > 0
+                                                    ? Math.min(parent.width, naturalWidth)
+                                                    : 0
+                                                height: naturalWidth > 0 && naturalHeight > 0
+                                                    ? Math.round(width * naturalHeight / naturalWidth)
+                                                    : 0
+                                            }
+                                        }
+
+                                        Text {
+                                            visible: String(modelData.screenshotTitle || "").trim().length > 0
+                                            width: parent.width
+                                            text: String(modelData.screenshotTitle || "")
+                                            color: "#c9c9c9"
+                                            font.family: Qt.application.font.family
+                                            font.pixelSize: 11
+                                            font.weight: Font.DemiBold
+                                            horizontalAlignment: Text.AlignHCenter
+                                            wrapMode: Text.WordWrap
+                                        }
+                                    }
 
                                     Rectangle {
                                         id: screenshotCardBackground
+                                        visible: !contentSectionBlock.hasScreenshotSource
                                         width: parent.width
                                         height: screenshotCardColumn.implicitHeight + dialog.screenshotCardPadding * 2
                                         radius: 14
@@ -1150,35 +1208,6 @@ PopupDialogWindow {
                                             width: parent.width - dialog.screenshotCardPadding * 2
                                             spacing: contentSectionBlock.hasScreenshotSource ? 14 : 8
 
-                                            Item {
-                                                visible: contentSectionBlock.hasScreenshotSource
-                                                width: parent.width
-                                                height: screenshotImage.height
-
-                                                Image {
-                                                    id: screenshotImage
-                                                    readonly property real naturalWidth: Math.max(
-                                                        0,
-                                                        Number(sourceSize.width || implicitWidth || 0)
-                                                    )
-                                                    readonly property real naturalHeight: Math.max(
-                                                        0,
-                                                        Number(sourceSize.height || implicitHeight || 0)
-                                                    )
-                                                    anchors.horizontalCenter: parent.horizontalCenter
-                                                    source: String(modelData.screenshotSource || "")
-                                                    asynchronous: true
-                                                    smooth: true
-                                                    fillMode: Image.PreserveAspectFit
-                                                    width: naturalWidth > 0
-                                                        ? Math.min(parent.width, naturalWidth)
-                                                        : parent.width
-                                                    height: naturalWidth > 0 && naturalHeight > 0
-                                                        ? Math.round(width * naturalHeight / naturalWidth)
-                                                        : 0
-                                                }
-                                            }
-
                                             Text {
                                                 visible: !contentSectionBlock.hasScreenshotSource
                                                 width: parent.width
@@ -1192,7 +1221,8 @@ PopupDialogWindow {
                                             }
 
                                             Text {
-                                                visible: String(modelData.screenshotTitle || "").trim().length > 0
+                                                visible: !contentSectionBlock.hasScreenshotSource
+                                                    && String(modelData.screenshotTitle || "").trim().length > 0
                                                 width: parent.width
                                                 text: String(modelData.screenshotTitle || "")
                                                 color: "#d7d7d7"
@@ -1236,10 +1266,60 @@ PopupDialogWindow {
                                 Item {
                                     visible: contentSectionBlock.hasPostScreenshotCard
                                     width: parent.width
-                                    height: postScreenshotCardBackground.height
+                                    height: contentSectionBlock.hasPostScreenshotSource
+                                        ? postScreenshotInlineColumn.implicitHeight
+                                        : postScreenshotCardBackground.height
+
+                                    Column {
+                                        id: postScreenshotInlineColumn
+                                        visible: contentSectionBlock.hasPostScreenshotSource
+                                        width: parent.width
+                                        spacing: 10
+
+                                        Item {
+                                            width: parent.width
+                                            height: postScreenshotImage.height
+
+                                            Image {
+                                                id: postScreenshotImage
+                                                readonly property real naturalWidth: Math.max(
+                                                    0,
+                                                    Number(sourceSize.width || implicitWidth || 0)
+                                                )
+                                                readonly property real naturalHeight: Math.max(
+                                                    0,
+                                                    Number(sourceSize.height || implicitHeight || 0)
+                                                )
+                                                anchors.horizontalCenter: parent.horizontalCenter
+                                                source: String(modelData.screenshotSourceAfter || "")
+                                                asynchronous: true
+                                                smooth: true
+                                                fillMode: Image.PreserveAspectFit
+                                                width: naturalWidth > 0
+                                                    ? Math.min(parent.width, naturalWidth)
+                                                    : 0
+                                                height: naturalWidth > 0 && naturalHeight > 0
+                                                    ? Math.round(width * naturalHeight / naturalWidth)
+                                                    : 0
+                                            }
+                                        }
+
+                                        Text {
+                                            visible: String(modelData.screenshotTitleAfter || "").trim().length > 0
+                                            width: parent.width
+                                            text: String(modelData.screenshotTitleAfter || "")
+                                            color: "#c9c9c9"
+                                            font.family: Qt.application.font.family
+                                            font.pixelSize: 11
+                                            font.weight: Font.DemiBold
+                                            horizontalAlignment: Text.AlignHCenter
+                                            wrapMode: Text.WordWrap
+                                        }
+                                    }
 
                                     Rectangle {
                                         id: postScreenshotCardBackground
+                                        visible: !contentSectionBlock.hasPostScreenshotSource
                                         width: parent.width
                                         height: postScreenshotCardColumn.implicitHeight + dialog.screenshotCardPadding * 2
                                         radius: 14
@@ -1254,35 +1334,6 @@ PopupDialogWindow {
                                             width: parent.width - dialog.screenshotCardPadding * 2
                                             spacing: contentSectionBlock.hasPostScreenshotSource ? 14 : 8
 
-                                            Item {
-                                                visible: contentSectionBlock.hasPostScreenshotSource
-                                                width: parent.width
-                                                height: postScreenshotImage.height
-
-                                                Image {
-                                                    id: postScreenshotImage
-                                                    readonly property real naturalWidth: Math.max(
-                                                        0,
-                                                        Number(sourceSize.width || implicitWidth || 0)
-                                                    )
-                                                    readonly property real naturalHeight: Math.max(
-                                                        0,
-                                                        Number(sourceSize.height || implicitHeight || 0)
-                                                    )
-                                                    anchors.horizontalCenter: parent.horizontalCenter
-                                                    source: String(modelData.screenshotSourceAfter || "")
-                                                    asynchronous: true
-                                                    smooth: true
-                                                    fillMode: Image.PreserveAspectFit
-                                                    width: naturalWidth > 0
-                                                        ? Math.min(parent.width, naturalWidth)
-                                                        : parent.width
-                                                    height: naturalWidth > 0 && naturalHeight > 0
-                                                        ? Math.round(width * naturalHeight / naturalWidth)
-                                                        : 0
-                                                }
-                                            }
-
                                             Text {
                                                 visible: !contentSectionBlock.hasPostScreenshotSource
                                                 width: parent.width
@@ -1296,7 +1347,8 @@ PopupDialogWindow {
                                             }
 
                                             Text {
-                                                visible: String(modelData.screenshotTitleAfter || "").trim().length > 0
+                                                visible: !contentSectionBlock.hasPostScreenshotSource
+                                                    && String(modelData.screenshotTitleAfter || "").trim().length > 0
                                                 width: parent.width
                                                 text: String(modelData.screenshotTitleAfter || "")
                                                 color: "#d7d7d7"
