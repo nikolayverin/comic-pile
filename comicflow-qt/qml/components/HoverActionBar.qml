@@ -8,6 +8,7 @@ Item {
 
     property Item anchorItem: null
     property color backgroundColor: themeColors.fieldFillColor
+    property color borderColor: themeColors.borderColor
     property color hoverColor: themeColors.uiActionHoverBackground
     property color textColor: themeColors.textPrimary
     property string uiFontFamily: Qt.application.font.family
@@ -32,7 +33,7 @@ Item {
     signal replaceRequested()
     signal deleteRequested()
 
-    readonly property int bodyHorizontalPadding: 6
+    readonly property int bodyHorizontalPadding: 3
     readonly property int buttonHorizontalPadding: 12
     readonly property int bodyWidth: Math.ceil(actionRow.implicitWidth) + root.bodyHorizontalPadding * 2
     readonly property int bodyHeight: 30
@@ -40,6 +41,7 @@ Item {
     readonly property int buttonSpacing: 4
     readonly property int arrowWidth: 16
     readonly property int arrowHeight: 8
+    readonly property int borderWidth: 1
     readonly property real desiredY: Math.round(root.anchorTopY - root.height)
     readonly property bool fitsTopBoundary: desiredY >= root.topBoundaryY
     readonly property bool shouldBeVisible: root.presented
@@ -59,6 +61,40 @@ Item {
         NumberAnimation {
             duration: root.fadeDurationMs
             easing.type: Easing.OutCubic
+        }
+    }
+
+    Rectangle {
+        id: borderBody
+        width: root.bodyWidth + root.borderWidth * 2
+        height: root.bodyHeight + root.borderWidth * 2
+        anchors.top: parent.top
+        anchors.topMargin: -root.borderWidth
+        anchors.horizontalCenter: parent.horizontalCenter
+        radius: Math.round(backgroundRect.radius + root.borderWidth)
+        color: root.borderColor
+    }
+
+    Canvas {
+        id: borderArrow
+        width: root.arrowWidth + root.borderWidth * 2
+        height: root.arrowHeight + root.borderWidth
+        anchors.top: backgroundRect.bottom
+        anchors.topMargin: -root.borderWidth
+        anchors.horizontalCenter: backgroundRect.horizontalCenter
+        contextType: "2d"
+        antialiasing: true
+
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            ctx.fillStyle = root.borderColor
+            ctx.beginPath()
+            ctx.moveTo(0, 0)
+            ctx.lineTo(width, 0)
+            ctx.lineTo(width / 2, height)
+            ctx.closePath()
+            ctx.fill()
         }
     }
 
@@ -124,6 +160,7 @@ Item {
         anchors.top: backgroundRect.bottom
         anchors.horizontalCenter: backgroundRect.horizontalCenter
         contextType: "2d"
+        antialiasing: true
 
         onPaint: {
             const ctx = getContext("2d")
@@ -135,6 +172,29 @@ Item {
             ctx.lineTo(width / 2, height)
             ctx.closePath()
             ctx.fill()
+        }
+    }
+
+    Canvas {
+        id: menuArrowBorder
+        width: root.arrowWidth + root.borderWidth * 2
+        height: root.arrowHeight + root.borderWidth
+        anchors.top: backgroundRect.bottom
+        anchors.topMargin: -root.borderWidth
+        anchors.horizontalCenter: backgroundRect.horizontalCenter
+        contextType: "2d"
+        antialiasing: true
+
+        onPaint: {
+            const ctx = getContext("2d")
+            ctx.reset()
+            ctx.beginPath()
+            ctx.moveTo(0.5, 0.5)
+            ctx.lineTo(width / 2, height - 0.5)
+            ctx.lineTo(width - 0.5, 0.5)
+            ctx.strokeStyle = root.borderColor
+            ctx.lineWidth = root.borderWidth
+            ctx.stroke()
         }
     }
 
