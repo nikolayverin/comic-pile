@@ -35,7 +35,7 @@ PopupDialogWindow {
                 {
                     key: "main_areas",
                     label: "Main areas of the app",
-                    bodyHtml: "<b>Main menu</b><br>The <b>Top bar</b> contains the main app menus <b>File</b> and <b>Help</b>, plus reading shortcuts such as <b>Continue reading</b> and <b>Next unread</b>. Use it to open main commands without leaving the current screen.<br><br><b>Library</b><br>The <b>Library</b> shows search, quick filters such as <b>Last import</b>, <b>Favorites</b>, and <b>Bookmarks</b>, and the list of series in your library. Use it to move around the library, switch between filters and series, and find what you want to open.<br><br><b>Drop zone</b><br>The <b>bottom of Library</b> contains the drop zone for files and folders. Use it to quickly add comics to the app by dropping supported files or folders into it.<br><br><b>Series spotlight</b><br>The <b>header of the right side</b> shows the currently selected series and its main details. Use it to confirm which series you are viewing before opening an issue or editing series information.<br><br><b>Issues</b><br>The <b>grid on the right side</b> shows the issues that belong to the selected series or active filter. Use it to browse the available issues and click a cover to open it in the reader.<br><br><b>Grid view controls</b><br>The <b>Bottom bar</b> contains the controls for issue order and grid density. Use them to change how the issue grid is sorted and how compact or spacious it looks.",
+                    bodyHtml: "<b>Main menu</b><br>The <b>Top bar</b> contains the main app menus <b>File</b> and <b>Help</b>, plus reading shortcuts such as <b>Continue reading</b> and <b>Next unread</b>. Use it to open main commands without leaving the current screen.<br><br><b>Library</b><br>The <b>Library</b> shows search, quick filters such as <b>Last import</b>, <b>Favorites</b>, and <b>Bookmarks</b>, and the list of series in your library. Use it to move around the library, switch between filters and series, and find what you want to open.<br><br><b>Drop zone</b><br>The <b>bottom of Library</b> contains the drop zone for files and folders. Use it to quickly add comics to the app by dropping supported files or folders into it.<br><br><b>Series spotlight</b><br>The <b>Series spotlight</b> shows the currently selected series and its main details. Use it to confirm which series you are viewing before opening an issue or editing series information.<br><br><b>Issues</b><br><b>Issues</b> shows the issues that belong to the selected series or active filter. Use it to browse the available issues and click a cover to open it in the reader.<br><br><b>Grid view controls</b><br>The <b>Bottom bar</b> contains the controls for issue order and grid density. Use them to change how <b>Issues</b> is sorted and how compact or spacious it looks.",
                     screenshotTitle: "Main interface map",
                     screenshotHint: ""
                 },
@@ -81,7 +81,7 @@ PopupDialogWindow {
                 {
                     key: "how_to_import",
                     label: "How do I import comics?",
-                    bodyHtml: "You can import in three simple ways:<br><br>&bull; <b>Drop files or folders</b> into the <b>drop zone</b> in the left sidebar<br>&bull; <b>File -> Add files</b>: best when you want to import a few specific issues<br>&bull; <b>File -> Add folder</b>: best when one folder already contains many issues that belong together"
+                    bodyHtml: "You can import in three simple ways:<br><br>&bull; <b>Drop files or folders</b> into the <b>drop zone</b> in <b>Library</b><br>&bull; <b>File -> Add files</b>: best when you want to import a few specific issues<br>&bull; <b>File -> Add folder</b>: best when one folder already contains many issues that belong together"
                 },
                 {
                     key: "duplicate_found",
@@ -150,7 +150,7 @@ PopupDialogWindow {
                 {
                     key: "move_data_location",
                     label: "Can I move the library data location?",
-                    bodyHtml: "Yes. Open <b>File -> Settings -> Library &amp; Data</b>, then use <b>Move library data -> Choose</b> to select a new folder. After that, restart the app. The transfer runs on the next launch, so choose an empty folder and do not move the active library data manually while the app is using it."
+                    bodyHtml: "Yes. Open <b>File -> Settings -> Library &amp; Data</b>, then use <b>Move library data -> Choose</b> to select a new folder. After that, restart the app. The transfer runs on the next launch, so choose an empty folder in advance and do not move the active library data manually while the app is using it.<br><br>Once that transfer has started, it must finish or stop with an error before the app can continue."
                 },
                 {
                     key: "check_storage_access",
@@ -169,7 +169,7 @@ PopupDialogWindow {
                 {
                     key: "edit_one_series",
                     label: "How do I edit series details?",
-                    bodyHtml: "Use this path when you want to change series-level details such as <b>series name</b>, <b>volume</b>, <b>publisher</b>, <b>year</b>, <b>genres</b>, or <b>summary</b>.<br><br>You can open it in two ways:<br>&bull; select the series in <b>Library</b>, open the <b>...</b> menu, and choose <b>Edit Series</b><br>&bull; open the same fields from the small edit buttons in the <b>Series spotlight</b> on the right side<br><br>Both paths edit the same series information. Use whichever feels faster in the moment.",
+                    bodyHtml: "Use this path when you want to change series-level details such as <b>series name</b>, <b>volume</b>, <b>publisher</b>, <b>year</b>, <b>genres</b>, or <b>summary</b>.<br><br>You can open it in two ways:<br>&bull; select the series in <b>Library</b>, open the <b>...</b> menu, and choose <b>Edit Series</b><br>&bull; open the same fields from the small edit buttons in <b>Series spotlight</b><br><br>Both paths edit the same series information. Use whichever feels faster in the moment.",
                     screenshotTitle: "Edit Series from the selected series menu",
                     screenshotHint: ""
                 },
@@ -197,7 +197,7 @@ PopupDialogWindow {
                 {
                     key: "last_import",
                     label: "What is Last Import?",
-                    bodyHtml: "<b><i>Last import</i></b> is a quick filter in the left sidebar that shows the most recent import session. Use it when you want to quickly find issues from the latest import session again.<br><br>Do not treat it as a permanent reading shelf. After restart, it may no longer contain the previous import session. For long-term access, open the series from the library."
+                    bodyHtml: "<b><i>Last import</i></b> is a quick filter in <b>Library</b> that shows the most recent import session. Use it when you want to quickly find issues from the latest import session again.<br><br>Do not treat it as a permanent reading shelf. After restart, it may no longer contain the previous import session. For long-term access, open the series from <b>Library</b>."
                 },
             ]
         },
@@ -210,40 +210,46 @@ PopupDialogWindow {
                 {
                     key: "reader_overview",
                     label: "Reader interface overview",
-                    bodyHtml: "Open any issue from the library to start reading.<br><br>The reader has four main areas:<br>&bull; the <b>top bar</b> with issue title and icon buttons<br>&bull; the <b>page area</b> in the middle<br>&bull; the <b>side arrows</b> for previous and next page<br>&bull; the <b>bottom controls</b> for page list, <b>Read from start</b>, and <b>Mark as read</b><br><br>Comic Pile reopens an issue from your saved spot when progress already exists. If <b>Auto-open bookmarked page instead of last page</b> is enabled in <b>File -> Settings -> Reader</b>, a bookmark can open first.",
+                    bodyHtml: "Open any issue from <b>Issues</b> to start reading.<br><br>The reader has four main areas:<br>&bull; the <b>Top bar</b> with issue title and icon buttons<br>&bull; the <b>page area</b> in the middle<br>&bull; the <b>side arrows</b> for previous and next page<br>&bull; the <b>Bottom controls</b> for page list, <b>Read from start</b>, and <b>Mark as read</b><br><br>Comic Pile reopens an issue from your saved spot when progress already exists. If <b>Auto-open bookmarked page instead of last page</b> is enabled in <b>File -> Settings -> Reader</b>, a bookmark can open first.",
                     screenshotTitle: "Reader layout overview",
                     screenshotHint: ""
                 },
                 {
-                    key: "reader_top_reading_controls",
-                    label: "Reading controls in the top bar",
-                    bodyHtml: "Near the issue title, the left and right issue arrows move to the previous or next issue in the same series when available.<br><br>The icon buttons on the top bar control the reading view:<br>&bull; <b>Manga mode</b> reverses reading direction<br>&bull; <b>1 page</b> shows one page at a time<br>&bull; <b>2 pages</b> shows a two-page spread when possible<br>&bull; <b>Bookmark</b> saves or removes a bookmark for the current page<br>&bull; <b>Favorite</b> adds or removes the current issue from <b>Favorites</b>"
+                    key: "reader_top_bar_left",
+                    label: "Left side of the top bar",
+                    bodyHtml: "The left side of the <b>Top bar</b> contains quick utility actions for the current issue:<br>&bull; <b>Delete page</b> permanently removes the current page file from the archive<br>&bull; <b>Info</b> opens the hotkeys popup. Shortcut: <b>I</b><br>&bull; <b>Settings</b> opens reader-related settings<br>&bull; <b>Theme</b> switches the reader between its dark and light look"
                 },
                 {
-                    key: "reader_tools",
-                    label: "Utility buttons in the top bar",
-                    bodyHtml: "The remaining top-bar buttons are for utility actions rather than reading mode:<br>&bull; <b>Delete page</b> removes the current page from the archive<br>&bull; <b>Settings</b> opens reader-related settings<br>&bull; <b>Theme</b> switches the reader between its dark and light look<br>&bull; <b>Fullscreen</b> expands the reader to fullscreen mode<br>&bull; <b>Magnifier</b> turns on zoom-on-hover inside the page area<br>&bull; <b>Copy</b> copies the current page image<br>&bull; <b>Info</b> opens the hotkeys popup<br>&bull; <b>Close</b> exits the reader",
-                    screenshotTitle: "Reader utility buttons",
+                    key: "reader_top_bar_center",
+                    label: "Center of the top bar",
+                    bodyHtml: "The center of the <b>Top bar</b> shows the current issue title. The left and right arrows beside it move to the previous or next issue in the same series when available. Shortcuts: <b>A</b> / <b>D</b>"
+                },
+                {
+                    key: "reader_top_bar_right",
+                    label: "Right side of the top bar",
+                    bodyHtml: "The right side of the <b>Top bar</b> contains reading modes and quick actions:<br>&bull; <b>Manga mode</b> reverses reading direction and page navigation<br>&bull; <b>1 page</b> shows one page at a time<br>&bull; <b>2 pages</b> shows a two-page spread when possible. Pre-merged double-page images still display as their own spread. Shortcut: <b>P</b><br>&bull; <b>Fullscreen</b> expands the reader to fullscreen mode. Shortcut: <b>S</b><br>&bull; <b>Magnifier</b> enables press-and-hold zoom inside the page area. Its size can be changed in <b>File -> Settings -> Reader</b>. Shortcut: <b>Z</b><br>&bull; <b>Bookmark</b> saves or removes a bookmark for the current page. Shortcut: <b>B</b><br>&bull; <b>Favorite</b> adds or removes the current issue from <b>Favorites</b>. Shortcut: <b>F</b><br>&bull; <b>Copy</b> copies the current page as an image to the clipboard, so you can paste it into another app. Shortcut: <b>Ctrl + C</b><br>&bull; <b>Close</b> exits the reader. Shortcut: <b>Esc</b>",
+                    screenshotTitle: "Reader top bar layout",
                     screenshotHint: ""
                 },
                 {
                     key: "reader_bottom_controls",
                     label: "Bottom controls and page navigation",
-                    bodyHtml: "Use the large left and right arrows on the sides of the page area to move between pages.<br><br>At the bottom of the reader:<br>&bull; <b>Read from start</b> clears the saved continue-reading spot and starts the issue again from the beginning<br>&bull; <b>Mark as read</b> marks the current issue as finished in the library, clears its bookmark, and moves to the next issue when one is available<br>&bull; in the library grid, a read issue shows the completed read state on the cover and is no longer used as a <b>Next unread</b> target<br>&bull; the <b>page counter</b> shows your current position and opens the page list when clicked<br><br>If <b>Manga mode</b> is enabled, the page-direction logic is reversed to match manga reading order.",
+                    bodyHtml: "Use the large left and right arrows on the sides of the page area to move between pages. Shortcuts: <b>Left</b> / <b>Right</b> or <b>PgUp</b> / <b>PgDown</b><br><br>At the bottom of the reader:<br>&bull; <b>Read from start</b> clears the saved continue-reading spot and starts the issue again from the beginning. Shortcut: <b>1</b><br>&bull; <b>Mark as read</b> marks the current issue as finished in <b>Library</b>, clears its bookmark, and moves to the next issue when one is available. Shortcut: <b>M</b><br>&bull; in <b>Issues</b>, a read issue appears dimmed and shows a green circular check badge on the cover, and it is no longer used as a <b>Next unread</b> target<br>&bull; the <b>page counter</b> shows your current position and opens the page list when clicked<br><br>If <b>Manga mode</b> is enabled, the page-direction logic is reversed to match manga reading order, including <b>Left</b> / <b>Right</b> navigation.",
                     screenshotTitle: "Reader bottom controls and page list",
                     screenshotHint: ""
                 },
                 {
                     key: "reader_bookmarks_favorites",
                     label: "Bookmarks and Favorites",
-                    bodyHtml: "<b><i>Bookmarks</i></b> save a page inside one issue.<br><br>If a bookmark exists on a page that is not currently visible, the reader shows a bookmark marker near the page area. Click it to jump back to that bookmarked page.<br><br><b><i>Favorites</i></b> mark whole issues so you can find them again in the <b>Favorites</b> quick filter in the left sidebar.",
+                    bodyHtml: "<b><i>Bookmarks</i></b> save one page inside one issue. Each issue can have only one bookmark at a time.<br><br>If a bookmark exists on a page that is not currently visible, the reader shows a bookmark marker near the page area. Click it to jump back to that bookmarked page.<br><br>In <b>Issues</b>, a bookmarked issue also shows a bookmark ribbon on the cover, so you can spot it from <b>Library</b>.<br><br><b><i>Favorites</i></b> mark whole issues so you can find them again in the <b>Favorites</b> quick filter in <b>Library</b>.",
                     screenshotTitle: "Bookmark indicator and favorites",
                     screenshotHint: ""
                 },
                 {
                     key: "continue_next_unread",
                     label: "Continue reading and Next unread",
-                    bodyHtml: "<b><i>Continue reading</i></b> opens the issue Comic Pile currently uses as your reading target.<br><br>That target can come from saved progress or a bookmark.<br><br><b><i>Next unread</i></b> opens the next unread issue in the same series flow."
+                    bodyHtml: "You can use <b><i>Continue reading</i></b> and <b><i>Next unread</i></b> from <b>Main menu</b>, so you do not need to open the reader first to keep going.<br><br><b><i>Continue reading</i></b> opens the issue currently used as your reading target. This usually comes from saved reading progress, and a bookmark can take priority over plain progress. Once an issue has saved progress, it can become your <b><i>Continue reading</i></b> target until you build newer progress or a bookmark in another issue.<br><br><b><i>Next unread</i></b> opens the next issue in the same series flow that is not marked as read yet. It follows the current reading target, so it is meant for moving forward through the same series instead of jumping to a random issue.",
+                    screenshotTitleAfter: "Continue reading and Next unread in the Top bar"
                 }
             ]
         },
@@ -256,17 +262,35 @@ PopupDialogWindow {
                 {
                     key: "issue_does_not_open",
                     label: "The issue does not open",
-                    bodyHtml: "Try these checks in order:<br>&bull; make sure the issue is still visible in the library<br>&bull; open another issue to see whether the problem affects one file or many<br>&bull; if you moved folders recently, run <b><i>Check storage access</i></b> from <b>File -> Settings -> Library &amp; Data</b><br><br>If only one issue fails, the problem is usually with that issue. If many issues fail, check storage first."
+                    bodyHtml: "Start with these checks:<br>&bull; make sure the issue is still visible in <b>Issues</b><br>&bull; open another issue to see whether the problem affects one file or many<br>&bull; if many issues stop opening, open <b>File -> Settings -> Library &amp; Data</b> and run <b><i>Check storage access</i></b><br><br>If only one issue fails, the problem is usually in that file. If many issues fail at once, check the current library data location first."
                 },
                 {
                     key: "import_failed",
                     label: "Import failed",
-                    bodyHtml: "If import fails, check these first:<br>&bull; the file type is supported<br>&bull; the archive or document opens normally outside the app<br>&bull; an image folder really contains page files<br>&bull; the file is not locked by another app<br><br>Fix the problem file, make sure it follows the expected file-structure rules and is not broken, then try importing it again."
+                    bodyHtml: "Start with these checks:<br>&bull; make sure the file type is listed in <b>What formats can I import?</b><br>&bull; make sure the archive, document, or image files open normally outside the app<br>&bull; if you are importing a folder, make sure it really contains supported page files<br>&bull; if only <b>CBR</b> fails, check the 7-Zip setup in <b>File -> Settings -> Import &amp; Archives</b><br><br>If the source file is broken, unsupported, or structured incorrectly, fix or replace it and then import it again."
                 },
                 {
                     key: "import_errors_popup",
                     label: "What if only one archive fails during a large import?",
                     bodyHtml: "That usually means the rest of the batch can still be fine. Review the failed file in <b>Import Errors</b>. If the other imported issues appear and open normally, the problem is usually limited to that one archive.<br><br>Retry it only after you fix or replace the source file."
+                }
+            ]
+        },
+        {
+            key: "faq",
+            label: "FAQ",
+            iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-popup-info.svg",
+            leadHtml: "",
+            subsections: [
+                {
+                    key: "window_size_limits",
+                    label: "Why can't I make the app window much smaller?",
+                    bodyHtml: "The app is designed around a minimum working size for the full interface. If the available screen area is <b>1440 x 980</b> or larger, the window does not shrink much below that layout.<br><br>If the available screen area is smaller than <b>1440 x 980</b>, the app switches to a display-constrained mode and opens maximized for that screen instead of using a smaller windowed size."
+                },
+                {
+                    key: "critical_popup_close_block",
+                    label: "Why can't I close the app while this popup is open?",
+                    bodyHtml: "Some popups require a decision before the app can safely continue. While one of these critical popups is open, closing the app is temporarily blocked so that this step is not skipped by accident.<br><br>If you try to close the app anyway, the popup highlights itself in green to show that it still needs your answer first."
                 }
             ]
         }
@@ -322,8 +346,7 @@ PopupDialogWindow {
     width: {
         if (hostWidth <= 0) return baseDialogWidth
         const availableWidth = Math.max(420, Math.floor(hostWidth - horizontalMargin * 2))
-        const scaledWidth = Math.round(baseDialogWidth * (hostWidth / baseHostWidth))
-        return Math.max(minimumDialogWidth, Math.min(scaledWidth, availableWidth))
+        return Math.min(baseDialogWidth, availableWidth)
     }
     height: {
         if (hostHeight <= 0) return baseDialogHeight
@@ -437,6 +460,41 @@ PopupDialogWindow {
             return
         }
         pendingScrollSubsectionKey = key
+    }
+
+    function syncVisibleSubsectionFromContentY() {
+        if (!contentFlick) return
+        if (contentScrollAnimation.running) return
+        if (pendingScrollSubsectionKey.length > 0) return
+        if (pendingRestoreContentY >= 0) return
+
+        const subsections = subsectionsForSection(contentSectionKey)
+        if (!Array.isArray(subsections) || subsections.length < 1) {
+            if (selectedSubsectionKey.length > 0) {
+                selectedSubsectionKey = ""
+            }
+            return
+        }
+
+        const triggerOffset = Math.max(48, Math.min(120, Math.round(Number(contentFlick.height || 0) * 0.18)))
+        const anchorY = Math.max(0, Number(contentFlick.contentY || 0)) + triggerOffset
+        let activeKey = ""
+        for (let i = 0; i < subsections.length; i += 1) {
+            const key = String((subsections[i] || {}).key || "")
+            if (!key.length) continue
+            const item = subsectionItemForKey(key)
+            if (!item) continue
+            const itemY = Math.max(0, Math.round(Number(item.y || 0)))
+            if (itemY <= anchorY) {
+                activeKey = key
+            } else {
+                break
+            }
+        }
+
+        if (selectedSubsectionKey !== activeKey) {
+            selectedSubsectionKey = activeKey
+        }
     }
 
     function animateContentTo(desiredY) {
@@ -816,17 +874,33 @@ PopupDialogWindow {
                         elide: Text.ElideRight
                     }
 
-                    Text {
+                    Canvas {
+                        id: sectionIndicatorGlyph
                         anchors.right: parent.right
                         anchors.rightMargin: 10
                         anchors.verticalCenter: parent.verticalCenter
-                        text: ">"
-                        rotation: sectionBlock.expanded ? 90 : 0
+                        width: 11
+                        height: 5
+                        rotation: sectionBlock.expanded ? 0 : -90
                         transformOrigin: Item.Center
-                        color: sectionBlock.expanded || sectionMouseArea.containsMouse
+                        contextType: "2d"
+                        property color glyphColor: sectionBlock.expanded || sectionMouseArea.containsMouse
                             ? styleTokens.textColor
                             : themeColors.settingsSidebarIdleTextColor
-                        font.pixelSize: 12
+
+                        onGlyphColorChanged: requestPaint()
+
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            ctx.fillStyle = glyphColor
+                            ctx.beginPath()
+                            ctx.moveTo(0, 0)
+                            ctx.lineTo(width, 0)
+                            ctx.lineTo(width / 2, height)
+                            ctx.closePath()
+                            ctx.fill()
+                        }
 
                         Behavior on rotation {
                             NumberAnimation {
@@ -940,6 +1014,7 @@ PopupDialogWindow {
                         Qt.callLater(function() { dialog.scrollToSectionStart() })
                     }
                 }
+                onContentYChanged: dialog.syncVisibleSubsectionFromContentY()
                 onHeightChanged: {
                     if (dialog.pendingScrollSubsectionKey.length > 0) {
                         Qt.callLater(function() { dialog.scrollToSubsection(dialog.pendingScrollSubsectionKey) })
