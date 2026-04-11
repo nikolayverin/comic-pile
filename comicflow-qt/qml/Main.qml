@@ -1617,6 +1617,11 @@ ApplicationWindow {
         importFocusNewSeriesAfterReload = true
     }
 
+    function requestImportCurrentSeriesRefreshAfterReload() {
+        pendingImportPostReloadAction = "refresh_current_series"
+        importFocusNewSeriesAfterReload = false
+    }
+
     function clearImportSeriesFocusState() {
         importSeriesKeysBeforeBatch = ({})
         importFocusNewSeriesAfterReload = false
@@ -1705,6 +1710,11 @@ ApplicationWindow {
         }
         if (pendingImportPostReloadAction === "none") {
             clearImportSeriesFocusState()
+            return false
+        }
+        if (pendingImportPostReloadAction === "refresh_current_series") {
+            clearImportSeriesFocusState()
+            postImportCurrentSeriesRefreshTimer.restart()
             return false
         }
         if (!importFocusNewSeriesAfterReload) return false
@@ -2991,6 +3001,19 @@ ApplicationWindow {
         interval: root.gridOverlayMenuPostScrollDelayMs
         repeat: false
         onTriggered: root.gridOverlayMenusSuppressed = false
+    }
+
+    Timer {
+        id: postImportCurrentSeriesRefreshTimer
+        interval: 16
+        repeat: false
+        onTriggered: {
+            if (!root.selectedSeriesContext || !root.selectedSeriesContext.hasSeries) return
+            root.refreshIssuesGridData(true)
+            root.primeVisibleIssueCoverSourcesFromCache()
+            root.warmVisibleIssueThumbnails()
+            heroSeriesController.resolveHeroMediaForSelectedSeries()
+        }
     }
 }
 

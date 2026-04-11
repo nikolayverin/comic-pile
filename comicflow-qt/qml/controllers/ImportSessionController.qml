@@ -56,6 +56,7 @@ Item {
     property int importCleanupTotalCount: 0
     property int importCleanupProcessedCount: 0
     property string importCleanupCurrentFileName: ""
+    property string importBatchIntent: ""
 
     readonly property bool importCleanupActive: importLifecycleState === "cleanup"
 
@@ -175,6 +176,13 @@ Item {
         const rootRef = root()
         if (rootRef && typeof rootRef.clearImportSeriesFocusState === "function") {
             rootRef.clearImportSeriesFocusState()
+        }
+    }
+
+    function requestImportCurrentSeriesRefreshAfterReload() {
+        const rootRef = root()
+        if (rootRef && typeof rootRef.requestImportCurrentSeriesRefreshAfterReload === "function") {
+            rootRef.requestImportCurrentSeriesRefreshAfterReload()
         }
     }
 
@@ -382,7 +390,11 @@ Item {
         const shouldReloadLibrary = importImportedCount > 0 || cancelled === true
         if (shouldReloadLibrary && libraryModelRef) {
             if (!cancelled && importImportedCount > 0) {
-                requestImportNewSeriesFocusAfterReload()
+                if (String(importBatchIntent || "") === "series_add") {
+                    requestImportCurrentSeriesRefreshAfterReload()
+                } else {
+                    requestImportNewSeriesFocusAfterReload()
+                }
             } else {
                 clearImportSeriesFocusState()
             }
@@ -398,6 +410,7 @@ Item {
         importBatchRollbackOps = []
         importPendingOldFileDeletes = []
         importQueue = []
+        importBatchIntent = ""
         resetImportCleanupState()
 
         if (cancelled === true) {
@@ -1224,6 +1237,7 @@ Item {
         importLifecycleState = "running"
         importConflictActionTimer.stop()
         importQueue = queue
+        importBatchIntent = String((options && options.importIntent) ? options.importIntent : ((queue[0] || {}).importIntent || "")).trim().toLowerCase()
         importTotal = queue.length
         importProcessed = 0
 
