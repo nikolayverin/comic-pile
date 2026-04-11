@@ -307,7 +307,7 @@ Rectangle {
                 }
                 onDismissMenusRequested: if (rootObject) rootObject.seriesMenuDismissToken += 1
                 onAddFilesRequested: if (rootObject) rootObject.quickAddFilesFromDialog()
-                onAddIssueRequested: if (rootObject) rootObject.quickAddFilesForSeries(seriesName)
+                onAddIssueRequested: if (rootObject) rootObject.quickAddFilesForSeries(seriesKey)
                 onEditSeriesRequested: if (rootObject) rootObject.openSeriesMetadataDialog(
                     seriesKey,
                     seriesName,

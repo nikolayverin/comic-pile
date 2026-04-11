@@ -785,6 +785,29 @@ QString ComicsListModel::groupTitleForKey(const QString &groupKey) const
     return ComicModelUtils::makeGroupTitle(groupKey);
 }
 
+QVariantMap ComicsListModel::seriesImportContext(const QString &seriesKey) const
+{
+    const QString normalizedKey = seriesKey.trimmed();
+    if (normalizedKey.isEmpty()) {
+        return {};
+    }
+
+    for (const ComicRow &row : m_rows) {
+        if (row.seriesGroupKey != normalizedKey) {
+            continue;
+        }
+
+        return {
+            { QStringLiteral("series"), row.series.trimmed() },
+            { QStringLiteral("volume"), row.volume.trimmed() },
+            { QStringLiteral("seriesKey"), row.seriesGroupKey.trimmed() },
+            { QStringLiteral("seriesTitle"), row.seriesGroupTitle.trimmed() }
+        };
+    }
+
+    return {};
+}
+
 QVariantMap ComicsListModel::seriesMetadataForKey(const QString &seriesKey) const
 {
     QVariantMap metadata = ComicLibraryQueries::seriesMetadataForKey(m_dbPath, seriesKey);

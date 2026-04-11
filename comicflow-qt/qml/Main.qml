@@ -1401,24 +1401,31 @@ ApplicationWindow {
         )
     }
 
-    function quickAddFilesForSeries(seriesTitle) {
+    function quickAddFilesForSeries(seriesKey) {
         if (importInProgress) return
         const selected = libraryModel.browseArchiveFiles("")
         if (!selected || selected.length < 1) return
-        const overrideSeries = String(seriesTitle || "").trim()
-        if (overrideSeries.length > 0) {
+        const importContext = libraryModel && typeof libraryModel.seriesImportContext === "function"
+            ? (libraryModel.seriesImportContext(String(seriesKey || "").trim()) || ({}))
+            : ({})
+        const targetSeries = String(importContext.series || "").trim()
+        const targetVolume = String(importContext.volume || "").trim()
+        if (targetSeries.length > 0) {
             startImportFromSourcePaths(
                 selected,
-                { seriesOverride: overrideSeries, importIntent: "series_add" },
+                {
+                    seriesOverride: targetSeries,
+                    importIntent: "series_add",
+                    values: {
+                        series: targetSeries,
+                        volume: targetVolume
+                    }
+                },
                 "No Supported Archives Found in Selected Files."
             )
             return
         }
-        startImportFromSourcePaths(
-            selected,
-            { importIntent: "global_add" },
-            "No Supported Archives Found in Selected Files."
-        )
+        popupController.showActionResult(AppText.metadataSeriesContextMissing, true)
     }
 
     function performReplaceIssueArchive(comicId, selectedPath) {

@@ -1004,7 +1004,9 @@ Item {
         }
         if (seriesOverride.length > 0) {
             importValues.importContextSeries = seriesOverride
-            importValues.series = seriesOverride
+            if (String(importValues.series || "").trim().length < 1) {
+                importValues.series = seriesOverride
+            }
             const sourceBaseName = baseNameWithoutExtension(sourcePath)
             if (sourceBaseName.length > 0) {
                 importValues.title = sourceBaseName
@@ -1155,6 +1157,7 @@ Item {
         const seen = {}
         const batchSeriesOverride = String((options && options.seriesOverride) ? options.seriesOverride : "").trim()
         const batchImportIntent = String((options && options.importIntent) ? options.importIntent : "").trim().toLowerCase()
+        const batchValues = cloneVariantMap((options && options.values) ? options.values : ({}))
         if (!paths || paths.length < 1) return queue
 
         for (let i = 0; i < paths.length; i += 1) {
@@ -1163,7 +1166,7 @@ Item {
             let entryImportIntent = batchImportIntent
             let entryFilenameHint = ""
             let entrySourceType = "archive"
-            let entryValues = ({})
+            let entryValues = cloneVariantMap(batchValues)
             let entrySizeBytes = 0
 
             if (rawPath && typeof rawPath === "object") {
@@ -1171,7 +1174,13 @@ Item {
                 entryImportIntent = String(rawPath.importIntent || entryImportIntent).trim().toLowerCase()
                 entryFilenameHint = String(rawPath.filenameHint || "").trim()
                 entrySourceType = String(rawPath.sourceType || entrySourceType).trim().toLowerCase() || "archive"
-                entryValues = cloneVariantMap(rawPath.values)
+                const rawValues = cloneVariantMap(rawPath.values)
+                const rawValueKeys = Object.keys(rawValues)
+                for (let valueIndex = 0; valueIndex < rawValueKeys.length; valueIndex += 1) {
+                    const key = String(rawValueKeys[valueIndex] || "")
+                    if (key.length < 1) continue
+                    entryValues[key] = rawValues[key]
+                }
                 entrySizeBytes = Math.max(0, Number(rawPath.fileSizeBytes || 0))
                 rawPath = rawPath.path
             }
@@ -1328,7 +1337,9 @@ Item {
             }
             if (seriesOverride.length > 0) {
                 importValues.importContextSeries = seriesOverride
-                importValues.series = seriesOverride
+                if (String(importValues.series || "").trim().length < 1) {
+                    importValues.series = seriesOverride
+                }
                 const sourceBaseName = baseNameWithoutExtension(sourcePath)
                 if (sourceBaseName.length > 0) {
                     importValues.title = sourceBaseName
