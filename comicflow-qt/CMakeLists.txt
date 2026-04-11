@@ -161,6 +161,24 @@ target_compile_definitions(comic_pile_regression PRIVATE
     COMICPILE_APP_VERSION="${PROJECT_VERSION}"
 )
 
+add_executable(comic_pile_workstream1
+    src/tools/comic_pile_workstream1.cpp
+    ${_comicpile_core_sources}
+)
+
+target_compile_definitions(comic_pile_workstream1 PRIVATE
+    COMICPILE_APP_VERSION="${PROJECT_VERSION}"
+)
+
+add_executable(comic_pile_workstream2
+    src/tools/comic_pile_workstream2.cpp
+    ${_comicpile_core_sources}
+)
+
+target_compile_definitions(comic_pile_workstream2 PRIVATE
+    COMICPILE_APP_VERSION="${PROJECT_VERSION}"
+)
+
 qt_add_qml_module(comic_pile_qt
     URI ComicPile
     VERSION 1.0
@@ -455,12 +473,44 @@ target_link_libraries(comic_pile_regression
         Qt6::Pdf
 )
 
+target_link_libraries(comic_pile_workstream1
+    PRIVATE
+        Qt6::Core
+        Qt6::Quick
+        Qt6::Sql
+        Qt6::Widgets
+        Qt6::Concurrent
+        Qt6::Network
+        Qt6::Pdf
+)
+
+target_link_libraries(comic_pile_workstream2
+    PRIVATE
+        Qt6::Core
+        Qt6::Quick
+        Qt6::Sql
+        Qt6::Widgets
+        Qt6::Concurrent
+        Qt6::Network
+        Qt6::Pdf
+)
+
 target_include_directories(comic_pile_smoke
     PRIVATE
         src
 )
 
 target_include_directories(comic_pile_regression
+    PRIVATE
+        src
+)
+
+target_include_directories(comic_pile_workstream1
+    PRIVATE
+        src
+)
+
+target_include_directories(comic_pile_workstream2
     PRIVATE
         src
 )
