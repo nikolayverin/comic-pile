@@ -271,8 +271,8 @@ Item {
         id: issueMetadataAutofillConfirmDialog
         hostWidth: root.width
         hostHeight: root.height
-        primaryButtonText: "Fill Fields"
-        secondaryButtonText: "Keep Current"
+        primaryButtonText: "Fill from library"
+        secondaryButtonText: "Keep current values"
         onPrimaryRequested: root.acceptIssueMetadataSuggestion()
         onSecondaryRequested: root.skipIssueMetadataSuggestion()
     }

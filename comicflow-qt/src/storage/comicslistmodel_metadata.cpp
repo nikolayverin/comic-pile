@@ -1030,20 +1030,24 @@ QVariantMap ComicsListModel::issueMetadataSuggestion(const QVariantMap &values, 
         const QString candidateMonth = valueFromMap(candidate, QStringLiteral("month"));
         const QString candidateAgeRating = valueFromMap(candidate, QStringLiteral("ageRating"));
 
-        if (optionalMetadataTextConflict(requestedVolume, candidateVolume)
-            || optionalMetadataTextConflict(requestedTitle, candidateTitle)
-            || optionalMetadataTextConflict(requestedPublisher, candidatePublisher)
-            || optionalMetadataTextConflict(requestedYear, candidateYear)
-            || optionalMetadataTextConflict(requestedMonth, candidateMonth)
-            || optionalMetadataTextConflict(requestedAgeRating, candidateAgeRating)) {
+        const int requestedAnchorCount =
+            (requestedVolume.isEmpty() ? 0 : 1)
+            + (requestedPublisher.isEmpty() ? 0 : 1)
+            + (requestedYear.isEmpty() ? 0 : 1);
+        const int anchorMatchCount =
+            (metadataTextMatchScore(requestedVolume, candidateVolume, 1) > 0 ? 1 : 0)
+            + (metadataTextMatchScore(requestedPublisher, candidatePublisher, 1) > 0 ? 1 : 0)
+            + (metadataTextMatchScore(requestedYear, candidateYear, 1) > 0 ? 1 : 0);
+
+        if (requestedAnchorCount > 0 && anchorMatchCount < 1) {
             continue;
         }
 
         int score =
             metadataTextMatchScore(requestedVolume, candidateVolume, 4)
-            + metadataTextMatchScore(requestedTitle, candidateTitle, 3)
-            + metadataTextMatchScore(requestedPublisher, candidatePublisher, 3)
-            + metadataTextMatchScore(requestedYear, candidateYear, 2)
+            + metadataTextMatchScore(requestedPublisher, candidatePublisher, 4)
+            + metadataTextMatchScore(requestedYear, candidateYear, 3)
+            + metadataTextMatchScore(requestedTitle, candidateTitle, 2)
             + metadataTextMatchScore(requestedMonth, candidateMonth, 1)
             + metadataTextMatchScore(requestedAgeRating, candidateAgeRating, 1);
         if (score < 1 && candidates.size() > 1) {
@@ -1100,6 +1104,11 @@ QVariantMap ComicsListModel::issueMetadataSuggestion(const QVariantMap &values, 
         { QStringLiteral("issueNumber"), valueFromMap(bestCandidate, QStringLiteral("issueNumber")) },
         { QStringLiteral("patch"), patch }
     };
+}
+
+QString ComicsListModel::rememberIssueMetadataForAutofill(int comicId)
+{
+    return preserveRetainedIssueMetadata(comicId);
 }
 
 QVariantMap ComicsListModel::saveSeriesHeaderImages(

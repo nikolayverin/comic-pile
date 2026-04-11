@@ -149,6 +149,9 @@ Item {
             root.issueMetadataAutofillConfirmDialog.close()
         }
         if (saveMetadata(root.metadataDialog.currentState())) {
+            if (libraryModelRef && editingComic) {
+                libraryModelRef.rememberIssueMetadataForAutofill(Number(editingComic.id || 0))
+            }
             root.metadataDialog.close()
         }
     }

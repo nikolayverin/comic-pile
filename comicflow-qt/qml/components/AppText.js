@@ -152,9 +152,8 @@ var seriesMetaButtonMerge = "Merge"
 var seriesMetaButtonSave = "Save"
 
 function issueAutofillMessage(issueNumber, seriesLabel) {
-    return "Saved issue info was found for issue #" + String(issueNumber || "")
-        + " in \"" + String(seriesLabel || "this series") + "\".\n\n"
-        + "Fill the remaining issue fields automatically before saving?"
+    return "Saved issue data was found in your library.\n\n"
+        + "Do you want to fill the remaining empty fields from it, or keep the values currently in this form and update saved data?"
 }
 
 function seriesAutofillMessage(seriesLabel) {
