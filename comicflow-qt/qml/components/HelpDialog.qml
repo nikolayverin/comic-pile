@@ -171,6 +171,7 @@ PopupDialogWindow {
                     key: "edit_one_issue",
                     label: "How do I edit one issue?",
                     bodyHtml: "Use this path:<br>&bull; open the series in <b>Library</b><br>&bull; find the issue in <b>Issues</b><br>&bull; open the issue menu and press <b>Edit</b><br><br>Use it when you want to change issue-level fields such as <b>issue number</b>, <b>title</b>, <b>publisher</b>, credits, story details, or other details for that one issue.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/09-issue-edit.png",
                     screenshotTitle: "Edit action in the issue menu",
                     screenshotHint: ""
                 },
@@ -178,20 +179,20 @@ PopupDialogWindow {
                     key: "edit_one_series",
                     label: "How do I edit series details?",
                     bodyHtml: "Use this path when you want to change series-level details such as <b>series name</b>, <b>volume</b>, <b>publisher</b>, <b>year</b>, <b>genres</b>, or <b>summary</b>.<br><br>You can open it in two ways:<br>&bull; select the series in <b>Library</b>, open the <b>...</b> menu, and choose <b>Edit Series</b><br>&bull; open the same fields from the small edit buttons in <b>Series spotlight</b><br><br>Both paths edit the same series information. Use whichever feels faster in the moment.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/10-series-edit.png",
                     screenshotTitle: "Edit Series from the selected series menu",
                     screenshotHint: ""
                 },
                 {
                     key: "series_menu_actions",
                     label: "What can I do from the selected series menu?",
-                    bodyHtml: "The <b>...</b> menu for the selected series in <b>Library</b> changes depending on what is selected.<br><br>If one series is selected, you can use it for actions such as:<br>&bull; <b>Add issues</b> when you want to add more files directly into that series<br>&bull; <b>Edit Series</b> when you want to change series-level details<br>&bull; <b>Delete files</b> when you want to remove the files for that series<br><br>To select several series, use <b>Ctrl + LMB</b> to add or remove one series at a time, or <b>Shift + LMB</b> to select a range.<br><br>If several series are selected, the same menu can offer bulk actions such as:<br>&bull; <b>Bulk Edit</b> when you want to apply the same series changes to several selected series<br>&bull; <b>Merge into series</b> when those selected series should become one series<br>&bull; <b>Delete selected</b> when you want to remove the files for all selected series<br><br>This menu is the main place for series-level actions before you touch the issues inside the series.",
-                    screenshotTitle: "Selected series menu in Library",
-                    screenshotHint: ""
+                    bodyHtml: "The <b>...</b> menu for the selected series in <b>Library</b> changes depending on what is selected.<br><br>If one series is selected, you can use it for actions such as:<br>&bull; <b>Add issues</b> when you want to add more files directly into that series<br>&bull; <b>Edit Series</b> when you want to change series-level details<br>&bull; <b>Delete files</b> when you want to remove the files for that series<br><br>To select several series, use <b>Ctrl + LMB</b> to add or remove one series at a time, or <b>Shift + LMB</b> to select a range.<br><br>If several series are selected, the same menu can offer bulk actions such as:<br>&bull; <b>Bulk Edit</b> when you want to apply the same series changes to several selected series<br>&bull; <b>Merge into series</b> when those selected series should become one series<br>&bull; <b>Delete selected</b> when you want to remove the files for all selected series<br><br>This menu is the main place for series-level actions before you touch the issues inside the series."
                 },
                 {
                     key: "fill_fields_popup",
                     label: "What does Fill Fields do?",
                     bodyHtml: "A <b>Fill Fields</b> popup appears only when the app finds one clear, non-conflicting match in your local library data.<br><br><b>For one issue</b><br>The saved issue info must already match the same <b>series</b> and <b>issue number</b>. The popup can then appear if supporting fields such as <b>volume</b>, <b>title</b>, <b>publisher</b>, <b>year</b>, <b>month</b>, or <b>age rating</b> also fit and do not conflict.<br><br><b>For series details</b><br>The saved series info must match the same series and at least one supporting field such as <b>volume</b>, <b>publisher</b>, <b>year</b>, <b>month</b>, or <b>age rating</b>.<br><br>If the saved data conflicts with what is already in the form, or if there is no one clear best match, the popup does not appear.<br><br>If you choose <b>Fill Fields</b>, only the remaining empty fields are filled automatically. The values you already entered manually stay as they are. Use <b>Keep Current</b> when you want to save only what is already in the form.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/11-fill-fields.png",
                     screenshotTitle: "Fill Fields popup for saved issue or series info",
                     screenshotHint: ""
                 },
@@ -199,13 +200,17 @@ PopupDialogWindow {
                     key: "replace_issue",
                     label: "How do I replace one issue in a series?",
                     bodyHtml: "<b>Replace</b> keeps the existing issue in your library and replaces its current file with the new one. Use it when the new file is a corrected or better copy of the same issue.<br><br>This updates the current issue instead of creating a separate one.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/11-replace.png",
                     screenshotTitle: "Replace action in the issue menu",
                     screenshotHint: ""
                 },
                 {
                     key: "last_import",
                     label: "What is Last Import?",
-                    bodyHtml: "<b><i>Last import</i></b> is a quick filter in <b>Library</b> that shows the most recent import session. Use it when you want to quickly find issues from the latest import session again.<br><br>Do not treat it as a permanent reading shelf. After restart, it may no longer contain the previous import session. For long-term access, open the series from <b>Library</b>."
+                    bodyHtml: "<b><i>Last import</i></b> is a quick filter in <b>Library</b> that shows the most recent import session. Use it when you want to quickly find issues from the latest import session again.<br><br>Do not treat it as a permanent reading shelf. After restart, it may no longer contain the previous import session. For long-term access, open the series from <b>Library</b>.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/11-last-imported.png",
+                    screenshotTitle: "Last import quick filter in Library",
+                    screenshotHint: ""
                 },
             ]
         },
@@ -219,30 +224,39 @@ PopupDialogWindow {
                     key: "reader_overview",
                     label: "Reader interface overview",
                     bodyHtml: "Open any issue from <b>Issues</b> to start reading.<br><br>The reader has four main areas:<br>&bull; the <b>Top bar</b> with issue title and icon buttons<br>&bull; the <b>page area</b> in the middle<br>&bull; the <b>side arrows</b> for previous and next page<br>&bull; the <b>Bottom controls</b> for page list, <b>Read from start</b>, and <b>Mark as read</b><br><br>Comic Pile reopens an issue from your saved spot when progress already exists. If <b>Auto-open bookmarked page instead of last page</b> is enabled in <b>File -> Settings -> Reader</b>, a bookmark can open first.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/12-reader.png",
                     screenshotTitle: "Reader layout overview",
                     screenshotHint: ""
                 },
                 {
                     key: "reader_top_bar_left",
                     label: "Left side of the top bar",
-                    bodyHtml: "The left side of the <b>Top bar</b> contains quick utility actions for the current issue:<br>&bull; <b>Delete page</b> permanently removes the current page file from the archive<br>&bull; <b>Info</b> opens the hotkeys popup. Shortcut: <b>I</b><br>&bull; <b>Settings</b> opens reader-related settings<br>&bull; <b>Theme</b> switches the reader between its dark and light look"
+                    bodyHtml: "The left side of the <b>Top bar</b> contains quick utility actions for the current issue:<br>&bull; <b>Delete page</b> permanently removes the current page file from the archive<br>&bull; <b>Info</b> opens the hotkeys popup. Shortcut: <b>I</b><br>&bull; <b>Settings</b> opens reader-related settings<br>&bull; <b>Theme</b> switches the reader between its dark and light look",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/13-reader-top-bar-1.png",
+                    screenshotTitle: "Left side of the Reader top bar",
+                    screenshotHint: ""
                 },
                 {
                     key: "reader_top_bar_center",
                     label: "Center of the top bar",
-                    bodyHtml: "The center of the <b>Top bar</b> shows the current issue title. The left and right arrows beside it move to the previous or next issue in the same series when available. Shortcuts: <b>A</b> / <b>D</b>"
+                    bodyHtml: "The center of the <b>Top bar</b> shows the current issue title. The left and right arrows beside it move to the previous or next issue in the same series when available. Shortcuts: <b>A</b> / <b>D</b>",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/14-reader-top-bar-2.png",
+                    screenshotTitle: "Center of the Reader top bar",
+                    screenshotHint: ""
                 },
                 {
                     key: "reader_top_bar_right",
                     label: "Right side of the top bar",
                     bodyHtml: "The right side of the <b>Top bar</b> contains reading modes and quick actions:<br>&bull; <b>Manga mode</b> reverses reading direction and page navigation<br>&bull; <b>1 page</b> shows one page at a time<br>&bull; <b>2 pages</b> shows a two-page spread when possible. Pre-merged double-page images still display as their own spread. Shortcut: <b>P</b><br>&bull; <b>Fullscreen</b> expands the reader to fullscreen mode. Shortcut: <b>S</b><br>&bull; <b>Magnifier</b> enables press-and-hold zoom inside the page area. Its size can be changed in <b>File -> Settings -> Reader</b>. Shortcut: <b>Z</b><br>&bull; <b>Bookmark</b> saves or removes a bookmark for the current page. Shortcut: <b>B</b><br>&bull; <b>Favorite</b> adds or removes the current issue from <b>Favorites</b>. Shortcut: <b>F</b><br>&bull; <b>Copy</b> copies the current page as an image to the clipboard, so you can paste it into another app. Shortcut: <b>Ctrl + C</b><br>&bull; <b>Close</b> exits the reader. Shortcut: <b>Esc</b>",
-                    screenshotTitle: "Reader top bar layout",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/15-reader-top-bar-3.png",
+                    screenshotTitle: "Right side of the Reader top bar",
                     screenshotHint: ""
                 },
                 {
                     key: "reader_bottom_controls",
                     label: "Bottom controls and page navigation",
                     bodyHtml: "Use the large left and right arrows on the sides of the page area to move between pages. Shortcuts: <b>Left</b> / <b>Right</b> or <b>PgUp</b> / <b>PgDown</b><br><br>At the bottom of the reader:<br>&bull; <b>Read from start</b> clears the saved continue-reading spot and starts the issue again from the beginning. Shortcut: <b>1</b><br>&bull; <b>Mark as read</b> marks the current issue as finished in <b>Library</b>, clears its bookmark, and moves to the next issue when one is available. Shortcut: <b>M</b><br>&bull; in <b>Issues</b>, a read issue appears dimmed and shows a green circular check badge on the cover, and it is no longer used as a <b>Next unread</b> target<br>&bull; the <b>page counter</b> shows your current position and opens the page list when clicked<br><br>If <b>Manga mode</b> is enabled, the page-direction logic is reversed to match manga reading order, including <b>Left</b> / <b>Right</b> navigation.",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/16-reader-bottom-bar.png",
                     screenshotTitle: "Reader bottom controls and page list",
                     screenshotHint: ""
                 },
@@ -250,14 +264,16 @@ PopupDialogWindow {
                     key: "reader_bookmarks_favorites",
                     label: "Bookmarks and Favorites",
                     bodyHtml: "<b><i>Bookmarks</i></b> save one page inside one issue. Each issue can have only one bookmark at a time.<br><br>If a bookmark exists on a page that is not currently visible, the reader shows a bookmark marker near the page area. Click it to jump back to that bookmarked page.<br><br>In <b>Issues</b>, a bookmarked issue also shows a bookmark ribbon on the cover, so you can spot it from <b>Library</b>.<br><br><b><i>Favorites</i></b> mark whole issues so you can find them again in the <b>Favorites</b> quick filter in <b>Library</b>.",
-                    screenshotTitle: "Bookmark indicator and favorites",
+                    screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/17-series-bookmark.png",
+                    screenshotTitle: "Bookmark indicator",
                     screenshotHint: ""
                 },
                 {
                     key: "continue_next_unread",
                     label: "Continue reading and Next unread",
                     bodyHtml: "You can use <b><i>Continue reading</i></b> and <b><i>Next unread</i></b> from <b>Main menu</b>, so you do not need to open the reader first to keep going.<br><br><b><i>Continue reading</i></b> opens the issue currently used as your reading target. This usually comes from saved reading progress, and a bookmark can take priority over plain progress. Once an issue has saved progress, it can become your <b><i>Continue reading</i></b> target until you build newer progress or a bookmark in another issue.<br><br><b><i>Next unread</i></b> opens the next issue in the same series flow that is not marked as read yet. It follows the current reading target, so it is meant for moving forward through the same series instead of jumping to a random issue.",
-                    screenshotTitleAfter: "Continue reading and Next unread in the Top bar"
+                    screenshotSourceAfter: "qrc:/qt/qml/ComicPile/assets/ui/help/18-continue-reading.png",
+                    screenshotTitleAfter: "Continue reading and Next unread in the Main menu"
                 }
             ]
         },

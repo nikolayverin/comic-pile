@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import "../controllers"
 
 Popup {
@@ -565,6 +566,10 @@ Popup {
             ctx.closePath()
             ctx.fill()
             if (borderWidth > 0 && borderColor !== "transparent") {
+                ctx.beginPath()
+                ctx.moveTo(0.5, 0.5)
+                ctx.lineTo(width / 2, height - 0.5)
+                ctx.lineTo(width - 0.5, 0.5)
                 ctx.strokeStyle = borderColor
                 ctx.lineWidth = borderWidth
                 ctx.stroke()
@@ -1830,12 +1835,30 @@ Popup {
                 border.color: root.pageListMenuBorderColor
             }
 
+            Rectangle {
+                id: pageListMaskShape
+                anchors.fill: pageListBody
+                anchors.margins: 1
+                radius: Math.max(0, root.listRadius - 1)
+                color: "white"
+            }
+
+            ShaderEffectSource {
+                id: pageListMaskSource
+                anchors.fill: pageListMaskShape
+                sourceItem: pageListMaskShape
+                hideSource: true
+                live: true
+                visible: false
+            }
+
             PopupMenuListView {
                 id: pageListView
                 anchors.left: pageListBody.left
                 anchors.right: pageListBody.right
                 anchors.top: pageListBody.top
                 anchors.bottom: pageListBody.bottom
+                anchors.margins: 1
                 uiFontFamily: root.uiFontFamily
                 uiFontPixelSize: root.listFontPx
                 hoverColor: root.pageListMenuHoverColor
@@ -1852,6 +1875,12 @@ Popup {
                 scrollThumbColor: root.pageListMenuScrollThumbColor
                 hoverFadeDurationMs: root.pageListFadeDurationMs
                 menuItems: root.pageListMenuItems
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    maskEnabled: true
+                    maskSource: pageListMaskSource
+                    autoPaddingEnabled: false
+                }
 
                 onItemTriggered: function(index, item) {
                     const targetPageIndex = Number((item || {}).pageIndex || 0)
@@ -1868,6 +1897,15 @@ Popup {
                 fillColor: root.pageListMenuFillColor
                 borderColor: root.pageListMenuBorderColor
                 borderWidth: 1
+            }
+
+            Rectangle {
+                width: root.listNotchWidth + 2
+                height: 2
+                anchors.horizontalCenter: pageListBody.horizontalCenter
+                anchors.top: pageListBody.bottom
+                anchors.topMargin: -1
+                color: root.pageListMenuFillColor
             }
         }
     }
