@@ -197,7 +197,11 @@ Item {
         }
 
         const rows = libraryModelRef.issuesForSeries(key, "__all__", "all", "")
-        const storedSeriesMetadata = multiSelected ? {} : (libraryModelRef.seriesMetadataForKey(key) || {})
+        const storedSeriesMetadata = effectiveMode === "merge"
+            ? (typeof libraryModelRef.retainedSeriesMetadataForKey === "function"
+                ? (libraryModelRef.retainedSeriesMetadataForKey(key) || {})
+                : (libraryModelRef.seriesMetadataForKey(key) || {}))
+            : (multiSelected ? {} : (libraryModelRef.seriesMetadataForKey(key) || {}))
         let seedSeries = ""
         let seedVolume = String(storedSeriesMetadata.volume || "").trim()
         let seedSeriesTitle = String(storedSeriesMetadata.seriesTitle || "").trim()
@@ -676,7 +680,9 @@ Item {
             const primaryTargetSeriesKey = primaryLeadId > 0
                 ? String(findSeriesKeyForIssueId(primaryLeadId, key) || key).trim()
                 : key
-            const primarySourceMetadata = libraryModelRef.seriesMetadataForKey(key) || {}
+            const primarySourceMetadata = typeof libraryModelRef.retainedSeriesMetadataForKey === "function"
+                ? (libraryModelRef.retainedSeriesMetadataForKey(key) || {})
+                : (libraryModelRef.seriesMetadataForKey(key) || {})
             if (primaryTargetSeriesKey !== key) {
                 const preserveHeaderError = heroSeriesControllerRef.preserveHeaderOverridesIfNeeded(
                     primaryTargetSeriesKey,
@@ -686,21 +692,37 @@ Item {
                     root.seriesMetaDialog.errorText = preserveHeaderError
                     return false
                 }
-                const primarySeriesMetaSaveResult = libraryModelRef.setSeriesMetadataForKey(primaryTargetSeriesKey, {
-                    seriesTitle: String(primarySourceMetadata.seriesTitle || "").trim(),
-                    summary: String(primarySourceMetadata.summary || "").trim(),
-                    year: String(primarySourceMetadata.year || "").trim(),
-                    month: String(primarySourceMetadata.month || "").trim(),
-                    genres: String(primarySourceMetadata.genres || "").trim(),
-                    volume: String(primarySourceMetadata.volume || "").trim(),
-                    publisher: String(primarySourceMetadata.publisher || "").trim(),
-                    ageRating: String(primarySourceMetadata.ageRating || "").trim()
-                })
-                if (primarySeriesMetaSaveResult.length > 0) {
-                    startupControllerRef.startupLog("seriesDialog merge metadata save error: " + primarySeriesMetaSaveResult)
-                    root.seriesMetaDialog.errorText = primarySeriesMetaSaveResult
-                    return false
-                }
+            }
+            const primarySeriesMetaSaveResult = libraryModelRef.setSeriesMetadataForKey(primaryTargetSeriesKey, {
+                seriesTitle: seriesTitleValue.length > 0
+                    ? seriesTitleValue
+                    : String(primarySourceMetadata.seriesTitle || "").trim(),
+                summary: summaryValue.length > 0
+                    ? summaryValue
+                    : String(primarySourceMetadata.summary || "").trim(),
+                year: yearValue.length > 0
+                    ? yearValue
+                    : String(primarySourceMetadata.year || "").trim(),
+                month: monthValue.length > 0
+                    ? monthValue
+                    : String(primarySourceMetadata.month || "").trim(),
+                genres: genresValue.length > 0
+                    ? genresValue
+                    : String(primarySourceMetadata.genres || "").trim(),
+                volume: volumeValue.length > 0
+                    ? volumeValue
+                    : String(primarySourceMetadata.volume || "").trim(),
+                publisher: resolvedPublisherValue.length > 0
+                    ? resolvedPublisherValue
+                    : String(primarySourceMetadata.publisher || "").trim(),
+                ageRating: ageRatingValue.length > 0
+                    ? ageRatingValue
+                    : String(primarySourceMetadata.ageRating || "").trim()
+            })
+            if (primarySeriesMetaSaveResult.length > 0) {
+                startupControllerRef.startupLog("seriesDialog merge metadata save error: " + primarySeriesMetaSaveResult)
+                root.seriesMetaDialog.errorText = primarySeriesMetaSaveResult
+                return false
             }
             for (let i = 0; i < normalizedKeys.length; i += 1) {
                 const sourceKey = normalizedKeys[i]

@@ -808,6 +808,51 @@ QVariantMap ComicsListModel::seriesImportContext(const QString &seriesKey) const
     return {};
 }
 
+QVariantMap ComicsListModel::seriesAddIssueContext(const QString &seriesKey) const
+{
+    const QString normalizedKey = seriesKey.trimmed();
+    if (normalizedKey.isEmpty()) {
+        return {};
+    }
+
+    const QVariantMap importContext = seriesImportContext(normalizedKey);
+    const QVariantMap retainedMetadata = buildRetainedSeriesMetadata(normalizedKey);
+
+    const QString targetSeries = valueFromMap(importContext, QStringLiteral("series")).isEmpty()
+        ? valueFromMap(retainedMetadata, QStringLiteral("seriesTitle"))
+        : valueFromMap(importContext, QStringLiteral("series"));
+    const QString targetVolume = valueFromMap(importContext, QStringLiteral("volume")).isEmpty()
+        ? valueFromMap(retainedMetadata, QStringLiteral("volume"))
+        : valueFromMap(importContext, QStringLiteral("volume"));
+
+    QVariantMap result;
+    if (!targetSeries.isEmpty()) result.insert(QStringLiteral("series"), targetSeries);
+    if (!targetVolume.isEmpty()) result.insert(QStringLiteral("volume"), targetVolume);
+
+    const QString contextSeriesKey = valueFromMap(importContext, QStringLiteral("seriesKey"));
+    if (!contextSeriesKey.isEmpty()) result.insert(QStringLiteral("seriesKey"), contextSeriesKey);
+
+    const QString contextSeriesTitle = valueFromMap(importContext, QStringLiteral("seriesTitle"));
+    if (!contextSeriesTitle.isEmpty()) result.insert(QStringLiteral("seriesTitle"), contextSeriesTitle);
+
+    const QString publisher = valueFromMap(retainedMetadata, QStringLiteral("publisher"));
+    const QString year = valueFromMap(retainedMetadata, QStringLiteral("year"));
+    const QString month = valueFromMap(retainedMetadata, QStringLiteral("month"));
+    const QString ageRating = valueFromMap(retainedMetadata, QStringLiteral("ageRating"));
+
+    if (!publisher.isEmpty()) result.insert(QStringLiteral("publisher"), publisher);
+    if (!year.isEmpty()) result.insert(QStringLiteral("year"), year);
+    if (!month.isEmpty()) result.insert(QStringLiteral("month"), month);
+    if (!ageRating.isEmpty()) result.insert(QStringLiteral("ageRating"), ageRating);
+
+    return result;
+}
+
+QVariantMap ComicsListModel::retainedSeriesMetadataForKey(const QString &seriesKey) const
+{
+    return buildRetainedSeriesMetadata(seriesKey.trimmed());
+}
+
 QVariantMap ComicsListModel::seriesMetadataForKey(const QString &seriesKey) const
 {
     QVariantMap metadata = ComicLibraryQueries::seriesMetadataForKey(m_dbPath, seriesKey);

@@ -229,6 +229,8 @@ public:
     Q_INVOKABLE QString normalizeSeriesKeyForLookup(const QString &value) const;
     Q_INVOKABLE QString groupTitleForKey(const QString &groupKey) const;
     Q_INVOKABLE QVariantMap seriesImportContext(const QString &seriesKey) const;
+    Q_INVOKABLE QVariantMap seriesAddIssueContext(const QString &seriesKey) const;
+    Q_INVOKABLE QVariantMap retainedSeriesMetadataForKey(const QString &seriesKey) const;
     Q_INVOKABLE QVariantMap seriesMetadataForKey(const QString &seriesKey) const;
     Q_INVOKABLE QVariantMap seriesMetadataSuggestion(const QVariantMap &values, const QString &currentSeriesKey) const;
     Q_INVOKABLE QString setSeriesMetadataForKey(const QString &seriesKey, const QVariantMap &values);

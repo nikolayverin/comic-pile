@@ -930,71 +930,27 @@ Item {
             readonly property string filename: String(itemData.filename || "")
             readonly property string coverSource: root.coverSourceForComic(comicId)
             property bool coverRequested: false
-            property int coverRetryCount: 0
-            readonly property int coverRetryMax: 2
 
             width: issuesFlick.cardWidth
             height: issuesFlick.cardHeight
 
-            function scheduleCoverRetry() {
-                if (!visible) return
-                if (comicId < 1) return
-                if (root.coverSourceForComic(comicId).length > 0) return
-                if (coverRetryCount >= coverRetryMax) return
-                coverRetryTimer.restart()
-            }
-
-            function requestCover(forceRetry) {
+            function requestCover() {
                 if (root.restoringStartupSnapshot || root.startupHydrationInProgress) return
-                if (comicId < 1) return
-                if (coverRequested && !Boolean(forceRetry)) return
+                if (comicId < 1 || coverRequested) return
                 if (root.coverSourceForComic(comicId).length > 0) {
                     coverRequested = true
-                    coverRetryCount = 0
-                    coverRetryTimer.stop()
                     return
                 }
                 coverRequested = true
                 root.requestIssueThumbnail(comicId)
-                scheduleCoverRetry()
             }
 
-            onVisibleChanged: {
-                if (visible) {
-                    requestCover(false)
-                } else {
-                    coverRetryTimer.stop()
-                }
-            }
-            onCoverSourceChanged: {
-                if (coverSource.length > 0) {
-                    coverRequested = true
-                    coverRetryCount = 0
-                    coverRetryTimer.stop()
-                }
-            }
+            onVisibleChanged: requestCover()
             onComicIdChanged: {
                 coverRequested = false
-                coverRetryCount = 0
-                coverRetryTimer.stop()
-                requestCover(false)
+                requestCover()
             }
-            Component.onCompleted: requestCover(false)
-
-            Timer {
-                id: coverRetryTimer
-                interval: 350
-                repeat: false
-                onTriggered: {
-                    if (!parent.visible) return
-                    if (parent.comicId < 1) return
-                    if (root.coverSourceForComic(parent.comicId).length > 0) return
-                    if (parent.coverRetryCount >= parent.coverRetryMax) return
-                    parent.coverRetryCount += 1
-                    parent.coverRequested = false
-                    parent.requestCover(true)
-                }
-            }
+            Component.onCompleted: requestCover()
 
             IssueCard {
                 anchors.fill: parent

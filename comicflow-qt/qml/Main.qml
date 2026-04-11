@@ -1405,21 +1405,40 @@ ApplicationWindow {
         if (importInProgress) return
         const selected = libraryModel.browseArchiveFiles("")
         if (!selected || selected.length < 1) return
-        const importContext = libraryModel && typeof libraryModel.seriesImportContext === "function"
-            ? (libraryModel.seriesImportContext(String(seriesKey || "").trim()) || ({}))
-            : ({})
+        const importContext = libraryModel && typeof libraryModel.seriesAddIssueContext === "function"
+            ? (libraryModel.seriesAddIssueContext(String(seriesKey || "").trim()) || ({}))
+            : (libraryModel && typeof libraryModel.seriesImportContext === "function"
+                ? (libraryModel.seriesImportContext(String(seriesKey || "").trim()) || ({}))
+                : ({}))
         const targetSeries = String(importContext.series || "").trim()
         const targetVolume = String(importContext.volume || "").trim()
+        const targetPublisher = String(importContext.publisher || "").trim()
+        const targetYear = String(importContext.year || "").trim()
+        const targetMonth = String(importContext.month || "").trim()
+        const targetAgeRating = String(importContext.ageRating || "").trim()
+        const importValues = {
+            series: targetSeries,
+            volume: targetVolume
+        }
+        if (targetPublisher.length > 0) {
+            importValues.publisher = targetPublisher
+        }
+        if (targetYear.length > 0) {
+            importValues.year = targetYear
+        }
+        if (targetMonth.length > 0) {
+            importValues.month = targetMonth
+        }
+        if (targetAgeRating.length > 0) {
+            importValues.ageRating = targetAgeRating
+        }
         if (targetSeries.length > 0) {
             startImportFromSourcePaths(
                 selected,
                 {
                     seriesOverride: targetSeries,
                     importIntent: "series_add",
-                    values: {
-                        series: targetSeries,
-                        volume: targetVolume
-                    }
+                    values: importValues
                 },
                 "No Supported Archives Found in Selected Files."
             )

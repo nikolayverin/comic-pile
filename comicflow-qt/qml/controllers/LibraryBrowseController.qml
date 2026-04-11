@@ -279,6 +279,7 @@ Item {
                 }
                 root.seriesSelectionAnchorIndex = i
                 refreshVolumeList()
+                refreshIssuesGridData(true)
                 heroSeriesControllerRef.resolveHeroMediaForSelectedSeries()
                 heroSeriesControllerRef.refreshSeriesData()
                 refreshQuickFilterCounts()
