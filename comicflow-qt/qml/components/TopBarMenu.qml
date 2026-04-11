@@ -51,6 +51,7 @@ Rectangle {
     property int helperButtonsBottomMargin: 8
     property int helperButtonsSpacing: 8
     property bool continueReadingEnabled: true
+    property bool whatsNewAvailable: false
     property bool topMenuSessionActive: false
     property var activeTopMenuPopup: null
     property int windowCornerRadius: 14
@@ -71,6 +72,7 @@ Rectangle {
     signal settingsRequested()
     signal helpRequested()
     signal aboutRequested()
+    signal whatsNewRequested()
     signal quickTourRequested()
     signal continueReadingRequested()
     signal nextUnreadRequested()
@@ -496,12 +498,15 @@ Rectangle {
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenuPopup, visible)
         menuItems: [
             { text: "Quick tour", action: "quick_tour" },
+            { text: "What's new", action: "whats_new", visible: root.whatsNewAvailable },
             { text: "View Help", action: "view_help" },
             { text: "About", action: "about" }
         ]
         onItemTriggered: function(index, action) {
             if (action === "quick_tour") {
                 root.quickTourRequested()
+            } else if (action === "whats_new") {
+                root.whatsNewRequested()
             } else if (action === "view_help") {
                 root.helpRequested()
             } else if (action === "about") {

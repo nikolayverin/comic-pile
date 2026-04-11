@@ -201,6 +201,7 @@ ApplicationWindow {
     readonly property var settingsDialog: mainDialogHost.settingsDialogRef
     readonly property var helpDialog: mainDialogHost.helpDialogRef
     readonly property var aboutDialog: mainDialogHost.aboutDialogRef
+    readonly property var whatsNewDialog: mainDialogHost.whatsNewDialogRef
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
     readonly property var deleteConfirmDialog: mainDialogHost.deleteConfirmDialogRef
     readonly property var deleteErrorDialog: mainDialogHost.deleteErrorDialogRef
@@ -476,6 +477,7 @@ ApplicationWindow {
         settingsDialogRef: settingsDialog
         helpDialogRef: helpDialog
         aboutDialogRef: aboutDialog
+        whatsNewDialogRef: whatsNewDialog
         replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
         seriesHeaderDialogRef: seriesHeaderDialog
         deleteConfirmDialogRef: deleteConfirmDialog
@@ -1004,6 +1006,10 @@ ApplicationWindow {
 
     function openAboutDialog() {
         popupController.openExclusivePopup(aboutDialog)
+    }
+
+    function openWhatsNewDialog() {
+        popupController.openExclusivePopup(whatsNewDialog)
     }
 
     function launchOnboarding(manualLaunch) {
@@ -2141,20 +2147,22 @@ ApplicationWindow {
             windowControlButtonHeight: 16
             windowControlSpacing: 0
             helperButtonsLeftMargin: root.sidebarWidth + 8
-            helperButtonsBottomMargin: 8
-            helperButtonsSpacing: 8
-            continueReadingEnabled: navigationSurfaceController.continueReadingAvailable
-            centerLabel: uiTokens.appTitle
-            windowCornerRadius: root.windowCornerRadius
-            onContinueReadingRequested: navigationSurfaceController.continueReading()
-            onNextUnreadRequested: navigationSurfaceController.nextUnread()
+              helperButtonsBottomMargin: 8
+              helperButtonsSpacing: 8
+              continueReadingEnabled: navigationSurfaceController.continueReadingAvailable
+              whatsNewAvailable: false
+              centerLabel: uiTokens.appTitle
+              windowCornerRadius: root.windowCornerRadius
+              onContinueReadingRequested: navigationSurfaceController.continueReading()
+              onNextUnreadRequested: navigationSurfaceController.nextUnread()
             onAddFilesRequested: root.quickAddFilesFromDialog()
             onAddFolderRequested: root.quickAddFolderFromDialog()
-            onAddIssueRequested: root.quickAddFilesFromDialog()
-            onSettingsRequested: root.openSettingsDialog("")
-            onHelpRequested: root.openHelpDialog("")
-            onQuickTourRequested: root.launchOnboarding(true)
-            onAboutRequested: root.openAboutDialog()
+              onAddIssueRequested: root.quickAddFilesFromDialog()
+              onSettingsRequested: root.openSettingsDialog("")
+              onWhatsNewRequested: root.openWhatsNewDialog()
+              onHelpRequested: root.openHelpDialog("")
+              onQuickTourRequested: root.launchOnboarding(true)
+              onAboutRequested: root.openAboutDialog()
             onRefreshRequested: libraryModel.reload()
             onExitRequested: root.close()
             onToggleFullscreenRequested: {
