@@ -1,0 +1,30 @@
+Comic Pile - 7-Zip Notice
+
+Comic Pile bundles 7-Zip command-line binaries for archive support.
+
+Current bundled files in the project:
+- `tools/7zip/7z.exe`
+- `tools/7zip/7z.dll`
+
+According to the official 7-Zip documentation:
+- most of 7-Zip is licensed under the GNU LGPL
+- some parts are under the BSD 3-Clause License
+- some parts have unRAR license restrictions
+
+Relevant official references:
+- 7-Zip home / license overview:
+  https://www.7-zip.org/
+- 7-Zip FAQ:
+  https://www.7-zip.org/faq.html
+
+The 7-Zip FAQ states that when parts of 7-Zip are used, documentation should:
+- state that parts of the 7-Zip program are used
+- state that 7-Zip is licensed under the GNU LGPL
+- provide a link to www.7-zip.org where source code can be found
+
+This release notice is intended to satisfy that documentation-level requirement in a clear user-facing form.
+
+Recommended release-package follow-up:
+- include this notice in the release package
+- include the relevant license text copies required for the bundled 7-Zip distribution path after final legal review
+

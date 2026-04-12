@@ -1,0 +1,7 @@
+Bundled public-domain demo comics source:
+
+Courtesy of ComicBookPlus.Com
+
+Suggested placement:
+- inside the release package `Open Source Notices` folder
+- optionally repeated in the release README

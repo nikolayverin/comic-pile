@@ -1,0 +1,25 @@
+Comic Pile - DjVuLibre Notice
+
+Comic Pile bundles DjVuLibre runtime tools to support DJVU import.
+
+Current bundled runtime files in the project include:
+- `ddjvu.exe`
+- `djvudump.exe`
+- `djvused.exe`
+- `libdjvulibre.dll`
+- required runtime support DLLs distributed with that bundled DjVuLibre runtime set
+
+Project-local source materials already present:
+- notice file:
+  `tools/djvulibre/NOTICE.txt`
+- license text:
+  `tools/djvulibre/runtime/COPYING.txt`
+
+Release-package direction:
+- include this notice
+- include a verbatim copy of `tools/djvulibre/NOTICE.txt`
+- include a verbatim copy of `tools/djvulibre/runtime/COPYING.txt`
+
+This notice should stay short and user-facing.
+The verbatim upstream files should carry the exact legal text.
+

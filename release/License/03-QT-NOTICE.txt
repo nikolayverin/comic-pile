@@ -1,0 +1,37 @@
+Comic Pile - Qt Notice
+
+This release bundles Qt runtime libraries and plugins required to run Comic Pile on Windows.
+
+The current app build is based on Qt 6 community/open-source components.
+According to the official Qt licensing documentation, Qt is available under commercial terms or under open-source terms including GNU LGPL version 3, with some components available under other open-source terms.
+
+Relevant official Qt references:
+- Qt licensing overview:
+  https://doc.qt.io/qt-6/licensing.html
+- LGPL reference page:
+  https://doc.qt.io/qt-6/lgpl.html
+- licenses used in Qt / third-party code in Qt:
+  https://doc.qt.io/qt-6/licenses-used-in-qt.html
+
+Runtime components currently expected in the first release package include modules such as:
+- Qt Core
+- Qt Gui
+- Qt Network
+- Qt OpenGL
+- Qt PDF
+- Qt QML / Qt Quick
+- Qt Quick Controls 2 and style/runtime support
+- Qt SQL
+- Qt SVG
+- Qt Widgets
+- related Qt runtime plugins deployed with the app
+
+Compliance direction for the release package:
+- keep the relevant Qt license texts with the release
+- keep this notice near the shipped app
+- keep the public source-code availability link with the release
+
+Important review note:
+- before the first public release, confirm that every shipped Qt module in the final release build is covered by the intended open-source distribution path
+- if any shipped component has different licensing requirements, update this notice bundle accordingly
+

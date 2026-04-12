@@ -1,0 +1,14 @@
+Comic Pile - Source Code Availability
+
+Comic Pile source code is intended to be made publicly available at:
+
+https://github.com/nikolayverin/comic-pile
+
+This notice is meant for the release package so users can find:
+- the application source code
+- the release build scripts
+- the starter library packaging logic
+- the project documentation and bug-report path
+
+If the repository URL changes before the first public release, update this file to match the final public source location.
+

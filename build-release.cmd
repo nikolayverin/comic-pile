@@ -16,6 +16,8 @@ set "BUILD_LOG=%BUILD_DIR%\build-release.log"
 set "DATABASE_SRC=%ROOT%\Database"
 set "DATABASE_DST=%STAGE_DIR%\Database"
 set "RUNTIME_MARKER=library-storage-layout-migration-v1.done"
+set "RELEASE_ASSETS_SRC=%ROOT%\release"
+set "RELEASE_ASSETS_DST=%STAGE_DIR%"
 
 set "QT_ROOT=C:\Qt\6.10.2\mingw_64"
 set "QT_BIN=%QT_ROOT%\bin"
@@ -39,6 +41,10 @@ set "PATH=%QT_BIN%;%MINGW_BIN%;C:\Qt\Tools\Ninja;%PATH%"
 call :requireFile "%SRC_DIR%\CMakeLists.txt" "Project source"
 if errorlevel 1 exit /b 1
 call :requireFile "%DATABASE_SRC%\library.db" "Release Database"
+if errorlevel 1 exit /b 1
+call :requireFile "%RELEASE_ASSETS_SRC%\README.txt" "Release README"
+if errorlevel 1 exit /b 1
+call :requireFile "%RELEASE_ASSETS_SRC%\License\00-COMIC-PILE-LICENSE.txt" "Release license bundle"
 if errorlevel 1 exit /b 1
 call :requireFile "%CMAKE_EXE%" "CMake"
 if errorlevel 1 exit /b 1
@@ -137,6 +143,13 @@ if %ROBOCOPY_RC% GEQ 8 (
 if not exist "%DATABASE_DST%\.runtime" mkdir "%DATABASE_DST%\.runtime" >nul 2>nul
 if exist "%DATABASE_SRC%\.runtime\%RUNTIME_MARKER%" (
     copy /Y "%DATABASE_SRC%\.runtime\%RUNTIME_MARKER%" "%DATABASE_DST%\.runtime\%RUNTIME_MARKER%" >nul 2>nul
+)
+copy /Y "%RELEASE_ASSETS_SRC%\README.txt" "%RELEASE_ASSETS_DST%\README.txt" >nul 2>nul
+robocopy "%RELEASE_ASSETS_SRC%\License" "%RELEASE_ASSETS_DST%\License" /MIR >nul
+set "ROBOCOPY_RC=%ERRORLEVEL%"
+if %ROBOCOPY_RC% GEQ 8 (
+    echo [FAIL] Could not copy release license bundle.
+    exit /b 1
 )
 
 echo.
