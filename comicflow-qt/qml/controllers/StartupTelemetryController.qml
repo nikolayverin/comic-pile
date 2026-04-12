@@ -15,9 +15,19 @@ Item {
     property bool startupWindowStateRestored: false
     property real startupLastLogAtMs: 0
 
+    function startupLoggingEnabled() {
+        const root = rootObject
+        if (root && root.startupDebugLogsEnabled) return true
+        return Boolean(
+            libraryModelRef
+                && typeof libraryModelRef.startupTextLogsEnabled === "function"
+                && libraryModelRef.startupTextLogsEnabled()
+        )
+    }
+
     function startupLog(message) {
         const root = rootObject
-        if (!root || !libraryModelRef || !root.startupDebugLogsEnabled) return
+        if (!root || !libraryModelRef || !startupLoggingEnabled()) return
         const now = Date.now()
         const elapsed = root.startupStartedAtMs > 0
             ? Math.max(0, Math.round(now - root.startupStartedAtMs))
@@ -42,7 +52,7 @@ Item {
 
     function trackingLog(message) {
         const root = rootObject
-        if (!root || !libraryModelRef) return
+        if (!root || !libraryModelRef || !startupLoggingEnabled()) return
         const startedAtMs = Number(root.launchStartedAtMs || 0)
         const elapsedMs = startedAtMs > 0
             ? Math.max(0, Math.round(Date.now() - startedAtMs))
@@ -80,7 +90,7 @@ Item {
 
     function launchLog(message) {
         const root = rootObject
-        if (!root || !libraryModelRef) return
+        if (!root || !libraryModelRef || !startupLoggingEnabled()) return
         const startedAtMs = Number(root.launchStartedAtMs || 0)
         const elapsedMs = startedAtMs > 0
             ? Math.max(0, Math.round(Date.now() - startedAtMs))

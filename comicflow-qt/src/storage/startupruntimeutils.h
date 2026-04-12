@@ -5,6 +5,7 @@
 
 namespace ComicStartupRuntime {
 
+bool startupTextLogsEnabled();
 void resetTextLogFile(const QString &path);
 void appendNormalizedTextLogLine(const QString &path, const QString &line);
 

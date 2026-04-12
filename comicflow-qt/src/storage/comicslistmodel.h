@@ -142,6 +142,7 @@ public:
     Q_INVOKABLE QString startupDebugLogPath() const;
     Q_INVOKABLE QString startupPreviewPath() const;
     Q_INVOKABLE QString startupPreviewMetaPath() const;
+    Q_INVOKABLE bool startupTextLogsEnabled() const;
     Q_INVOKABLE bool writeStartupPreviewMeta(const QString &payload) const;
     Q_INVOKABLE QString readStartupPreviewMeta() const;
     Q_INVOKABLE void resetStartupLog() const;

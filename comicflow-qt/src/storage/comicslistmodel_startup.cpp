@@ -312,6 +312,11 @@ QString ComicsListModel::startupPreviewMetaPath() const
     return ComicStartupRuntime::startupPreviewMetaPath(m_dataRoot);
 }
 
+bool ComicsListModel::startupTextLogsEnabled() const
+{
+    return ComicStartupRuntime::startupTextLogsEnabled();
+}
+
 bool ComicsListModel::writeStartupPreviewMeta(const QString &payload) const
 {
     return ComicStartupRuntime::writeStartupPreviewMeta(m_dataRoot, payload);
@@ -324,20 +329,32 @@ QString ComicsListModel::readStartupPreviewMeta() const
 
 void ComicsListModel::resetStartupLog() const
 {
+    if (!ComicStartupRuntime::startupTextLogsEnabled()) {
+        return;
+    }
     ComicStartupRuntime::resetTextLogFile(startupLogPath());
 }
 
 void ComicsListModel::appendStartupLog(const QString &line) const
 {
+    if (!ComicStartupRuntime::startupTextLogsEnabled()) {
+        return;
+    }
     ComicStartupRuntime::appendNormalizedTextLogLine(startupLogPath(), line);
 }
 
 void ComicsListModel::resetStartupDebugLog() const
 {
+    if (!ComicStartupRuntime::startupTextLogsEnabled()) {
+        return;
+    }
     ComicStartupRuntime::resetTextLogFile(startupDebugLogPath());
 }
 
 void ComicsListModel::appendStartupDebugLog(const QString &line) const
 {
+    if (!ComicStartupRuntime::startupTextLogsEnabled()) {
+        return;
+    }
     ComicStartupRuntime::appendNormalizedTextLogLine(startupDebugLogPath(), line);
 }

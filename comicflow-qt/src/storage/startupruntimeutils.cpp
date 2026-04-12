@@ -24,6 +24,15 @@
 
 namespace {
 
+bool envFlagEnabled(const char *name)
+{
+    const QString raw = qEnvironmentVariable(name).trimmed().toLower();
+    return raw == QStringLiteral("1")
+        || raw == QStringLiteral("true")
+        || raw == QStringLiteral("yes")
+        || raw == QStringLiteral("on");
+}
+
 qint64 launchStartedAtMsFromEnv()
 {
     bool ok = false;
@@ -102,6 +111,11 @@ QString continueReadingStatePath(const QString &dataRoot)
 } // namespace
 
 namespace ComicStartupRuntime {
+
+bool startupTextLogsEnabled()
+{
+    return envFlagEnabled("COMIC_PILE_STARTUP_TEXT_LOGS");
+}
 
 void resetTextLogFile(const QString &path)
 {
