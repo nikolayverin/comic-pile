@@ -665,7 +665,22 @@ PopupDialogWindow {
 
         return rows
     }
-    function formatBodyHtml(rawHtml) {
+    function applyHelpLinkStyles(rawHtml, hoveredLink) {
+        const html = String(rawHtml || "")
+        if (!html.length) return ""
+
+        const activeLink = String(hoveredLink || "")
+        return html.replace(/<a\b([^>]*?)href=(["'])(.*?)\2([^>]*)>/gi, function(match, before, quote, href, after) {
+            const cleanedBefore = String(before || "").replace(/\sstyle=(["']).*?\1/gi, "")
+            const cleanedAfter = String(after || "").replace(/\sstyle=(["']).*?\1/gi, "")
+            const decoration = href === activeLink ? "underline" : "none"
+            return "<a" + cleanedBefore
+                + " href=" + quote + href + quote
+                + cleanedAfter
+                + " style=\"color:#78b7ff; text-decoration:" + decoration + ";\">"
+        })
+    }
+    function formatBodyHtml(rawHtml, hoveredLink) {
         const source = String(rawHtml || "").replace(/\r\n/g, "\n")
         if (!source.length) return ""
 
@@ -737,7 +752,7 @@ PopupDialogWindow {
             }
         }
 
-        return html
+        return applyHelpLinkStyles(html, hoveredLink)
     }
     function openHelpLink(url) {
         const normalized = String(url || "").trim()
@@ -1108,9 +1123,11 @@ PopupDialogWindow {
                                 }
 
                                 Text {
+                                    id: introRichText
+                                    property string hoveredLink: ""
                                     visible: text.length > 0
                                     width: parent.width
-                                    text: String(modelData.leadHtml || "")
+                                    text: dialog.applyHelpLinkStyles(String(modelData.leadHtml || ""), hoveredLink)
                                     color: "#a2a2a2"
                                     textFormat: Text.RichText
                                     onLinkActivated: function(link) { dialog.openHelpLink(link) }
@@ -1119,6 +1136,21 @@ PopupDialogWindow {
                                     wrapMode: Text.WordWrap
                                     lineHeight: 1.24
                                     lineHeightMode: Text.ProportionalHeight
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: introRichText.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onPositionChanged: function(mouse) {
+                                            introRichText.hoveredLink = introRichText.linkAt(mouse.x, mouse.y)
+                                        }
+                                        onExited: introRichText.hoveredLink = ""
+                                        onClicked: function(mouse) {
+                                            const link = introRichText.linkAt(mouse.x, mouse.y)
+                                            if (link.length > 0)
+                                                dialog.openHelpLink(link)
+                                        }
+                                    }
                                 }
 
                                 Rectangle {
@@ -1146,8 +1178,10 @@ PopupDialogWindow {
                                 }
 
                                 Text {
+                                    id: bodyRichText
+                                    property string hoveredLink: ""
                                     width: parent.width
-                                    text: dialog.formatBodyHtml(String(modelData.bodyHtml || ""))
+                                    text: dialog.formatBodyHtml(String(modelData.bodyHtml || ""), hoveredLink)
                                     color: styleTokens.textColor
                                     textFormat: Text.RichText
                                     onLinkActivated: function(link) { dialog.openHelpLink(link) }
@@ -1156,6 +1190,21 @@ PopupDialogWindow {
                                     wrapMode: Text.WordWrap
                                     lineHeight: dialog.bodyLineHeight
                                     lineHeightMode: Text.ProportionalHeight
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: bodyRichText.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onPositionChanged: function(mouse) {
+                                            bodyRichText.hoveredLink = bodyRichText.linkAt(mouse.x, mouse.y)
+                                        }
+                                        onExited: bodyRichText.hoveredLink = ""
+                                        onClicked: function(mouse) {
+                                            const link = bodyRichText.linkAt(mouse.x, mouse.y)
+                                            if (link.length > 0)
+                                                dialog.openHelpLink(link)
+                                        }
+                                    }
                                 }
 
                                 Item {
@@ -1271,9 +1320,11 @@ PopupDialogWindow {
                                 }
 
                                 Text {
+                                    id: postBodyRichText
+                                    property string hoveredLink: ""
                                     visible: contentSectionBlock.hasPostScreenshotBody
                                     width: parent.width
-                                    text: dialog.formatBodyHtml(String(modelData.bodyHtmlAfterScreenshot || ""))
+                                    text: dialog.formatBodyHtml(String(modelData.bodyHtmlAfterScreenshot || ""), hoveredLink)
                                     color: styleTokens.textColor
                                     textFormat: Text.RichText
                                     onLinkActivated: function(link) { dialog.openHelpLink(link) }
@@ -1282,6 +1333,21 @@ PopupDialogWindow {
                                     wrapMode: Text.WordWrap
                                     lineHeight: dialog.bodyLineHeight
                                     lineHeightMode: Text.ProportionalHeight
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: postBodyRichText.hoveredLink.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                        onPositionChanged: function(mouse) {
+                                            postBodyRichText.hoveredLink = postBodyRichText.linkAt(mouse.x, mouse.y)
+                                        }
+                                        onExited: postBodyRichText.hoveredLink = ""
+                                        onClicked: function(mouse) {
+                                            const link = postBodyRichText.linkAt(mouse.x, mouse.y)
+                                            if (link.length > 0)
+                                                dialog.openHelpLink(link)
+                                        }
+                                    }
                                 }
 
                                 Item {

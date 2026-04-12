@@ -5,6 +5,12 @@ import QtQuick.Layouts
 PopupDialogWindow {
     id: dialog
 
+    readonly property string aboutLinkColor: "#78b7ff"
+    readonly property string repositoryUrl: "https://github.com/nikolayverin/comic-pile"
+    readonly property string projectLicenseUrl: repositoryUrl + "/blob/main/LICENSE"
+    readonly property string qtLicensesUrl: repositoryUrl + "/blob/main/release/License/03-QT-NOTICE.txt"
+    readonly property string thirdPartyLicensesUrl: repositoryUrl + "/blob/main/release/License/01-README.txt"
+
     PopupStyle {
         id: styleTokens
     }
@@ -18,6 +24,18 @@ PopupDialogWindow {
     height: 620
 
     onCloseRequested: close()
+
+    function openExternalLink(url) {
+        if (!url || url.length === 0) {
+            return
+        }
+        Qt.openUrlExternally(url)
+    }
+
+    function aboutLinkText(url, label, hovered) {
+        const decoration = hovered ? "underline" : "none"
+        return "<a href=\"" + url + "\" style=\"color:" + aboutLinkColor + "; text-decoration:" + decoration + ";\">" + label + "</a>"
+    }
 
     Item {
         anchors.fill: parent
@@ -141,24 +159,75 @@ PopupDialogWindow {
                 spacing: 6
 
                 Text {
-                    text: "Project License"
+                    id: projectLicenseLink
+                    property bool hovered: false
+                    text: dialog.aboutLinkText(dialog.projectLicenseUrl, "Project License", hovered)
                     color: "#ffffff"
                     font.family: Qt.application.font.family
                     font.pixelSize: 12
+                    textFormat: Text.RichText
+                    onLinkActivated: function(link) { dialog.openExternalLink(link) }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: projectLicenseLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onEntered: projectLicenseLink.hovered = true
+                        onExited: projectLicenseLink.hovered = false
+                        onClicked: function(mouse) {
+                            const link = projectLicenseLink.linkAt(mouse.x, mouse.y)
+                            if (link !== "")
+                                dialog.openExternalLink(link)
+                        }
+                    }
                 }
 
                 Text {
-                    text: "Qt Licenses"
+                    id: qtLicensesLink
+                    property bool hovered: false
+                    text: dialog.aboutLinkText(dialog.qtLicensesUrl, "Qt Licenses", hovered)
                     color: "#ffffff"
                     font.family: Qt.application.font.family
                     font.pixelSize: 12
+                    textFormat: Text.RichText
+                    onLinkActivated: function(link) { dialog.openExternalLink(link) }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: qtLicensesLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onEntered: qtLicensesLink.hovered = true
+                        onExited: qtLicensesLink.hovered = false
+                        onClicked: function(mouse) {
+                            const link = qtLicensesLink.linkAt(mouse.x, mouse.y)
+                            if (link !== "")
+                                dialog.openExternalLink(link)
+                        }
+                    }
                 }
 
                 Text {
-                    text: "Third-Party Licenses"
+                    id: thirdPartyLicensesLink
+                    property bool hovered: false
+                    text: dialog.aboutLinkText(dialog.thirdPartyLicensesUrl, "Third-Party Licenses", hovered)
                     color: "#ffffff"
                     font.family: Qt.application.font.family
                     font.pixelSize: 12
+                    textFormat: Text.RichText
+                    onLinkActivated: function(link) { dialog.openExternalLink(link) }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: thirdPartyLicensesLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onEntered: thirdPartyLicensesLink.hovered = true
+                        onExited: thirdPartyLicensesLink.hovered = false
+                        onClicked: function(mouse) {
+                            const link = thirdPartyLicensesLink.linkAt(mouse.x, mouse.y)
+                            if (link !== "")
+                                dialog.openExternalLink(link)
+                        }
+                    }
                 }
             }
 
@@ -173,10 +242,27 @@ PopupDialogWindow {
             }
 
             Text {
-                text: "GitHub Repository"
+                id: repositoryLink
+                property bool hovered: false
+                text: dialog.aboutLinkText(dialog.repositoryUrl, "GitHub Repository", hovered)
                 color: "#ffffff"
                 font.family: Qt.application.font.family
                 font.pixelSize: 12
+                textFormat: Text.RichText
+                onLinkActivated: function(link) { dialog.openExternalLink(link) }
+
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: repositoryLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onEntered: repositoryLink.hovered = true
+                    onExited: repositoryLink.hovered = false
+                    onClicked: function(mouse) {
+                        const link = repositoryLink.linkAt(mouse.x, mouse.y)
+                        if (link !== "")
+                            dialog.openExternalLink(link)
+                    }
+                }
             }
 
             Text {
