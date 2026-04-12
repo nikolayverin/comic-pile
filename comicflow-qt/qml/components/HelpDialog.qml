@@ -297,6 +297,11 @@ PopupDialogWindow {
                     key: "import_errors_popup",
                     label: "What if only one archive fails during a large import?",
                     bodyHtml: "That usually means the rest of the batch can still be fine. Review the failed file in <b>Import Errors</b>. If the other imported issues appear and open normally, the problem is usually limited to that one archive.<br><br>Retry it only after you fix or replace the source file."
+                },
+                {
+                    key: "bug_reports",
+                    label: "How do I report a bug?",
+                    bodyHtml: "If you find a bug, please report it in <a href=\"https://github.com/nikolayverin/comic-pile/issues\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Issues</a>. A GitHub account is required to create a report.<br><br>Useful details include: what happened, what you expected, how to reproduce it, your Windows version, and your Comic Pile version from <b>About</b>."
                 }
             ]
         },
