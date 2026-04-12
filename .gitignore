@@ -8,7 +8,6 @@ Thumbs.db
 .idea/
 *.log
 .runtime/
-Database/
 Library/
 library.db*
 _build/
@@ -32,3 +31,11 @@ tools/djvulibre/*Setup*.exe
 tools/djvulibre/*.real.exe
 tools/djvulibre/*.real.tar
 tools/djvulibre/*.real.tar.gz
+
+!Database/
+!Database/library.db
+!Database/Library/
+!Database/Library/**
+!Database/.runtime/
+Database/.runtime/*
+!Database/.runtime/library-storage-layout-migration-v1.done
