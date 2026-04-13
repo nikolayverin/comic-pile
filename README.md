@@ -55,12 +55,3 @@ The working Qt/C++ application lives in `comicflow-qt/`.
 
 Local build notes currently live in:
 - `comicflow-qt/README.md`
-
-## Project status
-
-Comic Pile is in pre-release preparation.
-
-The current work is focused on:
-- stabilizing the first public portable release
-- finishing legal/notices packaging
-- preparing the public release surface and repository presentation
