@@ -18,7 +18,17 @@ QString pendingDataRootRelocationSettingsKey()
     return QStringLiteral("AppSettings/libraryDataRelocationPendingPath");
 }
 
-QSettings relocationSettingsStore()
+QString portableSettingsFilePath()
+{
+    return QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("ComicPile.ini"));
+}
+
+QSettings portableSettingsStore()
+{
+    return QSettings(portableSettingsFilePath(), QSettings::IniFormat);
+}
+
+QSettings legacyRelocationSettingsStore()
 {
     return QSettings(
         QSettings::IniFormat,
@@ -26,6 +36,12 @@ QSettings relocationSettingsStore()
         QStringLiteral("ComicPile"),
         QStringLiteral("ComicPile")
     );
+}
+
+QString configuredLegacyDataRootOverridePath()
+{
+    QSettings settings = legacyRelocationSettingsStore();
+    return ComicDataRootSettings::normalizedFolderPath(settings.value(dataRootOverrideSettingsKey()).toString());
 }
 
 } // namespace
@@ -59,13 +75,13 @@ QString persistedFolderPathForDisplay(const QString &rawPath)
 
 QString configuredDataRootOverridePath()
 {
-    QSettings settings = relocationSettingsStore();
+    QSettings settings = portableSettingsStore();
     return normalizedFolderPath(settings.value(dataRootOverrideSettingsKey()).toString());
 }
 
 QString pendingDataRootRelocationPath()
 {
-    QSettings settings = relocationSettingsStore();
+    QSettings settings = portableSettingsStore();
     return normalizedFolderPath(settings.value(pendingDataRootRelocationSettingsKey()).toString());
 }
 
@@ -81,13 +97,14 @@ QString resolveActiveDataRootPath()
         return QDir(envValueLegacy).absolutePath();
     }
 
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QString currentDir = QDir::currentPath();
+
     const QString configuredOverride = configuredDataRootOverridePath();
     if (!configuredOverride.isEmpty()) {
         return QDir(configuredOverride).absolutePath();
     }
 
-    const QString appDir = QCoreApplication::applicationDirPath();
-    const QString currentDir = QDir::currentPath();
     const QStringList candidates = {
         QDir(appDir).filePath(QStringLiteral("Database")),
         QDir(appDir).filePath(QStringLiteral("../Database")),
@@ -105,13 +122,23 @@ QString resolveActiveDataRootPath()
         }
     }
 
+    const QString legacyConfiguredOverride = configuredLegacyDataRootOverridePath();
+    if (!legacyConfiguredOverride.isEmpty()) {
+        return QDir(legacyConfiguredOverride).absolutePath();
+    }
+
     return QDir(appDir).filePath(QStringLiteral("Database"));
 }
 
 bool writeConfiguredDataRootOverridePath(const QString &rawPath)
 {
-    QSettings settings = relocationSettingsStore();
-    settings.setValue(dataRootOverrideSettingsKey(), persistedFolderPathForDisplay(rawPath));
+    QSettings settings = portableSettingsStore();
+    const QString persistedPath = persistedFolderPathForDisplay(rawPath);
+    if (persistedPath.isEmpty()) {
+        settings.remove(dataRootOverrideSettingsKey());
+    } else {
+        settings.setValue(dataRootOverrideSettingsKey(), persistedPath);
+    }
     settings.sync();
     return settings.status() == QSettings::NoError;
 }
@@ -120,7 +147,7 @@ bool writePendingDataRootRelocationPath(const QString &rawPath, QString &errorTe
 {
     errorText.clear();
 
-    QSettings settings = relocationSettingsStore();
+    QSettings settings = portableSettingsStore();
     settings.setValue(
         pendingDataRootRelocationSettingsKey(),
         persistedFolderPathForDisplay(rawPath)
@@ -144,7 +171,7 @@ bool writePendingDataRootRelocationPath(const QString &rawPath, QString &errorTe
 
 bool clearPendingDataRootRelocationPath()
 {
-    QSettings settings = relocationSettingsStore();
+    QSettings settings = portableSettingsStore();
     settings.remove(pendingDataRootRelocationSettingsKey());
     settings.sync();
     return settings.status() == QSettings::NoError;
