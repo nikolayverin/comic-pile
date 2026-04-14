@@ -14,6 +14,7 @@ Item {
     property bool draggingThumb: false
     property real dragStartMouseY: 0
     property real dragStartContentY: 0
+    property real dragPointerOffsetY: 0
 
     readonly property real resolvedVisibleRatio: {
         if (flickable && flickable.visibleArea) {
@@ -58,17 +59,28 @@ Item {
     }
 
     function dragThumbToPointer(localY) {
+        const availableTravel = Math.max(0, innerTrackHeight - resolvedThumbHeight)
+        if (availableTravel <= 0) {
+            return
+        }
+        const desiredThumbTop = Math.max(
+            0,
+            Math.min(
+                availableTravel,
+                (localY - thumbInset) - dragPointerOffsetY
+            )
+        )
+        const ratio = availableTravel > 0 ? clampRatio(desiredThumbTop / availableTravel) : 0
         if (flickable) {
             const maxContentY = Math.max(0, Number(flickable.contentHeight || 0) - Number(flickable.height || 0))
-            const availableTravel = Math.max(0, innerTrackHeight - resolvedThumbHeight)
-            if (maxContentY <= 0 || availableTravel <= 0) {
+            if (maxContentY <= 0) {
                 return
             }
-            const deltaY = localY - dragStartMouseY
-            const desiredContentY = dragStartContentY + (deltaY * maxContentY / availableTravel)
+            const desiredContentY = ratio * maxContentY
             flickable.contentY = Math.round(Math.max(0, Math.min(maxContentY, desiredContentY)))
             return
         }
+        root.positionRequested(ratio)
     }
 
     Rectangle {
@@ -101,6 +113,7 @@ Item {
             }
             root.dragStarted()
             root.dragStartMouseY = mouse.y
+            root.dragPointerOffsetY = mouse.y - thumbTopY
             root.dragStartContentY = root.flickable
                 ? Number(root.flickable.contentY || 0)
                 : 0
@@ -118,6 +131,7 @@ Item {
             root.draggingThumb = false
             root.dragStartMouseY = 0
             root.dragStartContentY = 0
+            root.dragPointerOffsetY = 0
         }
         onCanceled: {
             if (root.draggingThumb) {
@@ -126,6 +140,7 @@ Item {
             root.draggingThumb = false
             root.dragStartMouseY = 0
             root.dragStartContentY = 0
+            root.dragPointerOffsetY = 0
         }
     }
 }
