@@ -20,6 +20,8 @@
 
 namespace {
 
+constexpr auto kSeriesHeaderShufflePreviewKey = "__series_header_shuffle_preview__";
+
 QString trimOrEmpty(const QVariant &value)
 {
     return value.toString().trimmed();
@@ -84,7 +86,7 @@ QString ComicsListModel::deleteSeriesFiles(const QString &seriesKey)
     if (!preserveError.isEmpty()) {
         return preserveError;
     }
-    purgeSeriesHeroCacheForKey(normalizedKey);
+    cleanupSeriesHeroArtifactsForDeletedSeries(normalizedKey);
     ComicReaderCache::purgeSeriesHeaderOverridesForKey(m_dataRoot, normalizedKey);
 
     QStringList errors;
@@ -667,7 +669,7 @@ QString ComicsListModel::deleteComic(int comicId)
         if (!preserveError.isEmpty()) {
             return preserveError;
         }
-        purgeSeriesHeroCacheForKey(seriesKey);
+        cleanupSeriesHeroArtifactsForDeletedSeries(seriesKey);
         ComicReaderCache::purgeSeriesHeaderOverridesForKey(m_dataRoot, seriesKey);
     }
 
@@ -703,6 +705,18 @@ QString ComicsListModel::deleteComicHard(int comicId)
     return message;
 }
 
+void ComicsListModel::cleanupSeriesHeroArtifactsForDeletedSeries(const QString &seriesKey)
+{
+    const QString normalizedKey = seriesKey.trimmed();
+    if (normalizedKey.isEmpty()) {
+        return;
+    }
+
+    purgeSeriesHeroCacheForKey(normalizedKey);
+    resetRandomSeriesHeroState(normalizedKey);
+    purgeSeriesHeroCacheForKey(QStringLiteral(kSeriesHeaderShufflePreviewKey));
+}
+
 bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
 {
     messageOut.clear();
@@ -712,6 +726,7 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
     }
 
     const QString seriesKey = deleteSeriesKeyForComic(comicId);
+    const bool deletingLastIssueInSeries = !seriesKey.isEmpty() && liveIssueCountForSeries(seriesKey) <= 1;
 
     QString filePath;
     {
@@ -750,7 +765,11 @@ bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)
     }
 
     ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
-    purgeSeriesHeroCacheForKey(seriesKey);
+    if (deletingLastIssueInSeries) {
+        cleanupSeriesHeroArtifactsForDeletedSeries(seriesKey);
+    } else {
+        purgeSeriesHeroCacheForKey(seriesKey);
+    }
     clearReaderRuntimeStateForComic(comicId);
 
     int removeIndex = -1;

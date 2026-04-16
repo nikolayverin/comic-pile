@@ -2277,32 +2277,6 @@ ApplicationWindow {
             }
         }
 
-        Rectangle {
-            id: dbHealthBanner
-            Layout.fillWidth: true
-            Layout.preferredHeight: root.startupDbHealthWarningVisible ? 34 : 0
-            visible: root.startupDbHealthWarningVisible || opacity > 0
-            opacity: root.startupDbHealthWarningVisible ? 1 : 0
-            color: root.dbHealthBannerBg
-
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: root.motionBaseMs
-                    easing.type: Easing.OutCubic
-                }
-            }
-
-            Label {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                verticalAlignment: Text.AlignVCenter
-                elide: Text.ElideMiddle
-                color: root.dbHealthBannerText
-                text: root.startupDbHealthWarningMessage
-            }
-        }
-
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true

@@ -417,6 +417,7 @@ private:
         const QString &error
     );
     void purgeSeriesHeroCacheForKey(const QString &seriesKey);
+    void cleanupSeriesHeroArtifactsForDeletedSeries(const QString &seriesKey);
     void updateReaderProgressCache(int comicId, int currentPage, const QString &readStatus);
     void updateReaderBookmarkCache(int comicId, int bookmarkPage);
     void updateReaderFavoriteCache(int comicId, bool favoriteActive);
