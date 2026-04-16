@@ -139,6 +139,9 @@ Item {
 
         resolveHeroCoverForSelectedSeries()
         resolveHeroBackgroundForSelectedSeries()
+        if (libraryModelRef && typeof libraryModelRef.resetRandomSeriesHeroState === "function") {
+            libraryModelRef.resetRandomSeriesHeroState(key)
+        }
 
         const storedSeriesMetadata = libraryModelRef && typeof libraryModelRef.seriesMetadataForKey === "function"
             ? libraryModelRef.seriesMetadataForKey(key) || {}

@@ -174,6 +174,7 @@ public:
     Q_INVOKABLE int heroCoverComicIdForSeries(const QString &seriesKey) const;
     Q_INVOKABLE int requestSeriesHeroAsync(const QString &seriesKey);
     Q_INVOKABLE int requestRandomSeriesHeroAsync(const QString &seriesKey);
+    Q_INVOKABLE void resetRandomSeriesHeroState(const QString &seriesKey);
     Q_INVOKABLE QString setSortMode(const QString &sortMode);
     Q_INVOKABLE QVariantMap openReaderSession(int comicId);
     Q_INVOKABLE int requestReaderSessionAsync(int comicId);
@@ -318,19 +319,28 @@ private:
     struct QueuedSeriesHeroGeneration {
         QString pendingKey;
         QString seriesKey;
+        QString shuffleStateKey;
         int comicId = 0;
         QString archivePath;
         QString cacheStamp;
         QByteArray heroFormat;
         bool randomEligiblePage = false;
+        int candidateStartIndex = 0;
         QVector<int> candidateComicIds;
         QStringList candidateArchivePaths;
+        QVector<QVector<int>> candidateShownPageIndices;
+    };
+
+    struct SeriesHeroShuffleState {
+        int nextCandidateIndex = 0;
+        QHash<int, QVector<int>> shownPageIndicesByComicId;
     };
 
     struct ArtworkRuntimeState {
         QHash<QString, QList<int>> pendingImageRequestIdsByKey;
         QHash<QString, QList<int>> pendingSeriesHeroRequestIdsByKey;
         QHash<QString, QString> latestSeriesHeroPendingKeyBySeriesKey;
+        QHash<QString, SeriesHeroShuffleState> randomSeriesHeroStateBySeriesKey;
         QVector<QueuedCoverGeneration> coverGenerationQueue;
         QVector<QueuedSeriesHeroGeneration> seriesHeroGenerationQueue;
         int activeCoverGenerationCount = 0;

@@ -14,10 +14,13 @@
 #include <QFutureWatcher>
 #include <QMetaObject>
 #include <QRandomGenerator>
+#include <QSet>
 #include <QUrl>
 #include <QtConcurrent>
 
 namespace {
+
+constexpr int kRandomSeriesHeroCandidateLimit = 10;
 
 QString seriesHeroPendingKeyPrefix(const QString &seriesKey)
 {
@@ -187,8 +190,12 @@ int ComicsListModel::requestRandomSeriesHeroAsync(const QString &seriesKey)
 
     QVector<int> candidateComicIds;
     QStringList candidateArchivePaths;
-    candidateComicIds.reserve(m_rows.size());
-    candidateArchivePaths.reserve(m_rows.size());
+    QVector<QVector<int>> candidateShownPageIndices;
+    candidateComicIds.reserve(std::min(static_cast<int>(m_rows.size()), kRandomSeriesHeroCandidateLimit));
+    candidateArchivePaths.reserve(std::min(static_cast<int>(m_rows.size()), kRandomSeriesHeroCandidateLimit));
+    candidateShownPageIndices.reserve(std::min(static_cast<int>(m_rows.size()), kRandomSeriesHeroCandidateLimit));
+
+    SeriesHeroShuffleState &shuffleState = m_artworkState.randomSeriesHeroStateBySeriesKey[requestedSeriesKey];
 
     for (const ComicRow &row : m_rows) {
         if (row.seriesGroupKey != requestedSeriesKey) continue;
@@ -198,12 +205,38 @@ int ComicsListModel::requestRandomSeriesHeroAsync(const QString &seriesKey)
 
         candidateComicIds.push_back(row.id);
         candidateArchivePaths.push_back(archivePath);
+        candidateShownPageIndices.push_back(shuffleState.shownPageIndicesByComicId.value(row.id));
+
+        if (candidateComicIds.size() >= kRandomSeriesHeroCandidateLimit) {
+            break;
+        }
     }
 
     if (candidateComicIds.isEmpty()) {
+        m_artworkState.randomSeriesHeroStateBySeriesKey.remove(requestedSeriesKey);
         emitLaterSingle({}, QStringLiteral("No issues are available for shuffled background."));
         return requestId;
     }
+
+    {
+        QSet<int> candidateComicIdSet;
+        candidateComicIdSet.reserve(candidateComicIds.size());
+        for (int comicId : candidateComicIds) {
+            candidateComicIdSet.insert(comicId);
+        }
+
+        const QList<int> trackedComicIds = shuffleState.shownPageIndicesByComicId.keys();
+        for (int trackedComicId : trackedComicIds) {
+            if (!candidateComicIdSet.contains(trackedComicId)) {
+                shuffleState.shownPageIndicesByComicId.remove(trackedComicId);
+            }
+        }
+    }
+
+    const int candidateCount = std::min(candidateComicIds.size(), candidateArchivePaths.size());
+    const int candidateStartIndex = candidateCount > 0
+        ? (shuffleState.nextCandidateIndex % candidateCount)
+        : 0;
 
     ComicReaderCache::purgeSeriesHeroForKey(m_dataRoot, requestKey);
 
@@ -216,13 +249,16 @@ int ComicsListModel::requestRandomSeriesHeroAsync(const QString &seriesKey)
     const QueuedSeriesHeroGeneration job {
         pendingKey,
         requestKey,
+        requestedSeriesKey,
         0,
         QString(),
         QString(),
         ComicReaderCache::preferredThumbnailFormat(),
         true,
+        candidateStartIndex,
         candidateComicIds,
-        candidateArchivePaths
+        candidateArchivePaths,
+        candidateShownPageIndices
     };
 
     constexpr int kMaxQueuedSeriesHeroGenerationCount = 1;
@@ -244,7 +280,7 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
         watcher,
         &QFutureWatcher<QVariantMap>::finished,
         this,
-        [this, watcher, pendingKey = job.pendingKey, seriesKey = job.seriesKey]() {
+        [this, watcher, pendingKey = job.pendingKey, seriesKey = job.seriesKey, shuffleStateKey = job.shuffleStateKey]() {
             const QVariantMap result = watcher->result();
             const QList<int> requestIds = ComicReaderRequests::takePendingImageRequestIds(
                 m_artworkState.pendingSeriesHeroRequestIdsByKey,
@@ -267,6 +303,35 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
                     QFile::remove(localFilePath);
                 }
             } else {
+                if (!shuffleStateKey.trimmed().isEmpty() && errorText.trimmed().isEmpty()) {
+                    SeriesHeroShuffleState &shuffleState = m_artworkState.randomSeriesHeroStateBySeriesKey[shuffleStateKey];
+                    const int candidateCount = std::min(
+                        result.value(QStringLiteral("candidateCount")).toInt(),
+                        std::min(job.candidateComicIds.size(), job.candidateArchivePaths.size())
+                    );
+                    if (candidateCount > 0) {
+                        const int selectedCandidateIndex = result.contains(QStringLiteral("selectedCandidateIndex"))
+                            ? result.value(QStringLiteral("selectedCandidateIndex")).toInt()
+                            : -1;
+                        if (selectedCandidateIndex >= 0) {
+                            shuffleState.nextCandidateIndex = (selectedCandidateIndex + 1) % candidateCount;
+                        } else {
+                            shuffleState.nextCandidateIndex %= candidateCount;
+                        }
+                    }
+
+                    const int selectedComicId = result.value(QStringLiteral("selectedComicId")).toInt();
+                    if (selectedComicId > 0) {
+                        QVector<int> shownPageIndices;
+                        const QVariantList shownPageValues = result.value(QStringLiteral("shownPageIndices")).toList();
+                        shownPageIndices.reserve(shownPageValues.size());
+                        for (const QVariant &shownPageValue : shownPageValues) {
+                            shownPageIndices.push_back(shownPageValue.toInt());
+                        }
+                        shuffleState.shownPageIndicesByComicId.insert(selectedComicId, shownPageIndices);
+                    }
+                }
+
                 if (errorText.trimmed().isEmpty() && !localFilePath.trimmed().isEmpty()) {
                     ComicReaderCache::pruneSeriesHeroVariantsForKey(m_dataRoot, seriesKey, localFilePath);
                 }
@@ -279,28 +344,27 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
     );
 
     const auto task = [job, dataRoot = m_dataRoot]() {
-        struct HeroSource {
-            int comicId = 0;
-            QString archivePath;
-            QString cacheStamp;
-            QStringList entries;
-            int eligiblePageCount = 0;
-        };
-
         int resolvedComicId = job.comicId;
         QString resolvedArchivePath = job.archivePath;
         QString resolvedCacheStamp = job.cacheStamp;
         QStringList entries;
         int pageIndex = -1;
+        int selectedCandidateIndex = -1;
+        QVector<int> updatedShownPageIndices;
 
         if (job.randomEligiblePage) {
-            QVector<HeroSource> sources;
-            sources.reserve(std::min(job.candidateComicIds.size(), job.candidateArchivePaths.size()));
-            int totalEligiblePages = 0;
             QString lastListError;
 
-            const int candidateCount = std::min(job.candidateComicIds.size(), job.candidateArchivePaths.size());
-            for (int index = 0; index < candidateCount; ++index) {
+            const int candidateCount = std::min(
+                std::min(job.candidateComicIds.size(), job.candidateArchivePaths.size()),
+                job.candidateShownPageIndices.size()
+            );
+            const int startIndex = candidateCount > 0
+                ? (job.candidateStartIndex % candidateCount)
+                : 0;
+
+            for (int offset = 0; offset < candidateCount; ++offset) {
+                const int index = (startIndex + offset) % candidateCount;
                 const int comicId = job.candidateComicIds.at(index);
                 const QString archivePath = job.candidateArchivePaths.at(index).trimmed();
                 if (comicId < 1 || archivePath.isEmpty()) continue;
@@ -312,53 +376,62 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
                     continue;
                 }
 
-                const int eligiblePageCount = std::max(0, static_cast<int>(candidateEntries.size()) - 4);
-                if (eligiblePageCount < 1) {
+                QVector<int> eligiblePageIndices;
+                eligiblePageIndices.reserve(std::max(0, static_cast<int>(candidateEntries.size()) - 4));
+                for (int candidatePageIndex = 2; candidatePageIndex < (candidateEntries.size() - 2); ++candidatePageIndex) {
+                    eligiblePageIndices.push_back(candidatePageIndex);
+                }
+                if (eligiblePageIndices.isEmpty()) {
                     continue;
                 }
 
-                HeroSource source;
-                source.comicId = comicId;
-                source.archivePath = archivePath;
-                source.cacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
-                source.entries = candidateEntries;
-                source.eligiblePageCount = eligiblePageCount;
-                sources.push_back(source);
-                totalEligiblePages += eligiblePageCount;
-            }
+                QVector<int> normalizedShownPageIndices;
+                normalizedShownPageIndices.reserve(job.candidateShownPageIndices.at(index).size());
+                for (int shownPageIndex : job.candidateShownPageIndices.at(index)) {
+                    if (shownPageIndex < 0 || shownPageIndex >= candidateEntries.size()) continue;
+                    if (!eligiblePageIndices.contains(shownPageIndex)) continue;
+                    if (normalizedShownPageIndices.contains(shownPageIndex)) continue;
+                    normalizedShownPageIndices.push_back(shownPageIndex);
+                }
 
-            if (totalEligiblePages < 1) {
-                const QString errorText = lastListError.trimmed().isEmpty()
-                    ? QStringLiteral("No eligible pages are available for shuffled background.")
-                    : lastListError;
-                return makeAsyncSeriesHeroResult(job.seriesKey, QString(), QString(), errorText);
-            }
+                QVector<int> availablePageIndices;
+                availablePageIndices.reserve(eligiblePageIndices.size());
+                for (int eligiblePageIndex : eligiblePageIndices) {
+                    if (!normalizedShownPageIndices.contains(eligiblePageIndex)) {
+                        availablePageIndices.push_back(eligiblePageIndex);
+                    }
+                }
 
-            int selectedOffset = QRandomGenerator::global()->bounded(totalEligiblePages);
-            HeroSource selectedSource;
-            for (const HeroSource &source : sources) {
-                if (selectedOffset >= source.eligiblePageCount) {
-                    selectedOffset -= source.eligiblePageCount;
+                if (availablePageIndices.isEmpty()) {
+                    normalizedShownPageIndices.clear();
+                    availablePageIndices = eligiblePageIndices;
+                }
+
+                if (availablePageIndices.isEmpty()) {
                     continue;
                 }
-                selectedSource = source;
+
+                selectedCandidateIndex = index;
+                resolvedComicId = comicId;
+                resolvedArchivePath = archivePath;
+                resolvedCacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+                entries = candidateEntries;
+                pageIndex = availablePageIndices.at(QRandomGenerator::global()->bounded(availablePageIndices.size()));
+                updatedShownPageIndices = normalizedShownPageIndices;
+                updatedShownPageIndices.push_back(pageIndex);
                 break;
             }
 
-            if (selectedSource.comicId < 1 || selectedSource.entries.isEmpty()) {
+            if (selectedCandidateIndex < 0 || resolvedComicId < 1 || entries.isEmpty()) {
                 return makeAsyncSeriesHeroResult(
                     job.seriesKey,
                     QString(),
                     QString(),
-                    QStringLiteral("Failed to resolve shuffled background source.")
+                    lastListError.trimmed().isEmpty()
+                        ? QStringLiteral("No eligible pages are available for shuffled background.")
+                        : lastListError
                 );
             }
-
-            resolvedComicId = selectedSource.comicId;
-            resolvedArchivePath = selectedSource.archivePath;
-            resolvedCacheStamp = selectedSource.cacheStamp;
-            entries = selectedSource.entries;
-            pageIndex = 2 + selectedOffset;
         } else {
             const QString cachedHeroPath = ComicReaderCache::cachedSeriesHeroPath(dataRoot, job.seriesKey);
             if (!cachedHeroPath.isEmpty()) {
@@ -432,15 +505,41 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
             }
         }
 
-        return makeAsyncSeriesHeroResult(
+        QVariantMap result = makeAsyncSeriesHeroResult(
             job.seriesKey,
             QUrl::fromLocalFile(heroPath).toString(),
             heroPath,
             QString()
         );
+        if (job.randomEligiblePage) {
+            QVariantList shownPageValues;
+            shownPageValues.reserve(updatedShownPageIndices.size());
+            for (int shownPageIndex : updatedShownPageIndices) {
+                shownPageValues.push_back(shownPageIndex);
+            }
+            result.insert(
+                QStringLiteral("candidateCount"),
+                std::min(
+                    std::min(job.candidateComicIds.size(), job.candidateArchivePaths.size()),
+                    job.candidateShownPageIndices.size()
+                )
+            );
+            result.insert(QStringLiteral("selectedCandidateIndex"), selectedCandidateIndex);
+            result.insert(QStringLiteral("selectedComicId"), resolvedComicId);
+            result.insert(QStringLiteral("shownPageIndices"), shownPageValues);
+        }
+        return result;
     };
 
     watcher->setFuture(QtConcurrent::run(task));
+}
+
+void ComicsListModel::resetRandomSeriesHeroState(const QString &seriesKey)
+{
+    const QString normalizedSeriesKey = seriesKey.trimmed();
+    if (normalizedSeriesKey.isEmpty()) return;
+
+    m_artworkState.randomSeriesHeroStateBySeriesKey.remove(normalizedSeriesKey);
 }
 
 void ComicsListModel::pumpQueuedSeriesHeroGeneration()
