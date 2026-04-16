@@ -158,6 +158,7 @@ int ComicsListModel::requestSeriesHeroAsync(const QString &seriesKey)
     const QueuedSeriesHeroGeneration job {
         pendingKey,
         requestedSeriesKey,
+        QString(),
         comicId,
         archivePath,
         cacheStamp,
@@ -280,7 +281,7 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
         watcher,
         &QFutureWatcher<QVariantMap>::finished,
         this,
-        [this, watcher, pendingKey = job.pendingKey, seriesKey = job.seriesKey, shuffleStateKey = job.shuffleStateKey]() {
+        [this, watcher, pendingKey = job.pendingKey, seriesKey = job.seriesKey, shuffleStateKey = job.shuffleStateKey, job]() {
             const QVariantMap result = watcher->result();
             const QList<int> requestIds = ComicReaderRequests::takePendingImageRequestIds(
                 m_artworkState.pendingSeriesHeroRequestIdsByKey,
@@ -305,9 +306,13 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
             } else {
                 if (!shuffleStateKey.trimmed().isEmpty() && errorText.trimmed().isEmpty()) {
                     SeriesHeroShuffleState &shuffleState = m_artworkState.randomSeriesHeroStateBySeriesKey[shuffleStateKey];
+                    const int queuedCandidateCount = std::min(
+                        static_cast<int>(job.candidateComicIds.size()),
+                        static_cast<int>(job.candidateArchivePaths.size())
+                    );
                     const int candidateCount = std::min(
                         result.value(QStringLiteral("candidateCount")).toInt(),
-                        std::min(job.candidateComicIds.size(), job.candidateArchivePaths.size())
+                        queuedCandidateCount
                     );
                     if (candidateCount > 0) {
                         const int selectedCandidateIndex = result.contains(QStringLiteral("selectedCandidateIndex"))

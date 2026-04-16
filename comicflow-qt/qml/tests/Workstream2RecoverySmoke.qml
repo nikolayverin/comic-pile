@@ -311,6 +311,8 @@ Item {
         property var startupInventorySignature: ({})
         property var heroSeriesData: ({})
         property int heroCoverComicId: -1
+        property string heroAutoCoverSource: ""
+        property var heroAutoCoverStateBySeriesKey: ({})
         property var coverByComicId: ({})
         property var issuesGridData: []
         property real startupSnapshotSeriesContentY: 0
@@ -374,6 +376,8 @@ Item {
         property var startupInventorySignature: ({})
         property var heroSeriesData: ({})
         property int heroCoverComicId: -1
+        property string heroAutoCoverSource: ""
+        property var heroAutoCoverStateBySeriesKey: ({})
         property var coverByComicId: ({})
         property var issuesGridData: []
         property real startupSnapshotSeriesContentY: 0

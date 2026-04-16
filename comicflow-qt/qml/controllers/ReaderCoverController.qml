@@ -25,6 +25,20 @@ Item {
         root.runtimeDebugLog("reader-session", String(message || ""))
     }
 
+    function traceHeroCover(message) {
+        const root = rootObject
+        if (!root || typeof root.runtimeDebugLog !== "function") return
+        root.runtimeDebugLog("hero-cover", String(message || ""))
+    }
+
+    function debugSourceToken(source) {
+        const normalized = String(source || "").trim().replace(/[?#].*$/, "")
+        if (normalized.length < 1) return "<empty>"
+        const slashPath = normalized.replace(/\\/g, "/")
+        const parts = slashPath.split("/")
+        return parts.length > 0 ? parts[parts.length - 1] : slashPath
+    }
+
     function normalizedBookmarkPageIndex(value) {
         const parsed = Number(value)
         return isNaN(parsed) ? -1 : parsed
@@ -202,6 +216,75 @@ Item {
         return String(root.coverByComicId[String(comicId)] || "")
     }
 
+    function automaticHeroCoverStates() {
+        const root = rootObject
+        if (!root || !root.heroAutoCoverStateBySeriesKey || typeof root.heroAutoCoverStateBySeriesKey !== "object") {
+            return {}
+        }
+        return root.heroAutoCoverStateBySeriesKey
+    }
+
+    function automaticHeroCoverStateForSeries(seriesKey) {
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length < 1) {
+            return { comicId: -1, source: "" }
+        }
+
+        const state = automaticHeroCoverStates()[normalizedSeriesKey] || {}
+        return {
+            comicId: Number(state.comicId || -1),
+            source: String(state.source || "")
+        }
+    }
+
+    function setAutomaticHeroCoverState(seriesKey, comicId, source) {
+        const root = rootObject
+        if (!root) return
+
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length < 1) return
+
+        const nextComicId = Number(comicId || -1)
+        const nextSource = String(source || "")
+        const previousState = automaticHeroCoverStateForSeries(normalizedSeriesKey)
+        const nextStates = Object.assign({}, automaticHeroCoverStates())
+        nextStates[normalizedSeriesKey] = {
+            comicId: nextComicId,
+            source: nextSource
+        }
+        root.heroAutoCoverStateBySeriesKey = nextStates
+        traceHeroCover(
+            "store auto state"
+            + " seriesKey=" + normalizedSeriesKey
+            + " comicId=" + String(nextComicId)
+            + " source=" + debugSourceToken(nextSource)
+            + " prevComicId=" + String(previousState.comicId)
+            + " prevSource=" + debugSourceToken(previousState.source)
+        )
+    }
+
+    function clearAutomaticHeroCoverState(seriesKey) {
+        const root = rootObject
+        if (!root) return
+
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length < 1) return
+
+        const currentStates = automaticHeroCoverStates()
+        if (!Object.prototype.hasOwnProperty.call(currentStates, normalizedSeriesKey)) return
+
+        const previousState = automaticHeroCoverStateForSeries(normalizedSeriesKey)
+        const nextStates = Object.assign({}, currentStates)
+        delete nextStates[normalizedSeriesKey]
+        root.heroAutoCoverStateBySeriesKey = nextStates
+        traceHeroCover(
+            "clear auto state"
+            + " seriesKey=" + normalizedSeriesKey
+            + " comicId=" + String(previousState.comicId)
+            + " source=" + debugSourceToken(previousState.source)
+        )
+    }
+
     function setCoverSource(comicId, source) {
         const root = rootObject
         if (!root) return
@@ -260,6 +343,86 @@ Item {
             return cacheBustedSource(normalizedNext)
         }
         return normalizedNext
+    }
+
+    function hasSelectedSeriesCustomHeroCover() {
+        const root = rootObject
+        return root ? String(root.heroCustomCoverSource || "").trim().length > 0 : false
+    }
+
+    function seriesHasStoredCustomHeroCover(seriesKey) {
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length < 1) return false
+
+        const root = rootObject
+        const selectionContext = root && typeof root.currentSelectedSeriesContext === "function"
+            ? root.currentSelectedSeriesContext()
+            : (root ? (root.selectedSeriesContext || {}) : {})
+        if (String(selectionContext.seriesKey || "").trim() === normalizedSeriesKey
+                && hasSelectedSeriesCustomHeroCover()) {
+            return true
+        }
+
+        if (!libraryModelRef || typeof libraryModelRef.seriesMetadataForKey !== "function") {
+            return false
+        }
+
+        const metadata = libraryModelRef.seriesMetadataForKey(normalizedSeriesKey) || {}
+        return String(metadata.headerCoverPath || "").trim().length > 0
+    }
+
+    function applySelectedAutomaticHeroCoverState(seriesKey, fallbackComicId) {
+        const root = rootObject
+        if (!root) return
+
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        const state = automaticHeroCoverStateForSeries(normalizedSeriesKey)
+        const resolvedComicId = state.comicId > 0
+            ? state.comicId
+            : Number(fallbackComicId || -1)
+
+        root.heroCoverComicId = resolvedComicId
+        if (hasSelectedSeriesCustomHeroCover()) {
+            root.heroAutoCoverSource = ""
+            traceHeroCover(
+                "apply selected auto state suppressed by custom cover"
+                + " seriesKey=" + normalizedSeriesKey
+                + " comicId=" + String(resolvedComicId)
+                + " storedSource=" + debugSourceToken(state.source)
+            )
+            return
+        }
+        root.heroAutoCoverSource = String(state.source || "")
+        traceHeroCover(
+            "apply selected auto state"
+            + " seriesKey=" + normalizedSeriesKey
+            + " comicId=" + String(resolvedComicId)
+            + " source=" + debugSourceToken(state.source)
+            + " fallbackComicId=" + String(Number(fallbackComicId || -1))
+        )
+    }
+
+    function syncAutomaticHeroCoverState(seriesKey, comicId, source) {
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length < 1) return
+
+        traceHeroCover(
+            "sync auto state request"
+            + " seriesKey=" + normalizedSeriesKey
+            + " comicId=" + String(Number(comicId || -1))
+            + " source=" + debugSourceToken(source)
+        )
+        setAutomaticHeroCoverState(normalizedSeriesKey, comicId, source)
+
+        const root = rootObject
+        if (!root) return
+
+        const selectionContext = typeof root.currentSelectedSeriesContext === "function"
+            ? root.currentSelectedSeriesContext()
+            : (root.selectedSeriesContext || ({}))
+        if (String(selectionContext.seriesKey || "").trim() !== normalizedSeriesKey) return
+
+        applySelectedAutomaticHeroCoverState(normalizedSeriesKey, comicId)
     }
 
     function requestIssueThumbnail(comicId) {
@@ -323,36 +486,114 @@ Item {
         return Number(firstIssue.id || -1)
     }
 
-    function resolveHeroCoverForSelectedSeries() {
+    function resolveHeroCoverForSelectedSeries(preferStoredState) {
         const root = rootObject
         if (!root || !libraryModelRef) return
 
         const selectionContext = typeof root.currentSelectedSeriesContext === "function"
             ? root.currentSelectedSeriesContext()
             : (root.selectedSeriesContext || ({}))
-        const key = String(selectionContext.seriesKey || "")
+        const key = String(selectionContext.seriesKey || "").trim()
+        const useStoredState = Boolean(preferStoredState)
+        traceHeroCover(
+            "resolve start"
+            + " seriesKey=" + key
+            + " preferStored=" + String(useStoredState)
+            + " currentHeroComicId=" + String(Number(root.heroCoverComicId || -1))
+            + " currentAutoSource=" + debugSourceToken(root.heroAutoCoverSource)
+            + " currentCustomSource=" + debugSourceToken(root.heroCustomCoverSource)
+        )
         if (key.length < 1) {
             root.heroCoverComicId = -1
+            root.heroAutoCoverSource = ""
+            traceHeroCover("resolve empty selection")
+            return
+        }
+
+        if (seriesHasStoredCustomHeroCover(key)) {
+            const existingState = automaticHeroCoverStateForSeries(key)
+            root.heroCoverComicId = existingState.comicId > 0
+                ? existingState.comicId
+                : Number(libraryModelRef.heroCoverComicIdForSeries(key) || -1)
+            root.heroAutoCoverSource = ""
+            traceHeroCover(
+                "resolve custom cover series"
+                + " seriesKey=" + key
+                + " comicId=" + String(Number(root.heroCoverComicId || -1))
+                + " storedAutoSource=" + debugSourceToken(existingState.source)
+            )
+            return
+        }
+
+        const currentState = automaticHeroCoverStateForSeries(key)
+        if (useStoredState && currentState.comicId > 0 && currentState.source.length > 0) {
+            traceHeroCover(
+                "resolve using stored state"
+                + " seriesKey=" + key
+                + " comicId=" + String(currentState.comicId)
+                + " source=" + debugSourceToken(currentState.source)
+            )
+            applySelectedAutomaticHeroCoverState(key, currentState.comicId)
             return
         }
 
         const resolvedId = Number(libraryModelRef.heroCoverComicIdForSeries(key) || -1)
-        if (resolvedId > 0) {
-            root.heroCoverComicId = resolvedId
-            requestIssueThumbnail(resolvedId)
-            return
-        }
-
         const fallbackId = snapshotHeroFallbackComicId()
-        if (fallbackId > 0) {
-            root.heroCoverComicId = fallbackId
-            if (coverSourceForComic(fallbackId).length < 1) {
-                requestIssueThumbnail(fallbackId)
+        const targetComicId = resolvedId > 0 ? resolvedId : fallbackId
+        traceHeroCover(
+            "resolve target"
+            + " seriesKey=" + key
+            + " resolvedId=" + String(resolvedId)
+            + " fallbackId=" + String(fallbackId)
+            + " targetComicId=" + String(targetComicId)
+            + " storedComicId=" + String(currentState.comicId)
+            + " storedSource=" + debugSourceToken(currentState.source)
+        )
+
+        if (targetComicId < 1) {
+            clearAutomaticHeroCoverState(key)
+            root.heroCoverComicId = -1
+            if (!hasSelectedSeriesCustomHeroCover()) {
+                root.heroAutoCoverSource = ""
             }
+            traceHeroCover("resolve no target for seriesKey=" + key)
             return
         }
 
-        root.heroCoverComicId = -1
+        if (currentState.comicId === targetComicId && currentState.source.length > 0) {
+            traceHeroCover(
+                "resolve reuse current state"
+                + " seriesKey=" + key
+                + " comicId=" + String(targetComicId)
+                + " source=" + debugSourceToken(currentState.source)
+            )
+            applySelectedAutomaticHeroCoverState(key, targetComicId)
+            return
+        }
+
+        const cachedSource = String(libraryModelRef.cachedIssueThumbnailSource(targetComicId) || "")
+        if (cachedSource.length > 0) {
+            traceHeroCover(
+                "resolve cached source hit"
+                + " seriesKey=" + key
+                + " comicId=" + String(targetComicId)
+                + " source=" + debugSourceToken(cachedSource)
+            )
+            syncAutomaticHeroCoverState(
+                key,
+                targetComicId,
+                refreshedCoverSource(currentState.source, cachedSource)
+            )
+            return
+        }
+
+        traceHeroCover(
+            "resolve requesting thumbnail"
+            + " seriesKey=" + key
+            + " comicId=" + String(targetComicId)
+        )
+        syncAutomaticHeroCoverState(key, targetComicId, "")
+        requestIssueThumbnail(targetComicId)
     }
 
     function resolveHeroBackgroundForSelectedSeries() {
@@ -1035,7 +1276,34 @@ Item {
 
             if (thumbnail) {
                 if (String(error).length === 0 && String(imageSource).length > 0) {
-                    setCoverSource(comicId, refreshedCoverSource(coverSourceForComic(comicId), imageSource))
+                    const refreshedSource = refreshedCoverSource(coverSourceForComic(comicId), imageSource)
+                    setCoverSource(comicId, refreshedSource)
+
+                    const seriesKey = resolvedSeriesKeyForComic(comicId, "")
+                    if (seriesKey.length > 0) {
+                        const automaticState = automaticHeroCoverStateForSeries(seriesKey)
+                        const currentSelection = typeof root.currentSelectedSeriesContext === "function"
+                            ? root.currentSelectedSeriesContext()
+                            : (root.selectedSeriesContext || ({}))
+                        const isSelectedSeries = String(currentSelection.seriesKey || "").trim() === seriesKey
+                        const currentHeroComicId = Number(root.heroCoverComicId || -1)
+                        if (automaticState.comicId === Number(comicId || 0)
+                                || (isSelectedSeries && currentHeroComicId === Number(comicId || 0))) {
+                            traceHeroCover(
+                                "thumbnail ready for hero candidate"
+                                + " seriesKey=" + seriesKey
+                                + " comicId=" + String(Number(comicId || 0))
+                                + " imageSource=" + debugSourceToken(imageSource)
+                                + " automaticStateComicId=" + String(automaticState.comicId)
+                                + " currentHeroComicId=" + String(currentHeroComicId)
+                            )
+                            syncAutomaticHeroCoverState(
+                                seriesKey,
+                                comicId,
+                                refreshedCoverSource(automaticState.source, imageSource)
+                            )
+                        }
+                    }
                 }
             }
         }

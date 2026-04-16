@@ -397,6 +397,16 @@ Item {
     function toggleIssueOrder() {
         const root = rootObject
         issueOrderDescending = !issueOrderDescending
+        if (root && typeof root.runtimeDebugLog === "function") {
+            root.runtimeDebugLog(
+                "hero-cover",
+                "toggle issue order"
+                + " selectedSeriesKey=" + String(root.selectedSeriesKey || "")
+                + " orderDescending=" + String(issueOrderDescending)
+                + " heroCoverComicId=" + String(Number(root.heroCoverComicId || -1))
+                + " heroAutoSourceEmpty=" + String(String(root.heroAutoCoverSource || "").trim().length < 1)
+            )
+        }
         if (!root) return
         if (typeof root.refreshIssuesGridData === "function") {
             root.refreshIssuesGridData(false)

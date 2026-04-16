@@ -18,7 +18,7 @@ ApplicationWindow {
     minimumHeight: windowDisplayController.displayConstrainedWindow ? 1 : windowDisplayController.defaultWindowHeight
     visible: false
     flags: Qt.Window | Qt.FramelessWindowHint
-    title: uiTokens.appWindowTitle
+    title: root.windowTitleLabel
     color: root.bgApp
 
     property string uiFontFamily: interFont.status === FontLoader.Ready ? interFont.name : "Inter"
@@ -49,6 +49,18 @@ ApplicationWindow {
         id: startupState
         launchStartedAtMs: Number(appLaunchStartedAtMs || 0)
     }
+
+    readonly property bool fastDevBuild: Boolean(appIsFastDevBuild)
+    readonly property string buildIterationLabel: String(appBuildIteration || "").trim()
+    readonly property string devBuildBadgeText: fastDevBuild && buildIterationLabel.length > 0
+        ? "DEV " + buildIterationLabel
+        : ""
+    readonly property string topBarCenterLabel: devBuildBadgeText.length > 0
+        ? (uiTokens.appTitle + "  " + devBuildBadgeText)
+        : uiTokens.appTitle
+    readonly property string windowTitleLabel: devBuildBadgeText.length > 0
+        ? (uiTokens.appWindowTitle + " [" + devBuildBadgeText + "]")
+        : uiTokens.appWindowTitle
 
     readonly property string libraryBackgroundMode: String(appSettingsController.appearanceLibraryBackground || "Default")
     readonly property color libraryBackgroundSolidColor: appSettingsController.appearanceLibraryBackgroundSolidColor
@@ -275,6 +287,8 @@ ApplicationWindow {
     property int sidebarSeriesListBottomGap: 16
     property var coverByComicId: ({})
     property int heroCoverComicId: -1
+    property string heroAutoCoverSource: ""
+    property var heroAutoCoverStateBySeriesKey: ({})
     property string heroBackgroundSource: ""
     property string heroCustomCoverSource: ""
     property string heroCustomBackgroundSource: ""
@@ -805,7 +819,7 @@ ApplicationWindow {
         settledSelectionVolumeTitle = volumeTitle
 
         if (seriesKeyChanged) {
-            heroSeriesController.resolveHeroMediaForSelectedSeries()
+            heroSeriesController.resolveHeroMediaForSelectedSeries(true)
         }
         heroSeriesController.refreshSeriesData()
         if (seriesKeyChanged || volumeKeyChanged) {
@@ -2115,6 +2129,42 @@ ApplicationWindow {
         startupController.requestSnapshotSave()
     }
 
+    onHeroCoverComicIdChanged: {
+        runtimeDebugLog(
+            "hero-cover",
+            "root heroCoverComicId changed"
+            + " selectedSeriesKey=" + String(selectedSeriesKey || "")
+            + " heroCoverComicId=" + String(Number(heroCoverComicId || -1))
+        )
+    }
+
+    onHeroAutoCoverSourceChanged: {
+        const normalized = String(heroAutoCoverSource || "").trim().replace(/[?#].*$/, "")
+        const slashPath = normalized.replace(/\\/g, "/")
+        const parts = slashPath.length > 0 ? slashPath.split("/") : []
+        const token = parts.length > 0 ? parts[parts.length - 1] : "<empty>"
+        runtimeDebugLog(
+            "hero-cover",
+            "root heroAutoCoverSource changed"
+            + " selectedSeriesKey=" + String(selectedSeriesKey || "")
+            + " heroCoverComicId=" + String(Number(heroCoverComicId || -1))
+            + " source=" + token
+        )
+    }
+
+    onHeroCustomCoverSourceChanged: {
+        const normalized = String(heroCustomCoverSource || "").trim().replace(/[?#].*$/, "")
+        const slashPath = normalized.replace(/\\/g, "/")
+        const parts = slashPath.length > 0 ? slashPath.split("/") : []
+        const token = parts.length > 0 ? parts[parts.length - 1] : "<empty>"
+        runtimeDebugLog(
+            "hero-cover",
+            "root heroCustomCoverSource changed"
+            + " selectedSeriesKey=" + String(selectedSeriesKey || "")
+            + " source=" + token
+        )
+    }
+
     onIssuesGridDataChanged: {
         if (restoringStartupSnapshot) return
         startupController.requestSnapshotSave()
@@ -2191,7 +2241,7 @@ ApplicationWindow {
               helperButtonsSpacing: 8
               continueReadingEnabled: navigationSurfaceController.continueReadingAvailable
               whatsNewAvailable: false
-              centerLabel: uiTokens.appTitle
+              centerLabel: root.topBarCenterLabel
               windowCornerRadius: root.windowCornerRadius
               onContinueReadingRequested: navigationSurfaceController.continueReading()
               onNextUnreadRequested: navigationSurfaceController.nextUnread()

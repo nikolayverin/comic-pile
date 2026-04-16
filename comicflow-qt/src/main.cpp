@@ -25,6 +25,10 @@
 #define COMICPILE_APP_VERSION "0.0.0"
 #endif
 
+#ifndef COMICPILE_FAST_DEV_BUILD_ENABLED
+#define COMICPILE_FAST_DEV_BUILD_ENABLED 0
+#endif
+
 namespace {
 
 #ifdef Q_OS_WIN
@@ -80,6 +84,23 @@ void installRoundedWindowRegion(QWindow *window)
     QMetaObject::invokeMethod(window, updateRegion, Qt::QueuedConnection);
 }
 #endif
+
+QString effectiveBuildIterationText()
+{
+#if COMICPILE_FAST_DEV_BUILD_ENABLED
+    const QString appDirPath = QCoreApplication::applicationDirPath();
+    const QString successfulBuildStampPath =
+        appDirPath + QStringLiteral("/generated/build_meta/successful_build_iteration.txt");
+    QFile successfulBuildStamp(successfulBuildStampPath);
+    if (successfulBuildStamp.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        const QString successfulBuildText = QString::fromUtf8(successfulBuildStamp.readAll()).trimmed();
+        if (!successfulBuildText.isEmpty()) {
+            return successfulBuildText;
+        }
+    }
+#endif
+    return QString::fromLatin1(ComicPileBuildIteration::kText);
+}
 
 }
 
@@ -162,19 +183,23 @@ int main(int argc, char *argv[])
     ComicsListModel libraryModel;
     ComicStartupLaunch::appendLaunchLog(launchLogPath, launchTimer, QStringLiteral("library_model_created"));
     bool pendingActivation = false;
+    const QString effectiveBuildIteration = effectiveBuildIterationText();
     engine.rootContext()->setContextProperty("libraryModel", &libraryModel);
     engine.rootContext()->setContextProperty(
         "appVersion",
         QString::fromLatin1(COMICPILE_APP_VERSION));
     engine.rootContext()->setContextProperty(
         "appBuildIteration",
-        QString::fromLatin1(ComicPileBuildIteration::kText));
+        effectiveBuildIteration);
+    engine.rootContext()->setContextProperty(
+        "appIsFastDevBuild",
+        QVariant::fromValue(bool(COMICPILE_FAST_DEV_BUILD_ENABLED)));
     engine.rootContext()->setContextProperty("appLaunchStartedAtMs", QDateTime::currentMSecsSinceEpoch() - launchTimer.elapsed());
     engine.rootContext()->setContextProperty("appLaunchState", &launchState);
     ComicStartupLaunch::appendLaunchLog(
         launchLogPath,
         launchTimer,
-        QStringLiteral("build_iteration=%1").arg(QString::fromLatin1(ComicPileBuildIteration::kText)));
+        QStringLiteral("build_iteration=%1").arg(effectiveBuildIteration));
 
     bool rootWindowVisibleLogged = false;
     auto markRootWindowVisible = [&]() {

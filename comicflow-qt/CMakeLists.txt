@@ -119,6 +119,7 @@ qt_add_executable(comic_pile_qt
 
 target_compile_definitions(comic_pile_qt PRIVATE
     COMICPILE_APP_VERSION="${PROJECT_VERSION}"
+    COMICPILE_FAST_DEV_BUILD_ENABLED=$<IF:$<BOOL:${COMICPILE_FAST_DEV_BUILD}>,1,0>
 )
 
 set(_comicpile_build_meta_dir "${CMAKE_CURRENT_BINARY_DIR}/generated/build_meta")

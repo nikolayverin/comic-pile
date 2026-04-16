@@ -10,6 +10,9 @@ set "BUILD_TARGET=comic_pile_qt"
 set "APP_BASENAME=Comic Pile"
 set "APP_EXE=%BUILD_DIR%\%APP_BASENAME%.exe"
 set "BUILD_LOG=%BUILD_DIR%\build-fast.log"
+set "BUILD_META_DIR=%BUILD_DIR%\generated\build_meta"
+set "BUILD_ITERATION_FILE=%BUILD_META_DIR%\build_iteration_state.txt"
+set "SUCCESSFUL_BUILD_ITERATION_FILE=%BUILD_META_DIR%\successful_build_iteration.txt"
 
 set "QT_ROOT=C:\Qt\6.10.2\mingw_64"
 set "QT_BIN=%QT_ROOT%\bin"
@@ -118,9 +121,21 @@ if exist "%BUNDLED_7Z_DIR%\7z.dll" (
     copy /Y "%SYSTEM_7Z_DLL%" "%BUILD_DIR%\7z.dll" >nul 2>nul
 )
 
+if not exist "%BUILD_META_DIR%" mkdir "%BUILD_META_DIR%" >nul 2>nul
+if not exist "%BUILD_ITERATION_FILE%" (
+    echo [FAIL] Build iteration source file was not found: %BUILD_ITERATION_FILE%
+    exit /b 1
+)
+copy /Y "%BUILD_ITERATION_FILE%" "%SUCCESSFUL_BUILD_ITERATION_FILE%" >nul 2>nul
+if errorlevel 1 (
+    echo [FAIL] Could not write successful build stamp: %SUCCESSFUL_BUILD_ITERATION_FILE%
+    exit /b 1
+)
+
 echo.
 echo [OK] Build finished.
 echo EXE: %APP_EXE%
+echo BUILD STAMP: %SUCCESSFUL_BUILD_ITERATION_FILE%
 exit /b 0
 
 :requireFile

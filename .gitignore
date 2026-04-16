@@ -10,6 +10,7 @@ Thumbs.db
 .runtime/
 Library/
 library.db*
+Database/
 _build/
 _release_build/
 _tmp/
@@ -32,10 +33,13 @@ tools/djvulibre/*.real.exe
 tools/djvulibre/*.real.tar
 tools/djvulibre/*.real.tar.gz
 
-!Database/
-!Database/library.db
-!Database/Library/
-!Database/Library/**
-!Database/.runtime/
-Database/.runtime/*
-!Database/.runtime/library-storage-layout-migration-v1.done
+!release/Database/
+!release/Database/library.db
+!release/Database/Library/
+!release/Database/Library/**
+!release/Database/Covers/
+!release/Database/Covers/**
+!release/Database/.runtime/
+release/Database/.runtime/*
+!release/Database/.runtime/library-storage-layout-migration-v1.done
+

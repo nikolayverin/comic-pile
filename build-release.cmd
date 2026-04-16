@@ -13,7 +13,7 @@ set "APP_EXE=%BUILD_DIR%\%APP_BASENAME%.exe"
 set "STAGE_EXE=%STAGE_DIR%\%APP_BASENAME%.exe"
 set "BUILD_LOG=%BUILD_DIR%\build-release.log"
 
-set "DATABASE_SRC=%ROOT%\Database"
+set "DATABASE_SRC=%ROOT%\release\Database"
 set "DATABASE_DST=%STAGE_DIR%\Database"
 set "RUNTIME_MARKER=library-storage-layout-migration-v1.done"
 set "RELEASE_ASSETS_SRC=%ROOT%\release"

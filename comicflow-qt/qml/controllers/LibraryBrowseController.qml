@@ -478,6 +478,17 @@ Item {
                 const liveId = Number((liveIssues[i] || {}).id || 0)
                 if (liveId > 0) resetComicIds.push(liveId)
             }
+            traceBrowse(
+                "refresh grid clearing cover sources"
+                + " seriesKey=" + String(currentContext.seriesKey || "")
+                + " resetCount=" + String(resetComicIds.length)
+                + " orderDescending=" + String(Boolean(
+                    navigationSurfaceControllerRef
+                    && navigationSurfaceControllerRef.issueOrderDescending
+                ))
+                + " heroComicId=" + String(Number(root.heroCoverComicId || -1))
+                + " heroAutoSourceEmpty=" + String(String(root.heroAutoCoverSource || "").trim().length < 1)
+            )
             readerCoverControllerRef.clearCoverSourcesForComicIds(resetComicIds)
         }
         if (typeof root.primeVisibleIssueCoverSourcesFromCache === "function") {
@@ -489,6 +500,18 @@ Item {
             }
         } else {
             startupControllerRef.startupLog("defer warmVisibleIssueThumbnails until first reconcile")
+        }
+        if (readerCoverControllerRef
+                && currentContext.hasSeries
+                && String(root.heroCustomCoverSource || "").trim().length < 1
+                && String(root.heroAutoCoverSource || "").trim().length < 1
+                && typeof readerCoverControllerRef.resolveHeroCoverForSelectedSeries === "function") {
+            traceBrowse(
+                "refresh grid hero fallback resolve"
+                + " seriesKey=" + String(currentContext.seriesKey || "")
+                + " heroComicId=" + String(Number(root.heroCoverComicId || -1))
+            )
+            readerCoverControllerRef.resolveHeroCoverForSelectedSeries(false)
         }
 
         if (shouldPreserveSplitScroll && typeof root.scheduleGridSplitScrollRestore === "function") {

@@ -279,7 +279,7 @@ Item {
         }
 
         if (root.heroCoverComicId > 0) {
-            const heroSource = root.coverSourceForComic(root.heroCoverComicId)
+            const heroSource = String(root.heroAutoCoverSource || "")
             if (heroSource.length > 0) {
                 coverSubset[String(root.heroCoverComicId)] = heroSource
             }
@@ -504,6 +504,8 @@ Item {
             root.selectedVolumeTitle = String(parsed.selectedVolumeTitle || AppText.libraryAllVolumes)
         }
         root.heroCoverComicId = Number(parsed.heroCoverComicId || -1)
+        root.heroAutoCoverSource = ""
+        root.heroAutoCoverStateBySeriesKey = ({})
         const restoredSelection = {}
         if (root.selectedSeriesKey.length > 0) {
             restoredSelection[root.selectedSeriesKey] = true
@@ -532,6 +534,11 @@ Item {
             }
         }
 
+        const selectedSeriesMetadata = root.selectedSeriesKey.length > 0
+            ? (libraryModelRef.seriesMetadataForKey(root.selectedSeriesKey) || {})
+            : {}
+        const selectedSeriesHasCustomHeroCover = String(selectedSeriesMetadata.headerCoverPath || "").trim().length > 0
+
         const restoredCovers = {}
         const parsedCovers = parsed.coverByComicId && typeof parsed.coverByComicId === "object"
             ? parsed.coverByComicId
@@ -545,6 +552,19 @@ Item {
         }
         root.coverByComicId = restoredCovers
         startupController.startupStep("restore_snapshot_covers_applied", "count=" + String(Object.keys(restoredCovers).length))
+
+        if (!selectedSeriesHasCustomHeroCover
+                && root.selectedSeriesKey.length > 0
+                && root.heroCoverComicId > 0) {
+            const restoredHeroSource = String(restoredCovers[String(root.heroCoverComicId)] || "")
+            root.heroAutoCoverSource = restoredHeroSource
+            const restoredHeroStates = {}
+            restoredHeroStates[String(root.selectedSeriesKey)] = {
+                comicId: Number(root.heroCoverComicId || -1),
+                source: restoredHeroSource
+            }
+            root.heroAutoCoverStateBySeriesKey = restoredHeroStates
+        }
 
         const nextIssues = []
         for (let i = 0; i < parsedIssues.length; i += 1) {
@@ -563,7 +583,9 @@ Item {
                 root.heroCoverComicId = Number((nextIssues[0] || {}).id || -1)
             }
         }
-        if (root.heroCoverComicId > 0 && root.coverSourceForComic(root.heroCoverComicId).length < 1) {
+        if (!selectedSeriesHasCustomHeroCover
+                && root.heroCoverComicId > 0
+                && String(root.heroAutoCoverSource || "").length < 1) {
             root.requestIssueThumbnail(root.heroCoverComicId)
         }
 

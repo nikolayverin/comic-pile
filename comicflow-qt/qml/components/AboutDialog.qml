@@ -10,6 +10,18 @@ PopupDialogWindow {
     readonly property string projectLicenseUrl: repositoryUrl + "/blob/main/LICENSE"
     readonly property string qtLicensesUrl: repositoryUrl + "/blob/main/release/License/03-QT-NOTICE.txt"
     readonly property string thirdPartyLicensesUrl: repositoryUrl + "/blob/main/release/License/01-README.txt"
+    readonly property bool fastDevBuild: Boolean(appIsFastDevBuild)
+    readonly property string buildVersionText: {
+        const versionText = String(appVersion || "").trim()
+        const buildText = String(appBuildIteration || "").trim()
+        if (!fastDevBuild || buildText.length < 1) {
+            return versionText
+        }
+        if (versionText.length < 1) {
+            return "DEV " + buildText
+        }
+        return versionText + " (DEV " + buildText + ")"
+    }
 
     PopupStyle {
         id: styleTokens
@@ -276,7 +288,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: String(appVersion || "")
+                text: dialog.buildVersionText
                 color: "#ffffff"
                 font.family: Qt.application.font.family
                 font.pixelSize: 12

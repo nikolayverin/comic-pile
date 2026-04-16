@@ -63,13 +63,6 @@ Item {
             : ""
     }
 
-    function coverSourceForComic(comicId) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.coverSourceForComic === "function"
-            ? String(rootRef.coverSourceForComic(comicId) || "")
-            : ""
-    }
-
     function issuesGridMatchesSelectedSeries() {
         const rootRef = root()
         return rootRef && typeof rootRef.issuesGridMatchesSelectedSeries === "function"
@@ -115,7 +108,7 @@ Item {
 
     function automaticHeroCoverSource() {
         const rootRef = root()
-        return rootRef ? coverSourceForComic(rootRef.heroCoverComicId) : ""
+        return rootRef ? String(rootRef.heroAutoCoverSource || "") : ""
     }
 
     function automaticHeroBackgroundSource() {
@@ -158,11 +151,11 @@ Item {
         return automaticHeroBackgroundSource()
     }
 
-    function resolveHeroMediaForSelectedSeries() {
+    function resolveHeroMediaForSelectedSeries(preferStoredCoverState) {
         traceHero("resolve media for selected series")
         if (!readerCoverControllerRef) return
         if (typeof readerCoverControllerRef.resolveHeroCoverForSelectedSeries === "function") {
-            readerCoverControllerRef.resolveHeroCoverForSelectedSeries()
+            readerCoverControllerRef.resolveHeroCoverForSelectedSeries(Boolean(preferStoredCoverState))
         }
         if (typeof readerCoverControllerRef.resolveHeroBackgroundForSelectedSeries === "function") {
             readerCoverControllerRef.resolveHeroBackgroundForSelectedSeries()
