@@ -208,7 +208,7 @@ ApplicationWindow {
     readonly property var issueMetadataAutofillConfirmDialog: mainDialogHost.issueMetadataAutofillConfirmDialogRef
     readonly property var seriesMetadataAutofillConfirmDialog: mainDialogHost.seriesMetadataAutofillConfirmDialogRef
     readonly property var readerDeletePageConfirmDialog: mainDialogHost.readerDeletePageConfirmDialogRef
-    readonly property var replaceArchiveConfirmDialog: mainDialogHost.replaceArchiveConfirmDialogRef
+    readonly property var replaceSourceChoiceDialog: mainDialogHost.replaceSourceChoiceDialogRef
     readonly property var seriesMetaDialog: mainDialogHost.seriesMetaDialogRef
     readonly property var settingsDialog: mainDialogHost.settingsDialogRef
     readonly property var helpDialog: mainDialogHost.helpDialogRef
@@ -253,8 +253,9 @@ ApplicationWindow {
     property int pendingDeleteReaderPageIndex: -1
     property int pendingReplaceArchiveComicId: -1
     property string pendingReplaceArchiveSourcePath: ""
+    property string pendingReplaceArchiveSourceType: "archive"
     property bool replaceArchiveOperationActive: false
-    property string replaceArchiveOperationStatusText: "Replacing archive..."
+    property string replaceArchiveOperationStatusText: "Replacing issue source..."
     property string readerViewMode: "one_page"
     property bool readerMangaModeEnabled: false
     property bool readerMangaSpreadOffsetEnabled: false
@@ -492,7 +493,7 @@ ApplicationWindow {
         helpDialogRef: helpDialog
         aboutDialogRef: aboutDialog
         whatsNewDialogRef: whatsNewDialog
-        replaceArchiveConfirmDialogRef: replaceArchiveConfirmDialog
+        replaceSourceChoiceDialogRef: replaceSourceChoiceDialog
         seriesHeaderDialogRef: seriesHeaderDialog
         deleteConfirmDialogRef: deleteConfirmDialog
         deleteErrorDialogRef: deleteErrorDialog
@@ -1465,15 +1466,16 @@ ApplicationWindow {
         popupController.showActionResult(AppText.metadataSeriesContextMissing, true)
     }
 
-    function performReplaceIssueArchive(comicId, selectedPath) {
+    function performReplaceIssueArchive(comicId, selectedPath, sourceType) {
         const normalizedComicId = Number(comicId || 0)
         const normalizedPath = String(selectedPath || "").trim()
+        const normalizedSourceType = String(sourceType || "archive").trim().toLowerCase() || "archive"
         if (normalizedComicId < 1 || normalizedPath.length < 1) return false
 
         const result = libraryModel.replaceComicFileFromSourceEx(
             normalizedComicId,
             normalizedPath,
-            "archive",
+            normalizedSourceType,
             "",
             ({})
         )
@@ -1496,41 +1498,61 @@ ApplicationWindow {
         }
         pendingReplaceArchiveComicId = -1
         pendingReplaceArchiveSourcePath = ""
-        if (replaceArchiveConfirmDialog && replaceArchiveConfirmDialog.visible) {
-            replaceArchiveConfirmDialog.close()
+        pendingReplaceArchiveSourceType = "archive"
+        if (replaceSourceChoiceDialog && replaceSourceChoiceDialog.visible) {
+            replaceSourceChoiceDialog.close()
         }
     }
 
-    function confirmReplaceIssueArchive() {
-        if (replaceArchiveOperationActive) {
-            return false
-        }
-
-        const comicId = Number(pendingReplaceArchiveComicId || 0)
-        const selectedPath = String(pendingReplaceArchiveSourcePath || "")
-        if (comicId < 1 || selectedPath.length < 1) {
-            cancelReplaceIssueArchiveConfirmation()
-            return false
-        }
-
-        return queueReplaceIssueArchive(comicId, selectedPath)
-    }
-
-    function queueReplaceIssueArchive(comicId, selectedPath) {
+    function queueReplaceIssueArchive(comicId, selectedPath, sourceType) {
         if (replaceArchiveOperationActive) {
             return false
         }
         const normalizedComicId = Number(comicId || 0)
         const normalizedPath = String(selectedPath || "").trim()
+        const normalizedSourceType = String(sourceType || "archive").trim().toLowerCase() || "archive"
         if (normalizedComicId < 1 || normalizedPath.length < 1) {
             return false
         }
         pendingReplaceArchiveComicId = normalizedComicId
         pendingReplaceArchiveSourcePath = normalizedPath
-        replaceArchiveOperationStatusText = "Replacing archive..."
+        pendingReplaceArchiveSourceType = normalizedSourceType
+        replaceArchiveOperationStatusText = normalizedSourceType === "image_folder"
+            ? "Replacing from image folder..."
+            : "Replacing archive..."
         replaceArchiveOperationActive = true
         replaceArchiveActionTimer.start()
         return true
+    }
+
+    function chooseReplaceIssueArchiveSource(comicId, sourceType) {
+        const normalizedComicId = Number(comicId || 0)
+        const normalizedSourceType = String(sourceType || "archive").trim().toLowerCase() || "archive"
+        if (normalizedComicId < 1) return
+        if (replaceSourceChoiceDialog && replaceSourceChoiceDialog.visible) {
+            replaceSourceChoiceDialog.close()
+        }
+
+        const loaded = libraryModel.loadComicMetadata(normalizedComicId)
+        if (loaded && loaded.error) {
+            return
+        }
+
+        const currentFilePath = String((loaded || {}).filePath || "")
+        const selectedPath = normalizedSourceType === "image_folder"
+            ? String(libraryModel.browseArchiveFolder(currentFilePath) || "")
+            : String(libraryModel.browseArchiveFile(currentFilePath) || "")
+        if (selectedPath.length < 1) return
+
+        if (normalizedSourceType === "archive") {
+            const unsupportedReason = String(libraryModel.importArchiveUnsupportedReason(selectedPath) || "")
+            if (unsupportedReason.length > 0) {
+                popupController.showActionResult(unsupportedReason, true)
+                return
+            }
+        }
+
+        queueReplaceIssueArchive(normalizedComicId, selectedPath, normalizedSourceType)
     }
 
     function replaceIssueArchive(comicId) {
@@ -1545,25 +1567,11 @@ ApplicationWindow {
             return
         }
 
-        const currentFilePath = String((loaded || {}).filePath || "")
-        const selectedPath = String(libraryModel.browseArchiveFile(currentFilePath) || "")
-        if (selectedPath.length < 1) return
-
-        const unsupportedReason = String(libraryModel.importArchiveUnsupportedReason(selectedPath) || "")
-        if (unsupportedReason.length > 0) {
-            popupController.showActionResult(unsupportedReason, true)
-            return
-        }
-
-        if (!Boolean(appSettingsController.safetyConfirmBeforeReplace)) {
-            queueReplaceIssueArchive(comicId, selectedPath)
-            return
-        }
-
         pendingReplaceArchiveComicId = Number(comicId || -1)
-        pendingReplaceArchiveSourcePath = selectedPath
-        if (replaceArchiveConfirmDialog && !replaceArchiveConfirmDialog.visible) {
-            popupController.openExclusivePopup(replaceArchiveConfirmDialog)
+        pendingReplaceArchiveSourcePath = ""
+        pendingReplaceArchiveSourceType = "archive"
+        if (replaceSourceChoiceDialog && !replaceSourceChoiceDialog.visible) {
+            popupController.openExclusivePopup(replaceSourceChoiceDialog)
         }
     }
 
@@ -1575,24 +1583,21 @@ ApplicationWindow {
         onTriggered: {
             const comicId = Number(root.pendingReplaceArchiveComicId || 0)
             const selectedPath = String(root.pendingReplaceArchiveSourcePath || "")
+            const sourceType = String(root.pendingReplaceArchiveSourceType || "archive")
 
             if (comicId < 1 || selectedPath.length < 1) {
                 root.replaceArchiveOperationActive = false
                 root.pendingReplaceArchiveComicId = -1
                 root.pendingReplaceArchiveSourcePath = ""
-                if (root.replaceArchiveConfirmDialog && root.replaceArchiveConfirmDialog.visible) {
-                    root.replaceArchiveConfirmDialog.close()
-                }
+                root.pendingReplaceArchiveSourceType = "archive"
                 return
             }
 
-            root.performReplaceIssueArchive(comicId, selectedPath)
+            root.performReplaceIssueArchive(comicId, selectedPath, sourceType)
             root.replaceArchiveOperationActive = false
             root.pendingReplaceArchiveComicId = -1
             root.pendingReplaceArchiveSourcePath = ""
-            if (root.replaceArchiveConfirmDialog && root.replaceArchiveConfirmDialog.visible) {
-                root.replaceArchiveConfirmDialog.close()
-            }
+            root.pendingReplaceArchiveSourceType = "archive"
         }
     }
 

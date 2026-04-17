@@ -714,7 +714,7 @@ void ComicsListModel::cleanupSeriesHeroArtifactsForDeletedSeries(const QString &
 
     purgeSeriesHeroCacheForKey(normalizedKey);
     resetRandomSeriesHeroState(normalizedKey);
-    purgeSeriesHeroCacheForKey(QStringLiteral(kSeriesHeaderShufflePreviewKey));
+    purgeSeriesHeroCacheForKey(QString::fromLatin1(kSeriesHeaderShufflePreviewKey));
 }
 
 bool ComicsListModel::deleteComicHardInternal(int comicId, QString &messageOut)

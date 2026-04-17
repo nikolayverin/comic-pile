@@ -26,7 +26,7 @@ Item {
     property var helpDialogRef: null
     property var aboutDialogRef: null
     property var whatsNewDialogRef: null
-    property var replaceArchiveConfirmDialogRef: null
+    property var replaceSourceChoiceDialogRef: null
     property var seriesHeaderDialogRef: null
     property var deleteConfirmDialogRef: null
     property var deleteErrorDialogRef: null
@@ -60,7 +60,7 @@ Item {
         || Boolean(helpDialogRef && helpDialogRef.visible)
         || Boolean(aboutDialogRef && aboutDialogRef.visible)
         || Boolean(whatsNewDialogRef && whatsNewDialogRef.visible)
-        || Boolean(replaceArchiveConfirmDialogRef && replaceArchiveConfirmDialogRef.visible)
+        || Boolean(replaceSourceChoiceDialogRef && replaceSourceChoiceDialogRef.visible)
         || Boolean(seriesHeaderDialogRef && seriesHeaderDialogRef.visible)
         || Boolean(deleteConfirmDialogRef && deleteConfirmDialogRef.visible)
         || Boolean(deleteErrorDialogRef && deleteErrorDialogRef.visible)
@@ -149,7 +149,7 @@ Item {
             helpDialogRef,
             aboutDialogRef,
             whatsNewDialogRef,
-            replaceArchiveConfirmDialogRef,
+            replaceSourceChoiceDialogRef,
             seriesHeaderDialogRef,
             deleteConfirmDialogRef,
             deleteErrorDialogRef

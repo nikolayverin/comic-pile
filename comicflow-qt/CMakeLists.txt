@@ -250,6 +250,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupGhostBlock.qml
         qml/components/PopupProgressBlock.qml
         qml/components/PopupConfirmDialog.qml
+        qml/components/ReplaceSourceChoiceDialog.qml
         qml/components/PopupCopyButton.qml
         qml/components/PopupContentGeometry.qml
         qml/components/MetadataDropdownField.qml
