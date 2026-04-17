@@ -489,6 +489,76 @@ QString normalizeIssueKey(const QString &issueValue)
     return normalized;
 }
 
+QString normalizeStoredIssueNumber(const QString &issueValue)
+{
+    const QString trimmed = issueValue.trimmed();
+    if (trimmed.isEmpty()) return {};
+
+    static const QRegularExpression numericPattern(QStringLiteral("^0*([0-9]+)(?:\\.([0-9]+))?$"));
+    {
+        const QRegularExpressionMatch match = numericPattern.match(trimmed);
+        if (match.hasMatch()) {
+            const QString integerPart = match.captured(1).isEmpty()
+                ? QStringLiteral("0")
+                : match.captured(1);
+            const QString decimalPart = match.captured(2);
+            return decimalPart.isEmpty()
+                ? integerPart
+                : QStringLiteral("%1.%2").arg(integerPart, decimalPart);
+        }
+    }
+
+    static const QRegularExpression spacedPrefixPattern(
+        QStringLiteral("^(.*?)(\\s+#?\\s*)(0*([0-9]+))(?:\\.([0-9]+))?$"),
+        QRegularExpression::CaseInsensitiveOption
+    );
+    {
+        const QRegularExpressionMatch match = spacedPrefixPattern.match(trimmed);
+        if (match.hasMatch()) {
+            const QString prefix = match.captured(1).trimmed();
+            if (!prefix.isEmpty()) {
+                const QString separator = match.captured(2).contains(QLatin1Char('#'))
+                    ? QStringLiteral(" #")
+                    : QStringLiteral(" ");
+                const QString integerPart = match.captured(4).isEmpty()
+                    ? QStringLiteral("0")
+                    : match.captured(4);
+                const QString decimalPart = match.captured(5);
+                return decimalPart.isEmpty()
+                    ? QStringLiteral("%1%2%3").arg(prefix, separator, integerPart)
+                    : QStringLiteral("%1%2%3.%4").arg(prefix, separator, integerPart, decimalPart);
+            }
+        }
+    }
+
+    static const QRegularExpression attachedHashPattern(
+        QStringLiteral("^(.*?)(#\\s*)(0*([0-9]+))(?:\\.([0-9]+))?$"),
+        QRegularExpression::CaseInsensitiveOption
+    );
+    {
+        const QRegularExpressionMatch match = attachedHashPattern.match(trimmed);
+        if (match.hasMatch()) {
+            const QString prefix = match.captured(1).trimmed();
+            if (!prefix.isEmpty()) {
+                const QString integerPart = match.captured(4).isEmpty()
+                    ? QStringLiteral("0")
+                    : match.captured(4);
+                const QString decimalPart = match.captured(5);
+                return decimalPart.isEmpty()
+                    ? QStringLiteral("%1#%2").arg(prefix, integerPart)
+                    : QStringLiteral("%1#%2.%3").arg(prefix, integerPart, decimalPart);
+            }
+        }
+    }
+
+    return trimmed;
+}
+
+QString displayIssueNumber(const QString &issueValue)
+{
+    return normalizeStoredIssueNumber(issueValue);
+}
+
 ImportIdentityPassport buildImportIdentityPassport(
     const QString &sourceType,
     const QString &sourcePath,
@@ -580,6 +650,7 @@ ImportIdentityPassport buildImportIdentityPassport(
     } else {
         passport.issueSource = QStringLiteral("empty");
     }
+    passport.effectiveIssue = normalizeStoredIssueNumber(passport.effectiveIssue);
 
     if (!passport.explicitTitle.isEmpty()) {
         passport.effectiveTitle = passport.explicitTitle;

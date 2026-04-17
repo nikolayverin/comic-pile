@@ -255,6 +255,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupContentGeometry.qml
         qml/components/MetadataDropdownField.qml
         qml/components/MetadataTextUtils.js
+        qml/components/IssueNumberText.js
         qml/components/AppMessagePayload.js
         qml/components/ReadingTarget.js
         qml/components/SeriesContext.js

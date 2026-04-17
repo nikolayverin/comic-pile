@@ -859,7 +859,7 @@ int main(int argc, char *argv[])
             QStringLiteral("absolute batman"),
             QStringLiteral("2"),
             QStringLiteral("1"),
-            QStringLiteral("002"),
+            QStringLiteral("2"),
             QStringLiteral("1")
         };
         const QVector<DuplicateRestoreResolver::RestoreCandidate> candidates = {
@@ -867,8 +867,8 @@ int main(int argc, char *argv[])
             { 102, QString(), QString(), QStringLiteral("Absolute Batman"), QStringLiteral("absolute batman"), QStringLiteral("1"), QStringLiteral("002") }
         };
         const auto resolution = DuplicateRestoreResolver::resolveMetadataCandidates(candidates, input);
-        if (!resolution.isUnique() || resolution.candidates.first().id != 102) {
-            printStepResult(QStringLiteral("Restore resolver exact-match narrow"), false, QStringLiteral("Expected exact issue text 002 to win over stale 2."));
+        if (!resolution.isUnique() || resolution.candidates.first().id != 101) {
+            printStepResult(QStringLiteral("Restore resolver exact-match narrow"), false, QStringLiteral("Expected canonical issue text 2 to win over stale padded 002."));
             return 1;
         }
         printStepResult(QStringLiteral("Restore resolver exact-match narrow"), true);
@@ -915,7 +915,7 @@ int main(int argc, char *argv[])
             );
         if (passport.effectiveSeries != QStringLiteral("Selected Shelf")
             || passport.seriesSource != QStringLiteral("context")
-            || passport.effectiveIssue != QStringLiteral("002")
+            || passport.effectiveIssue != QStringLiteral("2")
             || passport.issueSource != QStringLiteral("comicinfo")
             || passport.strictFilenameSignature != QStringLiteral("absolute batman 002 2025")) {
             printStepResult(
@@ -928,7 +928,7 @@ int main(int argc, char *argv[])
 
         const QVariantMap appliedValues = ComicImportMatching::applyPassportDefaults({}, passport);
         if (appliedValues.value(QStringLiteral("series")).toString() != QStringLiteral("Selected Shelf")
-            || appliedValues.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("002")
+            || appliedValues.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("2")
             || appliedValues.value(QStringLiteral("volume")).toString() != QStringLiteral("7")
             || appliedValues.value(QStringLiteral("title")).toString() != QStringLiteral("ComicInfo Title")
             || appliedValues.value(QStringLiteral("importOriginalFilename")).toString() != QStringLiteral("Absolute.Batman_002_2025.cbr")
@@ -1286,11 +1286,11 @@ int main(int argc, char *argv[])
     const int numericSeriesBaselineId = numericSeriesBaselineResult.value(QStringLiteral("comicId")).toInt();
     const QVariantMap numericSeriesBaselineMeta = model.loadComicMetadata(numericSeriesBaselineId);
     if (numericSeriesBaselineId < 1
-        || numericSeriesBaselineMeta.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("002")) {
+        || numericSeriesBaselineMeta.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("2")) {
         printStepResult(
             QStringLiteral("ImportEx numeric filename baseline"),
             false,
-            QStringLiteral("Bare numeric filename did not preserve the expected 002 issue text.")
+            QStringLiteral("Bare numeric filename did not normalize to the expected issue text 2.")
         );
         return 1;
     }
@@ -1750,7 +1750,7 @@ int main(int argc, char *argv[])
     }
     printStepResult(QStringLiteral("Dirty restore weak metadata import-as-new"), true);
 
-    // 2l) dirty restore state: exact text issue match should prefer 002 over stale 2.
+    // 2l) dirty restore state: canonical normalized issue text should prefer 2 over stale padded 002.
     int dirtyIssue2Id = 0;
     int dirtyIssue002Id = 0;
     if (!insertDirtyRestoreRow(
@@ -1789,21 +1789,21 @@ int main(int argc, char *argv[])
         printStepResult(QStringLiteral("Dirty restore exact issue"), false, error);
         return 1;
     }
-    if (dirtyRestoreResult.value(QStringLiteral("comicId")).toInt() != dirtyIssue002Id) {
-        printStepResult(QStringLiteral("Dirty restore exact issue"), false, QStringLiteral("Restore picked stale issue 2 instead of exact 002."));
+    if (dirtyRestoreResult.value(QStringLiteral("comicId")).toInt() != dirtyIssue2Id) {
+        printStepResult(QStringLiteral("Dirty restore exact issue"), false, QStringLiteral("Restore picked stale padded 002 instead of canonical issue 2."));
         return 1;
     }
     const QVariantMap dirtyIssue002Meta = model.loadComicMetadata(dirtyIssue002Id);
     const QString dirtyRestoredPath = dirtyRestoreResult.value(QStringLiteral("filePath")).toString();
-    if (dirtyIssue002Meta.value(QStringLiteral("filePath")).toString().isEmpty()
+    const QVariantMap dirtyIssue2Meta = model.loadComicMetadata(dirtyIssue2Id);
+    if (dirtyIssue2Meta.value(QStringLiteral("filePath")).toString().isEmpty()
         || dirtyRestoredPath.isEmpty()
         || !QFileInfo::exists(dirtyRestoredPath)) {
-        printStepResult(QStringLiteral("Dirty restore exact issue"), false, QStringLiteral("Exact 002 row was not relinked to a real archive."));
+        printStepResult(QStringLiteral("Dirty restore exact issue"), false, QStringLiteral("Canonical issue 2 row was not relinked to a real archive."));
         return 1;
     }
-    const QVariantMap dirtyIssue2Meta = model.loadComicMetadata(dirtyIssue2Id);
-    if (!dirtyIssue2Meta.value(QStringLiteral("filePath")).toString().isEmpty()) {
-        printStepResult(QStringLiteral("Dirty restore exact issue"), false, QStringLiteral("Stale issue 2 row should remain detached."));
+    if (!dirtyIssue002Meta.value(QStringLiteral("filePath")).toString().isEmpty()) {
+        printStepResult(QStringLiteral("Dirty restore exact issue"), false, QStringLiteral("Stale padded issue 002 row should remain detached."));
         return 1;
     }
     printStepResult(QStringLiteral("Dirty restore exact issue"), true);

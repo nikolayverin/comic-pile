@@ -465,7 +465,9 @@ QString setIssueMetadataKnowledge(const QString &dbPath, const QVariantMap &valu
 {
     const QString seriesName = valueFromMap(values, QStringLiteral("series"));
     const QString volume = valueFromMap(values, QStringLiteral("volume"));
-    const QString issueNumber = valueFromMap(values, QStringLiteral("issueNumber"));
+    const QString issueNumber = ComicImportMatching::normalizeStoredIssueNumber(
+        valueFromMap(values, QStringLiteral("issueNumber"))
+    );
     const QString seriesNameKey = ComicImportMatching::normalizeSeriesKey(seriesName);
     const QString normalizedVolumeKey = ComicImportMatching::normalizeVolumeKey(volume);
     const QString seriesGroupKey = seriesNameKey.isEmpty()

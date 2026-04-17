@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "IssueNumberText.js" as IssueNumberText
 
 Rectangle {
     id: root
@@ -70,7 +71,7 @@ Rectangle {
     }
     readonly property bool shouldCropWideCover: sourceCoverRatio > cropWideThreshold
     readonly property string hoverCaptionText: {
-        const num = String(root.issueNumber || "").trim()
+        const num = IssueNumberText.formatDisplayIssueNumber(root.issueNumber)
         const title = String(root.issueTitle || "").trim()
         if (num.length > 0 && title.length > 0) return "#" + num + " " + title
         if (num.length > 0) return "#" + num

@@ -937,7 +937,9 @@ QString ComicsListModel::createComicFromLibrary(
     const QString series = valueFromMap(values, "series");
     const QString volume = valueFromMap(values, "volume");
     const QString title = valueFromMap(values, "title");
-    const QString issueNumber = valueFromMap(values, "issueNumber", "issue");
+    const QString issueNumber = ComicImportMatching::normalizeStoredIssueNumber(
+        valueFromMap(values, "issueNumber", "issue")
+    );
     const QString publisher = valueFromMap(values, "publisher");
     const QString writer = valueFromMap(values, "writer");
     const QString penciller = valueFromMap(values, "penciller");
@@ -1008,7 +1010,9 @@ QString ComicsListModel::createComicFromLibrary(
     const QString candidateVolumeKey = ComicModelUtils::normalizeVolumeKey(volume);
     QString candidateIssueValue = issueNumber;
     if (candidateIssueValue.isEmpty()) {
-        candidateIssueValue = ComicImportMatching::guessIssueNumberFromFilename(resolvedFilename);
+        candidateIssueValue = ComicImportMatching::normalizeStoredIssueNumber(
+            ComicImportMatching::guessIssueNumberFromFilename(resolvedFilename)
+        );
     }
     const QString candidateIssueKey = ComicImportMatching::normalizeIssueKey(candidateIssueValue);
     const QString strictInputSignature = ComicImportMatching::normalizeFilenameSignatureStrict(resolvedFilename);
@@ -1070,7 +1074,7 @@ QString ComicsListModel::createComicFromLibrary(
                 const QString restoredVolume = !volume.trimmed().isEmpty() ? volume.trimmed() : candidate.volume;
                 const QString restoredIssue = !candidateIssueValue.trimmed().isEmpty()
                     ? candidateIssueValue.trimmed()
-                    : candidate.issue;
+                    : ComicImportMatching::normalizeStoredIssueNumber(candidate.issue);
 
                 restoreQuery.prepare(
                     "UPDATE comics SET "
@@ -1368,8 +1372,8 @@ QString ComicsListModel::createComicFromLibrary(
         insertQuery.addBindValue(ComicModelUtils::normalizeSeriesKey(series));
         insertQuery.addBindValue(volume);
         insertQuery.addBindValue(title);
-        insertQuery.addBindValue(issueNumber);
-        insertQuery.addBindValue(issueNumber);
+        insertQuery.addBindValue(candidateIssueValue);
+        insertQuery.addBindValue(candidateIssueValue);
         insertQuery.addBindValue(publisher);
         if (yearIsNull) {
             insertQuery.addBindValue(QVariant());
@@ -1582,9 +1586,13 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         const QString candidateSeriesKey = ComicImportMatching::normalizeSeriesKey(candidateSeries);
         const QString candidateVolume = valueFromMap(createValues, QStringLiteral("volume"));
         const QString candidateVolumeKey = ComicImportMatching::normalizeVolumeKey(candidateVolume);
-        QString candidateIssue = valueFromMap(createValues, QStringLiteral("issueNumber"), QStringLiteral("issue"));
+        QString candidateIssue = ComicImportMatching::normalizeStoredIssueNumber(
+            valueFromMap(createValues, QStringLiteral("issueNumber"), QStringLiteral("issue"))
+        );
         if (candidateIssue.isEmpty()) {
-            candidateIssue = ComicImportMatching::guessIssueNumberFromFilename(sourceInfo.fileName());
+            candidateIssue = ComicImportMatching::normalizeStoredIssueNumber(
+                ComicImportMatching::guessIssueNumberFromFilename(sourceInfo.fileName())
+            );
         }
         const QString candidateIssueKey = ComicImportMatching::normalizeIssueKey(candidateIssue);
         const QString strictTargetSignature = ComicImportMatching::normalizeFilenameSignatureStrict(targetFilename);

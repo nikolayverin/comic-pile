@@ -376,7 +376,9 @@ QString ComicsListModel::bulkUpdateMetadata(
     plan.series = valueFromMap(values, QStringLiteral("series"));
     plan.volume = valueFromMap(values, QStringLiteral("volume"));
     plan.title = valueFromMap(values, QStringLiteral("title"));
-    plan.issueNumber = valueFromMap(values, QStringLiteral("issueNumber"), QStringLiteral("issue"));
+    plan.issueNumber = ComicImportMatching::normalizeStoredIssueNumber(
+        valueFromMap(values, QStringLiteral("issueNumber"), QStringLiteral("issue"))
+    );
     plan.publisher = valueFromMap(values, QStringLiteral("publisher"));
     plan.writer = valueFromMap(values, QStringLiteral("writer"));
     plan.penciller = valueFromMap(values, QStringLiteral("penciller"));

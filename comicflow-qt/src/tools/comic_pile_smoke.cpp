@@ -459,7 +459,7 @@ int main(int argc, char *argv[])
     const QVariantMap imageFolderMeta = model.loadComicMetadata(imageFolderComicId);
     if (imageFolderMeta.contains(QStringLiteral("error"))
         || imageFolderMeta.value(QStringLiteral("series")).toString() != QStringLiteral("Spawn")
-        || imageFolderMeta.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("001")) {
+        || imageFolderMeta.value(QStringLiteral("issueNumber")).toString() != QStringLiteral("1")) {
         printStepResult(QStringLiteral("Image Folder Import"), false, QStringLiteral("Folder-derived series/issue metadata mismatch."));
         return 1;
     }

@@ -3,6 +3,7 @@
 #include "storage/archivepacking.h"
 #include "storage/comicsmodelutils.h"
 #include "storage/imagepreparationops.h"
+#include "storage/importmatching.h"
 #include "storage/readercacheutils.h"
 #include "storage/readerpayloadutils.h"
 #include "storage/readerrequestutils.h"
@@ -365,7 +366,7 @@ QVariantMap ComicsListModel::buildIssueNavigationTarget(const ComicRow &row) con
         { QStringLiteral("title"), row.title.trimmed() },
         { QStringLiteral("displayTitle"), displayTitle.isEmpty() ? QStringLiteral("Issue #%1").arg(row.id) : displayTitle },
         { QStringLiteral("filename"), row.filename.trimmed() },
-        { QStringLiteral("issueNumber"), row.issueNumber.trimmed() },
+        { QStringLiteral("issueNumber"), ComicImportMatching::displayIssueNumber(row.issueNumber) },
         { QStringLiteral("readStatus"), normalizedReadStatus.isEmpty() ? QStringLiteral("unread") : normalizedReadStatus },
         { QStringLiteral("currentPage"), row.currentPage },
         { QStringLiteral("bookmarkPage"), row.bookmarkPage },

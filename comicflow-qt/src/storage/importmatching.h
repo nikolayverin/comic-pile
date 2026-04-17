@@ -60,6 +60,8 @@ bool isWeakSeriesName(const QString &seriesName);
 QString normalizeFilenameSignatureStrict(const QString &filename);
 QString normalizeFilenameSignatureLoose(const QString &filename);
 QString normalizeIssueKey(const QString &issueValue);
+QString normalizeStoredIssueNumber(const QString &issueValue);
+QString displayIssueNumber(const QString &issueValue);
 
 int extractPositiveIssueNumber(const QString &issueNumber);
 int extractPositiveNumberFromFilename(const QString &filename);

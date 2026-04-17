@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "MetadataTextUtils.js" as MetadataTextUtils
+import "IssueNumberText.js" as IssueNumberText
 import "AppText.js" as AppText
 
 Popup {
@@ -26,6 +27,7 @@ Popup {
     property bool metadataDirty: false
     property bool metadataApplyingState: false
     property string errorText: ""
+    property string metadataRawIssueNumber: ""
     property var metadataInitialState: ({})
     property var metadataYearOptions: []
     property var metadataMonthOptions: [
@@ -167,10 +169,12 @@ Popup {
     }
 
     function currentState() {
+        const visibleIssueNumber = String(editIssueField.text || "").trim()
+        const issueNumber = IssueNumberText.formatDisplayIssueNumber(visibleIssueNumber)
         return {
             series: String(editSeriesField.text || "").trim(),
             volume: String(editVolumeField.text || "").trim(),
-            issueNumber: String(editIssueField.text || "").trim(),
+            issueNumber: issueNumber,
             title: String(editTitleField.text || "").trim(),
             publisher: String(editPublisherField.text || "").trim(),
             year: String(editYearCombo.currentText || "").trim(),
@@ -201,13 +205,14 @@ Popup {
             ? String(safeState.monthName || "").trim()
             : monthNameFromNumber(safeState.month)
         const ageText = String(safeState.ageRating || "").trim()
+        metadataRawIssueNumber = String(safeState.issueNumber || "").trim()
 
         metadataYearOptions = buildYearOptions(yearText)
         metadataAgeRatingOptions = buildAgeRatingOptions(ageText)
 
         editSeriesField.text = String(safeState.series || "")
         editVolumeField.text = String(safeState.volume || "")
-        editIssueField.text = String(safeState.issueNumber || "")
+        editIssueField.text = IssueNumberText.formatDisplayIssueNumber(metadataRawIssueNumber)
         editPublisherField.text = String(safeState.publisher || "")
         editTitleField.text = String(safeState.title || "")
         editWriterField.text = String(safeState.writer || "")
@@ -245,6 +250,7 @@ Popup {
     }
 
     function markSaved(state) {
+        metadataRawIssueNumber = String(((state || currentState()) || {}).issueNumber || "").trim()
         metadataInitialState = state || currentState()
         metadataDirty = false
     }

@@ -826,7 +826,7 @@ QVariant ComicsListModel::data(const QModelIndex &index, int role) const
     case TitleRole:
         return row.title;
     case IssueNumberRole:
-        return row.issueNumber;
+        return ComicImportMatching::displayIssueNumber(row.issueNumber);
     case PublisherRole:
         return row.publisher;
     case YearRole:
@@ -1247,7 +1247,7 @@ QVariantList ComicsListModel::issuesForSeries(
         item.insert("series", row.series);
         item.insert("volume", row.volume);
         item.insert("title", row.title);
-        item.insert("issueNumber", row.issueNumber);
+        item.insert("issueNumber", ComicImportMatching::displayIssueNumber(row.issueNumber));
         item.insert("publisher", row.publisher);
         item.insert("year", row.year);
         item.insert("month", row.month);
@@ -1290,7 +1290,7 @@ QVariantList ComicsListModel::issuesForQuickFilter(
         item.insert("series", row.series);
         item.insert("volume", row.volume);
         item.insert("title", row.title);
-        item.insert("issueNumber", row.issueNumber);
+        item.insert("issueNumber", ComicImportMatching::displayIssueNumber(row.issueNumber));
         item.insert("publisher", row.publisher);
         item.insert("year", row.year);
         item.insert("month", row.month);
@@ -1986,7 +1986,8 @@ QString ComicsListModel::buildSubtitle(const ComicRow &row)
 {
     QStringList parts;
     if (!row.volume.isEmpty()) parts << QString("Vol %1").arg(row.volume);
-    if (!row.issueNumber.isEmpty()) parts << QString("#%1").arg(row.issueNumber);
+    const QString displayIssue = ComicImportMatching::displayIssueNumber(row.issueNumber);
+    if (!displayIssue.isEmpty()) parts << QString("#%1").arg(displayIssue);
     if (!row.title.isEmpty()) parts << row.title;
     if (!row.publisher.isEmpty()) parts << row.publisher;
     if (row.year > 0) {

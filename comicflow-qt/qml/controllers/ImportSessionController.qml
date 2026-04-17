@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/IssueNumberText.js" as IssueNumberText
 import "../components/AppText.js" as AppText
 
 Item {
@@ -603,7 +604,7 @@ Item {
         const values = meta || ({})
         const existingId = Number(fallbackExistingId || 0)
         const existingSeries = String(values.series || "").trim()
-        const existingIssue = String(values.issueNumber || "").trim()
+        const existingIssue = IssueNumberText.formatDisplayIssueNumber(values.issueNumber)
         const existingTitle = String(values.title || "").trim()
         const existingFilename = String(values.filename || "").trim()
 
