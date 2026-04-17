@@ -1,4 +1,5 @@
 #include "storage/readercacheutils.h"
+#include "storage/storedpathutils.h"
 
 #include <algorithm>
 
@@ -141,17 +142,20 @@ struct ReaderCacheIssueEntry {
 
 namespace ComicReaderCache {
 
-QString buildArchiveCacheStamp(const QString &archivePath)
+QString buildArchiveCacheStamp(const QString &dataRoot, const QString &archivePath)
 {
     const QFileInfo archiveInfo(archivePath);
-    const QString normalizedPath = QDir::toNativeSeparators(archiveInfo.absoluteFilePath());
+    const QString absolutePath = QDir::toNativeSeparators(archiveInfo.absoluteFilePath());
+    const QString stablePath = dataRoot.trimmed().isEmpty()
+        ? absolutePath
+        : ComicStoragePaths::persistPathForDataRoot(dataRoot, absolutePath);
     const qint64 size = archiveInfo.exists() ? archiveInfo.size() : 0;
     const qint64 mtimeUtcMs = archiveInfo.exists()
         ? archiveInfo.lastModified().toUTC().toMSecsSinceEpoch()
         : 0;
 
     const QByteArray seed = QStringLiteral("%1|%2|%3")
-        .arg(normalizedPath)
+        .arg(stablePath)
         .arg(size)
         .arg(mtimeUtcMs)
         .toUtf8();

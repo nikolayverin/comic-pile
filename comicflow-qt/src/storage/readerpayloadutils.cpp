@@ -87,7 +87,7 @@ QVariantMap loadReaderPagePayload(
         extension = QStringLiteral("img");
     }
 
-    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(dataRoot, archivePath);
     const QString cacheFilePath = ComicReaderCache::buildReaderCachePath(
         dataRoot,
         comicId,
@@ -134,7 +134,7 @@ QString cachedIssueThumbnailSource(
         return {};
     }
 
-    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(dataRoot, archivePath);
     const QByteArray thumbFormat = ComicReaderCache::preferredThumbnailFormat();
     const QString preferredPath = ComicReaderCache::buildThumbnailPathWithFormat(
         dataRoot,

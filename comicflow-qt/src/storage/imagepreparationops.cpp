@@ -363,7 +363,7 @@ QVariantMap loadReaderPageMetricsPayload(
         };
     }
 
-    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(dataRoot, archivePath);
     QVariantList pageMetrics;
     pageMetrics.reserve(entries.size());
     QHash<QString, QVariantMap> bulkMetricsByEntryName;

@@ -837,7 +837,7 @@ int ComicsListModel::requestReaderPageAsync(int comicId, int pageIndex)
     const QString entryName = state.entries.at(state.resolvedPageIndex);
     QString extension = QFileInfo(entryName).suffix().toLower();
     if (extension.isEmpty()) extension = QStringLiteral("img");
-    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(state.archivePath);
+    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(m_dataRoot, state.archivePath);
     const QString cacheFilePath = ComicReaderCache::buildReaderCachePath(
         m_dataRoot,
         comicId,
@@ -920,7 +920,7 @@ void ComicsListModel::startQueuedCoverGeneration(const QueuedCoverGeneration &jo
                 ? QString()
                 : ComicReaderRequests::thumbnailPendingKey(
                     comicId,
-                    ComicReaderCache::buildArchiveCacheStamp(currentArchivePath)
+                    ComicReaderCache::buildArchiveCacheStamp(m_dataRoot, currentArchivePath)
                 );
             const bool staleResult = currentPendingKey != pendingKey;
 
@@ -1029,7 +1029,7 @@ int ComicsListModel::requestIssueThumbnailAsync(int comicId)
         return requestId;
     }
 
-    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(m_dataRoot, archivePath);
     const QByteArray thumbFormat = ComicReaderCache::preferredThumbnailFormat();
     const QString thumbPath = ComicReaderCache::buildThumbnailPathWithFormat(m_dataRoot, comicId, cacheStamp, thumbFormat);
 

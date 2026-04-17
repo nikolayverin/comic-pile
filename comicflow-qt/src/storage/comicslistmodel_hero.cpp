@@ -145,7 +145,7 @@ int ComicsListModel::requestSeriesHeroAsync(const QString &seriesKey)
         return requestId;
     }
 
-    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+    const QString cacheStamp = ComicReaderCache::buildArchiveCacheStamp(m_dataRoot, archivePath);
     const QString pendingKey = seriesHeroPendingKey(
         requestedSeriesKey,
         QStringLiteral("%1:%2").arg(comicId).arg(cacheStamp)
@@ -419,7 +419,7 @@ void ComicsListModel::startQueuedSeriesHeroGeneration(const QueuedSeriesHeroGene
                 selectedCandidateIndex = index;
                 resolvedComicId = comicId;
                 resolvedArchivePath = archivePath;
-                resolvedCacheStamp = ComicReaderCache::buildArchiveCacheStamp(archivePath);
+                resolvedCacheStamp = ComicReaderCache::buildArchiveCacheStamp(dataRoot, archivePath);
                 entries = candidateEntries;
                 pageIndex = availablePageIndices.at(QRandomGenerator::global()->bounded(availablePageIndices.size()));
                 updatedShownPageIndices = normalizedShownPageIndices;

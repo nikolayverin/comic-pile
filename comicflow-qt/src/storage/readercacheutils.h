@@ -5,7 +5,7 @@
 
 namespace ComicReaderCache {
 
-QString buildArchiveCacheStamp(const QString &archivePath);
+QString buildArchiveCacheStamp(const QString &dataRoot, const QString &archivePath);
 QString buildReaderCachePath(
     const QString &dataRoot,
     int comicId,
