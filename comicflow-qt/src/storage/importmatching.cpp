@@ -194,11 +194,31 @@ QString normalizeSeriesKey(const QString &value)
 
 QString normalizeVolumeKey(const QString &value)
 {
-    QString key = value.normalized(QString::NormalizationForm_KC).toLower().trimmed();
+    QString key = semanticVolumeValue(value).normalized(QString::NormalizationForm_KC).toLower().trimmed();
     key.replace(QRegularExpression(QStringLiteral("[\\-_.:/\\\\]+")), QStringLiteral(" "));
     key = key.simplified();
     if (key.isEmpty()) return QStringLiteral("__no_volume__");
     return key;
+}
+
+QString semanticVolumeValue(const QString &value)
+{
+    const QString trimmed = value.trimmed();
+    if (trimmed.isEmpty()) return {};
+
+    QString normalized = trimmed.normalized(QString::NormalizationForm_KC);
+    normalized.remove(QRegularExpression(
+        QStringLiteral("^vol(?:ume)?\\.?\\s*"),
+        QRegularExpression::CaseInsensitiveOption
+    ));
+    normalized = normalized.simplified();
+
+    static const QRegularExpression defaultOnePattern(QStringLiteral("^0*1(?:\\.0+)?$"));
+    if (defaultOnePattern.match(normalized).hasMatch()) {
+        return {};
+    }
+
+    return trimmed;
 }
 
 QString normalizeImportSourceType(const QString &value)

@@ -204,7 +204,7 @@ QString formatSeriesGroupTitle(const QString &series, const QString &volume)
         ? QStringLiteral("Unknown Series")
         : series.trimmed();
 
-    QString volumeText = volume.trimmed();
+    QString volumeText = ComicImportMatching::semanticVolumeValue(volume);
     if (volumeText.isEmpty()) return baseTitle;
 
     volumeText.remove(QRegularExpression(
@@ -540,7 +540,9 @@ QVariantMap ComicsListModel::buildRetainedSeriesMetadata(const QString &seriesKe
     QString retainedYear = valueFromMap(storedMetadata, QStringLiteral("year"));
     QString retainedMonth = valueFromMap(storedMetadata, QStringLiteral("month"));
     QString retainedGenres = valueFromMap(storedMetadata, QStringLiteral("genres"));
-    QString retainedVolume = valueFromMap(storedMetadata, QStringLiteral("volume"));
+    QString retainedVolume = ComicImportMatching::semanticVolumeValue(
+        valueFromMap(storedMetadata, QStringLiteral("volume"))
+    );
     QString retainedPublisher = valueFromMap(storedMetadata, QStringLiteral("publisher"));
     QString retainedAgeRating = valueFromMap(storedMetadata, QStringLiteral("ageRating"));
 
@@ -576,7 +578,7 @@ QVariantMap ComicsListModel::buildRetainedSeriesMetadata(const QString &seriesKe
             }
         }
 
-        const QString rowVolume = row.volume.trimmed();
+        const QString rowVolume = ComicImportMatching::semanticVolumeValue(row.volume);
         if (retainedVolume.isEmpty() && !rowVolume.isEmpty()) {
             if (singleVolume.isEmpty()) {
                 singleVolume = rowVolume;
@@ -801,7 +803,7 @@ QVariantMap ComicsListModel::seriesImportContext(const QString &seriesKey) const
 
         return {
             { QStringLiteral("series"), row.series.trimmed() },
-            { QStringLiteral("volume"), row.volume.trimmed() },
+            { QStringLiteral("volume"), ComicImportMatching::semanticVolumeValue(row.volume) },
             { QStringLiteral("seriesKey"), row.seriesGroupKey.trimmed() },
             { QStringLiteral("seriesTitle"), row.seriesGroupTitle.trimmed() }
         };

@@ -414,7 +414,7 @@ QString setSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey,
         record.seriesMonth = normalizedMonth;
     }
     if (hasGenres) record.genres = valueFromMap(values, QStringLiteral("genres"));
-    if (hasVolume) record.volume = valueFromMap(values, QStringLiteral("volume"));
+    if (hasVolume) record.volume = ComicImportMatching::semanticVolumeValue(valueFromMap(values, QStringLiteral("volume")));
     if (hasPublisher) record.publisher = valueFromMap(values, QStringLiteral("publisher"));
     if (hasAgeRating) record.ageRating = valueFromMap(values, QStringLiteral("ageRating"));
     if (hasHeaderCoverPath) record.headerCoverPath = valueFromMap(values, QStringLiteral("headerCoverPath"));
@@ -464,7 +464,7 @@ QString removeSeriesMetadataForKey(const QString &dbPath, const QString &seriesK
 QString setIssueMetadataKnowledge(const QString &dbPath, const QVariantMap &values)
 {
     const QString seriesName = valueFromMap(values, QStringLiteral("series"));
-    const QString volume = valueFromMap(values, QStringLiteral("volume"));
+    const QString volume = ComicImportMatching::semanticVolumeValue(valueFromMap(values, QStringLiteral("volume")));
     const QString issueNumber = ComicImportMatching::normalizeStoredIssueNumber(
         valueFromMap(values, QStringLiteral("issueNumber"))
     );

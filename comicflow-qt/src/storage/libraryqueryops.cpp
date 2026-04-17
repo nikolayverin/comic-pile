@@ -22,6 +22,11 @@ QString valueFromMap(const QVariantMap &map, const QString &key)
     return map.value(key).toString().trimmed();
 }
 
+QString semanticVolume(const QVariant &value)
+{
+    return ComicImportMatching::semanticVolumeValue(trimOrEmpty(value));
+}
+
 struct SeriesMetadataRecord {
     QString seriesTitle;
     QString summary;
@@ -133,7 +138,7 @@ bool loadSeriesMetadataRecord(
         recordOut.seriesYear = trimOrEmpty(query.value(2));
         recordOut.seriesMonth = trimOrEmpty(query.value(3));
         recordOut.genres = trimOrEmpty(query.value(4));
-        recordOut.volume = trimOrEmpty(query.value(5));
+        recordOut.volume = semanticVolume(query.value(5));
         recordOut.publisher = trimOrEmpty(query.value(6));
         recordOut.ageRating = trimOrEmpty(query.value(7));
         recordOut.headerCoverPath = trimOrEmpty(query.value(8));
@@ -148,7 +153,7 @@ QVariantMap issueKnowledgeRecordToMap(const IssueMetadataKnowledgeRecord &record
     return {
         { QStringLiteral("seriesKey"), record.seriesGroupKey },
         { QStringLiteral("seriesTitle"), record.seriesTitle },
-        { QStringLiteral("volume"), record.seriesVolume },
+        { QStringLiteral("volume"), ComicImportMatching::semanticVolumeValue(record.seriesVolume) },
         { QStringLiteral("issueNumber"), record.issueNumber },
         { QStringLiteral("title"), record.issueTitle },
         { QStringLiteral("publisher"), record.issuePublisher },
@@ -212,7 +217,7 @@ bool loadComicRecords(const QString &dbPath, QVector<ComicRecord> &rowsOut, QStr
         row.filePath = trimOrEmpty(query.value(1));
         row.filename = trimOrEmpty(query.value(2));
         row.series = trimOrEmpty(query.value(3));
-        row.volume = trimOrEmpty(query.value(4));
+        row.volume = semanticVolume(query.value(4));
         row.title = trimOrEmpty(query.value(5));
         row.issueNumber = trimOrEmpty(query.value(6));
         row.publisher = trimOrEmpty(query.value(7));
@@ -303,7 +308,7 @@ QVariantMap loadComicMetadata(const QString &dbPath, int comicId)
     QVariantMap values;
     values.insert(QStringLiteral("id"), comicId);
     values.insert(QStringLiteral("series"), trimOrEmpty(query.value(0)));
-    values.insert(QStringLiteral("volume"), trimOrEmpty(query.value(1)));
+    values.insert(QStringLiteral("volume"), semanticVolume(query.value(1)));
     values.insert(QStringLiteral("title"), trimOrEmpty(query.value(2)));
     values.insert(QStringLiteral("issueNumber"), trimOrEmpty(query.value(3)));
     values.insert(QStringLiteral("publisher"), trimOrEmpty(query.value(4)));
@@ -485,7 +490,7 @@ QVariantList seriesMetadataCandidates(const QString &dbPath, const QString &seri
         row.insert(QStringLiteral("year"), trimOrEmpty(query.value(3)));
         row.insert(QStringLiteral("month"), trimOrEmpty(query.value(4)));
         row.insert(QStringLiteral("genres"), trimOrEmpty(query.value(5)));
-        row.insert(QStringLiteral("volume"), trimOrEmpty(query.value(6)));
+        row.insert(QStringLiteral("volume"), semanticVolume(query.value(6)));
         row.insert(QStringLiteral("publisher"), trimOrEmpty(query.value(7)));
         row.insert(QStringLiteral("ageRating"), trimOrEmpty(query.value(8)));
         row.insert(QStringLiteral("headerCoverPath"), trimOrEmpty(query.value(9)));
@@ -560,7 +565,7 @@ QVariantList issueMetadataKnowledgeCandidates(
         record.seriesNameKey = trimOrEmpty(query.value(0));
         record.seriesGroupKey = trimOrEmpty(query.value(1));
         record.seriesTitle = trimOrEmpty(query.value(2));
-        record.seriesVolume = trimOrEmpty(query.value(3));
+        record.seriesVolume = semanticVolume(query.value(3));
         record.issueKey = trimOrEmpty(query.value(4));
         record.issueNumber = trimOrEmpty(query.value(5));
         record.issueTitle = trimOrEmpty(query.value(6));

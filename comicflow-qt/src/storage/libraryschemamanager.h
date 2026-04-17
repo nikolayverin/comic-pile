@@ -23,6 +23,7 @@ private:
     bool migrateSchemaToVersion6(QSqlDatabase &db, QString &errorText) const;
     bool migrateSchemaToVersion7(QSqlDatabase &db, QString &errorText) const;
     bool migrateSchemaToVersion8(QSqlDatabase &db, QString &errorText) const;
+    bool migrateSchemaToVersion9(QSqlDatabase &db, QString &errorText) const;
 
     QString m_dbPath;
 };

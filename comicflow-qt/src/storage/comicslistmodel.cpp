@@ -712,7 +712,7 @@ QString formatSeriesGroupTitle(const QString &series, const QString &volume)
         ? QString("Unknown Series")
         : series.trimmed();
 
-    QString volumeText = volume.trimmed();
+    QString volumeText = ComicImportMatching::semanticVolumeValue(volume);
     if (volumeText.isEmpty()) return baseTitle;
 
     volumeText.remove(QRegularExpression("^vol(?:ume)?\\.?\\s*", QRegularExpression::CaseInsensitiveOption));
@@ -1166,9 +1166,10 @@ QVariantList ComicsListModel::volumeGroupsForSeries(const QString &seriesKey) co
         if (row.seriesGroupKey != requestedSeriesKey) continue;
 
         const QString key = row.volumeGroupKey;
-        const QString title = row.volume.trimmed().isEmpty()
+        const QString displayVolume = ComicImportMatching::semanticVolumeValue(row.volume);
+        const QString title = displayVolume.isEmpty()
             ? QString("No Volume")
-            : row.volume.trimmed();
+            : displayVolume;
 
         const auto found = indexByKey.constFind(key);
         if (found == indexByKey.constEnd()) {
@@ -1245,7 +1246,7 @@ QVariantList ComicsListModel::issuesForSeries(
         QVariantMap item;
         item.insert("id", row.id);
         item.insert("series", row.series);
-        item.insert("volume", row.volume);
+        item.insert("volume", ComicImportMatching::semanticVolumeValue(row.volume));
         item.insert("title", row.title);
         item.insert("issueNumber", ComicImportMatching::displayIssueNumber(row.issueNumber));
         item.insert("publisher", row.publisher);
@@ -1288,7 +1289,7 @@ QVariantList ComicsListModel::issuesForQuickFilter(
         QVariantMap item;
         item.insert("id", row.id);
         item.insert("series", row.series);
-        item.insert("volume", row.volume);
+        item.insert("volume", ComicImportMatching::semanticVolumeValue(row.volume));
         item.insert("title", row.title);
         item.insert("issueNumber", ComicImportMatching::displayIssueNumber(row.issueNumber));
         item.insert("publisher", row.publisher);
@@ -1985,7 +1986,8 @@ QString ComicsListModel::resolveDataRoot() const
 QString ComicsListModel::buildSubtitle(const ComicRow &row)
 {
     QStringList parts;
-    if (!row.volume.isEmpty()) parts << QString("Vol %1").arg(row.volume);
+    const QString displayVolume = ComicImportMatching::semanticVolumeValue(row.volume);
+    if (!displayVolume.isEmpty()) parts << QString("Vol %1").arg(displayVolume);
     const QString displayIssue = ComicImportMatching::displayIssueNumber(row.issueNumber);
     if (!displayIssue.isEmpty()) parts << QString("#%1").arg(displayIssue);
     if (!row.title.isEmpty()) parts << row.title;

@@ -10,7 +10,7 @@
 
 namespace {
 
-constexpr int kCurrentLibrarySchemaVersion = 8;
+constexpr int kCurrentLibrarySchemaVersion = 9;
 
 struct ComicsColumnSpec {
     const char *name;
@@ -241,6 +241,9 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
                     break;
                 case 8:
                     migrated = migrateSchemaToVersion8(db, schemaError);
+                    break;
+                case 9:
+                    migrated = migrateSchemaToVersion9(db, schemaError);
                     break;
                 default:
                     schemaError = QStringLiteral("Unsupported schema migration target: %1").arg(nextVersion);
@@ -714,4 +717,15 @@ bool LibrarySchemaManager::migrateSchemaToVersion8(QSqlDatabase &db, QString &er
         return false;
     }
     return ensureIssueMetadataKnowledgeTable(db, errorText);
+}
+
+bool LibrarySchemaManager::migrateSchemaToVersion9(QSqlDatabase &db, QString &errorText) const
+{
+    if (!ensureSeriesMetadataTable(db, errorText)) {
+        return false;
+    }
+    if (!ensureIssueMetadataKnowledgeTable(db, errorText)) {
+        return false;
+    }
+    return ComicLibraryDataRepair::canonicalizeDefaultVolumeOneMetadata(db, errorText);
 }
