@@ -66,6 +66,79 @@ QString sourceFallbackTitle(const QString &sourceType, const QString &sourceLabe
     return trimmedLabel;
 }
 
+QString normalizeLooseText(const QString &value)
+{
+    QString key = value.normalized(QString::NormalizationForm_KC).toLower().trimmed();
+    key.replace(QRegularExpression(QStringLiteral("[^a-z0-9]+")), QString());
+    return key;
+}
+
+QString normalizedIssueToken(const QString &issueValue)
+{
+    QString normalized = issueValue.normalized(QString::NormalizationForm_KC).toLower().trimmed();
+    normalized.remove(QRegularExpression(QStringLiteral("^(?:issue|iss|no|n|chapter|ch|ep|episode|part|pt)\\s*#?\\s*")));
+    normalized.remove(QRegularExpression(QStringLiteral("^#+")));
+    normalized = normalized.trimmed();
+    normalized.replace(QRegularExpression(QStringLiteral("\\s+")), QString());
+    return normalized;
+}
+
+bool fallbackTitleRepeatsSeriesAndIssue(
+    const QString &fallbackTitle,
+    const QString &seriesValue,
+    const QString &issueValue
+)
+{
+    const QString fallbackKey = normalizeLooseText(fallbackTitle);
+    const QString seriesKey = normalizeLooseText(seriesValue);
+    if (fallbackKey.isEmpty() || seriesKey.isEmpty()) {
+        return false;
+    }
+
+    QStringList issueCandidates;
+    const QString rawIssueToken = normalizedIssueToken(issueValue);
+    if (!rawIssueToken.isEmpty()) {
+        issueCandidates.push_back(rawIssueToken);
+    }
+
+    const QString normalizedIssueKey = ComicImportMatching::normalizeIssueKey(issueValue);
+    if (!normalizedIssueKey.isEmpty()) {
+        const QString normalizedIssueTokenValue = normalizeLooseText(normalizedIssueKey);
+        if (!normalizedIssueTokenValue.isEmpty() && !issueCandidates.contains(normalizedIssueTokenValue)) {
+            issueCandidates.push_back(normalizedIssueTokenValue);
+        }
+    }
+
+    if (issueCandidates.isEmpty()) {
+        return false;
+    }
+
+    static const QStringList markers = {
+        QString(),
+        QStringLiteral("issue"),
+        QStringLiteral("iss"),
+        QStringLiteral("no"),
+        QStringLiteral("n"),
+        QStringLiteral("ch"),
+        QStringLiteral("chapter"),
+        QStringLiteral("ep"),
+        QStringLiteral("episode"),
+        QStringLiteral("part"),
+        QStringLiteral("pt")
+    };
+
+    for (const QString &issueCandidate : issueCandidates) {
+        for (const QString &marker : markers) {
+            const QString candidateKey = seriesKey + marker + issueCandidate;
+            if (fallbackKey == candidateKey) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 } // namespace
 
 namespace ComicImportMatching {
@@ -514,6 +587,12 @@ ImportIdentityPassport buildImportIdentityPassport(
     } else if (!passport.comicInfoTitle.isEmpty()) {
         passport.effectiveTitle = passport.comicInfoTitle;
         passport.titleSource = QStringLiteral("comicinfo");
+    } else if (fallbackTitleRepeatsSeriesAndIssue(
+                   passport.fallbackTitle,
+                   passport.effectiveSeries,
+                   passport.effectiveIssue
+               )) {
+        passport.titleSource = QStringLiteral("empty");
     } else {
         passport.effectiveTitle = passport.fallbackTitle;
         passport.titleSource = QStringLiteral("fallback");
