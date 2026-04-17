@@ -110,6 +110,8 @@ set(_comicpile_core_sources
     src/storage/startupinventoryops.h
     src/storage/startupruntimeutils.cpp
     src/storage/startupruntimeutils.h
+    src/updates/releasecheckservice.cpp
+    src/updates/releasecheckservice.h
 )
 
 qt_add_executable(comic_pile_qt

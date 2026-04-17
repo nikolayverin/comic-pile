@@ -3,6 +3,7 @@
 #include "comicpile_build_iteration.h"
 #include "storage/comicslistmodel.h"
 #include "storage/datarootrelocationbootstrap.h"
+#include "updates/releasecheckservice.h"
 
 #include <QApplication>
 #include <QDateTime>
@@ -181,10 +182,12 @@ int main(int argc, char *argv[])
     ComicStartupLaunch::LaunchState launchState;
 
     ComicsListModel libraryModel;
+    ReleaseCheckService releaseCheckService;
     ComicStartupLaunch::appendLaunchLog(launchLogPath, launchTimer, QStringLiteral("library_model_created"));
     bool pendingActivation = false;
     const QString effectiveBuildIteration = effectiveBuildIterationText();
     engine.rootContext()->setContextProperty("libraryModel", &libraryModel);
+    engine.rootContext()->setContextProperty("releaseCheckService", &releaseCheckService);
     engine.rootContext()->setContextProperty(
         "appVersion",
         QString::fromLatin1(COMICPILE_APP_VERSION));
