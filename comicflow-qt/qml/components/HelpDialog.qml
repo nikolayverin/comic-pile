@@ -199,7 +199,7 @@ PopupDialogWindow {
                 {
                     key: "replace_issue",
                     label: "How do I replace one issue in a series?",
-                    bodyHtml: "<b>Replace</b> keeps the existing issue in your library and replaces its current file with the new one. Use it when the new file is a corrected or better copy of the same issue.<br><br>This updates the current issue instead of creating a separate one.",
+                    bodyHtml: "<b>Replace</b> keeps the existing issue in your library and replaces its current source with a new one. Use it when the new source is a corrected or better copy of the same issue.<br><br>When you choose <b>Replace</b>, Comic Pile first asks what kind of source you want to use: an archive file or a folder of ordered page images.<br><br>This updates the current issue instead of creating a separate one.",
                     screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/11-replace.png",
                     screenshotTitle: "Replace action in the issue menu",
                     screenshotHint: ""
