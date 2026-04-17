@@ -1,6 +1,7 @@
 #include "updates/releasecheckservice.h"
 
 #include <QCoreApplication>
+#include <QDateTime>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -8,6 +9,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRegularExpression>
+#include <QSettings>
 #include <QStringList>
 #include <QUrl>
 
@@ -15,6 +17,12 @@ namespace {
 
 constexpr auto kLatestReleaseApiUrl = "https://api.github.com/repos/nikolayverin/comic-pile/releases/latest";
 constexpr auto kRepositoryUrl = "https://github.com/nikolayverin/comic-pile";
+constexpr qint64 kAutoCheckIntervalMs = 24ll * 60ll * 60ll * 1000ll;
+constexpr int kAutoCheckIntervalHours = 24;
+constexpr auto kSettingsGroup = "UpdateFlow";
+constexpr auto kLastCheckAttemptAtMsKey = "last_check_attempt_at_ms";
+constexpr auto kLastSuccessfulCheckAtMsKey = "last_successful_check_at_ms";
+constexpr auto kDismissedUpdateVersionKey = "dismissed_update_version";
 
 QString normalizeReleaseVersionTag(const QString &tag)
 {
@@ -78,6 +86,7 @@ ReleaseCheckService::ReleaseCheckService(QObject *parent)
     : QObject(parent)
     , m_networkAccessManager(new QNetworkAccessManager(this))
 {
+    loadPersistedState();
 }
 
 ReleaseCheckService::~ReleaseCheckService()
@@ -95,6 +104,39 @@ QString ReleaseCheckService::currentVersion() const
 bool ReleaseCheckService::checking() const
 {
     return m_checking;
+}
+
+qint64 ReleaseCheckService::lastCheckAttemptAtMs() const
+{
+    return m_lastCheckAttemptAtMs;
+}
+
+qint64 ReleaseCheckService::lastSuccessfulCheckAtMs() const
+{
+    return m_lastSuccessfulCheckAtMs;
+}
+
+QString ReleaseCheckService::dismissedUpdateVersion() const
+{
+    return m_dismissedUpdateVersion;
+}
+
+bool ReleaseCheckService::autoCheckDue() const
+{
+    return shouldAutoCheckNow();
+}
+
+qint64 ReleaseCheckService::nextAutoCheckAtMs() const
+{
+    if (m_lastCheckAttemptAtMs < 1) {
+        return 0;
+    }
+    return m_lastCheckAttemptAtMs + kAutoCheckIntervalMs;
+}
+
+int ReleaseCheckService::autoCheckIntervalHours() const
+{
+    return kAutoCheckIntervalHours;
 }
 
 bool ReleaseCheckService::hasReleaseInfo() const
@@ -165,6 +207,7 @@ void ReleaseCheckService::checkLatestRelease()
 
     setLastError({});
     setChecking(true);
+    storeLastCheckAttemptAtMs(QDateTime::currentMSecsSinceEpoch());
 
     QNetworkRequest request(QUrl(QString::fromLatin1(kLatestReleaseApiUrl)));
     request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
@@ -179,6 +222,94 @@ void ReleaseCheckService::checkLatestRelease()
     connect(m_activeReply, &QNetworkReply::finished, this, [this]() {
         handleReplyFinished(m_activeReply);
     });
+}
+
+void ReleaseCheckService::checkLatestReleaseIfDue()
+{
+    if (!shouldAutoCheckNow()) {
+        return;
+    }
+    checkLatestRelease();
+}
+
+bool ReleaseCheckService::shouldAutoCheckNow() const
+{
+    if (m_checking) {
+        return false;
+    }
+    if (m_lastCheckAttemptAtMs < 1) {
+        return true;
+    }
+    return QDateTime::currentMSecsSinceEpoch() >= (m_lastCheckAttemptAtMs + kAutoCheckIntervalMs);
+}
+
+void ReleaseCheckService::markUpdateDismissed(const QString &version)
+{
+    storeDismissedUpdateVersion(normalizeReleaseVersionTag(version));
+}
+
+void ReleaseCheckService::clearDismissedUpdateVersion()
+{
+    storeDismissedUpdateVersion({});
+}
+
+bool ReleaseCheckService::isVersionDismissed(const QString &version) const
+{
+    const QString normalizedVersion = normalizeReleaseVersionTag(version);
+    return !normalizedVersion.isEmpty()
+        && normalizedVersion.compare(m_dismissedUpdateVersion, Qt::CaseInsensitive) == 0;
+}
+
+void ReleaseCheckService::loadPersistedState()
+{
+    QSettings settings;
+    settings.beginGroup(QString::fromLatin1(kSettingsGroup));
+    m_lastCheckAttemptAtMs = settings.value(QString::fromLatin1(kLastCheckAttemptAtMsKey), 0).toLongLong();
+    m_lastSuccessfulCheckAtMs = settings.value(QString::fromLatin1(kLastSuccessfulCheckAtMsKey), 0).toLongLong();
+    m_dismissedUpdateVersion = normalizeReleaseVersionTag(
+        settings.value(QString::fromLatin1(kDismissedUpdateVersionKey)).toString()
+    );
+    settings.endGroup();
+}
+
+void ReleaseCheckService::storeLastCheckAttemptAtMs(qint64 timestampMs)
+{
+    if (m_lastCheckAttemptAtMs == timestampMs) {
+        return;
+    }
+    m_lastCheckAttemptAtMs = timestampMs;
+    QSettings settings;
+    settings.beginGroup(QString::fromLatin1(kSettingsGroup));
+    settings.setValue(QString::fromLatin1(kLastCheckAttemptAtMsKey), m_lastCheckAttemptAtMs);
+    settings.endGroup();
+    emit updateStateChanged();
+}
+
+void ReleaseCheckService::storeLastSuccessfulCheckAtMs(qint64 timestampMs)
+{
+    if (m_lastSuccessfulCheckAtMs == timestampMs) {
+        return;
+    }
+    m_lastSuccessfulCheckAtMs = timestampMs;
+    QSettings settings;
+    settings.beginGroup(QString::fromLatin1(kSettingsGroup));
+    settings.setValue(QString::fromLatin1(kLastSuccessfulCheckAtMsKey), m_lastSuccessfulCheckAtMs);
+    settings.endGroup();
+    emit updateStateChanged();
+}
+
+void ReleaseCheckService::storeDismissedUpdateVersion(const QString &version)
+{
+    const QString normalizedVersion = normalizeReleaseVersionTag(version);
+    if (m_dismissedUpdateVersion.compare(normalizedVersion, Qt::CaseInsensitive) == 0) {
+        return;
+    }
+    m_dismissedUpdateVersion = normalizedVersion;
+    QSettings settings;
+    settings.beginGroup(QString::fromLatin1(kSettingsGroup));
+    settings.setValue(QString::fromLatin1(kDismissedUpdateVersionKey), m_dismissedUpdateVersion);
+    settings.endGroup();
+    emit updateStateChanged();
 }
 
 void ReleaseCheckService::setChecking(bool checkingValue)
@@ -321,6 +452,7 @@ void ReleaseCheckService::handleReplyFinished(QNetworkReply *reply)
         assetName,
         assetDownloadUrl
     );
+    storeLastSuccessfulCheckAtMs(QDateTime::currentMSecsSinceEpoch());
     setChecking(false);
     emit latestReleaseCheckFinished(true);
 }
