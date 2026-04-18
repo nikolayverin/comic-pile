@@ -188,6 +188,7 @@ int main(int argc, char *argv[])
     bool pendingActivation = false;
     const QString effectiveBuildIteration = effectiveBuildIterationText();
     const QString bundledWhatsNewText = bundledReleaseNotesTextForVersion(QStringLiteral(COMICPILE_APP_VERSION));
+    const QVariantList bundledWhatsNewEntries = bundledReleaseNotesEntries(QStringLiteral(COMICPILE_APP_VERSION));
     engine.rootContext()->setContextProperty("libraryModel", &libraryModel);
     engine.rootContext()->setContextProperty("releaseCheckService", &releaseCheckService);
     engine.rootContext()->setContextProperty(
@@ -199,6 +200,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(
         "appBundledWhatsNewText",
         bundledWhatsNewText);
+    engine.rootContext()->setContextProperty(
+        "appBundledWhatsNewEntries",
+        bundledWhatsNewEntries);
     engine.rootContext()->setContextProperty(
         "appIsFastDevBuild",
         QVariant::fromValue(bool(COMICPILE_FAST_DEV_BUILD_ENABLED)));

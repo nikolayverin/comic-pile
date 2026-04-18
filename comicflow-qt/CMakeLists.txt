@@ -16,11 +16,14 @@ if(COMICPILE_FAST_DEV_BUILD)
     list(APPEND _comicpile_qml_module_extra_args NO_CACHEGEN)
 endif()
 
-set(_comicpile_bundled_whats_new_file "${CMAKE_CURRENT_SOURCE_DIR}/../release/WhatsNew/whats-new-patch-notes.md")
-set_source_files_properties(
-    "${_comicpile_bundled_whats_new_file}"
-    PROPERTIES QT_RESOURCE_ALIAS "release/WhatsNew/whats-new-patch-notes.md"
-)
+file(GLOB _comicpile_bundled_whats_new_files "${CMAKE_CURRENT_SOURCE_DIR}/../release/WhatsNew/*.md")
+foreach(_comicpile_bundled_whats_new_file IN LISTS _comicpile_bundled_whats_new_files)
+    get_filename_component(_comicpile_bundled_whats_new_name "${_comicpile_bundled_whats_new_file}" NAME)
+    set_source_files_properties(
+        "${_comicpile_bundled_whats_new_file}"
+        PROPERTIES QT_RESOURCE_ALIAS "release/WhatsNew/${_comicpile_bundled_whats_new_name}"
+    )
+endforeach()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -346,7 +349,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-reader-one-page.svg
         assets/icons/icon-reader-two-page.svg
         assets/icons/icon-reader-full-screen.svg
-        ${_comicpile_bundled_whats_new_file}
+        ${_comicpile_bundled_whats_new_files}
         assets/icons/icon-reader-moon.svg
         assets/icons/icon-reader-sun.svg
         assets/icons/pencil-line-gray.svg

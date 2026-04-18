@@ -5,6 +5,7 @@ Updates
 - Added a dedicated update popup that shows the latest version, What's new, and a direct Download update action.
 - Added a one-time update prompt that can appear on a later app launch after a newer version is detected.
 - Known available updates now stay visible in About between launches instead of disappearing after restart.
+- Added a separate What's new surface with a sidebar layout for reading the current build's release notes outside Help.
 
 Import
 - Replace can now use a folder of ordered page images, not only another archive file.

@@ -25,19 +25,6 @@ PopupDialogWindow {
         }
         return versionText + " (DEV " + buildText + ")"
     }
-    readonly property string updateStatusText: {
-        if (!updatesRef) {
-            return ""
-        }
-        if (Boolean(updatesRef.checking)) {
-            return "Checking GitHub Releases..."
-        }
-        const errorText = String(updatesRef.lastError || "").trim()
-        if (errorText.length > 0) {
-            return errorText
-        }
-        return ""
-    }
     readonly property bool hasUpdateAvailable: Boolean(updatesRef) && Boolean(updatesRef.hasReleaseInfo) && Boolean(updatesRef.latestVersionIsNewer)
     property bool manualUpdateCheckPending: false
 
@@ -370,18 +357,6 @@ PopupDialogWindow {
                             dialog.updatesRef.checkLatestRelease()
                         }
                     }
-                }
-
-                Text {
-                    width: 190
-                    text: dialog.updateStatusText
-                    visible: text.length > 0
-                    color: String(dialog.updatesRef && dialog.updatesRef.lastError || "").trim().length > 0
-                        ? "#e2a4a4"
-                        : "#8ba4c0"
-                    font.family: Qt.application.font.family
-                    font.pixelSize: 11
-                    wrapMode: Text.WordWrap
                 }
 
                 Text {

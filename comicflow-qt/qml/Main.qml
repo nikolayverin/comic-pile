@@ -2312,7 +2312,7 @@ ApplicationWindow {
               helperButtonsBottomMargin: 8
               helperButtonsSpacing: 8
               continueReadingEnabled: navigationSurfaceController.continueReadingAvailable
-              whatsNewAvailable: false
+              whatsNewAvailable: true
               centerLabel: root.topBarCenterLabel
               windowCornerRadius: root.windowCornerRadius
               onContinueReadingRequested: navigationSurfaceController.continueReading()

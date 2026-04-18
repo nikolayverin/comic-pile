@@ -381,6 +381,7 @@ Item {
         id: whatsNewDialog
         hostWidth: root.width
         hostHeight: root.height
+        onUpdateDetailsRequested: root.openUpdateAvailableDialog()
     }
 
     SeriesHeaderDialog {
