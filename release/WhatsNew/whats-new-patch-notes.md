@@ -7,6 +7,7 @@
 - Known available updates now stay visible in **About** between launches instead of disappearing after restart.
 - Added a dedicated **What's new** surface in the **Help** menu for reading the current build's release notes inside the app.
 - Added a separate **Downloading update** popup with progress, cancellation, download failure alerts, and a dedicated **Install update** step.
+- **Install update** now closes Comic Pile, applies the downloaded portable update over the current app folder, and keeps the existing **Database** library data in place.
 
 **Import**
 - **Replace** can now use a folder of ordered page images, not only another archive file.

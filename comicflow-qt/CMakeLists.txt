@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.15.1 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.15.2 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -121,6 +121,8 @@ set(_comicpile_core_sources
     src/storage/startupruntimeutils.h
     src/updates/bundledreleasenotes.cpp
     src/updates/bundledreleasenotes.h
+    src/updates/releaseinstallservice.cpp
+    src/updates/releaseinstallservice.h
     src/updates/releasedownloadservice.cpp
     src/updates/releasedownloadservice.h
     src/updates/releasecheckservice.cpp

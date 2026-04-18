@@ -1068,11 +1068,22 @@ ApplicationWindow {
     }
 
     function handleDownloadedUpdateInstallRequested() {
-        popupController.showMappedActionResult({
-            title: "Install update",
-            body: "Automatic update installation will be added in the next step of this update flow.",
-            details: "The update package has already been downloaded successfully."
-        })
+        if (typeof releaseInstallService === "undefined" || !releaseInstallService || !updateDownloadDialog) {
+            popupController.showMappedActionResult({
+                title: "Install update",
+                body: "Comic Pile couldn't start the update helper."
+            })
+            return
+        }
+
+        const packagePath = String(updateDownloadDialog.downloadedFilePath || "").trim()
+        const installError = String(releaseInstallService.installDownloadedRelease(packagePath) || "").trim()
+        if (installError.length > 0) {
+            popupController.showMappedActionResult({
+                title: "Install update",
+                body: installError
+            })
+        }
     }
 
     function openWhatsNewDialog() {

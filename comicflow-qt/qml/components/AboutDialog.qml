@@ -385,66 +385,6 @@ PopupDialogWindow {
                     }
                 }
 
-                Text {
-                    id: debugUpdateFlowLink
-                    visible: dialog.fastDevBuild && !!dialog.updatesRef
-                    property bool hovered: false
-                    text: dialog.aboutLinkText("#", "Debug update flow", hovered)
-                    color: "#ffffff"
-                    font.family: Qt.application.font.family
-                    font.pixelSize: 12
-                    textFormat: Text.RichText
-                    onLinkActivated: function(link) {
-                        dialog.updatesRef.debugLoadMockAvailableUpdate()
-                        dialog.updateDetailsRequested()
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: debugUpdateFlowLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onEntered: debugUpdateFlowLink.hovered = true
-                        onExited: debugUpdateFlowLink.hovered = false
-                        onClicked: function(mouse) {
-                            const link = debugUpdateFlowLink.linkAt(mouse.x, mouse.y)
-                            if (link !== "") {
-                                dialog.updatesRef.debugLoadMockAvailableUpdate()
-                                dialog.updateDetailsRequested()
-                            }
-                        }
-                    }
-                }
-
-                Text {
-                    id: debugFailedDownloadLink
-                    visible: dialog.fastDevBuild && !!dialog.updatesRef
-                    property bool hovered: false
-                    text: dialog.aboutLinkText("#", "Debug failed download", hovered)
-                    color: "#ffffff"
-                    font.family: Qt.application.font.family
-                    font.pixelSize: 12
-                    textFormat: Text.RichText
-                    onLinkActivated: function(link) {
-                        dialog.updatesRef.debugLoadMockFailedDownloadUpdate()
-                        dialog.updateDetailsRequested()
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: debugFailedDownloadLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onEntered: debugFailedDownloadLink.hovered = true
-                        onExited: debugFailedDownloadLink.hovered = false
-                        onClicked: function(mouse) {
-                            const link = debugFailedDownloadLink.linkAt(mouse.x, mouse.y)
-                            if (link !== "") {
-                                dialog.updatesRef.debugLoadMockFailedDownloadUpdate()
-                                dialog.updateDetailsRequested()
-                            }
-                        }
-                    }
-                }
-
             }
         }
 
