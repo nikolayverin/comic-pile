@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.14.20 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.15.0 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -15,6 +15,12 @@ set(_comicpile_qml_module_extra_args)
 if(COMICPILE_FAST_DEV_BUILD)
     list(APPEND _comicpile_qml_module_extra_args NO_CACHEGEN)
 endif()
+
+set(_comicpile_bundled_whats_new_file "${CMAKE_CURRENT_SOURCE_DIR}/../release/WhatsNew/whats-new-patch-notes.md")
+set_source_files_properties(
+    "${_comicpile_bundled_whats_new_file}"
+    PROPERTIES QT_RESOURCE_ALIAS "release/WhatsNew/whats-new-patch-notes.md"
+)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -110,6 +116,8 @@ set(_comicpile_core_sources
     src/storage/startupinventoryops.h
     src/storage/startupruntimeutils.cpp
     src/storage/startupruntimeutils.h
+    src/updates/bundledreleasenotes.cpp
+    src/updates/bundledreleasenotes.h
     src/updates/releasecheckservice.cpp
     src/updates/releasecheckservice.h
 )
@@ -279,6 +287,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/SettingsChoiceDropdown.qml
         qml/components/SettingsAppearanceSection.qml
         qml/components/AboutDialog.qml
+        qml/components/UpdateAvailableDialog.qml
         qml/components/WhatsNewDialog.qml
         qml/components/HelpDialog.qml
         qml/components/SettingsDialog.qml
@@ -337,6 +346,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-reader-one-page.svg
         assets/icons/icon-reader-two-page.svg
         assets/icons/icon-reader-full-screen.svg
+        ${_comicpile_bundled_whats_new_file}
         assets/icons/icon-reader-moon.svg
         assets/icons/icon-reader-sun.svg
         assets/icons/pencil-line-gray.svg

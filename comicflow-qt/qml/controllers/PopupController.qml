@@ -25,6 +25,7 @@ Item {
     property var settingsDialogRef: null
     property var helpDialogRef: null
     property var aboutDialogRef: null
+    property var updateAvailableDialogRef: null
     property var whatsNewDialogRef: null
     property var replaceSourceChoiceDialogRef: null
     property var seriesHeaderDialogRef: null
@@ -59,6 +60,7 @@ Item {
         || Boolean(settingsDialogRef && settingsDialogRef.visible)
         || Boolean(helpDialogRef && helpDialogRef.visible)
         || Boolean(aboutDialogRef && aboutDialogRef.visible)
+        || Boolean(updateAvailableDialogRef && updateAvailableDialogRef.visible)
         || Boolean(whatsNewDialogRef && whatsNewDialogRef.visible)
         || Boolean(replaceSourceChoiceDialogRef && replaceSourceChoiceDialogRef.visible)
         || Boolean(seriesHeaderDialogRef && seriesHeaderDialogRef.visible)
@@ -148,6 +150,7 @@ Item {
             settingsDialogRef,
             helpDialogRef,
             aboutDialogRef,
+            updateAvailableDialogRef,
             whatsNewDialogRef,
             replaceSourceChoiceDialogRef,
             seriesHeaderDialogRef,

@@ -1,4 +1,5 @@
 #include "updates/releasecheckservice.h"
+#include "updates/bundledreleasenotes.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -258,6 +259,27 @@ bool ReleaseCheckService::isVersionDismissed(const QString &version) const
     const QString normalizedVersion = normalizeReleaseVersionTag(version);
     return !normalizedVersion.isEmpty()
         && normalizedVersion.compare(m_dismissedUpdateVersion, Qt::CaseInsensitive) == 0;
+}
+
+void ReleaseCheckService::debugLoadMockAvailableUpdate()
+{
+#if COMICPILE_FAST_DEV_BUILD_ENABLED
+    setLastError({});
+    const QString bundledNotes = bundledReleaseNotesTextForVersion(currentVersion());
+    applyParsedReleaseInfo(
+        QStringLiteral("v0.14.21"),
+        QStringLiteral("0.14.21"),
+        QStringLiteral("https://github.com/nikolayverin/comic-pile/releases/tag/v0.14.21"),
+        QString(),
+        bundledNotes.isEmpty() ? QStringLiteral("Release notes are not available for this build.") : bundledNotes,
+        QStringLiteral("2026-04-18T18:00:00Z"),
+        QStringLiteral("Comic-Pile-0.14.21-portable.zip"),
+        QStringLiteral("https://github.com/nikolayverin/comic-pile/releases/download/v0.14.21/Comic-Pile-0.14.21-portable.zip")
+    );
+    emit latestReleaseCheckFinished(true);
+#else
+    emit latestReleaseCheckFinished(false);
+#endif
 }
 
 void ReleaseCheckService::loadPersistedState()

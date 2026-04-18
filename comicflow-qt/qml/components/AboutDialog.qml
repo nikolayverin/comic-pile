@@ -5,6 +5,8 @@ import QtQuick.Layouts
 PopupDialogWindow {
     id: dialog
 
+    signal updateDetailsRequested()
+
     readonly property string aboutLinkColor: "#78b7ff"
     readonly property string repositoryUrl: "https://github.com/nikolayverin/comic-pile"
     readonly property string projectLicenseUrl: repositoryUrl + "/blob/main/LICENSE"
@@ -34,31 +36,13 @@ PopupDialogWindow {
         if (errorText.length > 0) {
             return errorText
         }
-        const latestVersion = String(updatesRef.latestVersion || "").trim()
-        if (latestVersion.length < 1) {
-            return "No update check has been run yet."
-        }
-        if (Boolean(updatesRef.latestVersionIsNewer)) {
-            return "Update available: " + latestVersion
-        }
-        return "You are up to date."
+        return ""
     }
     readonly property bool hasUpdateAvailable: Boolean(updatesRef) && Boolean(updatesRef.hasReleaseInfo) && Boolean(updatesRef.latestVersionIsNewer)
-    readonly property string releaseNotesUrl: {
-        const url = String(updatesRef && updatesRef.latestReleaseUrl || "").trim()
-        return url
-    }
-    readonly property string updateDownloadUrl: {
-        const url = String(updatesRef && updatesRef.latestAssetDownloadUrl || "").trim()
-        return url
-    }
+    property bool manualUpdateCheckPending: false
 
     PopupStyle {
         id: styleTokens
-    }
-
-    ThemeColors {
-        id: themeColors
     }
 
     popupStyle: styleTokens
@@ -81,6 +65,20 @@ PopupDialogWindow {
     function aboutLinkText(url, label, hovered) {
         const decoration = hovered ? "underline" : "none"
         return "<a href=\"" + url + "\" style=\"color:" + aboutLinkColor + "; text-decoration:" + decoration + ";\">" + label + "</a>"
+    }
+
+    Connections {
+        target: dialog.updatesRef
+
+        function onLatestReleaseCheckFinished(ok) {
+            if (!dialog.manualUpdateCheckPending) {
+                return
+            }
+            dialog.manualUpdateCheckPending = false
+            if (ok && dialog.hasUpdateAvailable) {
+                dialog.updateDetailsRequested()
+            }
+        }
     }
 
     Item {
@@ -346,32 +344,29 @@ PopupDialogWindow {
                     id: checkForUpdatesButton
                     text: dialog.updatesRef && Boolean(dialog.updatesRef.checking)
                         ? "Checking..."
-                        : dialog.hasUpdateAvailable && dialog.updateDownloadUrl.length > 0
-                            ? "Download update"
-                            : "Check for updates"
+                        : dialog.updatesRef
+                          && Boolean(dialog.updatesRef.hasReleaseInfo)
+                          && !Boolean(dialog.updatesRef.latestVersionIsNewer)
+                          && String(dialog.updatesRef.lastError || "").trim().length < 1
+                            ? "You are up to date"
+                        : "Check for updates"
                     enabled: !!dialog.updatesRef
+                        && !(dialog.updatesRef && Boolean(dialog.updatesRef.checking))
+                        && !(dialog.updatesRef
+                            && Boolean(dialog.updatesRef.hasReleaseInfo)
+                            && !Boolean(dialog.updatesRef.latestVersionIsNewer)
+                            && String(dialog.updatesRef.lastError || "").trim().length < 1)
                     height: styleTokens.footerButtonHeight
                     minimumWidth: 168
                     horizontalPadding: styleTokens.footerButtonHorizontalPadding
                     cornerRadius: styleTokens.footerButtonRadius
-                    idleColor: dialog.hasUpdateAvailable && dialog.updateDownloadUrl.length > 0
-                        ? "#84db3f"
-                        : styleTokens.footerButtonIdleColor
-                    hoverColor: dialog.hasUpdateAvailable && dialog.updateDownloadUrl.length > 0
-                        ? "#459b00"
-                        : styleTokens.footerButtonHoverColor
-                    idleEdgeColor: dialog.hasUpdateAvailable && dialog.updateDownloadUrl.length > 0
-                        ? "#1e4400"
-                        : themeColors.lineTopbarBottom
-                    hoverEdgeColor: dialog.hasUpdateAvailable && dialog.updateDownloadUrl.length > 0
-                        ? "#e2ff40"
-                        : themeColors.popupPrimaryActionHoverEdgeColor
+                    idleColor: styleTokens.footerButtonIdleColor
+                    hoverColor: styleTokens.footerButtonHoverColor
                     textColor: styleTokens.textColor
                     textPixelSize: styleTokens.footerButtonTextSize
                     onClicked: {
-                        if (dialog.hasUpdateAvailable && dialog.updateDownloadUrl.length > 0) {
-                            dialog.openExternalLink(dialog.updateDownloadUrl)
-                        } else if (dialog.updatesRef) {
+                        if (dialog.updatesRef) {
+                            dialog.manualUpdateCheckPending = true
                             dialog.updatesRef.checkLatestRelease()
                         }
                     }
@@ -380,6 +375,7 @@ PopupDialogWindow {
                 Text {
                     width: 190
                     text: dialog.updateStatusText
+                    visible: text.length > 0
                     color: String(dialog.updatesRef && dialog.updatesRef.lastError || "").trim().length > 0
                         ? "#e2a4a4"
                         : "#8ba4c0"
@@ -389,56 +385,31 @@ PopupDialogWindow {
                 }
 
                 Text {
-                    id: downloadUpdateLink
-                    visible: dialog.hasUpdateAvailable && dialog.updateDownloadUrl.length > 0
+                    id: viewUpdateLink
+                    visible: dialog.hasUpdateAvailable
                     property bool hovered: false
-                    text: dialog.aboutLinkText(dialog.updateDownloadUrl, "Download update", hovered)
+                    text: dialog.aboutLinkText("#", "View update", hovered)
                     color: "#ffffff"
                     font.family: Qt.application.font.family
                     font.pixelSize: 12
                     textFormat: Text.RichText
-                    onLinkActivated: function(link) { dialog.openExternalLink(link) }
+                    onLinkActivated: function(link) { dialog.updateDetailsRequested() }
 
                     MouseArea {
                         anchors.fill: parent
                         hoverEnabled: true
-                        cursorShape: downloadUpdateLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onEntered: downloadUpdateLink.hovered = true
-                        onExited: downloadUpdateLink.hovered = false
+                        cursorShape: viewUpdateLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onEntered: viewUpdateLink.hovered = true
+                        onExited: viewUpdateLink.hovered = false
                         onClicked: function(mouse) {
-                            const link = downloadUpdateLink.linkAt(mouse.x, mouse.y)
+                            const link = viewUpdateLink.linkAt(mouse.x, mouse.y)
                             if (link !== "") {
-                                dialog.openExternalLink(link)
+                                dialog.updateDetailsRequested()
                             }
                         }
                     }
                 }
 
-                Text {
-                    id: releaseNotesLink
-                    visible: dialog.hasUpdateAvailable && dialog.releaseNotesUrl.length > 0
-                    property bool hovered: false
-                    text: dialog.aboutLinkText(dialog.releaseNotesUrl, "Release notes", hovered)
-                    color: "#ffffff"
-                    font.family: Qt.application.font.family
-                    font.pixelSize: 12
-                    textFormat: Text.RichText
-                    onLinkActivated: function(link) { dialog.openExternalLink(link) }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: releaseNotesLink.linkAt(mouseX, mouseY) !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
-                        onEntered: releaseNotesLink.hovered = true
-                        onExited: releaseNotesLink.hovered = false
-                        onClicked: function(mouse) {
-                            const link = releaseNotesLink.linkAt(mouse.x, mouse.y)
-                            if (link !== "") {
-                                dialog.openExternalLink(link)
-                            }
-                        }
-                    }
-                }
             }
         }
 

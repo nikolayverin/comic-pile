@@ -59,6 +59,7 @@ public:
     Q_INVOKABLE void markUpdateDismissed(const QString &version);
     Q_INVOKABLE void clearDismissedUpdateVersion();
     Q_INVOKABLE bool isVersionDismissed(const QString &version) const;
+    Q_INVOKABLE void debugLoadMockAvailableUpdate();
 
 signals:
     void checkingChanged();

@@ -46,6 +46,7 @@ Item {
     property alias settingsDialogRef: settingsDialog
     property alias helpDialogRef: helpDialog
     property alias aboutDialogRef: aboutDialog
+    property alias updateAvailableDialogRef: updateAvailableDialog
     property alias whatsNewDialogRef: whatsNewDialog
     property alias seriesHeaderDialogRef: seriesHeaderDialog
     property alias deleteConfirmDialogRef: deleteConfirmDialog
@@ -365,6 +366,13 @@ Item {
 
     AboutDialog {
         id: aboutDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        onUpdateDetailsRequested: root.openUpdateAvailableDialog()
+    }
+
+    UpdateAvailableDialog {
+        id: updateAvailableDialog
         hostWidth: root.width
         hostHeight: root.height
     }

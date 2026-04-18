@@ -213,6 +213,7 @@ ApplicationWindow {
     readonly property var settingsDialog: mainDialogHost.settingsDialogRef
     readonly property var helpDialog: mainDialogHost.helpDialogRef
     readonly property var aboutDialog: mainDialogHost.aboutDialogRef
+    readonly property var updateAvailableDialog: mainDialogHost.updateAvailableDialogRef
     readonly property var whatsNewDialog: mainDialogHost.whatsNewDialogRef
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
     readonly property var deleteConfirmDialog: mainDialogHost.deleteConfirmDialogRef
@@ -492,6 +493,7 @@ ApplicationWindow {
         settingsDialogRef: settingsDialog
         helpDialogRef: helpDialog
         aboutDialogRef: aboutDialog
+        updateAvailableDialogRef: updateAvailableDialog
         whatsNewDialogRef: whatsNewDialog
         replaceSourceChoiceDialogRef: replaceSourceChoiceDialog
         seriesHeaderDialogRef: seriesHeaderDialog
@@ -1025,6 +1027,10 @@ ApplicationWindow {
 
     function openAboutDialog() {
         popupController.openExclusivePopup(aboutDialog)
+    }
+
+    function openUpdateAvailableDialog() {
+        popupController.openExclusivePopup(updateAvailableDialog)
     }
 
     function openWhatsNewDialog() {
