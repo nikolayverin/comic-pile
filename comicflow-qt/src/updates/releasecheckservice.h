@@ -14,6 +14,7 @@ class ReleaseCheckService : public QObject
     Q_PROPERTY(qint64 lastCheckAttemptAtMs READ lastCheckAttemptAtMs NOTIFY updateStateChanged)
     Q_PROPERTY(qint64 lastSuccessfulCheckAtMs READ lastSuccessfulCheckAtMs NOTIFY updateStateChanged)
     Q_PROPERTY(QString dismissedUpdateVersion READ dismissedUpdateVersion NOTIFY updateStateChanged)
+    Q_PROPERTY(QString pendingUpdatePromptVersion READ pendingUpdatePromptVersion NOTIFY updateStateChanged)
     Q_PROPERTY(bool autoCheckDue READ autoCheckDue NOTIFY updateStateChanged)
     Q_PROPERTY(qint64 nextAutoCheckAtMs READ nextAutoCheckAtMs NOTIFY updateStateChanged)
     Q_PROPERTY(int autoCheckIntervalHours READ autoCheckIntervalHours CONSTANT)
@@ -38,6 +39,7 @@ public:
     qint64 lastCheckAttemptAtMs() const;
     qint64 lastSuccessfulCheckAtMs() const;
     QString dismissedUpdateVersion() const;
+    QString pendingUpdatePromptVersion() const;
     bool autoCheckDue() const;
     qint64 nextAutoCheckAtMs() const;
     int autoCheckIntervalHours() const;
@@ -56,8 +58,10 @@ public:
     Q_INVOKABLE void checkLatestRelease();
     Q_INVOKABLE void checkLatestReleaseIfDue();
     Q_INVOKABLE bool shouldAutoCheckNow() const;
+    Q_INVOKABLE bool shouldShowPendingUpdatePrompt() const;
     Q_INVOKABLE void markUpdateDismissed(const QString &version);
     Q_INVOKABLE void clearDismissedUpdateVersion();
+    Q_INVOKABLE void clearPendingUpdatePrompt();
     Q_INVOKABLE bool isVersionDismissed(const QString &version) const;
     Q_INVOKABLE void debugLoadMockAvailableUpdate();
 
@@ -70,9 +74,13 @@ signals:
 
 private:
     void loadPersistedState();
+    void startLatestReleaseCheck(bool autoDueCheck);
     void storeLastCheckAttemptAtMs(qint64 timestampMs);
     void storeLastSuccessfulCheckAtMs(qint64 timestampMs);
     void storeDismissedUpdateVersion(const QString &version);
+    void storePendingUpdatePromptVersion(const QString &version);
+    void storePersistedReleaseInfo();
+    void clearPersistedReleaseInfo();
     void setChecking(bool checking);
     void setLastError(const QString &errorText);
     void clearReleaseInfo();
@@ -92,9 +100,11 @@ private:
     QNetworkAccessManager *m_networkAccessManager = nullptr;
     QNetworkReply *m_activeReply = nullptr;
     bool m_checking = false;
+    bool m_activeCheckIsAutoDue = false;
     qint64 m_lastCheckAttemptAtMs = 0;
     qint64 m_lastSuccessfulCheckAtMs = 0;
     QString m_dismissedUpdateVersion;
+    QString m_pendingUpdatePromptVersion;
     bool m_hasReleaseInfo = false;
     QString m_latestVersion;
     QString m_latestTag;

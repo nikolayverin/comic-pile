@@ -9,6 +9,8 @@ PopupDialogWindow {
     readonly property string releaseNameText: String(updatesRef && updatesRef.latestReleaseName || "").trim()
     readonly property string updateDownloadUrl: String(updatesRef && updatesRef.latestAssetDownloadUrl || "").trim()
     readonly property string releaseNotesText: normalizedReleaseNotes(String(updatesRef && updatesRef.latestReleaseNotes || ""))
+    property bool autoPromptActive: false
+    property string autoPromptVersion: ""
     readonly property string releaseLabelText: {
         if (dialog.releaseNameText.length > 0) {
             return dialog.releaseNameText
@@ -54,6 +56,16 @@ PopupDialogWindow {
     )
 
     onCloseRequested: close()
+    onClosed: {
+        if (dialog.autoPromptActive && dialog.updatesRef) {
+            const dismissedVersion = String(dialog.autoPromptVersion || dialog.latestVersionText || "").trim()
+            if (dismissedVersion.length > 0) {
+                dialog.updatesRef.markUpdateDismissed(dismissedVersion)
+            }
+        }
+        dialog.autoPromptActive = false
+        dialog.autoPromptVersion = ""
+    }
 
     function openExternalLink(url) {
         const link = String(url || "").trim()

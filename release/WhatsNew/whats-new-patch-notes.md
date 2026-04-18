@@ -3,6 +3,8 @@ Features
 Updates
 - Added a visible Check for updates action in About.
 - Added a dedicated update popup that shows the latest version, What's new, and a direct Download update action.
+- Added a one-time update prompt that can appear on a later app launch after a newer version is detected.
+- Known available updates now stay visible in About between launches instead of disappearing after restart.
 
 Import
 - Replace can now use a folder of ordered page images, not only another archive file.

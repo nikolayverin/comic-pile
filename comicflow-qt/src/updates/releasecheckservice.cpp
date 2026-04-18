@@ -24,6 +24,15 @@ constexpr auto kSettingsGroup = "UpdateFlow";
 constexpr auto kLastCheckAttemptAtMsKey = "last_check_attempt_at_ms";
 constexpr auto kLastSuccessfulCheckAtMsKey = "last_successful_check_at_ms";
 constexpr auto kDismissedUpdateVersionKey = "dismissed_update_version";
+constexpr auto kPendingUpdatePromptVersionKey = "pending_update_prompt_version";
+constexpr auto kLatestReleaseVersionKey = "latest_release_version";
+constexpr auto kLatestReleaseTagKey = "latest_release_tag";
+constexpr auto kLatestReleaseUrlKey = "latest_release_url";
+constexpr auto kLatestReleaseNameKey = "latest_release_name";
+constexpr auto kLatestReleaseNotesKey = "latest_release_notes";
+constexpr auto kLatestPublishedAtKey = "latest_published_at";
+constexpr auto kLatestAssetNameKey = "latest_asset_name";
+constexpr auto kLatestAssetDownloadUrlKey = "latest_asset_download_url";
 
 QString normalizeReleaseVersionTag(const QString &tag)
 {
@@ -122,6 +131,11 @@ QString ReleaseCheckService::dismissedUpdateVersion() const
     return m_dismissedUpdateVersion;
 }
 
+QString ReleaseCheckService::pendingUpdatePromptVersion() const
+{
+    return m_pendingUpdatePromptVersion;
+}
+
 bool ReleaseCheckService::autoCheckDue() const
 {
     return shouldAutoCheckNow();
@@ -200,29 +214,7 @@ QString ReleaseCheckService::lastError() const
 
 void ReleaseCheckService::checkLatestRelease()
 {
-    if (m_activeReply) {
-        m_activeReply->abort();
-        m_activeReply->deleteLater();
-        m_activeReply = nullptr;
-    }
-
-    setLastError({});
-    setChecking(true);
-    storeLastCheckAttemptAtMs(QDateTime::currentMSecsSinceEpoch());
-
-    QNetworkRequest request(QUrl(QString::fromLatin1(kLatestReleaseApiUrl)));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
-    request.setRawHeader("Accept", "application/vnd.github+json");
-    request.setRawHeader("X-GitHub-Api-Version", "2022-11-28");
-    request.setHeader(
-        QNetworkRequest::UserAgentHeader,
-        QStringLiteral("Comic Pile/%1 (+%2)").arg(currentVersion(), QString::fromLatin1(kRepositoryUrl))
-    );
-
-    m_activeReply = m_networkAccessManager->get(request);
-    connect(m_activeReply, &QNetworkReply::finished, this, [this]() {
-        handleReplyFinished(m_activeReply);
-    });
+    startLatestReleaseCheck(false);
 }
 
 void ReleaseCheckService::checkLatestReleaseIfDue()
@@ -230,7 +222,7 @@ void ReleaseCheckService::checkLatestReleaseIfDue()
     if (!shouldAutoCheckNow()) {
         return;
     }
-    checkLatestRelease();
+    startLatestReleaseCheck(true);
 }
 
 bool ReleaseCheckService::shouldAutoCheckNow() const
@@ -244,6 +236,21 @@ bool ReleaseCheckService::shouldAutoCheckNow() const
     return QDateTime::currentMSecsSinceEpoch() >= (m_lastCheckAttemptAtMs + kAutoCheckIntervalMs);
 }
 
+bool ReleaseCheckService::shouldShowPendingUpdatePrompt() const
+{
+    const QString normalizedPendingVersion = normalizeReleaseVersionTag(m_pendingUpdatePromptVersion);
+    if (normalizedPendingVersion.isEmpty()) {
+        return false;
+    }
+    if (!m_hasReleaseInfo || !latestVersionIsNewer()) {
+        return false;
+    }
+    if (normalizeReleaseVersionTag(m_latestVersion).compare(normalizedPendingVersion, Qt::CaseInsensitive) != 0) {
+        return false;
+    }
+    return !isVersionDismissed(normalizedPendingVersion);
+}
+
 void ReleaseCheckService::markUpdateDismissed(const QString &version)
 {
     storeDismissedUpdateVersion(normalizeReleaseVersionTag(version));
@@ -252,6 +259,11 @@ void ReleaseCheckService::markUpdateDismissed(const QString &version)
 void ReleaseCheckService::clearDismissedUpdateVersion()
 {
     storeDismissedUpdateVersion({});
+}
+
+void ReleaseCheckService::clearPendingUpdatePrompt()
+{
+    storePendingUpdatePromptVersion({});
 }
 
 bool ReleaseCheckService::isVersionDismissed(const QString &version) const
@@ -291,7 +303,72 @@ void ReleaseCheckService::loadPersistedState()
     m_dismissedUpdateVersion = normalizeReleaseVersionTag(
         settings.value(QString::fromLatin1(kDismissedUpdateVersionKey)).toString()
     );
+    m_pendingUpdatePromptVersion = normalizeReleaseVersionTag(
+        settings.value(QString::fromLatin1(kPendingUpdatePromptVersionKey)).toString()
+    );
+    m_latestVersion = normalizeReleaseVersionTag(
+        settings.value(QString::fromLatin1(kLatestReleaseVersionKey)).toString()
+    );
+    m_latestTag = settings.value(QString::fromLatin1(kLatestReleaseTagKey)).toString().trimmed();
+    m_latestReleaseUrl = settings.value(QString::fromLatin1(kLatestReleaseUrlKey)).toString().trimmed();
+    m_latestReleaseName = settings.value(QString::fromLatin1(kLatestReleaseNameKey)).toString().trimmed();
+    m_latestReleaseNotes = settings.value(QString::fromLatin1(kLatestReleaseNotesKey)).toString();
+    m_latestPublishedAt = settings.value(QString::fromLatin1(kLatestPublishedAtKey)).toString().trimmed();
+    m_latestAssetName = settings.value(QString::fromLatin1(kLatestAssetNameKey)).toString().trimmed();
+    m_latestAssetDownloadUrl = settings.value(QString::fromLatin1(kLatestAssetDownloadUrlKey)).toString().trimmed();
     settings.endGroup();
+
+    m_hasReleaseInfo = !m_latestVersion.isEmpty() && !m_latestReleaseUrl.isEmpty();
+    if (m_hasReleaseInfo && !latestVersionIsNewer()) {
+        m_hasReleaseInfo = false;
+        m_latestVersion.clear();
+        m_latestTag.clear();
+        m_latestReleaseUrl.clear();
+        m_latestReleaseName.clear();
+        m_latestReleaseNotes.clear();
+        m_latestPublishedAt.clear();
+        m_latestAssetName.clear();
+        m_latestAssetDownloadUrl.clear();
+        clearPersistedReleaseInfo();
+    }
+    if (m_pendingUpdatePromptVersion.isEmpty()) {
+        return;
+    }
+    if (!m_hasReleaseInfo || !latestVersionIsNewer() || isVersionDismissed(m_pendingUpdatePromptVersion)) {
+        m_pendingUpdatePromptVersion.clear();
+        QSettings cleanupSettings;
+        cleanupSettings.beginGroup(QString::fromLatin1(kSettingsGroup));
+        cleanupSettings.remove(QString::fromLatin1(kPendingUpdatePromptVersionKey));
+        cleanupSettings.endGroup();
+    }
+}
+
+void ReleaseCheckService::startLatestReleaseCheck(bool autoDueCheck)
+{
+    if (m_activeReply) {
+        m_activeReply->abort();
+        m_activeReply->deleteLater();
+        m_activeReply = nullptr;
+    }
+
+    m_activeCheckIsAutoDue = autoDueCheck;
+    setLastError({});
+    setChecking(true);
+    storeLastCheckAttemptAtMs(QDateTime::currentMSecsSinceEpoch());
+
+    QNetworkRequest request(QUrl(QString::fromLatin1(kLatestReleaseApiUrl)));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    request.setRawHeader("Accept", "application/vnd.github+json");
+    request.setRawHeader("X-GitHub-Api-Version", "2022-11-28");
+    request.setHeader(
+        QNetworkRequest::UserAgentHeader,
+        QStringLiteral("Comic Pile/%1 (+%2)").arg(currentVersion(), QString::fromLatin1(kRepositoryUrl))
+    );
+
+    m_activeReply = m_networkAccessManager->get(request);
+    connect(m_activeReply, &QNetworkReply::finished, this, [this]() {
+        handleReplyFinished(m_activeReply);
+    });
 }
 
 void ReleaseCheckService::storeLastCheckAttemptAtMs(qint64 timestampMs)
@@ -334,6 +411,50 @@ void ReleaseCheckService::storeDismissedUpdateVersion(const QString &version)
     emit updateStateChanged();
 }
 
+void ReleaseCheckService::storePendingUpdatePromptVersion(const QString &version)
+{
+    const QString normalizedVersion = normalizeReleaseVersionTag(version);
+    if (m_pendingUpdatePromptVersion.compare(normalizedVersion, Qt::CaseInsensitive) == 0) {
+        return;
+    }
+    m_pendingUpdatePromptVersion = normalizedVersion;
+    QSettings settings;
+    settings.beginGroup(QString::fromLatin1(kSettingsGroup));
+    settings.setValue(QString::fromLatin1(kPendingUpdatePromptVersionKey), m_pendingUpdatePromptVersion);
+    settings.endGroup();
+    emit updateStateChanged();
+}
+
+void ReleaseCheckService::storePersistedReleaseInfo()
+{
+    QSettings settings;
+    settings.beginGroup(QString::fromLatin1(kSettingsGroup));
+    settings.setValue(QString::fromLatin1(kLatestReleaseVersionKey), m_latestVersion);
+    settings.setValue(QString::fromLatin1(kLatestReleaseTagKey), m_latestTag);
+    settings.setValue(QString::fromLatin1(kLatestReleaseUrlKey), m_latestReleaseUrl);
+    settings.setValue(QString::fromLatin1(kLatestReleaseNameKey), m_latestReleaseName);
+    settings.setValue(QString::fromLatin1(kLatestReleaseNotesKey), m_latestReleaseNotes);
+    settings.setValue(QString::fromLatin1(kLatestPublishedAtKey), m_latestPublishedAt);
+    settings.setValue(QString::fromLatin1(kLatestAssetNameKey), m_latestAssetName);
+    settings.setValue(QString::fromLatin1(kLatestAssetDownloadUrlKey), m_latestAssetDownloadUrl);
+    settings.endGroup();
+}
+
+void ReleaseCheckService::clearPersistedReleaseInfo()
+{
+    QSettings settings;
+    settings.beginGroup(QString::fromLatin1(kSettingsGroup));
+    settings.remove(QString::fromLatin1(kLatestReleaseVersionKey));
+    settings.remove(QString::fromLatin1(kLatestReleaseTagKey));
+    settings.remove(QString::fromLatin1(kLatestReleaseUrlKey));
+    settings.remove(QString::fromLatin1(kLatestReleaseNameKey));
+    settings.remove(QString::fromLatin1(kLatestReleaseNotesKey));
+    settings.remove(QString::fromLatin1(kLatestPublishedAtKey));
+    settings.remove(QString::fromLatin1(kLatestAssetNameKey));
+    settings.remove(QString::fromLatin1(kLatestAssetDownloadUrlKey));
+    settings.endGroup();
+}
+
 void ReleaseCheckService::setChecking(bool checkingValue)
 {
     if (m_checking == checkingValue) {
@@ -374,6 +495,8 @@ void ReleaseCheckService::clearReleaseInfo()
     m_latestAssetName.clear();
     m_latestAssetDownloadUrl.clear();
 
+    clearPersistedReleaseInfo();
+
     if (changed) {
         emit releaseInfoChanged();
     }
@@ -381,9 +504,9 @@ void ReleaseCheckService::clearReleaseInfo()
 
 void ReleaseCheckService::finishWithError(const QString &errorText)
 {
-    clearReleaseInfo();
     setLastError(errorText);
     setChecking(false);
+    m_activeCheckIsAutoDue = false;
     emit latestReleaseCheckFinished(false);
 }
 
@@ -474,7 +597,18 @@ void ReleaseCheckService::handleReplyFinished(QNetworkReply *reply)
         assetName,
         assetDownloadUrl
     );
+    if (latestVersionIsNewer()) {
+        storePersistedReleaseInfo();
+    } else {
+        clearPersistedReleaseInfo();
+    }
+    if (!latestVersionIsNewer() || isVersionDismissed(m_latestVersion)) {
+        storePendingUpdatePromptVersion({});
+    } else if (m_activeCheckIsAutoDue) {
+        storePendingUpdatePromptVersion(m_latestVersion);
+    }
     storeLastSuccessfulCheckAtMs(QDateTime::currentMSecsSinceEpoch());
     setChecking(false);
+    m_activeCheckIsAutoDue = false;
     emit latestReleaseCheckFinished(true);
 }

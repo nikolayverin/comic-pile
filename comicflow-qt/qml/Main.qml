@@ -215,6 +215,7 @@ ApplicationWindow {
     readonly property var aboutDialog: mainDialogHost.aboutDialogRef
     readonly property var updateAvailableDialog: mainDialogHost.updateAvailableDialogRef
     readonly property var whatsNewDialog: mainDialogHost.whatsNewDialogRef
+    property string startupDeferredUpdatePromptVersion: ""
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
     readonly property var deleteConfirmDialog: mainDialogHost.deleteConfirmDialogRef
     readonly property var deleteErrorDialog: mainDialogHost.deleteErrorDialogRef
@@ -1029,12 +1030,50 @@ ApplicationWindow {
         popupController.openExclusivePopup(aboutDialog)
     }
 
-    function openUpdateAvailableDialog() {
+    function openUpdateAvailableDialog(asDeferredPrompt, deferredPromptVersion) {
+        const deferredPrompt = Boolean(asDeferredPrompt)
+        const deferredVersionText = String(deferredPromptVersion || "").trim()
+        if (updateAvailableDialog) {
+            updateAvailableDialog.autoPromptActive = deferredPrompt
+            updateAvailableDialog.autoPromptVersion = deferredPrompt ? deferredVersionText : ""
+        }
         popupController.openExclusivePopup(updateAvailableDialog)
     }
 
     function openWhatsNewDialog() {
         popupController.openExclusivePopup(whatsNewDialog)
+    }
+
+    function readyForDeferredUpdatePrompt() {
+        if (!startupPrimaryContentVisible) return false
+        if (startupHydrationInProgress) return false
+        if (!startupReconcileCompleted) return false
+        if (firstRunOnboardingActive) return false
+        if (importInProgress) return false
+        if (anyManagedModalPopupVisible) return false
+        return true
+    }
+
+    function scheduleDeferredUpdatePromptCheck() {
+        deferredUpdatePromptTimer.restart()
+    }
+
+    function tryPresentDeferredUpdatePrompt() {
+        const startupVersion = String(startupDeferredUpdatePromptVersion || "").trim()
+        if (startupVersion.length < 1) return
+        if (!readyForDeferredUpdatePrompt()) return
+        if (typeof releaseCheckService === "undefined" || !releaseCheckService) {
+            startupDeferredUpdatePromptVersion = ""
+            return
+        }
+        const pendingVersion = String(releaseCheckService.pendingUpdatePromptVersion || "").trim()
+        if (pendingVersion.length < 1 || pendingVersion !== startupVersion || !releaseCheckService.shouldShowPendingUpdatePrompt()) {
+            startupDeferredUpdatePromptVersion = ""
+            return
+        }
+        startupDeferredUpdatePromptVersion = ""
+        releaseCheckService.clearPendingUpdatePrompt()
+        openUpdateAvailableDialog(true, pendingVersion)
     }
 
     function launchOnboarding(manualLaunch) {
@@ -2086,9 +2125,24 @@ ApplicationWindow {
         onTriggered: root.processQueuedReaderProgressSave()
     }
 
+    Timer {
+        id: deferredUpdatePromptTimer
+        interval: 0
+        repeat: false
+        running: false
+        onTriggered: root.tryPresentDeferredUpdatePrompt()
+    }
+
     Component.onCompleted: {
         migrateLibraryBackgroundImageSettingIfNeeded()
+        startupDeferredUpdatePromptVersion = typeof releaseCheckService !== "undefined" && releaseCheckService
+            ? String(releaseCheckService.pendingUpdatePromptVersion || "").trim()
+            : ""
         startupController.handleComponentCompleted()
+        if (typeof releaseCheckService !== "undefined" && releaseCheckService) {
+            releaseCheckService.checkLatestReleaseIfDue()
+        }
+        scheduleDeferredUpdatePromptCheck()
         if (!appSettingsController.onboardingCompleted) {
             launchOnboarding(false)
         }
@@ -2108,6 +2162,13 @@ ApplicationWindow {
     onSelectedSeriesTitleChanged: {
         scheduleSelectionDrivenRefresh()
     }
+
+    onStartupPrimaryContentVisibleChanged: scheduleDeferredUpdatePromptCheck()
+    onStartupHydrationInProgressChanged: scheduleDeferredUpdatePromptCheck()
+    onStartupReconcileCompletedChanged: scheduleDeferredUpdatePromptCheck()
+    onAnyManagedModalPopupVisibleChanged: scheduleDeferredUpdatePromptCheck()
+    onFirstRunOnboardingActiveChanged: scheduleDeferredUpdatePromptCheck()
+    onImportInProgressChanged: scheduleDeferredUpdatePromptCheck()
 
     onSelectedVolumeKeyChanged: {
         scheduleSelectionDrivenRefresh()
