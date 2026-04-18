@@ -1,11 +1,15 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 
 PopupDialogWindow {
     id: dialog
 
+    signal downloadRequested()
+
     readonly property var updatesRef: (typeof releaseCheckService !== "undefined") ? releaseCheckService : null
     readonly property string latestVersionText: String(updatesRef && updatesRef.latestVersion || "").trim()
+    readonly property string latestAssetNameText: String(updatesRef && updatesRef.latestAssetName || "").trim()
     readonly property string releaseNameText: String(updatesRef && updatesRef.latestReleaseName || "").trim()
     readonly property string updateDownloadUrl: String(updatesRef && updatesRef.latestAssetDownloadUrl || "").trim()
     readonly property string releaseNotesText: normalizedReleaseNotes(String(updatesRef && updatesRef.latestReleaseNotes || ""))
@@ -155,6 +159,7 @@ PopupDialogWindow {
                         width: notesFlick.width
                         text: dialog.releaseNotesText
                         color: styleTokens.textColor
+                        textFormat: Text.MarkdownText
                         font.family: Qt.application.font.family
                         font.pixelSize: styleTokens.dialogBodyFontSize
                         wrapMode: Text.WordWrap
@@ -188,6 +193,7 @@ PopupDialogWindow {
             height: dialog.footerZoneHeight
 
             PopupFooterRow {
+                id: footerButtons
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.bottom: parent.bottom
                 horizontalPadding: styleTokens.footerSideMargin
@@ -219,7 +225,7 @@ PopupDialogWindow {
                     textPixelSize: styleTokens.footerButtonTextSize
                     text: "Download update"
                     enabled: dialog.updateDownloadUrl.length > 0
-                    onClicked: dialog.openExternalLink(dialog.updateDownloadUrl)
+                    onClicked: dialog.downloadRequested()
                 }
             }
         }

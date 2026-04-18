@@ -6,6 +6,9 @@ PopupDialogWindow {
 
     signal updateDetailsRequested()
 
+    ThemeColors { id: themeColors }
+    PopupStyle { id: styleTokens }
+
     readonly property var updatesRef: (typeof releaseCheckService !== "undefined") ? releaseCheckService : null
     readonly property bool hasKnownUpdateAvailable: Boolean(updatesRef)
         && Boolean(updatesRef.hasReleaseInfo)
@@ -24,55 +27,67 @@ PopupDialogWindow {
             : "No bundled release notes are available for this build.",
         current: true
     })
-    readonly property var noteEntries: {
-        if (bundledEntriesRaw && bundledEntriesRaw.length > 0) {
-            return bundledEntriesRaw
-        }
-        return [fallbackEntry]
-    }
+    readonly property var noteEntries: bundledEntriesRaw && bundledEntriesRaw.length > 0
+        ? bundledEntriesRaw
+        : [fallbackEntry]
     readonly property int clampedSelectedIndex: Math.max(0, Math.min(selectedIndex, noteEntries.length - 1))
     readonly property var selectedEntry: noteEntries.length > 0 ? noteEntries[clampedSelectedIndex] : fallbackEntry
-    readonly property string selectedEntryLabel: String((selectedEntry || {}).label || "").trim()
+    readonly property string selectedEntryLabel: {
+        const label = String((selectedEntry || {}).label || "").trim()
+        return label.length > 0 ? label : "Patch notes"
+    }
     readonly property string selectedEntryNotes: {
         const text = String((selectedEntry || {}).notes || "").trim()
         return text.length > 0 ? text : "No bundled release notes are available for this build."
     }
-    readonly property int minimumDialogHeight: 300
-    readonly property int maximumDialogHeight: 800
-    readonly property int availableDialogHeight: hostHeight > 0
-        ? Math.min(maximumDialogHeight, hostHeight - 80)
-        : maximumDialogHeight
-    readonly property int sidebarWidth: 176
-    readonly property int footerZoneHeight: styleTokens.footerButtonHeight
-        + styleTokens.formFooterTopGap
-        + styleTokens.footerBottomMargin
-    readonly property int notesViewportMaxHeight: 700
-    readonly property int notesViewportPreferredHeight: Math.min(
-        dialog.notesViewportMaxHeight,
-        Math.max(180, notesContent.implicitHeight)
-    )
-    readonly property int contentImplicitHeight: styleTokens.dialogBodyTopMargin
-        + bodyLayout.implicitHeight
-        + dialog.footerZoneHeight
-        + styleTokens.dialogBottomMargin
+
+    readonly property int sidebarWidth: 252
+    readonly property int menuTop: 52
+    readonly property int menuLeft: 12
+    readonly property int menuAreaWidth: sidebarWidth - menuLeft - 16
+    readonly property int menuItemHeight: 42
+    readonly property int menuItemRadius: 8
+    readonly property int menuTextSize: 13
+    readonly property int menuTextGlobalX: 24
+    readonly property int titleToMenuGap: 25
+    readonly property int contentInsetFromSidebar: 30
+    readonly property int sectionTitleTop: 20
+    readonly property int contentTopSafeArea: styleTokens.closeTopMargin
+        + styleTokens.closeButtonSize
+        + 12
+    readonly property int sectionTitleSize: 28
+    readonly property int bodyTextSize: 13
+    readonly property real bodyLineHeight: 1.28
+    readonly property int baseHostWidth: 1440
+    readonly property int baseHostHeight: 980
+    readonly property int baseDialogWidth: 1024
+    readonly property int baseDialogHeight: 820
+    readonly property int minimumDialogWidth: 620
+    readonly property int minimumDialogHeight: 520
+    readonly property int horizontalMargin: hostWidth >= 1800 ? 60 : 36
+    readonly property int verticalMargin: hostHeight >= 1100 ? 56 : 36
 
     property int selectedIndex: 0
-
-    PopupStyle {
-        id: styleTokens
-    }
+    property bool contentThumbDragActive: false
 
     popupStyle: styleTokens
     debugName: "whats-new-dialog"
     debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
-    title: "What's new"
+    title: ""
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
-    width: 760
-    height: Math.min(
-        availableDialogHeight,
-        Math.max(minimumDialogHeight, contentImplicitHeight)
-    )
+    width: {
+        if (hostWidth <= 0) return baseDialogWidth
+        const availableWidth = Math.max(420, Math.floor(hostWidth - horizontalMargin * 2))
+        return Math.min(baseDialogWidth, availableWidth)
+    }
+    height: {
+        if (hostHeight <= 0) return baseDialogHeight
+        const availableHeight = Math.max(260, Math.floor(hostHeight - verticalMargin * 2))
+        const scaledHeight = Math.round(baseDialogHeight * (hostHeight / baseHostHeight))
+        return Math.max(minimumDialogHeight, Math.min(scaledHeight, availableHeight))
+    }
 
+    onOpened: selectedIndex = 0
     onCloseRequested: close()
     onNoteEntriesChanged: {
         if (!noteEntries || noteEntries.length < 1) {
@@ -81,235 +96,201 @@ PopupDialogWindow {
         }
         selectedIndex = Math.max(0, Math.min(selectedIndex, noteEntries.length - 1))
     }
-    onOpened: selectedIndex = 0
 
     Item {
         anchors.fill: parent
 
-        Item {
-            id: contentArea
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: footerArea.top
-            anchors.leftMargin: styleTokens.dialogSideMargin
-            anchors.rightMargin: styleTokens.dialogSideMargin
-            anchors.topMargin: styleTokens.dialogBodyTopMargin
-            anchors.bottomMargin: styleTokens.formFooterTopGap
+        Rectangle {
+            x: 0
+            y: 1
+            width: dialog.sidebarWidth
+            height: parent.height - 2
+            color: "#1d1d1d"
+            border.width: 1
+            border.color: "#2b2b2b"
+        }
 
-            Row {
-                id: bodyLayout
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.top: parent.top
-                spacing: 18
-                implicitHeight: Math.max(sidebarBlock.implicitHeight, notesBlock.implicitHeight)
+        Text {
+            id: menuTitle
+            x: dialog.menuTextGlobalX
+            y: dialog.menuTop - dialog.titleToMenuGap - implicitHeight
+            text: "What's new"
+            color: styleTokens.textColor
+            font.family: Qt.application.font.family
+            font.pixelSize: 13
+            font.weight: Font.DemiBold
+        }
 
-                Item {
-                    id: sidebarBlock
-                    width: dialog.sidebarWidth
-                    implicitHeight: Math.max(180, versionList.contentHeight)
+        ListView {
+            id: sidebarFlick
+            x: dialog.menuLeft
+            y: dialog.menuTop
+            width: dialog.menuAreaWidth
+            height: parent.height - dialog.menuTop - 16
+            model: dialog.noteEntries
+            spacing: 8
+            clip: true
+            interactive: contentHeight > height
+            boundsBehavior: Flickable.StopAtBounds
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 12
-                        color: "#1d1d1d"
-                        border.width: 1
-                        border.color: "#2c2c2c"
-                    }
+            delegate: Item {
+                id: noteRow
+                required property int index
+                required property var modelData
 
-                    ListView {
-                        id: versionList
-                        anchors.fill: parent
-                        anchors.margins: 8
-                        clip: true
-                        spacing: 4
-                        model: dialog.noteEntries
-                        currentIndex: dialog.clampedSelectedIndex
-                        boundsBehavior: Flickable.StopAtBounds
+                width: sidebarFlick.width
+                height: dialog.menuItemHeight
 
-                        delegate: Item {
-                            required property int index
-                            required property var modelData
-                            width: versionList.width
-                            height: 42
-
-                            readonly property bool current: Boolean((modelData || {}).current)
-                            readonly property bool selected: dialog.clampedSelectedIndex === index
-                            readonly property string labelText: String((modelData || {}).label || "").trim()
-
-                            Rectangle {
-                                anchors.fill: parent
-                                radius: 10
-                                color: parent.selected ? "#2d2d2d" : "transparent"
-                                border.width: parent.selected ? 1 : 0
-                                border.color: parent.selected ? "#4a4a4a" : "transparent"
-                            }
-
-                            Text {
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.leftMargin: 12
-                                anchors.rightMargin: 12
-                                text: labelText
-                                color: selected ? "#ffffff" : "#cfcfcf"
-                                font.family: Qt.application.font.family
-                                font.pixelSize: styleTokens.dialogBodyFontSize
-                                font.weight: current ? Font.Medium : Font.Normal
-                                elide: Text.ElideRight
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: dialog.selectedIndex = index
-                            }
-                        }
-
-                        VerticalScrollThumb {
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            anchors.right: parent.right
-                            width: 8
-                            visible: versionList.contentHeight > versionList.height
-                            flickable: versionList
-                            thumbWidth: 8
-                            thumbInset: 0
-                            thumbColor: "#111111"
-                        }
-                    }
+                readonly property bool selected: dialog.clampedSelectedIndex === index
+                readonly property string labelText: {
+                    const label = String((modelData || {}).label || "").trim()
+                    return label.length > 0 ? label : "Patch notes"
                 }
 
-                Item {
-                    id: notesBlock
-                    width: bodyLayout.width - sidebarBlock.width - bodyLayout.spacing
-                    implicitHeight: Math.max(notesHeader.implicitHeight + styleTokens.dialogContentSpacing + dialog.notesViewportPreferredHeight, 180)
+                InsetEdgeSurface {
+                    anchors.fill: parent
+                    cornerRadius: dialog.menuItemRadius
+                    visible: noteMouseArea.containsMouse || noteMouseArea.pressed || noteRow.selected
+                    fillColor: noteMouseArea.pressed ? themeColors.settingsSidebarPressedColor
+                        : noteRow.selected ? themeColors.settingsSidebarSelectedColor
+                        : themeColors.settingsSidebarHoverColor
+                    edgeColor: noteRow.selected ? themeColors.settingsSidebarSelectedEdgeColor
+                        : themeColors.settingsSidebarHoverEdgeColor
+                    fillOffsetY: noteMouseArea.pressed ? -1 : 0
+                }
 
-                    Item {
-                        id: notesHeader
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: parent.top
-                        implicitHeight: Math.max(whatsNewHeader.implicitHeight, selectedPatchLabel.implicitHeight)
+                Text {
+                    x: dialog.menuTextGlobalX - dialog.menuLeft
+                    y: Math.round((parent.height - implicitHeight) / 2) + (noteMouseArea.pressed ? 1 : 0)
+                    width: parent.width - x - 16
+                    text: noteRow.labelText
+                    color: noteRow.selected || noteMouseArea.containsMouse
+                        ? styleTokens.textColor
+                        : themeColors.settingsSidebarIdleTextColor
+                    font.family: Qt.application.font.family
+                    font.pixelSize: dialog.menuTextSize
+                    font.weight: noteRow.selected ? Font.DemiBold : Font.Normal
+                    wrapMode: Text.NoWrap
+                    elide: Text.ElideRight
+                }
 
-                        Text {
-                            id: whatsNewHeader
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            anchors.right: selectedPatchLabel.left
-                            anchors.rightMargin: 16
-                            text: "What's new"
-                            color: styleTokens.textColor
-                            font.family: Qt.application.font.family
-                            font.pixelSize: styleTokens.dialogBodyEmphasisFontSize
-                            font.weight: Font.Medium
-                            wrapMode: Text.WordWrap
-                        }
-
-                        Text {
-                            id: selectedPatchLabel
-                            anchors.top: parent.top
-                            anchors.right: parent.right
-                            visible: dialog.selectedEntryLabel.length > 0
-                            text: dialog.selectedEntryLabel
-                            color: styleTokens.textColor
-                            font.family: Qt.application.font.family
-                            font.pixelSize: styleTokens.dialogBodyEmphasisFontSize
-                            font.weight: Font.Medium
-                            horizontalAlignment: Text.AlignRight
-                        }
-                    }
-
-                    Item {
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.top: notesHeader.bottom
-                        anchors.topMargin: styleTokens.dialogContentSpacing
-                        anchors.bottom: parent.bottom
-
-                        Flickable {
-                            id: notesFlick
-                            anchors.fill: parent
-                            anchors.rightMargin: 10
-                            clip: true
-                            contentWidth: width
-                            contentHeight: notesContent.implicitHeight
-                            boundsBehavior: Flickable.StopAtBounds
-                            interactive: contentHeight > height
-
-                            Text {
-                                id: notesContent
-                                width: notesFlick.width
-                                text: dialog.selectedEntryNotes
-                                color: styleTokens.textColor
-                                font.family: Qt.application.font.family
-                                font.pixelSize: styleTokens.dialogBodyFontSize
-                                wrapMode: Text.WordWrap
-                                lineHeight: 1.24
-                                lineHeightMode: Text.ProportionalHeight
-                            }
-                        }
-
-                        VerticalScrollThumb {
-                            anchors.top: parent.top
-                            anchors.bottom: parent.bottom
-                            anchors.right: parent.right
-                            width: 8
-                            visible: notesFlick.contentHeight > notesFlick.height
-                            flickable: notesFlick
-                            thumbWidth: 8
-                            thumbInset: 0
-                            thumbColor: "#111111"
-                        }
-                    }
+                MouseArea {
+                    id: noteMouseArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    preventStealing: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: dialog.selectedIndex = index
                 }
             }
         }
 
+        VerticalScrollThumb {
+            anchors.top: sidebarFlick.top
+            anchors.bottom: sidebarFlick.bottom
+            anchors.right: sidebarFlick.right
+            width: 8
+            visible: sidebarFlick.contentHeight > sidebarFlick.height
+            flickable: sidebarFlick
+            thumbWidth: 8
+            thumbInset: 0
+            thumbColor: "#111111"
+        }
+
         Item {
-            id: footerArea
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.leftMargin: styleTokens.dialogSideMargin
-            anchors.rightMargin: styleTokens.dialogSideMargin
-            anchors.bottomMargin: styleTokens.dialogBottomMargin
-            height: dialog.footerZoneHeight
+            id: contentPane
+            x: dialog.sidebarWidth + dialog.contentInsetFromSidebar
+            width: parent.width - x - styleTokens.dialogSideMargin
+            height: parent.height
 
-            PopupFooterRow {
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottom: parent.bottom
-                horizontalPadding: styleTokens.footerSideMargin
-                spacing: styleTokens.footerButtonSpacing
+            Flickable {
+                id: contentFlick
+                x: 0
+                y: Math.max(dialog.sectionTitleTop, dialog.contentTopSafeArea)
+                width: parent.width
+                height: parent.height - y - 16
+                clip: true
+                contentWidth: width
+                contentHeight: contentColumn.implicitHeight
+                interactive: !dialog.contentThumbDragActive && contentHeight > height
+                boundsBehavior: Flickable.StopAtBounds
 
-                PopupActionButton {
-                    visible: dialog.hasKnownUpdateAvailable
-                    height: styleTokens.footerButtonHeight
-                    minimumWidth: 168
-                    horizontalPadding: styleTokens.footerButtonHorizontalPadding
-                    cornerRadius: styleTokens.footerButtonRadius
-                    idleColor: styleTokens.footerButtonIdleColor
-                    hoverColor: styleTokens.footerButtonHoverColor
-                    textColor: styleTokens.textColor
-                    textPixelSize: styleTokens.footerButtonTextSize
-                    text: "View available update"
-                    onClicked: dialog.updateDetailsRequested()
+                Column {
+                    id: contentColumn
+                    width: Math.max(320, contentFlick.width - 18)
+                    spacing: 18
+
+                    Text {
+                        width: parent.width
+                        text: dialog.selectedEntryLabel
+                        color: styleTokens.textColor
+                        font.family: Qt.application.font.family
+                        font.pixelSize: dialog.sectionTitleSize
+                        font.weight: Font.Bold
+                        wrapMode: Text.WordWrap
+                    }
+
+                    Rectangle {
+                        width: parent.width
+                        height: 1
+                        color: themeColors.lineSidebarRight
+                        opacity: 0.7
+                    }
+
+                    Text {
+                        width: parent.width
+                        text: dialog.selectedEntryNotes
+                        color: styleTokens.textColor
+                        textFormat: Text.MarkdownText
+                        font.family: Qt.application.font.family
+                        font.pixelSize: dialog.bodyTextSize
+                        wrapMode: Text.WordWrap
+                        lineHeight: dialog.bodyLineHeight
+                        lineHeightMode: Text.ProportionalHeight
+                    }
+
+                    Item {
+                        visible: dialog.hasKnownUpdateAvailable
+                        width: parent.width
+                        height: updateLink.implicitHeight
+
+                        Text {
+                            id: updateLink
+                            text: "View available update"
+                            color: "#78b7ff"
+                            font.family: Qt.application.font.family
+                            font.pixelSize: 12
+                            font.weight: Font.DemiBold
+                            wrapMode: Text.NoWrap
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: dialog.updateDetailsRequested()
+                        }
+                    }
+
+                    Item {
+                        width: parent.width
+                        height: Math.max(0, contentFlick.height - 120)
+                    }
                 }
+            }
 
-                PopupActionButton {
-                    height: styleTokens.footerButtonHeight
-                    minimumWidth: styleTokens.footerButtonMinWidth
-                    horizontalPadding: styleTokens.footerButtonHorizontalPadding
-                    cornerRadius: styleTokens.footerButtonRadius
-                    idleColor: styleTokens.footerButtonIdleColor
-                    hoverColor: styleTokens.footerButtonHoverColor
-                    textColor: styleTokens.textColor
-                    textPixelSize: styleTokens.footerButtonTextSize
-                    text: "Close"
-                    onClicked: dialog.close()
-                }
+            VerticalScrollThumb {
+                anchors.top: contentFlick.top
+                anchors.bottom: contentFlick.bottom
+                anchors.right: parent.right
+                width: 8
+                visible: contentFlick.contentHeight > contentFlick.height
+                flickable: contentFlick
+                thumbWidth: 8
+                thumbInset: 0
+                thumbColor: "#111111"
+                onDragStarted: dialog.contentThumbDragActive = true
+                onDragEnded: dialog.contentThumbDragActive = false
             }
         }
     }

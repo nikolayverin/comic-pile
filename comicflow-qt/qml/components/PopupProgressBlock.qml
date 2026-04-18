@@ -10,6 +10,9 @@ ColumnLayout {
     property bool reserveSpace: false
     property bool showTitle: true
     property bool showFileRow: true
+    property bool showFileCounter: true
+    property bool showRightStatus: true
+    property bool percentOnlyStatus: false
     property string titleText: "Current file"
     property string currentFileName: ""
     property int totalCount: 0
@@ -30,9 +33,12 @@ ColumnLayout {
         ? ""
         : (statusTextOverride.length > 0
             ? statusTextOverride
+            : (percentOnlyStatus
+            ? (indeterminate ? "" : (String(progressPercent) + "%"))
             : (indeterminate
             ? (singleItemMode ? "Importing..." : "Working...")
-            : (String(progressPercent) + "%")))
+            : (String(progressPercent) + "%"))))
+    readonly property string rightStatusPlaceholderText: percentOnlyStatus ? "100%" : "Working..."
 
     visible: reserveSpace || active
     spacing: popupStyle.dialogPlainTextSpacing
@@ -61,10 +67,11 @@ ColumnLayout {
         }
 
         Label {
+            visible: root.showFileCounter && text.length > 0
             text: root.fileCounterText
             color: popupStyle.textColor
             font.pixelSize: popupStyle.dialogBodyFontSize
-            Layout.preferredWidth: root.rightInfoWidth
+            Layout.preferredWidth: visible ? root.rightInfoWidth : 0
             horizontalAlignment: Text.AlignRight
         }
     }
@@ -106,7 +113,7 @@ ColumnLayout {
                 radius: popupStyle.importProgressBarHeight / 2
                 color: popupStyle.importProgressBarColor
                 opacity: 0.95
-                x: -width
+                x: 0
             }
 
             SequentialAnimation {
@@ -117,8 +124,8 @@ ColumnLayout {
                 NumberAnimation {
                     target: indeterminateFill
                     property: "x"
-                    from: -Math.max(28, Math.round(progressTrack.width * 0.28))
-                    to: progressTrack.width
+                    from: 0
+                    to: Math.max(0, progressTrack.width - indeterminateFill.width)
                     duration: 1050
                     easing.type: Easing.InOutQuad
                 }
@@ -126,10 +133,12 @@ ColumnLayout {
         }
 
         Label {
-            text: root.rightStatusText
+            visible: root.showRightStatus
+            text: root.rightStatusText.length > 0 ? root.rightStatusText : root.rightStatusPlaceholderText
+            opacity: root.rightStatusText.length > 0 ? 1 : 0
             color: popupStyle.textColor
             font.pixelSize: popupStyle.dialogBodyFontSize
-            Layout.preferredWidth: root.rightInfoWidth
+            Layout.preferredWidth: root.showRightStatus ? root.rightInfoWidth : 0
             horizontalAlignment: Text.AlignRight
         }
     }

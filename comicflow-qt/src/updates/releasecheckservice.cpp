@@ -18,6 +18,8 @@ namespace {
 
 constexpr auto kLatestReleaseApiUrl = "https://api.github.com/repos/nikolayverin/comic-pile/releases/latest";
 constexpr auto kRepositoryUrl = "https://github.com/nikolayverin/comic-pile";
+constexpr auto kDebugDownloadSuccessUrl = "comicpile-debug-download://success";
+constexpr auto kDebugDownloadFailureUrl = "comicpile-debug-download://failure";
 constexpr qint64 kAutoCheckIntervalMs = 24ll * 60ll * 60ll * 1000ll;
 constexpr int kAutoCheckIntervalHours = 24;
 constexpr auto kSettingsGroup = "UpdateFlow";
@@ -286,7 +288,28 @@ void ReleaseCheckService::debugLoadMockAvailableUpdate()
         bundledNotes.isEmpty() ? QStringLiteral("Release notes are not available for this build.") : bundledNotes,
         QStringLiteral("2026-04-18T18:00:00Z"),
         QStringLiteral("Comic-Pile-0.14.21-portable.zip"),
-        QStringLiteral("https://github.com/nikolayverin/comic-pile/releases/download/v0.14.21/Comic-Pile-0.14.21-portable.zip")
+        QString::fromLatin1(kDebugDownloadSuccessUrl)
+    );
+    emit latestReleaseCheckFinished(true);
+#else
+    emit latestReleaseCheckFinished(false);
+#endif
+}
+
+void ReleaseCheckService::debugLoadMockFailedDownloadUpdate()
+{
+#if COMICPILE_FAST_DEV_BUILD_ENABLED
+    setLastError({});
+    const QString bundledNotes = bundledReleaseNotesTextForVersion(currentVersion());
+    applyParsedReleaseInfo(
+        QStringLiteral("v0.14.21"),
+        QStringLiteral("0.14.21"),
+        QStringLiteral("https://github.com/nikolayverin/comic-pile/releases/tag/v0.14.21"),
+        QString(),
+        bundledNotes.isEmpty() ? QStringLiteral("Release notes are not available for this build.") : bundledNotes,
+        QStringLiteral("2026-04-18T18:00:00Z"),
+        QStringLiteral("Comic-Pile-0.14.21-portable.zip"),
+        QString::fromLatin1(kDebugDownloadFailureUrl)
     );
     emit latestReleaseCheckFinished(true);
 #else

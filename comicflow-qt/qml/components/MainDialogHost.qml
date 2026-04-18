@@ -47,6 +47,7 @@ Item {
     property alias helpDialogRef: helpDialog
     property alias aboutDialogRef: aboutDialog
     property alias updateAvailableDialogRef: updateAvailableDialog
+    property alias updateDownloadDialogRef: updateDownloadDialog
     property alias whatsNewDialogRef: whatsNewDialog
     property alias seriesHeaderDialogRef: seriesHeaderDialog
     property alias deleteConfirmDialogRef: deleteConfirmDialog
@@ -375,6 +376,14 @@ Item {
         id: updateAvailableDialog
         hostWidth: root.width
         hostHeight: root.height
+        onDownloadRequested: root.startUpdateDownloadFlow()
+    }
+
+    UpdateDownloadDialog {
+        id: updateDownloadDialog
+        hostWidth: root.width
+        hostHeight: root.height
+        onInstallRequested: root.handleDownloadedUpdateInstallRequested()
     }
 
     WhatsNewDialog {

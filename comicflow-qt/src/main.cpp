@@ -4,6 +4,7 @@
 #include "storage/comicslistmodel.h"
 #include "storage/datarootrelocationbootstrap.h"
 #include "updates/bundledreleasenotes.h"
+#include "updates/releasedownloadservice.h"
 #include "updates/releasecheckservice.h"
 
 #include <QApplication>
@@ -184,6 +185,7 @@ int main(int argc, char *argv[])
 
     ComicsListModel libraryModel;
     ReleaseCheckService releaseCheckService;
+    ReleaseDownloadService releaseDownloadService;
     ComicStartupLaunch::appendLaunchLog(launchLogPath, launchTimer, QStringLiteral("library_model_created"));
     bool pendingActivation = false;
     const QString effectiveBuildIteration = effectiveBuildIterationText();
@@ -191,6 +193,7 @@ int main(int argc, char *argv[])
     const QVariantList bundledWhatsNewEntries = bundledReleaseNotesEntries(QStringLiteral(COMICPILE_APP_VERSION));
     engine.rootContext()->setContextProperty("libraryModel", &libraryModel);
     engine.rootContext()->setContextProperty("releaseCheckService", &releaseCheckService);
+    engine.rootContext()->setContextProperty("releaseDownloadService", &releaseDownloadService);
     engine.rootContext()->setContextProperty(
         "appVersion",
         QString::fromLatin1(COMICPILE_APP_VERSION));

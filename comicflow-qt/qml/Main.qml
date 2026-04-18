@@ -214,6 +214,7 @@ ApplicationWindow {
     readonly property var helpDialog: mainDialogHost.helpDialogRef
     readonly property var aboutDialog: mainDialogHost.aboutDialogRef
     readonly property var updateAvailableDialog: mainDialogHost.updateAvailableDialogRef
+    readonly property var updateDownloadDialog: mainDialogHost.updateDownloadDialogRef
     readonly property var whatsNewDialog: mainDialogHost.whatsNewDialogRef
     property string startupDeferredUpdatePromptVersion: ""
     readonly property var seriesHeaderDialog: mainDialogHost.seriesHeaderDialogRef
@@ -495,6 +496,7 @@ ApplicationWindow {
         helpDialogRef: helpDialog
         aboutDialogRef: aboutDialog
         updateAvailableDialogRef: updateAvailableDialog
+        updateDownloadDialogRef: updateDownloadDialog
         whatsNewDialogRef: whatsNewDialog
         replaceSourceChoiceDialogRef: replaceSourceChoiceDialog
         seriesHeaderDialogRef: seriesHeaderDialog
@@ -1038,6 +1040,39 @@ ApplicationWindow {
             updateAvailableDialog.autoPromptVersion = deferredPrompt ? deferredVersionText : ""
         }
         popupController.openExclusivePopup(updateAvailableDialog)
+    }
+
+    function openUpdateDownloadDialog(assetNameText) {
+        if (updateDownloadDialog) {
+            updateDownloadDialog.assetNameText = String(assetNameText || "").trim()
+        }
+        popupController.openExclusivePopup(updateDownloadDialog)
+    }
+
+    function startUpdateDownloadFlow() {
+        if (typeof releaseDownloadService === "undefined" || !releaseDownloadService || !updateAvailableDialog) {
+            return
+        }
+        const downloadUrl = String(updateAvailableDialog.updateDownloadUrl || "").trim()
+        const assetName = String(updateAvailableDialog.latestAssetNameText || "").trim()
+        if (downloadUrl.length < 1) {
+            popupController.showMappedActionResult({
+                title: "Update download",
+                body: "No update download link is available for this release."
+            })
+            return
+        }
+        releaseDownloadService.clearCompletedDownload()
+        releaseDownloadService.downloadReleaseAsset(downloadUrl, assetName)
+        openUpdateDownloadDialog(assetName)
+    }
+
+    function handleDownloadedUpdateInstallRequested() {
+        popupController.showMappedActionResult({
+            title: "Install update",
+            body: "Automatic update installation will be added in the next step of this update flow.",
+            details: "The update package has already been downloaded successfully."
+        })
     }
 
     function openWhatsNewDialog() {
