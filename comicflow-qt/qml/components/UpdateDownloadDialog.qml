@@ -8,36 +8,13 @@ PopupDialogWindow {
     signal installRequested()
 
     readonly property var downloadRef: (typeof releaseDownloadService !== "undefined") ? releaseDownloadService : null
-    property bool previewMode: false
-    property string previewState: ""
-    property bool previewProgressKnown: true
-    property real previewProgressFraction: 0
-    property string previewStatusText: ""
-    property string previewErrorText: ""
-    property string previewDownloadedFilePath: ""
-    property string previewAssetNameText: ""
-    readonly property bool downloadActive: dialog.previewMode
-        ? String(dialog.previewState || "") === "downloading"
-        : Boolean(downloadRef) && Boolean(downloadRef.downloadActive)
-    readonly property bool downloadProgressKnown: dialog.previewMode
-        ? Boolean(dialog.previewProgressKnown)
-        : Boolean(downloadRef) && Boolean(downloadRef.downloadProgressKnown)
-    readonly property real downloadProgressFraction: dialog.previewMode
-        ? Number(dialog.previewProgressFraction || 0)
-        : Number(downloadRef && downloadRef.downloadProgressFraction || 0)
-    readonly property string downloadStatusText: dialog.previewMode
-        ? String(dialog.previewStatusText || "").trim()
-        : String(downloadRef && downloadRef.statusText || "").trim()
-    readonly property string downloadErrorText: dialog.previewMode
-        ? String(dialog.previewErrorText || "").trim()
-        : String(downloadRef && downloadRef.lastError || "").trim()
-    readonly property string downloadedFilePath: dialog.previewMode
-        ? String(dialog.previewDownloadedFilePath || "").trim()
-        : String(downloadRef && downloadRef.downloadedFilePath || "").trim()
+    readonly property bool downloadActive: Boolean(downloadRef) && Boolean(downloadRef.downloadActive)
+    readonly property bool downloadProgressKnown: Boolean(downloadRef) && Boolean(downloadRef.downloadProgressKnown)
+    readonly property real downloadProgressFraction: Number(downloadRef && downloadRef.downloadProgressFraction || 0)
+    readonly property string downloadStatusText: String(downloadRef && downloadRef.statusText || "").trim()
+    readonly property string downloadErrorText: String(downloadRef && downloadRef.lastError || "").trim()
+    readonly property string downloadedFilePath: String(downloadRef && downloadRef.downloadedFilePath || "").trim()
     readonly property string currentAssetNameText: {
-        if (dialog.previewMode) {
-            return String(dialog.previewAssetNameText || "").trim()
-        }
         const runtimeName = String(downloadRef && downloadRef.currentAssetName || "").trim()
         if (runtimeName.length > 0) {
             return runtimeName
@@ -71,20 +48,10 @@ PopupDialogWindow {
     height: Math.min(availableDialogHeight, Math.max(minimumDialogHeight, downloadBody.implicitHeight))
 
     onCloseRequested: {
-        if (!dialog.previewMode && dialog.downloadRef && dialog.downloadActive) {
+        if (dialog.downloadRef && dialog.downloadActive) {
             dialog.downloadRef.cancelDownload()
         }
         close()
-    }
-    onClosed: {
-        dialog.previewMode = false
-        dialog.previewState = ""
-        dialog.previewProgressKnown = true
-        dialog.previewProgressFraction = 0
-        dialog.previewStatusText = ""
-        dialog.previewErrorText = ""
-        dialog.previewDownloadedFilePath = ""
-        dialog.previewAssetNameText = ""
     }
 
     PopupBodyColumn {

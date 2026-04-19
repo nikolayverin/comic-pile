@@ -2,14 +2,11 @@
 
 **Updates**
 - Added a visible **Check for updates** action in **About**.
-- Added an **Automatically check for updates** option in **Settings -> General** so automatic update checks can be turned off while manual checks stay available.
-- Added a dedicated update popup that shows the latest version, **What's new**, and a direct **Download update** action.
-- Added a one-time update prompt that can appear on a later app launch after a newer version is detected.
-- Known available updates now stay visible in **About** between launches instead of disappearing after restart.
-- Added a dedicated **What's new** surface in the **Help** menu for reading the current build's release notes inside the app.
-- Added a separate **Downloading update** popup with progress, cancellation, download failure alerts, and a dedicated **Install update** step.
+- Added an **Automatically check for updates** option in **Settings -> General** while keeping manual checks available.
+- Added a dedicated update flow with **Update available**, **Downloading update**, **Install update**, and in-app **What's new** surfaces.
+- Added a one-time update prompt for newly detected versions and kept known available updates visible in **About** between launches.
 - **Install update** now closes Comic Pile, applies the downloaded portable update over the current app folder, and keeps the existing **Database** library data in place.
-- Added a dedicated **Updating Comic Pile** Help section that explains where to check for updates, what **What's new** means, how the built-in download and install flow works, and what to do if a manual portable update is needed.
+- Added a dedicated **Updating Comic Pile** Help section that explains update checks, automatic update behavior, the download-and-install flow, and manual portable update guidance.
 
 **Import**
 - **Replace** can now use a folder of ordered page images, not only another archive file.
@@ -18,8 +15,7 @@
 **Bugfixes**
 
 **Updates**
-- Tightened the layout in the **Downloading update** popup so failure alerts sit closer to the progress bar and the progress area no longer jumps upward when an error message appears.
-- Fixed the single-item progress animation used by **Downloading update** and other popup progress bars so the moving green indicator stays inside the rounded track instead of clipping as a rectangle at the edges.
+- Tightened the **Downloading update** popup layout and fixed the single-item progress animation so the progress bar stays visually stable and inside the rounded track.
 - Fixed the failed state in **Downloading update** so the progress bar no longer keeps animating after an error and mock failed downloads no longer misleadingly run to 100% first.
 
 **Library and Series**

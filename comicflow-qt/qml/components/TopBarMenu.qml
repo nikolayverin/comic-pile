@@ -52,7 +52,6 @@ Rectangle {
     property int helperButtonsSpacing: 8
     property bool continueReadingEnabled: true
     property bool whatsNewAvailable: false
-    property bool showUpdatePreviewEntries: false
     property bool topMenuSessionActive: false
     property var activeTopMenuPopup: null
     property int windowCornerRadius: 14
@@ -74,10 +73,6 @@ Rectangle {
     signal helpRequested()
     signal aboutRequested()
     signal whatsNewRequested()
-    signal updateAvailableRequested()
-    signal updateDownloadRequested()
-    signal updateDownloadFailedRequested()
-    signal updateReadyRequested()
     signal quickTourRequested()
     signal continueReadingRequested()
     signal nextUnreadRequested()
@@ -504,10 +499,6 @@ Rectangle {
         menuItems: [
             { text: "Quick tour", action: "quick_tour" },
             { text: "What's new", action: "whats_new", visible: root.whatsNewAvailable },
-            { text: "Update available", action: "update_available", visible: root.showUpdatePreviewEntries },
-            { text: "Downloading update", action: "update_download", visible: root.showUpdatePreviewEntries },
-            { text: "Download failed", action: "update_download_failed", visible: root.showUpdatePreviewEntries },
-            { text: "Update ready to install", action: "update_ready", visible: root.showUpdatePreviewEntries },
             { text: "View Help", action: "view_help" },
             { text: "About", action: "about" }
         ]
@@ -516,14 +507,6 @@ Rectangle {
                 root.quickTourRequested()
             } else if (action === "whats_new") {
                 root.whatsNewRequested()
-            } else if (action === "update_available") {
-                root.updateAvailableRequested()
-            } else if (action === "update_download") {
-                root.updateDownloadRequested()
-            } else if (action === "update_download_failed") {
-                root.updateDownloadFailedRequested()
-            } else if (action === "update_ready") {
-                root.updateReadyRequested()
             } else if (action === "view_help") {
                 root.helpRequested()
             } else if (action === "about") {

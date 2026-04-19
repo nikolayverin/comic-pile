@@ -13,6 +13,7 @@ set "BUILD_LOG=%BUILD_DIR%\build-fast.log"
 set "BUILD_META_DIR=%BUILD_DIR%\generated\build_meta"
 set "BUILD_ITERATION_FILE=%BUILD_META_DIR%\build_iteration_state.txt"
 set "SUCCESSFUL_BUILD_ITERATION_FILE=%BUILD_META_DIR%\successful_build_iteration.txt"
+set "APP_SETTINGS_REG_KEY=HKCU\Software\ComicPile\Comic Pile\AppSettings"
 
 set "QT_ROOT=C:\Qt\6.10.2\mingw_64"
 set "QT_BIN=%QT_ROOT%\bin"
@@ -132,10 +133,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
+reg add "%APP_SETTINGS_REG_KEY%" /v onboardingCompleted /t REG_SZ /d true /f >nul 2>nul
+if errorlevel 1 (
+    echo [FAIL] Could not mark onboarding as completed for fast build runs.
+    exit /b 1
+)
+
 echo.
 echo [OK] Build finished.
 echo EXE: %APP_EXE%
 echo BUILD STAMP: %SUCCESSFUL_BUILD_ITERATION_FILE%
+echo ONBOARDING: disabled for fast build runs
 exit /b 0
 
 :requireFile

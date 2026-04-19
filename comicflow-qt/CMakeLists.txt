@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.15.2 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.15.3 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -454,6 +454,11 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/help/16-reader-bottom-bar.png
         assets/ui/help/17-series-bookmark.png
         assets/ui/help/18-continue-reading.png
+        assets/ui/help/19-update-available.png
+        assets/ui/help/20-downloading-failed.png
+        assets/ui/help/21-install-update.png
+        assets/ui/help/22-auto-check-for-updates.png
+        assets/ui/help/23-check-for-updatet.png
         assets/textures/sidebar_dither_noise.png
 )
 
