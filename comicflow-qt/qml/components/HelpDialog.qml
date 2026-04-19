@@ -215,6 +215,44 @@ PopupDialogWindow {
             ]
         },
         {
+            key: "updating_app",
+            label: "Updating Comic Pile",
+            iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-download.svg",
+            leadHtml: "Use the built-in update flow to check for a newer portable release, read what changed, download it inside the app, and install it without replacing your current library data.",
+            subsections: [
+                {
+                    key: "check_for_updates",
+                    label: "How do I check for updates?",
+                    bodyHtml: "Open <b>Help -> About</b>, then press <b>Check for updates</b> in the <b>Updates</b> area.<br><br>If a newer release is found, Comic Pile opens the <b>Update available</b> popup. If no newer release is found, the same area shows that you are already up to date."
+                },
+                {
+                    key: "view_update_details",
+                    label: "What does the Update available popup show?",
+                    bodyHtml: "The <b>Update available</b> popup shows the latest release label and its release notes under <b>What's new</b>.<br><br>Use <b>Later</b> if you only want to review it now. Use <b>Download update</b> when you want Comic Pile to download the portable update package for you."
+                },
+                {
+                    key: "whats_new_meaning",
+                    label: "What is What's new?",
+                    bodyHtml: "<b>Help -> What's new</b> shows the bundled patch notes for the version of Comic Pile you currently have installed.<br><br>If an update is already known, the <b>Update available</b> popup also has its own <b>What's new</b> area for that newer release. In short: the Help entry is for your current build, while the update popup is for the available newer build."
+                },
+                {
+                    key: "download_install_flow",
+                    label: "How does download and install work?",
+                    bodyHtml: "After you press <b>Download update</b>, Comic Pile opens the <b>Downloading update</b> popup and downloads the portable release package into a temporary location.<br><br>When the download finishes, the <b>Install update</b> button becomes available. Pressing <b>Install update</b> starts the update right away: Comic Pile closes, applies the downloaded update over the current app folder, and then starts again automatically.<br><br>This does not wait for some later launch. The install step happens when you press <b>Install update</b>."
+                },
+                {
+                    key: "library_data_kept",
+                    label: "Will my library data stay in place?",
+                    bodyHtml: "Yes. The built-in update flow keeps your current <b>Database</b> folder in place during the app update, so updating Comic Pile by itself does not replace your existing library data."
+                },
+                {
+                    key: "update_errors",
+                    label: "What if download or install fails?",
+                    bodyHtml: "If the download fails, first try the download again from the update popup. Temporary network problems can interrupt the package download.<br><br>If the install step cannot finish after Comic Pile closes, first try the update again. If Comic Pile still cannot complete the built-in update, download the latest portable release manually from <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a>.<br><br>For a manual portable update, close Comic Pile, extract the latest archive, and replace the app files in the current app folder with the new ones. Keep your existing <b>Database</b> folder in place instead of replacing it from the archive.<br><br>After a normal file replacement, your app settings should stay available.<br><br>If your library data is stored next to <b>Comic Pile.exe</b>, Comic Pile should usually find it again automatically.<br><br>If your library data was moved to a different location, update the app in the same app folder so the existing <b>ComicPile.ini</b> file stays in place. If you already extracted the app into a new folder, copy <b>ComicPile.ini</b> from the previous app folder so Comic Pile keeps the saved path to that external library data."
+                }
+            ]
+        },
+        {
             key: "reader",
             label: "Reader",
             iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-settings.svg",

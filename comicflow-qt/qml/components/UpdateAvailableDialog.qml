@@ -8,11 +8,27 @@ PopupDialogWindow {
     signal downloadRequested()
 
     readonly property var updatesRef: (typeof releaseCheckService !== "undefined") ? releaseCheckService : null
-    readonly property string latestVersionText: String(updatesRef && updatesRef.latestVersion || "").trim()
-    readonly property string latestAssetNameText: String(updatesRef && updatesRef.latestAssetName || "").trim()
-    readonly property string releaseNameText: String(updatesRef && updatesRef.latestReleaseName || "").trim()
-    readonly property string updateDownloadUrl: String(updatesRef && updatesRef.latestAssetDownloadUrl || "").trim()
-    readonly property string releaseNotesText: normalizedReleaseNotes(String(updatesRef && updatesRef.latestReleaseNotes || ""))
+    property bool previewMode: false
+    property string previewLatestVersionText: ""
+    property string previewLatestAssetNameText: ""
+    property string previewReleaseNameText: ""
+    property string previewUpdateDownloadUrl: ""
+    property string previewReleaseNotesText: ""
+    readonly property string latestVersionText: dialog.previewMode
+        ? String(dialog.previewLatestVersionText || "").trim()
+        : String(updatesRef && updatesRef.latestVersion || "").trim()
+    readonly property string latestAssetNameText: dialog.previewMode
+        ? String(dialog.previewLatestAssetNameText || "").trim()
+        : String(updatesRef && updatesRef.latestAssetName || "").trim()
+    readonly property string releaseNameText: dialog.previewMode
+        ? String(dialog.previewReleaseNameText || "").trim()
+        : String(updatesRef && updatesRef.latestReleaseName || "").trim()
+    readonly property string updateDownloadUrl: dialog.previewMode
+        ? String(dialog.previewUpdateDownloadUrl || "").trim()
+        : String(updatesRef && updatesRef.latestAssetDownloadUrl || "").trim()
+    readonly property string releaseNotesText: dialog.previewMode
+        ? normalizedReleaseNotes(String(dialog.previewReleaseNotesText || ""))
+        : normalizedReleaseNotes(String(updatesRef && updatesRef.latestReleaseNotes || ""))
     property bool autoPromptActive: false
     property string autoPromptVersion: ""
     readonly property string releaseLabelText: {
@@ -69,6 +85,12 @@ PopupDialogWindow {
         }
         dialog.autoPromptActive = false
         dialog.autoPromptVersion = ""
+        dialog.previewMode = false
+        dialog.previewLatestVersionText = ""
+        dialog.previewLatestAssetNameText = ""
+        dialog.previewReleaseNameText = ""
+        dialog.previewUpdateDownloadUrl = ""
+        dialog.previewReleaseNotesText = ""
     }
 
     function openExternalLink(url) {

@@ -10,6 +10,7 @@ Item {
     height: 0
 
     readonly property string defaultGeneralDefaultReadingMode: SettingsCatalog.defaultGeneralDefaultReadingMode
+    readonly property bool defaultGeneralAutomaticallyCheckForUpdates: SettingsCatalog.defaultGeneralAutomaticallyCheckForUpdates
     readonly property bool defaultGeneralOpenReaderFullscreenByDefault: SettingsCatalog.defaultGeneralOpenReaderFullscreenByDefault
     readonly property string defaultGeneralAfterImport: SettingsCatalog.defaultGeneralAfterImport
     readonly property string defaultGeneralDefaultViewAfterLaunch: SettingsCatalog.defaultGeneralDefaultViewAfterLaunch
@@ -215,6 +216,7 @@ Item {
     Settings {
         id: settingsStore
         category: "AppSettings"
+        property bool generalAutomaticallyCheckForUpdates: controller.defaultGeneralAutomaticallyCheckForUpdates
         property string generalDefaultReadingMode: controller.defaultGeneralDefaultReadingMode
         property bool generalOpenReaderFullscreenByDefault: controller.defaultGeneralOpenReaderFullscreenByDefault
         property string generalAfterImport: controller.defaultGeneralAfterImport
@@ -243,6 +245,11 @@ Item {
         property bool onboardingCompleted: controller.defaultOnboardingCompleted
     }
 
+    property bool generalAutomaticallyCheckForUpdates: normalizeSettingValue(
+        "general_automatically_check_for_updates",
+        settingsStore.generalAutomaticallyCheckForUpdates,
+        defaultGeneralAutomaticallyCheckForUpdates
+    )
     property string generalDefaultReadingMode: normalizeSettingValue(
         "general_default_reading_mode",
         settingsStore.generalDefaultReadingMode,
@@ -372,6 +379,8 @@ Item {
         settingsStore.onboardingCompleted,
         defaultOnboardingCompleted
     )
+
+    onGeneralAutomaticallyCheckForUpdatesChanged: syncConfiguredSetting("general_automatically_check_for_updates")
 
     onGeneralDefaultReadingModeChanged: syncConfiguredSetting("general_default_reading_mode")
 

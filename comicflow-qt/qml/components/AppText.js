@@ -41,6 +41,7 @@ var settingsReaderSection = "Reader"
 var settingsAppearanceSection = "Appearance"
 var settingsSafetySection = "Safety"
 
+var settingsGeneralAutomaticallyCheckForUpdates = "Automatically check for updates"
 var settingsGeneralDefaultReadingMode = "Default reading mode"
 var settingsGeneralOpenReaderFullscreenByDefault = "Open reader in fullscreen by default"
 var settingsGeneralAfterImport = "After import:"

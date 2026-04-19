@@ -1036,6 +1036,7 @@ ApplicationWindow {
         const deferredPrompt = Boolean(asDeferredPrompt)
         const deferredVersionText = String(deferredPromptVersion || "").trim()
         if (updateAvailableDialog) {
+            updateAvailableDialog.previewMode = false
             updateAvailableDialog.autoPromptActive = deferredPrompt
             updateAvailableDialog.autoPromptVersion = deferredPrompt ? deferredVersionText : ""
         }
@@ -1044,12 +1045,83 @@ ApplicationWindow {
 
     function openUpdateDownloadDialog(assetNameText) {
         if (updateDownloadDialog) {
+            updateDownloadDialog.previewMode = false
             updateDownloadDialog.assetNameText = String(assetNameText || "").trim()
         }
         popupController.openExclusivePopup(updateDownloadDialog)
     }
 
+    function openUpdateAvailablePreviewDialog() {
+        if (!updateAvailableDialog) {
+            return
+        }
+
+        const versionText = String(appVersion || "").trim()
+        const assetNameText = versionText.length > 0
+            ? "Comic-Pile-" + versionText + "-portable.zip"
+            : "Comic-Pile-portable.zip"
+        const releaseTitleText = versionText.length > 0
+            ? "Patch v" + versionText
+            : "Patch preview"
+        const notesText = String(appBundledWhatsNewText || "").trim().length > 0
+            ? String(appBundledWhatsNewText || "").trim()
+            : "- Preview update notes are shown here.\n- Use this popup to capture Help screenshots."
+
+        updateAvailableDialog.autoPromptActive = false
+        updateAvailableDialog.autoPromptVersion = ""
+        updateAvailableDialog.previewMode = true
+        updateAvailableDialog.previewLatestVersionText = versionText
+        updateAvailableDialog.previewLatestAssetNameText = assetNameText
+        updateAvailableDialog.previewReleaseNameText = releaseTitleText
+        updateAvailableDialog.previewUpdateDownloadUrl = "preview://download-update"
+        updateAvailableDialog.previewReleaseNotesText = notesText
+        popupController.openExclusivePopup(updateAvailableDialog)
+    }
+
+    function openUpdateDownloadPreviewDialog(stateKey) {
+        if (!updateDownloadDialog) {
+            return
+        }
+
+        const versionText = String(appVersion || "").trim()
+        const assetNameText = versionText.length > 0
+            ? "Comic-Pile-" + versionText + "-portable.zip"
+            : "Comic-Pile-portable.zip"
+        const state = String(stateKey || "").trim()
+
+        updateDownloadDialog.assetNameText = assetNameText
+        updateDownloadDialog.previewMode = true
+        updateDownloadDialog.previewAssetNameText = assetNameText
+        updateDownloadDialog.previewStatusText = ""
+
+        if (state === "failed") {
+            updateDownloadDialog.previewState = "failed"
+            updateDownloadDialog.previewProgressKnown = true
+            updateDownloadDialog.previewProgressFraction = 0.58
+            updateDownloadDialog.previewErrorText = "The update download timed out before it could finish."
+            updateDownloadDialog.previewDownloadedFilePath = ""
+        } else if (state === "ready") {
+            updateDownloadDialog.previewState = "ready"
+            updateDownloadDialog.previewProgressKnown = true
+            updateDownloadDialog.previewProgressFraction = 1
+            updateDownloadDialog.previewErrorText = ""
+            updateDownloadDialog.previewDownloadedFilePath = "C:/Temp/" + assetNameText
+        } else {
+            updateDownloadDialog.previewState = "downloading"
+            updateDownloadDialog.previewProgressKnown = true
+            updateDownloadDialog.previewProgressFraction = 0.63
+            updateDownloadDialog.previewErrorText = ""
+            updateDownloadDialog.previewDownloadedFilePath = ""
+        }
+
+        popupController.openExclusivePopup(updateDownloadDialog)
+    }
+
     function startUpdateDownloadFlow() {
+        if (updateAvailableDialog && Boolean(updateAvailableDialog.previewMode)) {
+            openUpdateDownloadPreviewDialog("downloading")
+            return
+        }
         if (typeof releaseDownloadService === "undefined" || !releaseDownloadService || !updateAvailableDialog) {
             return
         }
@@ -1068,6 +1140,13 @@ ApplicationWindow {
     }
 
     function handleDownloadedUpdateInstallRequested() {
+        if (updateDownloadDialog && Boolean(updateDownloadDialog.previewMode)) {
+            popupController.showMappedActionResult({
+                title: "Install update",
+                body: "This preview popup is for screenshots only. No real install starts from this preview."
+            })
+            return
+        }
         if (typeof releaseInstallService === "undefined" || !releaseInstallService || !updateDownloadDialog) {
             popupController.showMappedActionResult({
                 title: "Install update",
@@ -2185,7 +2264,10 @@ ApplicationWindow {
             ? String(releaseCheckService.pendingUpdatePromptVersion || "").trim()
             : ""
         startupController.handleComponentCompleted()
-        if (typeof releaseCheckService !== "undefined" && releaseCheckService) {
+        if (typeof releaseCheckService !== "undefined"
+            && releaseCheckService
+            && appSettingsController
+            && Boolean(appSettingsController.generalAutomaticallyCheckForUpdates)) {
             releaseCheckService.checkLatestReleaseIfDue()
         }
         scheduleDeferredUpdatePromptCheck()
@@ -2359,6 +2441,7 @@ ApplicationWindow {
               helperButtonsSpacing: 8
               continueReadingEnabled: navigationSurfaceController.continueReadingAvailable
               whatsNewAvailable: true
+              showUpdatePreviewEntries: Boolean(appIsFastDevBuild)
               centerLabel: root.topBarCenterLabel
               windowCornerRadius: root.windowCornerRadius
               onContinueReadingRequested: navigationSurfaceController.continueReading()
@@ -2368,6 +2451,10 @@ ApplicationWindow {
               onAddIssueRequested: root.quickAddFilesFromDialog()
               onSettingsRequested: root.openSettingsDialog("")
               onWhatsNewRequested: root.openWhatsNewDialog()
+              onUpdateAvailableRequested: root.openUpdateAvailablePreviewDialog()
+              onUpdateDownloadRequested: root.openUpdateDownloadPreviewDialog("downloading")
+              onUpdateDownloadFailedRequested: root.openUpdateDownloadPreviewDialog("failed")
+              onUpdateReadyRequested: root.openUpdateDownloadPreviewDialog("ready")
               onHelpRequested: root.openHelpDialog("")
               onQuickTourRequested: root.launchOnboarding(true)
               onAboutRequested: root.openAboutDialog()

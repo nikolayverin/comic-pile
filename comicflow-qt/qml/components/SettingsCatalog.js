@@ -156,6 +156,11 @@ var settingsSections = [
 var sectionOptionRows = {
     general: [
         {
+            label: AppText.settingsGeneralAutomaticallyCheckForUpdates,
+            controlType: "checkbox",
+            valueKey: "general_automatically_check_for_updates"
+        },
+        {
             label: AppText.settingsGeneralDefaultReadingMode,
             controlType: "dropdown",
             valueKey: "general_default_reading_mode",
@@ -265,6 +270,7 @@ var sectionOptionRows = {
 }
 
 var defaultSettingsState = {
+    general_automatically_check_for_updates: true,
     general_default_reading_mode: "Remember last state",
     general_open_reader_fullscreen_by_default: false,
     general_after_import: "Focus imported series",
@@ -362,6 +368,13 @@ var appearanceSettingDescriptors = [
 ]
 
 var settingDescriptors = [
+    {
+        valueKey: "general_automatically_check_for_updates",
+        controllerProperty: "generalAutomaticallyCheckForUpdates",
+        storeProperty: "generalAutomaticallyCheckForUpdates",
+        defaultValue: defaultSettingsState.general_automatically_check_for_updates,
+        normalization: "boolean"
+    },
     {
         valueKey: "general_default_reading_mode",
         controllerProperty: "generalDefaultReadingMode",
@@ -504,6 +517,7 @@ function defaultSettingsSnapshot() {
     return Object.assign({}, defaultSettingsState)
 }
 
+var defaultGeneralAutomaticallyCheckForUpdates = defaultSettingsState.general_automatically_check_for_updates
 var defaultGeneralDefaultReadingMode = defaultSettingsState.general_default_reading_mode
 var defaultGeneralOpenReaderFullscreenByDefault = defaultSettingsState.general_open_reader_fullscreen_by_default
 var defaultGeneralAfterImport = defaultSettingsState.general_after_import

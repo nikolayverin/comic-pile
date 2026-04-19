@@ -2,12 +2,14 @@
 
 **Updates**
 - Added a visible **Check for updates** action in **About**.
+- Added an **Automatically check for updates** option in **Settings -> General** so automatic update checks can be turned off while manual checks stay available.
 - Added a dedicated update popup that shows the latest version, **What's new**, and a direct **Download update** action.
 - Added a one-time update prompt that can appear on a later app launch after a newer version is detected.
 - Known available updates now stay visible in **About** between launches instead of disappearing after restart.
 - Added a dedicated **What's new** surface in the **Help** menu for reading the current build's release notes inside the app.
 - Added a separate **Downloading update** popup with progress, cancellation, download failure alerts, and a dedicated **Install update** step.
 - **Install update** now closes Comic Pile, applies the downloaded portable update over the current app folder, and keeps the existing **Database** library data in place.
+- Added a dedicated **Updating Comic Pile** Help section that explains where to check for updates, what **What's new** means, how the built-in download and install flow works, and what to do if a manual portable update is needed.
 
 **Import**
 - **Replace** can now use a folder of ordered page images, not only another archive file.
