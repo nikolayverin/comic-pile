@@ -42,11 +42,11 @@ var settingsAppearanceSection = "Appearance"
 var settingsSafetySection = "Safety"
 
 var settingsGeneralAutomaticallyCheckForUpdates = "Automatically check for updates"
-var settingsGeneralDefaultReadingMode = "Default reading mode"
 var settingsGeneralOpenReaderFullscreenByDefault = "Open reader in fullscreen by default"
 var settingsGeneralAfterImport = "After import:"
 var settingsGeneralDefaultViewAfterLaunch = "Default view after launch:"
 
+var settingsReaderDefaultReadingMode = "Default reading mode"
 var settingsReaderRememberLastReaderMode = "Remember last reader mode"
 var settingsReaderMagnifierSize = "Magnifier size"
 var settingsReaderPageEdgeBehavior = "Page edge behavior"

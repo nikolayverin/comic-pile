@@ -11,7 +11,6 @@ function optionKeys(entries) {
     return result
 }
 
-var generalDefaultReadingModeOptions = ["1 page", "2 pages", "Remember last state"]
 var generalAfterImportOptions = ["Focus imported series", "Open last import", "Do nothing"]
 var generalDefaultViewAfterLaunchOptions = ["First series in library", "Last import", "Remember last state"]
 var readerDefaultReadingModeOptions = ["1 page", "2 pages"]
@@ -161,12 +160,6 @@ var sectionOptionRows = {
             valueKey: "general_automatically_check_for_updates"
         },
         {
-            label: AppText.settingsGeneralDefaultReadingMode,
-            controlType: "dropdown",
-            valueKey: "general_default_reading_mode",
-            options: generalDefaultReadingModeOptions
-        },
-        {
             label: AppText.settingsGeneralOpenReaderFullscreenByDefault,
             controlType: "checkbox",
             valueKey: "general_open_reader_fullscreen_by_default"
@@ -186,7 +179,7 @@ var sectionOptionRows = {
     ],
     reader: [
         {
-            label: AppText.settingsGeneralDefaultReadingMode,
+            label: AppText.settingsReaderDefaultReadingMode,
             controlType: "segmented",
             valueKey: "reader_default_reading_mode",
             options: readerDefaultReadingModeOptions
@@ -271,7 +264,6 @@ var sectionOptionRows = {
 
 var defaultSettingsState = {
     general_automatically_check_for_updates: true,
-    general_default_reading_mode: "Remember last state",
     general_open_reader_fullscreen_by_default: false,
     general_after_import: "Focus imported series",
     general_default_view_after_launch: "Remember last state",
@@ -374,14 +366,6 @@ var settingDescriptors = [
         storeProperty: "generalAutomaticallyCheckForUpdates",
         defaultValue: defaultSettingsState.general_automatically_check_for_updates,
         normalization: "boolean"
-    },
-    {
-        valueKey: "general_default_reading_mode",
-        controllerProperty: "generalDefaultReadingMode",
-        storeProperty: "generalDefaultReadingMode",
-        defaultValue: defaultSettingsState.general_default_reading_mode,
-        normalization: "choice",
-        options: generalDefaultReadingModeOptions
     },
     {
         valueKey: "general_open_reader_fullscreen_by_default",
@@ -518,7 +502,6 @@ function defaultSettingsSnapshot() {
 }
 
 var defaultGeneralAutomaticallyCheckForUpdates = defaultSettingsState.general_automatically_check_for_updates
-var defaultGeneralDefaultReadingMode = defaultSettingsState.general_default_reading_mode
 var defaultGeneralOpenReaderFullscreenByDefault = defaultSettingsState.general_open_reader_fullscreen_by_default
 var defaultGeneralAfterImport = defaultSettingsState.general_after_import
 var defaultGeneralDefaultViewAfterLaunch = defaultSettingsState.general_default_view_after_launch

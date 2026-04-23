@@ -9,7 +9,6 @@ Item {
     width: 0
     height: 0
 
-    readonly property string defaultGeneralDefaultReadingMode: SettingsCatalog.defaultGeneralDefaultReadingMode
     readonly property bool defaultGeneralAutomaticallyCheckForUpdates: SettingsCatalog.defaultGeneralAutomaticallyCheckForUpdates
     readonly property bool defaultGeneralOpenReaderFullscreenByDefault: SettingsCatalog.defaultGeneralOpenReaderFullscreenByDefault
     readonly property string defaultGeneralAfterImport: SettingsCatalog.defaultGeneralAfterImport
@@ -135,10 +134,6 @@ Item {
         syncConfiguredSetting(valueKey)
     }
 
-    function normalizeGeneralDefaultReadingMode(value) {
-        return normalizeSettingValue("general_default_reading_mode", value, defaultGeneralDefaultReadingMode)
-    }
-
     function normalizeGeneralAfterImport(value) {
         return normalizeSettingValue("general_after_import", value, defaultGeneralAfterImport)
     }
@@ -217,7 +212,6 @@ Item {
         id: settingsStore
         category: "AppSettings"
         property bool generalAutomaticallyCheckForUpdates: controller.defaultGeneralAutomaticallyCheckForUpdates
-        property string generalDefaultReadingMode: controller.defaultGeneralDefaultReadingMode
         property bool generalOpenReaderFullscreenByDefault: controller.defaultGeneralOpenReaderFullscreenByDefault
         property string generalAfterImport: controller.defaultGeneralAfterImport
         property string generalDefaultViewAfterLaunch: controller.defaultGeneralDefaultViewAfterLaunch
@@ -249,11 +243,6 @@ Item {
         "general_automatically_check_for_updates",
         settingsStore.generalAutomaticallyCheckForUpdates,
         defaultGeneralAutomaticallyCheckForUpdates
-    )
-    property string generalDefaultReadingMode: normalizeSettingValue(
-        "general_default_reading_mode",
-        settingsStore.generalDefaultReadingMode,
-        defaultGeneralDefaultReadingMode
     )
     property bool generalOpenReaderFullscreenByDefault: normalizeSettingValue(
         "general_open_reader_fullscreen_by_default",
@@ -381,8 +370,6 @@ Item {
     )
 
     onGeneralAutomaticallyCheckForUpdatesChanged: syncConfiguredSetting("general_automatically_check_for_updates")
-
-    onGeneralDefaultReadingModeChanged: syncConfiguredSetting("general_default_reading_mode")
 
     onGeneralOpenReaderFullscreenByDefaultChanged: syncConfiguredSetting("general_open_reader_fullscreen_by_default")
 
