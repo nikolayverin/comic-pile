@@ -5,7 +5,7 @@
 - Added an **Automatically check for updates** option in **Settings -> General** while keeping manual checks available.
 - Added a dedicated update flow with **Update available**, **Downloading update**, **Install update**, and in-app **What's new** surfaces.
 - Added a one-time update prompt for newly detected versions and kept known available updates visible in **About** between launches.
-- **Install update** now closes Comic Pile, applies the downloaded portable update over the current app folder, and keeps the existing **Database** library data in place.
+- **Install update** now closes Comic Pile, applies the downloaded portable update over the current app folder, and keeps the existing **Database** library data and **ComicPile.ini** settings file in place.
 - Added a dedicated **Updating Comic Pile** Help section that explains update checks, automatic update behavior, the download-and-install flow, and manual portable update guidance.
 
 **Import**

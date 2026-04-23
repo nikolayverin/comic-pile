@@ -1,5 +1,6 @@
 #include "updates/releasecheckservice.h"
 #include "updates/bundledreleasenotes.h"
+#include "settings/portablesettingsutils.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -275,7 +276,7 @@ bool ReleaseCheckService::isVersionDismissed(const QString &version) const
 
 void ReleaseCheckService::loadPersistedState()
 {
-    QSettings settings;
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.beginGroup(QString::fromLatin1(kSettingsGroup));
     m_lastCheckAttemptAtMs = settings.value(QString::fromLatin1(kLastCheckAttemptAtMsKey), 0).toLongLong();
     m_lastSuccessfulCheckAtMs = settings.value(QString::fromLatin1(kLastSuccessfulCheckAtMsKey), 0).toLongLong();
@@ -315,7 +316,7 @@ void ReleaseCheckService::loadPersistedState()
     }
     if (!m_hasReleaseInfo || !latestVersionIsNewer() || isVersionDismissed(m_pendingUpdatePromptVersion)) {
         m_pendingUpdatePromptVersion.clear();
-        QSettings cleanupSettings;
+        QSettings cleanupSettings = ComicPortableSettings::settingsStore();
         cleanupSettings.beginGroup(QString::fromLatin1(kSettingsGroup));
         cleanupSettings.remove(QString::fromLatin1(kPendingUpdatePromptVersionKey));
         cleanupSettings.endGroup();
@@ -356,7 +357,7 @@ void ReleaseCheckService::storeLastCheckAttemptAtMs(qint64 timestampMs)
         return;
     }
     m_lastCheckAttemptAtMs = timestampMs;
-    QSettings settings;
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.beginGroup(QString::fromLatin1(kSettingsGroup));
     settings.setValue(QString::fromLatin1(kLastCheckAttemptAtMsKey), m_lastCheckAttemptAtMs);
     settings.endGroup();
@@ -369,7 +370,7 @@ void ReleaseCheckService::storeLastSuccessfulCheckAtMs(qint64 timestampMs)
         return;
     }
     m_lastSuccessfulCheckAtMs = timestampMs;
-    QSettings settings;
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.beginGroup(QString::fromLatin1(kSettingsGroup));
     settings.setValue(QString::fromLatin1(kLastSuccessfulCheckAtMsKey), m_lastSuccessfulCheckAtMs);
     settings.endGroup();
@@ -383,7 +384,7 @@ void ReleaseCheckService::storeDismissedUpdateVersion(const QString &version)
         return;
     }
     m_dismissedUpdateVersion = normalizedVersion;
-    QSettings settings;
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.beginGroup(QString::fromLatin1(kSettingsGroup));
     settings.setValue(QString::fromLatin1(kDismissedUpdateVersionKey), m_dismissedUpdateVersion);
     settings.endGroup();
@@ -397,7 +398,7 @@ void ReleaseCheckService::storePendingUpdatePromptVersion(const QString &version
         return;
     }
     m_pendingUpdatePromptVersion = normalizedVersion;
-    QSettings settings;
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.beginGroup(QString::fromLatin1(kSettingsGroup));
     settings.setValue(QString::fromLatin1(kPendingUpdatePromptVersionKey), m_pendingUpdatePromptVersion);
     settings.endGroup();
@@ -406,7 +407,7 @@ void ReleaseCheckService::storePendingUpdatePromptVersion(const QString &version
 
 void ReleaseCheckService::storePersistedReleaseInfo()
 {
-    QSettings settings;
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.beginGroup(QString::fromLatin1(kSettingsGroup));
     settings.setValue(QString::fromLatin1(kLatestReleaseVersionKey), m_latestVersion);
     settings.setValue(QString::fromLatin1(kLatestReleaseTagKey), m_latestTag);
@@ -421,7 +422,7 @@ void ReleaseCheckService::storePersistedReleaseInfo()
 
 void ReleaseCheckService::clearPersistedReleaseInfo()
 {
-    QSettings settings;
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.beginGroup(QString::fromLatin1(kSettingsGroup));
     settings.remove(QString::fromLatin1(kLatestReleaseVersionKey));
     settings.remove(QString::fromLatin1(kLatestReleaseTagKey));

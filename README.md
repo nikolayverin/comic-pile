@@ -26,7 +26,7 @@ That means:
 - no installer is required
 - the app can be unpacked and launched directly
 - the bundled starter library lives next to the app in `Database/`
-- current app builds can check GitHub Releases and apply portable updates in place while keeping the existing `Database`
+- current app builds can check GitHub Releases and apply portable updates in place while keeping the existing `Database` and `ComicPile.ini`
 
 ## Demo library
 

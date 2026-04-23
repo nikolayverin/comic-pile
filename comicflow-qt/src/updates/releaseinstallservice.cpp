@@ -252,7 +252,9 @@ try {
         throw 'The downloaded update package does not contain Comic Pile.exe.'
     }
 
-    Get-ChildItem -LiteralPath $packageRoot.FullName -Force | Where-Object { $_.Name -ne 'Database' } | ForEach-Object {
+    Get-ChildItem -LiteralPath $packageRoot.FullName -Force | Where-Object {
+        $_.Name -ne 'Database' -and $_.Name -ne 'ComicPile.ini'
+    } | ForEach-Object {
         $destinationPath = Join-Path $InstallDir $_.Name
         if ($_.PSIsContainer) {
             Copy-DirectoryContent $_.FullName $destinationPath

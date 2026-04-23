@@ -1,4 +1,5 @@
 #include "storage/datarootsettingsutils.h"
+#include "settings/portablesettingsutils.h"
 #include "storage/storedpathutils.h"
 
 #include <QCoreApplication>
@@ -16,32 +17,6 @@ QString dataRootOverrideSettingsKey()
 QString pendingDataRootRelocationSettingsKey()
 {
     return QStringLiteral("AppSettings/libraryDataRelocationPendingPath");
-}
-
-QString portableSettingsFilePath()
-{
-    return QDir(QCoreApplication::applicationDirPath()).filePath(QStringLiteral("ComicPile.ini"));
-}
-
-QSettings portableSettingsStore()
-{
-    return QSettings(portableSettingsFilePath(), QSettings::IniFormat);
-}
-
-QSettings legacyRelocationSettingsStore()
-{
-    return QSettings(
-        QSettings::IniFormat,
-        QSettings::UserScope,
-        QStringLiteral("ComicPile"),
-        QStringLiteral("ComicPile")
-    );
-}
-
-QString configuredLegacyDataRootOverridePath()
-{
-    QSettings settings = legacyRelocationSettingsStore();
-    return ComicDataRootSettings::normalizedFolderPath(settings.value(dataRootOverrideSettingsKey()).toString());
 }
 
 } // namespace
@@ -75,13 +50,13 @@ QString persistedFolderPathForDisplay(const QString &rawPath)
 
 QString configuredDataRootOverridePath()
 {
-    QSettings settings = portableSettingsStore();
+    QSettings settings = ComicPortableSettings::settingsStore();
     return normalizedFolderPath(settings.value(dataRootOverrideSettingsKey()).toString());
 }
 
 QString pendingDataRootRelocationPath()
 {
-    QSettings settings = portableSettingsStore();
+    QSettings settings = ComicPortableSettings::settingsStore();
     return normalizedFolderPath(settings.value(pendingDataRootRelocationSettingsKey()).toString());
 }
 
@@ -122,17 +97,12 @@ QString resolveActiveDataRootPath()
         }
     }
 
-    const QString legacyConfiguredOverride = configuredLegacyDataRootOverridePath();
-    if (!legacyConfiguredOverride.isEmpty()) {
-        return QDir(legacyConfiguredOverride).absolutePath();
-    }
-
     return QDir(appDir).filePath(QStringLiteral("Database"));
 }
 
 bool writeConfiguredDataRootOverridePath(const QString &rawPath)
 {
-    QSettings settings = portableSettingsStore();
+    QSettings settings = ComicPortableSettings::settingsStore();
     const QString persistedPath = persistedFolderPathForDisplay(rawPath);
     if (persistedPath.isEmpty()) {
         settings.remove(dataRootOverrideSettingsKey());
@@ -147,7 +117,7 @@ bool writePendingDataRootRelocationPath(const QString &rawPath, QString &errorTe
 {
     errorText.clear();
 
-    QSettings settings = portableSettingsStore();
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.setValue(
         pendingDataRootRelocationSettingsKey(),
         persistedFolderPathForDisplay(rawPath)
@@ -171,7 +141,7 @@ bool writePendingDataRootRelocationPath(const QString &rawPath, QString &errorTe
 
 bool clearPendingDataRootRelocationPath()
 {
-    QSettings settings = portableSettingsStore();
+    QSettings settings = ComicPortableSettings::settingsStore();
     settings.remove(pendingDataRootRelocationSettingsKey());
     settings.sync();
     return settings.status() == QSettings::NoError;

@@ -1,6 +1,7 @@
 #include "common/singleinstanceguard.h"
 #include "common/startuplaunchbootstrap.h"
 #include "comicpile_build_iteration.h"
+#include "settings/portablesettingsutils.h"
 #include "storage/comicslistmodel.h"
 #include "storage/datarootrelocationbootstrap.h"
 #include "updates/bundledreleasenotes.h"
@@ -214,6 +215,7 @@ int main(int argc, char *argv[])
         QVariant::fromValue(bool(COMICPILE_FAST_DEV_BUILD_ENABLED)));
     engine.rootContext()->setContextProperty("appLaunchStartedAtMs", QDateTime::currentMSecsSinceEpoch() - launchTimer.elapsed());
     engine.rootContext()->setContextProperty("appLaunchState", &launchState);
+    engine.rootContext()->setContextProperty("appPortableSettingsFileUrl", ComicPortableSettings::settingsFileUrl());
     ComicStartupLaunch::appendLaunchLog(
         launchLogPath,
         launchTimer,

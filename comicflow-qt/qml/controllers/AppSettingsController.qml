@@ -35,6 +35,7 @@ Item {
     readonly property bool defaultSafetyConfirmBeforeReplace: SettingsCatalog.defaultSafetyConfirmBeforeReplace
     readonly property bool defaultSafetyConfirmBeforeDeletingPage: SettingsCatalog.defaultSafetyConfirmBeforeDeletingPage
     readonly property bool defaultOnboardingCompleted: false
+    readonly property url portableSettingsLocation: typeof appPortableSettingsFileUrl === "undefined" ? "" : appPortableSettingsFileUrl
     readonly property var settingDescriptors: SettingsCatalog.settingDescriptors
 
     function normalizeChoice(value, allowedValues, fallbackValue, aliases) {
@@ -212,6 +213,7 @@ Item {
 
     Settings {
         id: settingsStore
+        location: controller.portableSettingsLocation
         category: "AppSettings"
         property bool generalAutomaticallyCheckForUpdates: controller.defaultGeneralAutomaticallyCheckForUpdates
         property bool generalOpenReaderFullscreenByDefault: controller.defaultGeneralOpenReaderFullscreenByDefault
