@@ -13,22 +13,24 @@ It is designed around a simple flow:
 - local-library workflow
 - issue and series metadata editing
 - built-in reader with bookmarks, favorites, continue reading, and next unread
+- full in-app `Help`, `Quick tour`, and `What's new`
+- in-app update flow with `Check for updates`, `Update available`, `Downloading update`, and `Install update`
 - bundled startup demo library with 2 public-domain series and 5 issues
 - portable release package with the library stored next to the app in `Database/`
 
 ## Portable app behavior
 
-Comic Pile is planned as a portable `.zip` app for the first public release.
+Comic Pile is distributed as a portable Windows `.zip` app.
 
 That means:
 - no installer is required
 - the app can be unpacked and launched directly
 - the bundled starter library lives next to the app in `Database/`
-- later app updates can replace app files without rebuilding the library structure
+- current app builds can check GitHub Releases and apply portable updates in place while keeping the existing `Database`
 
 ## Demo library
 
-The first public release is planned to ship with a small starter library so a new user can browse and read immediately after launch.
+Comic Pile ships with a small starter library so a new user can browse and read immediately after launch.
 
 Current starter library direction:
 - `Popular Comics`
@@ -40,7 +42,7 @@ Bundled public-domain comics attribution:
 
 ## Bug reports
 
-Bug reports are planned to go through GitHub Issues once the repository and issue flow are public.
+Bug reports go through GitHub Issues.
 
 Useful report details:
 - what happened
