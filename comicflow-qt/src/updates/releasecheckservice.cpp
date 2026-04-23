@@ -72,9 +72,80 @@ bool isVersionNewer(const QString &candidateVersion, const QString &currentVersi
     return false;
 }
 
-QString firstZipAssetName(const QJsonArray &assets, QString &downloadUrlOut)
+QString normalizedReleaseAssetName(const QString &name)
+{
+    QString normalized = name.trimmed().toLower();
+    normalized.replace(QRegularExpression(QStringLiteral("[\\s_]+")), QStringLiteral("-"));
+    return normalized;
+}
+
+bool isBlockedReleaseAssetName(const QString &normalizedName)
+{
+    static const QStringList blockedTokens = {
+        QStringLiteral("source"),
+        QStringLiteral("symbols"),
+        QStringLiteral("symbol"),
+        QStringLiteral("debug"),
+        QStringLiteral("pdb"),
+        QStringLiteral("checksum"),
+        QStringLiteral("checksums"),
+        QStringLiteral("sha256")
+    };
+
+    for (const QString &token : blockedTokens) {
+        if (normalizedName.contains(token)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isComicPilePortableAssetName(const QString &name)
+{
+    const QString normalizedName = normalizedReleaseAssetName(name);
+    if (!normalizedName.endsWith(QStringLiteral(".zip"))) {
+        return false;
+    }
+    if (isBlockedReleaseAssetName(normalizedName)) {
+        return false;
+    }
+    return normalizedName.startsWith(QStringLiteral("comic-pile"))
+        || normalizedName.startsWith(QStringLiteral("comics-pile"))
+        || normalizedName.startsWith(QStringLiteral("comicpile"));
+}
+
+int portableAssetScore(const QString &name, const QString &version)
+{
+    const QString normalizedName = normalizedReleaseAssetName(name);
+    int score = 0;
+    if (normalizedName.contains(QStringLiteral("portable"))) {
+        score += 20;
+    }
+    if (normalizedName.contains(QStringLiteral("win64")) || normalizedName.contains(QStringLiteral("windows"))) {
+        score += 10;
+    }
+    if (normalizedName.contains(QStringLiteral("x64"))) {
+        score += 5;
+    }
+
+    const QString normalizedVersion = normalizeReleaseVersionTag(version).toLower();
+    if (!normalizedVersion.isEmpty()) {
+        const QString dashedVersion = normalizedVersion;
+        QString vPrefixedVersion = QStringLiteral("v") + normalizedVersion;
+        if (normalizedName.contains(dashedVersion) || normalizedName.contains(vPrefixedVersion)) {
+            score += 30;
+        }
+    }
+    return score;
+}
+
+QString portableZipAssetName(const QJsonArray &assets, const QString &version, QString &downloadUrlOut)
 {
     downloadUrlOut.clear();
+    QString selectedName;
+    int selectedScore = -1;
+    bool ambiguousBest = false;
+
     for (const QJsonValue &assetValue : assets) {
         const QJsonObject assetObject = assetValue.toObject();
         const QString name = assetObject.value(QStringLiteral("name")).toString().trimmed();
@@ -82,13 +153,26 @@ QString firstZipAssetName(const QJsonArray &assets, QString &downloadUrlOut)
         if (name.isEmpty() || downloadUrl.isEmpty()) {
             continue;
         }
-        if (!name.endsWith(QStringLiteral(".zip"), Qt::CaseInsensitive)) {
+        if (!isComicPilePortableAssetName(name)) {
             continue;
         }
-        downloadUrlOut = downloadUrl;
-        return name;
+
+        const int score = portableAssetScore(name, version);
+        if (score > selectedScore) {
+            selectedName = name;
+            downloadUrlOut = downloadUrl;
+            selectedScore = score;
+            ambiguousBest = false;
+        } else if (score == selectedScore) {
+            ambiguousBest = true;
+        }
     }
-    return {};
+
+    if (ambiguousBest) {
+        downloadUrlOut.clear();
+        return {};
+    }
+    return selectedName;
 }
 
 }
@@ -564,7 +648,7 @@ void ReleaseCheckService::handleReplyFinished(QNetworkReply *reply)
     }
 
     QString assetDownloadUrl;
-    const QString assetName = firstZipAssetName(root.value(QStringLiteral("assets")).toArray(), assetDownloadUrl);
+    const QString assetName = portableZipAssetName(root.value(QStringLiteral("assets")).toArray(), version, assetDownloadUrl);
 
     setLastError({});
     applyParsedReleaseInfo(

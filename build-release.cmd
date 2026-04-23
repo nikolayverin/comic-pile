@@ -18,6 +18,7 @@ set "DATABASE_DST=%STAGE_DIR%\Database"
 set "RUNTIME_MARKER=library-storage-layout-migration-v1.done"
 set "RELEASE_ASSETS_SRC=%ROOT%\release"
 set "RELEASE_ASSETS_DST=%STAGE_DIR%"
+set "UPDATE_MANIFEST=%STAGE_DIR%\.comicpile-update-manifest.txt"
 
 set "QT_ROOT=C:\Qt\6.10.2\mingw_64"
 set "QT_BIN=%QT_ROOT%\bin"
@@ -149,6 +150,12 @@ robocopy "%RELEASE_ASSETS_SRC%\License" "%RELEASE_ASSETS_DST%\License" /MIR >nul
 set "ROBOCOPY_RC=%ERRORLEVEL%"
 if %ROBOCOPY_RC% GEQ 8 (
     echo [FAIL] Could not copy release license bundle.
+    exit /b 1
+)
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$root=(Resolve-Path -LiteralPath '%STAGE_DIR%').Path; $manifest=[System.IO.Path]::GetFullPath('%UPDATE_MANIFEST%'); Get-ChildItem -LiteralPath $root -File -Recurse -Force | ForEach-Object { $relativePath=$_.FullName.Substring($root.Length).TrimStart('\') -replace '\\','/'; $rootName=($relativePath -split '/',2)[0]; if (@('Database','ComicPile.ini','.comicpile-update-manifest.txt') -notcontains $rootName) { $relativePath } } | Sort-Object -Unique | Set-Content -LiteralPath $manifest -Encoding UTF8"
+if errorlevel 1 (
+    echo [FAIL] Could not write update manifest.
     exit /b 1
 )
 

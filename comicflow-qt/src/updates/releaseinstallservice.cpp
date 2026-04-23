@@ -200,6 +200,91 @@ function Show-InstallError([string]$MessageText) {
     ) | Out-Null
 }
 
+$ManifestName = '.comicpile-update-manifest.txt'
+$ProtectedRootNames = @('Database', 'ComicPile.ini', $ManifestName)
+
+function Convert-ToRelativeInstallPath([string]$RootDir, [string]$FullName) {
+    $rootPath = [System.IO.Path]::GetFullPath($RootDir)
+    $fullPath = [System.IO.Path]::GetFullPath($FullName)
+    if (-not $rootPath.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {
+        $rootPath = $rootPath + [System.IO.Path]::DirectorySeparatorChar
+    }
+    if (-not $fullPath.StartsWith($rootPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        return ''
+    }
+    return $fullPath.Substring($rootPath.Length).Replace('\', '/')
+}
+
+function Test-ProtectedRootRelativePath([string]$RelativePath) {
+    if ([string]::IsNullOrWhiteSpace($RelativePath)) {
+        return $true
+    }
+    $rootName = $RelativePath -split '[\\/]', 2 | Select-Object -First 1
+    foreach ($protectedName in $ProtectedRootNames) {
+        if ($rootName -ieq $protectedName) {
+            return $true
+        }
+    }
+    return $false
+}
+
+function Get-PackageFileManifest([string]$PackageRoot) {
+    $manifestEntries = New-Object System.Collections.Generic.List[string]
+    Get-ChildItem -LiteralPath $PackageRoot -File -Recurse -Force | ForEach-Object {
+        $relativePath = Convert-ToRelativeInstallPath $PackageRoot $_.FullName
+        if (-not [string]::IsNullOrWhiteSpace($relativePath)
+            -and -not (Test-ProtectedRootRelativePath $relativePath)) {
+            $manifestEntries.Add($relativePath)
+        }
+    }
+    return $manifestEntries | Sort-Object -Unique
+}
+
+function Remove-StaleInstalledFiles([string]$InstallDir, [string[]]$NewManifestEntries) {
+    $manifestPath = Join-Path $InstallDir $ManifestName
+    if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+        return
+    }
+
+    $newManifestLookup = @{}
+    foreach ($relativePath in $NewManifestEntries) {
+        if (-not [string]::IsNullOrWhiteSpace($relativePath)) {
+            $newManifestLookup[$relativePath] = $true
+        }
+    }
+
+    $candidateDirs = New-Object System.Collections.Generic.List[string]
+    Get-Content -LiteralPath $manifestPath | ForEach-Object {
+        $relativePath = [string]$_
+        if (-not [string]::IsNullOrWhiteSpace($relativePath)
+            -and -not (Test-ProtectedRootRelativePath $relativePath)
+            -and -not ($newManifestLookup.ContainsKey($relativePath))) {
+            $targetPath = Join-Path $InstallDir ($relativePath.Replace('/', [System.IO.Path]::DirectorySeparatorChar))
+            if (Test-Path -LiteralPath $targetPath -PathType Leaf) {
+                Remove-Item -LiteralPath $targetPath -Force
+                $parentDir = Split-Path -Parent $targetPath
+                if (-not [string]::IsNullOrWhiteSpace($parentDir)) {
+                    $candidateDirs.Add($parentDir)
+                }
+            }
+        }
+    }
+
+    $candidateDirs |
+        Sort-Object { $_.Length } -Descending -Unique |
+        ForEach-Object {
+            if ((Test-Path -LiteralPath $_ -PathType Container)
+                -and -not (Get-ChildItem -LiteralPath $_ -Force | Select-Object -First 1)) {
+                Remove-Item -LiteralPath $_ -Force
+            }
+        }
+}
+
+function Write-InstallManifest([string]$InstallDir, [string[]]$ManifestEntries) {
+    $manifestPath = Join-Path $InstallDir $ManifestName
+    $ManifestEntries | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+}
+
 function Copy-DirectoryContent([string]$SourceDir, [string]$DestinationDir) {
     if (-not (Test-Path -LiteralPath $DestinationDir -PathType Container)) {
         New-Item -ItemType Directory -Path $DestinationDir -Force | Out-Null
@@ -252,8 +337,11 @@ try {
         throw 'The downloaded update package does not contain Comic Pile.exe.'
     }
 
+    $newManifestEntries = @(Get-PackageFileManifest $packageRoot.FullName)
+    Remove-StaleInstalledFiles $InstallDir $newManifestEntries
+
     Get-ChildItem -LiteralPath $packageRoot.FullName -Force | Where-Object {
-        $_.Name -ne 'Database' -and $_.Name -ne 'ComicPile.ini'
+        $ProtectedRootNames -notcontains $_.Name
     } | ForEach-Object {
         $destinationPath = Join-Path $InstallDir $_.Name
         if ($_.PSIsContainer) {
@@ -263,6 +351,8 @@ try {
 
         Copy-Item -LiteralPath $_.FullName -Destination $destinationPath -Force
     }
+
+    Write-InstallManifest $InstallDir $newManifestEntries
 
     if (-not (Test-Path -LiteralPath $ExePath -PathType Leaf)) {
         throw 'Comic Pile.exe was not found after the update files were copied.'
