@@ -2,7 +2,7 @@ import QtQuick
 
 QtObject {
     readonly property string appTitle: "Comic Pile"
-    readonly property string appWindowTitle: "Comic Pile (Qt Prototype)"
+    readonly property string appWindowTitle: "Comic Pile"
     readonly property string searchPlaceholder: "Search"
     readonly property string inventoryRebuildStatus: "Library Or Database Changed. Rebuilding Inventory..."
     readonly property string settingsSoonLabel: "Settings (soon)"
