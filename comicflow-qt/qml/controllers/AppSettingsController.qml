@@ -205,7 +205,9 @@ Item {
     }
 
     function resetAllSettingsToDefaults() {
+        const wasOnboardingCompleted = Boolean(onboardingCompleted)
         applySettingsSnapshot(SettingsCatalog.defaultSettingsSnapshot())
+        onboardingCompleted = wasOnboardingCompleted
     }
 
     Settings {
