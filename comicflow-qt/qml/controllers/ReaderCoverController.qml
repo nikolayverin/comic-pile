@@ -1,6 +1,7 @@
 import QtQuick
 import "../components/AppErrorMapper.js" as AppErrorMapper
 import "../components/ReadingTarget.js" as ReadingTarget
+import "../components/AppSharedUtils.js" as AppSharedUtils
 
 Item {
     id: controller
@@ -458,12 +459,7 @@ Item {
     }
 
     function displaySeriesTitleForIssue(issue) {
-        const row = issue || {}
-        const series = String(row.series || "").trim()
-        const volume = String(row.volume || "").trim()
-        if (series.length < 1) return ""
-        if (volume.length < 1) return series
-        return series + " - Vol. " + volume
+        return AppSharedUtils.displaySeriesTitleForIssue(issue)
     }
 
     function snapshotHeroFallbackComicId() {

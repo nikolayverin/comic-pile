@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppSharedUtils.js" as AppSharedUtils
 
 Item {
     id: root
@@ -39,10 +40,7 @@ Item {
     }
 
     function fileNameFromPath(pathValue) {
-        const normalized = String(pathValue || "").replace(/\\/g, "/").trim()
-        if (normalized.length < 1) return ""
-        const parts = normalized.split("/")
-        return parts.length > 0 ? String(parts[parts.length - 1] || "") : normalized
+        return AppSharedUtils.fileNameFromPath(pathValue)
     }
 
     visible: presented || opacity > 0

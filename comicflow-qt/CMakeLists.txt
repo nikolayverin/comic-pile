@@ -279,6 +279,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/ReadingTarget.js
         qml/components/SeriesContext.js
         qml/components/AppText.js
+        qml/components/AppSharedUtils.js
         qml/components/AppErrorMapper.js
         qml/components/SettingsCatalog.js
         qml/components/ContextMenuPopup.qml

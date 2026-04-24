@@ -1,5 +1,6 @@
 import QtQuick
 import "../components/AppMessagePayload.js" as AppMessagePayload
+import "../components/AppSharedUtils.js" as AppSharedUtils
 
 Item {
     id: controller
@@ -40,17 +41,11 @@ Item {
     }
 
     function normalizeImportPath(rawPath) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.normalizeImportPath === "function"
-            ? String(rootRef.normalizeImportPath(rawPath) || "")
-            : ""
+        return AppSharedUtils.normalizeImportPath(rawPath)
     }
 
     function fileNameFromPath(pathValue) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.fileNameFromPath === "function"
-            ? rootRef.fileNameFromPath(pathValue)
-            : ""
+        return AppSharedUtils.fileNameFromPath(pathValue)
     }
 
     function openExclusivePopup(targetPopup) {

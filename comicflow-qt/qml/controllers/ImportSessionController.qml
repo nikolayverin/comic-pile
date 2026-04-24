@@ -1,6 +1,7 @@
 import QtQuick
 import "../components/IssueNumberText.js" as IssueNumberText
 import "../components/AppText.js" as AppText
+import "../components/AppSharedUtils.js" as AppSharedUtils
 
 Item {
     id: controller
@@ -78,17 +79,11 @@ Item {
     }
 
     function cloneVariantMap(sourceValues) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.cloneVariantMap === "function"
-            ? rootRef.cloneVariantMap(sourceValues)
-            : ({})
+        return AppSharedUtils.cloneVariantMap(sourceValues)
     }
 
     function fileNameFromPath(pathValue) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.fileNameFromPath === "function"
-            ? rootRef.fileNameFromPath(pathValue)
-            : ""
+        return AppSharedUtils.fileNameFromPath(pathValue)
     }
 
     function baseNameWithoutExtension(pathValue) {
@@ -107,10 +102,7 @@ Item {
     }
 
     function normalizeImportPath(rawPath) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.normalizeImportPath === "function"
-            ? String(rootRef.normalizeImportPath(rawPath) || "")
-            : ""
+        return AppSharedUtils.normalizeImportPath(rawPath)
     }
 
     function parentFolderPath(pathValue) {
@@ -188,18 +180,11 @@ Item {
     }
 
     function classifyImportError(pathValue, rawErrorText, rawErrorCode) {
-        const rootRef = root()
-        if (rootRef && typeof rootRef.classifyImportError === "function") {
-            return rootRef.classifyImportError(pathValue, rawErrorText, rawErrorCode)
-        }
-        return {
-            reason: "Import failed"
-        }
+        return AppSharedUtils.classifyImportError(pathValue, rawErrorText, rawErrorCode)
     }
 
     function archiveUnsupportedReason(pathValue) {
-        if (!libraryModelRef) return ""
-        return String(libraryModelRef.importArchiveUnsupportedReason(String(pathValue || "")) || "")
+        return AppSharedUtils.archiveUnsupportedReason(libraryModelRef, pathValue)
     }
 
     function pushImportFailure(pathValue, rawErrorText, rawErrorCode) {

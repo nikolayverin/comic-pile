@@ -1,5 +1,6 @@
 import QtQuick
 import "../components/AppText.js" as AppText
+import "../components/AppSharedUtils.js" as AppSharedUtils
 
 Item {
     id: controller
@@ -28,10 +29,7 @@ Item {
     }
 
     function normalizeImportPath(rawPath) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.normalizeImportPath === "function"
-            ? String(rootRef.normalizeImportPath(rawPath) || "")
-            : ""
+        return AppSharedUtils.normalizeImportPath(rawPath)
     }
 
     function imageFileSource(pathValue) {
