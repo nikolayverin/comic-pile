@@ -153,6 +153,12 @@ if %ROBOCOPY_RC% GEQ 8 (
     exit /b 1
 )
 
+rem Keep runtime/debug logs out of portable release packages and manifests.
+del /S /Q "%STAGE_DIR%\*.log" >nul 2>nul
+del /S /Q "%STAGE_DIR%\*.log.*" >nul 2>nul
+del /S /Q "%STAGE_DIR%\startup-log.txt" >nul 2>nul
+del /S /Q "%STAGE_DIR%\startup-debug-log.txt" >nul 2>nul
+
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$root=(Resolve-Path -LiteralPath '%STAGE_DIR%').Path; $manifest=[System.IO.Path]::GetFullPath('%UPDATE_MANIFEST%'); Get-ChildItem -LiteralPath $root -File -Recurse -Force | ForEach-Object { $relativePath=$_.FullName.Substring($root.Length).TrimStart('\') -replace '\\','/'; $rootName=($relativePath -split '/',2)[0]; if (@('Database','ComicPile.ini','.comicpile-update-manifest.txt') -notcontains $rootName) { $relativePath } } | Sort-Object -Unique | Set-Content -LiteralPath $manifest -Encoding UTF8"
 if errorlevel 1 (
     echo [FAIL] Could not write update manifest.

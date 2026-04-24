@@ -857,30 +857,15 @@ ApplicationWindow {
     }
 
     function resolveImportSourceEntries(paths) {
-        const normalizedSources = []
-        if (!paths || paths.length < 1) return normalizedSources
-
-        for (let i = 0; i < paths.length; i += 1) {
-            let rawPath = paths[i]
-            if (rawPath && typeof rawPath === "object") {
-                rawPath = rawPath.path
-            }
-            const normalized = normalizeImportPath(rawPath)
-            if (normalized.length < 1) continue
-            normalizedSources.push(normalized)
-        }
-
-        if (normalizedSources.length < 1) return []
-        return libraryModel.expandImportSources(normalizedSources, true)
+        return importController && typeof importController.resolveImportSourceEntries === "function"
+            ? importController.resolveImportSourceEntries(paths)
+            : []
     }
 
     function startImportFromSourcePaths(paths, options, emptyMessage) {
-        const resolvedEntries = resolveImportSourceEntries(paths)
-        if (!resolvedEntries || resolvedEntries.length < 1) {
-            popupController.showActionResult(String(emptyMessage || AppText.sidebarDropNoSupportedSources), true)
-            return false
-        }
-        return importController.importSourceEntries(resolvedEntries, options || {})
+        return importController && typeof importController.startImportFromSourcePaths === "function"
+            ? importController.startImportFromSourcePaths(paths, options, emptyMessage)
+            : false
     }
 
     function parentFolderPath(pathValue) {

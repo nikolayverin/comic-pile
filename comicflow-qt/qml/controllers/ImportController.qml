@@ -115,4 +115,12 @@ Item {
     function importArchivePaths(paths, options) {
         return session.importArchivePaths(paths, options)
     }
+
+    function resolveImportSourceEntries(paths) {
+        return session.resolveImportSourceEntries(paths)
+    }
+
+    function startImportFromSourcePaths(paths, options, emptyMessage) {
+        return session.startImportFromSourcePaths(paths, options, emptyMessage)
+    }
 }

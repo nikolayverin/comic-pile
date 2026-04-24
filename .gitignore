@@ -7,6 +7,9 @@ Thumbs.db
 .vs/
 .idea/
 *.log
+*.log.*
+startup-log.txt
+startup-debug-log.txt
 .runtime/
 Library/
 library.db*

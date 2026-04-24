@@ -105,18 +105,49 @@ Item {
         return AppSharedUtils.normalizeImportPath(rawPath)
     }
 
+    function normalizedImportSources(paths) {
+        const normalizedSources = []
+        if (!paths || paths.length < 1) return normalizedSources
+
+        for (let i = 0; i < paths.length; i += 1) {
+            let rawPath = paths[i]
+            if (rawPath && typeof rawPath === "object") {
+                rawPath = rawPath.path
+            }
+            const normalized = normalizeImportPath(rawPath)
+            if (normalized.length < 1) continue
+            normalizedSources.push(normalized)
+        }
+        return normalizedSources
+    }
+
+    function resolveImportSourceEntries(paths) {
+        if (!libraryModelRef || typeof libraryModelRef.expandImportSources !== "function") return []
+        const normalizedSources = normalizedImportSources(paths)
+        if (normalizedSources.length < 1) return []
+        const resolvedEntries = libraryModelRef.expandImportSources(normalizedSources, true)
+        traceImport(
+            "sources resolved"
+            + " input=" + String(normalizedSources.length)
+            + " resolved=" + String((resolvedEntries || []).length || 0)
+        )
+        return resolvedEntries
+    }
+
+    function startImportFromSourcePaths(paths, options, emptyMessage) {
+        const resolvedEntries = resolveImportSourceEntries(paths)
+        if (!resolvedEntries || resolvedEntries.length < 1) {
+            showActionResult(String(emptyMessage || AppText.sidebarDropNoSupportedSources), true)
+            return false
+        }
+        return importSourceEntries(resolvedEntries, options || {})
+    }
+
     function parentFolderPath(pathValue) {
         const rootRef = root()
         return rootRef && typeof rootRef.parentFolderPath === "function"
             ? String(rootRef.parentFolderPath(pathValue) || "")
             : ""
-    }
-
-    function resolveImportSourceEntries(paths) {
-        const rootRef = root()
-        return rootRef && typeof rootRef.resolveImportSourceEntries === "function"
-            ? rootRef.resolveImportSourceEntries(paths)
-            : []
     }
 
     function openExclusivePopup(targetPopup) {
@@ -208,6 +239,7 @@ Item {
     function cleanupTemporaryNormalizedArchive(pathValue, temporaryFile) {
         const normalizedPath = String(pathValue || "").trim()
         if (!Boolean(temporaryFile) || normalizedPath.length < 1 || !libraryModelRef) return
+        traceImport("cleanup temp normalized archive file=" + fileNameFromPath(normalizedPath))
         libraryModelRef.deleteFileAtPath(normalizedPath)
     }
 
@@ -520,14 +552,13 @@ Item {
         rememberLastImportComicId(Number(effectiveResult.comicId || 0))
         registerBatchRollbackOp(effectiveResult, "", { newFilePath: String(effectiveResult.filePath || "") })
         const successCode = String(effectiveResult.code || "created").trim().toLowerCase() || "created"
-        if (successCode !== "created") {
-            traceImport(
-                "step ok"
-                + " code=" + successCode
-                + " comicId=" + String(Number(effectiveResult.comicId || 0))
-                + " file=" + fileNameFromPath(sourcePath)
-            )
-        }
+        traceImport(
+            "step ok"
+            + " code=" + successCode
+            + " comicId=" + String(Number(effectiveResult.comicId || 0))
+            + " file=" + fileNameFromPath(sourcePath)
+            + " sourceType=" + String(effectiveResult.sourceType || context.sourceType || "archive")
+        )
         advanceCompletedImportBytes(queuedFileSizeBytes)
         cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
 
@@ -1257,6 +1288,111 @@ Item {
         return true
     }
 
+    function importQueueEntryContext(queued) {
+        const context = {
+            sourcePath: "",
+            sourceType: "archive",
+            seriesOverride: "",
+            importIntent: "",
+            filenameHint: "",
+            values: ({}),
+            fileSizeBytes: 0
+        }
+
+        if (typeof queued === "string") {
+            context.sourcePath = String(queued || "")
+        } else if (queued && typeof queued === "object") {
+            context.sourcePath = String(queued.path || "")
+            context.sourceType = String(queued.sourceType || "archive").trim().toLowerCase() || "archive"
+            context.seriesOverride = String(queued.seriesOverride || "").trim()
+            context.importIntent = String(queued.importIntent || "").trim().toLowerCase()
+            context.filenameHint = String(queued.filenameHint || "").trim()
+            context.values = cloneVariantMap(queued.values)
+            context.fileSizeBytes = Math.max(0, Number(queued.fileSizeBytes || 0))
+        }
+
+        if (context.fileSizeBytes < 1 && context.sourcePath.length > 0) {
+            context.fileSizeBytes = fileSizeBytes(context.sourcePath)
+        }
+        return context
+    }
+
+    function importValuesForQueueEntry(context) {
+        const entry = context || ({})
+        const importValues = cloneVariantMap(entry.values)
+        const importIntent = String(entry.importIntent || "").trim().toLowerCase()
+        const seriesOverride = String(entry.seriesOverride || "").trim()
+        const sourcePath = String(entry.sourcePath || "")
+
+        importValues.deferReload = true
+        if (importIntent.length > 0) {
+            importValues.importIntent = importIntent
+        }
+        if (seriesOverride.length > 0) {
+            importValues.importContextSeries = seriesOverride
+            if (String(importValues.series || "").trim().length < 1) {
+                importValues.series = seriesOverride
+            }
+            const sourceBaseName = baseNameWithoutExtension(sourcePath)
+            if (sourceBaseName.length > 0) {
+                importValues.title = sourceBaseName
+            }
+        }
+
+        return importValues
+    }
+
+    function failImportQueueEntry(context, message, code, finishBatch) {
+        const entry = context || ({})
+        pushImportFailure(
+            String(entry.sourcePath || ""),
+            message,
+            code
+        )
+        advanceCompletedImportBytes(Math.max(0, Number(entry.fileSizeBytes || 0)))
+        if (Boolean(finishBatch)) {
+            finishImportBatch(false)
+        } else if (importQueue.length < 1) {
+            finishImportBatch(false)
+        }
+    }
+
+    function beginQueuedArchiveNormalization(context, importValues) {
+        if (!libraryModelRef || typeof libraryModelRef.requestNormalizeImportArchiveAsync !== "function") {
+            return false
+        }
+
+        const entry = context || ({})
+        importPendingStepContext = {
+            sourcePath: String(entry.sourcePath || ""),
+            sourceType: String(entry.sourceType || "archive"),
+            seriesOverride: String(entry.seriesOverride || ""),
+            filenameHint: String(entry.filenameHint || ""),
+            importValues: cloneVariantMap(importValues),
+            queuedFileSizeBytes: Math.max(0, Number(entry.fileSizeBytes || 0))
+        }
+        importArchiveNormalizationRequestId = Number(
+            libraryModelRef.requestNormalizeImportArchiveAsync(String(entry.sourcePath || "")) || -1
+        )
+        if (importArchiveNormalizationRequestId > 0) {
+            traceImport(
+                "normalize begin"
+                + " requestId=" + String(importArchiveNormalizationRequestId)
+                + " file=" + fileNameFromPath(String(entry.sourcePath || ""))
+            )
+            importBatchTimer.stop()
+            return true
+        }
+
+        traceImport(
+            "normalize skipped"
+            + " file=" + fileNameFromPath(String(entry.sourcePath || ""))
+            + " reason=request_not_started"
+        )
+        clearPendingImportStepContext()
+        return false
+    }
+
     function rebuildFailedImportItemsModel() {
         if (!failedImportItemsModelRef) return
         failedImportItemsModelRef.clear()
@@ -1292,89 +1428,50 @@ Item {
                 return
             }
 
-            const queued = importQueue.shift()
-            let sourcePath = ""
-            let sourceType = "archive"
-            let seriesOverride = ""
-            let importIntent = ""
-            let filenameHint = ""
-            let queuedValues = ({})
-            let queuedFileSizeBytes = 0
-            if (typeof queued === "string") {
-                sourcePath = String(queued || "")
-            } else if (queued && typeof queued === "object") {
-                sourcePath = String(queued.path || "")
-                sourceType = String(queued.sourceType || "archive").trim().toLowerCase() || "archive"
-                seriesOverride = String(queued.seriesOverride || "").trim()
-                importIntent = String(queued.importIntent || "").trim().toLowerCase()
-                filenameHint = String(queued.filenameHint || "").trim()
-                queuedValues = cloneVariantMap(queued.values)
-                queuedFileSizeBytes = Math.max(0, Number(queued.fileSizeBytes || 0))
-            }
-
-            if (queuedFileSizeBytes < 1 && sourcePath.length > 0) {
-                queuedFileSizeBytes = fileSizeBytes(sourcePath)
-            }
+            const entryContext = importQueueEntryContext(importQueue.shift())
+            const sourcePath = String(entryContext.sourcePath || "")
+            const sourceType = String(entryContext.sourceType || "archive")
+            const filenameHint = String(entryContext.filenameHint || "")
+            const queuedFileSizeBytes = Math.max(0, Number(entryContext.fileSizeBytes || 0))
 
             importProcessed += 1
             importCurrentPath = sourcePath
             importCurrentFileName = fileNameFromPath(sourcePath)
+            traceImport(
+                "step begin"
+                + " index=" + String(importProcessed)
+                + "/" + String(importTotal)
+                + " file=" + importCurrentFileName
+                + " sourceType=" + sourceType
+            )
 
             if (sourceType === "archive") {
                 const unsupportedReason = archiveUnsupportedReason(sourcePath)
                 if (unsupportedReason.length > 0) {
-                    pushImportFailure(sourcePath, unsupportedReason, "unsupported_format")
-                    advanceCompletedImportBytes(queuedFileSizeBytes)
-                    if (importQueue.length < 1) finishImportBatch(false)
+                    traceImport(
+                        "step unsupported"
+                        + " file=" + importCurrentFileName
+                        + " reason=" + unsupportedReason
+                    )
+                    failImportQueueEntry(entryContext, unsupportedReason, "unsupported_format", false)
                     return
                 }
             }
 
-            const importValues = cloneVariantMap(queuedValues)
-            importValues.deferReload = true
-            if (importIntent.length > 0) {
-                importValues.importIntent = importIntent
-            }
-            if (seriesOverride.length > 0) {
-                importValues.importContextSeries = seriesOverride
-                if (String(importValues.series || "").trim().length < 1) {
-                    importValues.series = seriesOverride
-                }
-                const sourceBaseName = baseNameWithoutExtension(sourcePath)
-                if (sourceBaseName.length > 0) {
-                    importValues.title = sourceBaseName
-                }
-            }
+            const importValues = importValuesForQueueEntry(entryContext)
 
             if (!libraryModelRef) {
-                pushImportFailure(sourcePath, AppText.importModelUnavailable, "runtime_error")
-                advanceCompletedImportBytes(queuedFileSizeBytes)
-                finishImportBatch(false)
+                failImportQueueEntry(entryContext, AppText.importModelUnavailable, "runtime_error", true)
                 return
             }
-            if (sourceType === "archive" && typeof libraryModelRef.requestNormalizeImportArchiveAsync === "function") {
-                importPendingStepContext = {
-                    sourcePath: sourcePath,
-                    sourceType: sourceType,
-                    seriesOverride: seriesOverride,
-                    filenameHint: filenameHint,
-                    importValues: cloneVariantMap(importValues),
-                    queuedFileSizeBytes: queuedFileSizeBytes
-                }
-                importArchiveNormalizationRequestId = Number(
-                    libraryModelRef.requestNormalizeImportArchiveAsync(sourcePath) || -1
-                )
-                if (importArchiveNormalizationRequestId > 0) {
-                    importBatchTimer.stop()
-                    return
-                }
-                clearPendingImportStepContext()
+            if (sourceType === "archive" && beginQueuedArchiveNormalization(entryContext, importValues)) {
+                return
             }
 
             const result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, filenameHint, importValues)
             finalizeImportStepResult(sourcePath, queuedFileSizeBytes, result, "", false, ({
                 sourceType: sourceType,
-                seriesOverride: seriesOverride,
+                seriesOverride: String(entryContext.seriesOverride || ""),
                 filenameHint: filenameHint,
                 importValues: cloneVariantMap(importValues)
             }))
@@ -1488,6 +1585,50 @@ Item {
         return importSourceEntries(paths, options)
     }
 
+    function failNormalizedArchiveImport(context, normalizedPath, temporaryFile, message, code, finishBatch) {
+        const sourcePath = String((context || {}).sourcePath || "")
+        const queuedFileSizeBytes = Math.max(0, Number((context || {}).queuedFileSizeBytes || 0))
+        pushImportFailure(sourcePath, message, code)
+        advanceCompletedImportBytes(queuedFileSizeBytes)
+        cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
+        if (Boolean(finishBatch)) {
+            finishImportBatch(false)
+        } else if (importQueue.length < 1) {
+            finishImportBatch(false)
+        } else {
+            importBatchTimer.start()
+        }
+    }
+
+    function importNormalizedArchiveStep(context, normalizationResult) {
+        const sourcePath = String((context || {}).sourcePath || "")
+        const queuedFileSizeBytes = Math.max(0, Number((context || {}).queuedFileSizeBytes || 0))
+        const normalizedPath = String((normalizationResult || {}).normalizedPath || "")
+        const temporaryFile = Boolean((normalizationResult || {}).temporaryFile)
+
+        const effectiveFilenameHint = String((context || {}).filenameHint || "").trim().length > 0
+            ? String((context || {}).filenameHint || "").trim()
+            : String((normalizationResult || {}).filenameHint || fileNameFromPath(sourcePath))
+        const importValues = cloneVariantMap((context || {}).importValues)
+        importValues.importHistorySourcePath = sourcePath
+        importValues.importHistorySourceLabel = fileNameFromPath(sourcePath)
+
+        const importResult = libraryModelRef.importSourceAndCreateIssueEx(
+            normalizedPath,
+            "archive",
+            effectiveFilenameHint,
+            importValues
+        )
+        finalizeImportStepResult(
+            sourcePath,
+            queuedFileSizeBytes,
+            importResult,
+            normalizedPath,
+            temporaryFile,
+            context
+        )
+    }
+
     Connections {
         target: libraryModelRef
 
@@ -1497,63 +1638,50 @@ Item {
             const context = importPendingStepContext || ({})
             clearPendingImportStepContext()
 
-            const sourcePath = String(context.sourcePath || "")
-            const queuedFileSizeBytes = Math.max(0, Number(context.queuedFileSizeBytes || 0))
             const normalizationResult = result || ({})
             const normalizedPath = String(normalizationResult.normalizedPath || "")
             const temporaryFile = Boolean(normalizationResult.temporaryFile)
+            traceImport(
+                "normalize finished"
+                + " requestId=" + String(Number(requestId || -1))
+                + " ok=" + String(Boolean(normalizationResult.ok))
+                + " code=" + String(normalizationResult.code || "")
+                + " file=" + fileNameFromPath(String(context.sourcePath || ""))
+                + " temporary=" + String(temporaryFile)
+            )
 
             if (importCancelRequested) {
+                traceImport("normalize result ignored reason=cancel_requested")
                 cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
                 beginImportCleanup()
                 return
             }
 
             if (!Boolean(normalizationResult.ok)) {
-                pushImportFailure(
-                    sourcePath,
+                failNormalizedArchiveImport(
+                    context,
+                    normalizedPath,
+                    temporaryFile,
                     String(normalizationResult.error || AppText.importPreparationFailed),
-                    String(normalizationResult.code || "archive_normalize_failed")
+                    String(normalizationResult.code || "archive_normalize_failed"),
+                    false
                 )
-                advanceCompletedImportBytes(queuedFileSizeBytes)
-                cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
-                if (importQueue.length < 1) {
-                    finishImportBatch(false)
-                } else {
-                    importBatchTimer.start()
-                }
                 return
             }
 
             if (!libraryModelRef) {
-                pushImportFailure(sourcePath, AppText.importModelUnavailable, "runtime_error")
-                advanceCompletedImportBytes(queuedFileSizeBytes)
-                cleanupTemporaryNormalizedArchive(normalizedPath, temporaryFile)
-                finishImportBatch(false)
+                failNormalizedArchiveImport(
+                    context,
+                    normalizedPath,
+                    temporaryFile,
+                    AppText.importModelUnavailable,
+                    "runtime_error",
+                    true
+                )
                 return
             }
 
-            const effectiveFilenameHint = String(context.filenameHint || "").trim().length > 0
-                ? String(context.filenameHint || "").trim()
-                : String(normalizationResult.filenameHint || fileNameFromPath(sourcePath))
-            const importValues = cloneVariantMap(context.importValues)
-            importValues.importHistorySourcePath = sourcePath
-            importValues.importHistorySourceLabel = fileNameFromPath(sourcePath)
-
-            const importResult = libraryModelRef.importSourceAndCreateIssueEx(
-                normalizedPath,
-                "archive",
-                effectiveFilenameHint,
-                importValues
-            )
-            finalizeImportStepResult(
-                sourcePath,
-                queuedFileSizeBytes,
-                importResult,
-                normalizedPath,
-                temporaryFile,
-                context
-            )
+            importNormalizedArchiveStep(context, normalizationResult)
         }
     }
 
