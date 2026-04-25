@@ -158,7 +158,7 @@ bool readComicInfoXmlFromArchive(
             stdOut,
             stdErr,
             errorText,
-            120000,
+            ComicArchiveProcess::kDefaultOperationTimeoutMs,
             QStringLiteral("ComicInfo read"),
             &exitCode
         )) {
@@ -244,7 +244,7 @@ bool writeComicInfoXmlToArchive(
         stdOut,
         stdErr,
         errorText,
-        120000,
+        ComicArchiveProcess::kDefaultOperationTimeoutMs,
         QStringLiteral("ComicInfo update")
     );
 }
@@ -299,7 +299,7 @@ bool listImageEntriesInArchive(
                 stdOut,
                 stdErr,
                 errorText,
-                120000,
+                ComicArchiveProcess::kDefaultOperationTimeoutMs,
                 QStringLiteral("Archive page listing")
             )) {
             return false;
@@ -324,7 +324,7 @@ bool listImageEntriesInArchive(
                 stdOutBytes,
                 stdErrBytes,
                 errorText,
-                120000,
+                ComicArchiveProcess::kDefaultOperationTimeoutMs,
                 true,
                 QStringLiteral("7-Zip page listing")
             )) {
@@ -443,7 +443,7 @@ bool extractArchiveEntryToFile(
                 stdOut,
                 stdErr,
                 errorText,
-                120000,
+                ComicArchiveProcess::kDefaultOperationTimeoutMs,
                 QStringLiteral("Archive entry extraction"),
                 &exitCode
             )) {
@@ -482,7 +482,7 @@ bool extractArchiveEntryToFile(
                 stdOutBytes,
                 stdErrBytes,
                 errorText,
-                120000,
+                ComicArchiveProcess::kDefaultOperationTimeoutMs,
                 true,
                 QStringLiteral("7-Zip entry extraction")
             )) {
@@ -586,7 +586,7 @@ bool listImageEntryMetricsInArchive(
                 stdOut,
                 stdErr,
                 errorText,
-                120000,
+                ComicArchiveProcess::kDefaultOperationTimeoutMs,
                 QStringLiteral("Archive page metrics")
             )) {
             return false;

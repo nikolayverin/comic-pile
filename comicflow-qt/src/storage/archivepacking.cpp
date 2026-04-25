@@ -237,7 +237,7 @@ bool extractZipLikeArchiveToDirectory(
         stdOut,
         stdErr,
         errorText,
-        120000,
+        ComicArchiveProcess::kDefaultOperationTimeoutMs,
         QStringLiteral("Archive extraction")
     );
 }
@@ -460,7 +460,7 @@ bool convertDjvuToCbz(
             stdOutBytes,
             stdErrBytes,
             errorText,
-            600000,
+            ComicArchiveProcess::kDocumentRenderTimeoutMs,
             true,
             QStringLiteral("DJVU page rendering")
         )) {
@@ -550,7 +550,7 @@ bool convertArchiveVia7ZipToCbz(
             stdOutBytes,
             stdErrBytes,
             errorText,
-            120000,
+            ComicArchiveProcess::kDefaultOperationTimeoutMs,
             true,
             QStringLiteral("7-Zip archive extraction")
         )) {
@@ -764,7 +764,7 @@ bool createCbzFromDirectory(
             stdOut,
             stdErr,
             errorText,
-            120000,
+            ComicArchiveProcess::kDefaultOperationTimeoutMs,
             QStringLiteral("Archive packaging")
         )) {
         return false;

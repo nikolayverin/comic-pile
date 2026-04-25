@@ -47,12 +47,12 @@ bool waitForProcessWithUiPumping(
         const int remainingMs = timeoutMs - static_cast<int>(timer.elapsed());
         if (remainingMs <= 0) {
             process.kill();
-            process.waitForFinished(5000);
+            process.waitForFinished(ComicArchiveProcess::kProcessKillWaitTimeoutMs);
             errorText = timeoutMessage;
             return false;
         }
 
-        const int waitSliceMs = qMin(50, remainingMs);
+        const int waitSliceMs = qMin(ComicArchiveProcess::kUiPumpWaitSliceMs, remainingMs);
         if (process.waitForFinished(waitSliceMs)) {
             break;
         }
@@ -80,7 +80,7 @@ bool waitForProcessToFinish(
     }
 
     process.kill();
-    process.waitForFinished(5000);
+    process.waitForFinished(ComicArchiveProcess::kProcessKillWaitTimeoutMs);
     errorText = timeoutMessage;
     return false;
 }
@@ -128,7 +128,7 @@ bool runPowerShellScript(
     });
 
     process.start();
-    if (!process.waitForStarted(15000)) {
+    if (!process.waitForStarted(kProcessStartTimeoutMs)) {
         errorText = QStringLiteral("%1 failed to start.").arg(label);
         return false;
     }
@@ -197,7 +197,7 @@ bool runExternalProcess(
     process.setArguments(arguments);
     process.start();
 
-    if (!process.waitForStarted(15000)) {
+    if (!process.waitForStarted(kProcessStartTimeoutMs)) {
         errorText = QStringLiteral("%1 failed to start.").arg(label);
         return false;
     }

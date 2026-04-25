@@ -460,7 +460,7 @@ QSet<QString> resolvedSevenZipArchiveExtensions()
             stdOutBytes,
             stdErrBytes,
             errorText,
-            15000,
+            ComicArchiveProcess::kSupportProbeTimeoutMs,
             false,
             QStringLiteral("7-Zip support scan"))) {
         return cachedExtensions;

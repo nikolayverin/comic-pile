@@ -1,5 +1,7 @@
 #pragma once
 
+#include "storage/archiveprocessutils.h"
+
 #include <QSet>
 #include <QString>
 #include <QStringList>
@@ -20,7 +22,7 @@ bool runSevenZipProcess(
     QByteArray &stdOut,
     QByteArray &stdErr,
     QString &errorText,
-    int timeoutMs = 120000,
+    int timeoutMs = ComicArchiveProcess::kDefaultOperationTimeoutMs,
     bool pumpUiEvents = false,
     const QString &operationLabel = QString(),
     int *exitCodeOut = nullptr
@@ -30,7 +32,7 @@ bool runDjVuProcess(
     QByteArray &stdOut,
     QByteArray &stdErr,
     QString &errorText,
-    int timeoutMs = 120000,
+    int timeoutMs = ComicArchiveProcess::kDefaultOperationTimeoutMs,
     bool pumpUiEvents = false,
     const QString &operationLabel = QString(),
     int *exitCodeOut = nullptr
