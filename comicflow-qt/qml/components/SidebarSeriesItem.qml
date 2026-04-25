@@ -49,7 +49,7 @@ Item {
     signal dismissMenusRequested()
 
     width: sidebarWidth
-    implicitHeight: 24
+    implicitHeight: uiTokens.sidebarRowHeight
 
     onDismissTokenChanged: {
         if (seriesMenuPopup.visible) {
@@ -93,11 +93,11 @@ Item {
 
     Rectangle {
         id: hoverRect
-        width: 268
-        height: 24
+        width: uiTokens.sidebarRowWidth
+        height: uiTokens.sidebarRowHeight
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        radius: 3
+        radius: uiTokens.sidebarRowRadius
         color: (rowMouseArea.containsMouse || root.selected) ? root.hoverColor : "transparent"
 
         MouseArea {
@@ -116,10 +116,10 @@ Item {
         Image {
             id: seriesFolderIcon
             anchors.left: parent.left
-            anchors.leftMargin: 6
+            anchors.leftMargin: uiTokens.sidebarRowIconLeftMargin
             anchors.verticalCenter: hoverRect.verticalCenter
-            width: 20
-            height: 20
+            width: uiTokens.sidebarSeriesIconSize
+            height: uiTokens.sidebarSeriesIconSize
             source: root.selected
                 ? uiTokens.folderOpenedIcon
                 : (rowMouseArea.containsMouse
@@ -132,7 +132,7 @@ Item {
         Label {
             id: seriesLabel
             anchors.left: parent.left
-            anchors.leftMargin: 34
+            anchors.leftMargin: uiTokens.sidebarRowLabelLeftMargin
             anchors.verticalCenter: hoverRect.verticalCenter
             text: root.seriesName.length > 0 ? root.seriesName : uiTokens.unknownSeriesLabel
             color: root.textColor
@@ -185,8 +185,8 @@ Item {
             Image {
                 anchors.centerIn: parent
                 source: uiTokens.verticalDotsIcon
-                width: 4
-                height: 14
+                width: uiTokens.sidebarSeriesMenuDotsWidth
+                height: uiTokens.sidebarSeriesMenuDotsHeight
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }

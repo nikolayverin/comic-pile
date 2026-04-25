@@ -8,6 +8,7 @@ Popup {
     id: root
 
     UiTokens { id: uiTokens }
+    ThemeColors { id: themeColors }
     PopupStyle { id: popupStyle }
     PopupMenuStyle { id: pageListMenuStyle }
 
@@ -50,102 +51,103 @@ Popup {
     property alias magnifierCursorX: popupStateController.magnifierCursorX
     property alias magnifierCursorY: popupStateController.magnifierCursorY
 
-    readonly property int outerMargin: fullscreenMode ? 0 : 24
-    readonly property int panelRadius: fullscreenMode ? 0 : 18
-    readonly property int toolbarHeight: 46
-    readonly property int footerBandHeight: 46
-    readonly property int titleBlockWidth: 340
+    readonly property int outerMargin: fullscreenMode ? 0 : uiTokens.readerOuterMargin
+    readonly property int panelRadius: fullscreenMode ? 0 : uiTokens.readerPanelRadius
+    readonly property int toolbarHeight: uiTokens.readerToolbarHeight
+    readonly property int footerBandHeight: uiTokens.readerFooterBandHeight
+    readonly property int titleBlockWidth: uiTokens.readerTitleBlockWidth
     readonly property int titleFontPx: 13
-    readonly property int issueArrowButtonSize: 24
-    readonly property int toolButtonWidth: 28
-    readonly property int toolButtonHeight: 22
-    readonly property int toolButtonRadius: 6
-    readonly property int toolButtonSpacing: 22
-    readonly property int closeButtonSize: 24
-    readonly property int closeIconSize: 12
-    readonly property int toolbarIconSize: 16
-    readonly property int mangaButtonWidth: 41
-    readonly property int mangaButtonHeight: 22
-    readonly property int mangaIconWidth: 31
-    readonly property int mangaIconHeight: 14
+    readonly property int issueArrowButtonSize: uiTokens.readerIssueArrowButtonSize
+    readonly property int toolButtonWidth: uiTokens.readerToolButtonWidth
+    readonly property int toolButtonHeight: uiTokens.readerToolButtonHeight
+    readonly property int toolButtonRadius: uiTokens.readerToolButtonRadius
+    readonly property int toolButtonSpacing: uiTokens.readerToolButtonSpacing
+    readonly property int closeButtonSize: uiTokens.readerCloseButtonSize
+    readonly property int closeIconSize: uiTokens.readerCloseIconSize
+    readonly property int toolbarIconSize: uiTokens.readerToolbarIconSize
+    readonly property int mangaButtonWidth: uiTokens.readerMangaButtonWidth
+    readonly property int mangaButtonHeight: uiTokens.readerMangaButtonHeight
+    readonly property int mangaIconWidth: uiTokens.readerMangaIconWidth
+    readonly property int mangaIconHeight: uiTokens.readerMangaIconHeight
     readonly property real toolbarIconLeftEdgeInButton: (toolButtonWidth - toolbarIconSize) / 2
     readonly property real toolbarIconRightEdgeInButton: (toolButtonWidth + toolbarIconSize) / 2
     readonly property real mangaIconLeftEdgeInButton: (mangaButtonWidth - mangaIconWidth) / 2
     readonly property real mangaIconRightEdgeInButton: (mangaButtonWidth + mangaIconWidth) / 2
-    readonly property int toolbarDeleteLeftInset: 64
-    readonly property int toolbarHotkeysLeftInset: toolbarDeleteLeftInset + toolbarIconSize + 38
-    readonly property int toolbarSettingsLeftInset: toolbarHotkeysLeftInset + toolbarIconSize + 22
-    readonly property int toolbarThemeLeftInset: toolbarSettingsLeftInset + toolbarIconSize + 22
-    readonly property int toolbarCopyRightInset: 64
-    readonly property int toolbarFavoritesRightInset: toolbarCopyRightInset + toolbarIconSize + 38
-    readonly property int toolbarBookmarkRightInset: toolbarFavoritesRightInset + toolbarIconSize + 22
-    readonly property int toolbarMagnifierRightInset: toolbarBookmarkRightInset + toolbarIconSize + 38
-    readonly property int toolbarFullScreenRightInset: toolbarMagnifierRightInset + toolbarIconSize + 22
-    readonly property int toolbarTwoPageRightInset: toolbarFullScreenRightInset + toolbarIconSize + 22
-    readonly property int toolbarOnePageRightInset: toolbarTwoPageRightInset + toolbarIconSize + 22
-    readonly property int toolbarMangaRightInset: toolbarOnePageRightInset + toolbarIconSize + 38
-    readonly property int sideButtonWidth: 34
-    readonly property int sideButtonHeight: 96
-    readonly property int sideButtonOffset: 14
-    readonly property int sideButtonImageGap: 16
-    readonly property int counterMinWidth: 80
-    readonly property int counterHeight: 28
-    readonly property int counterBottomMargin: 9
-    readonly property int counterHorizontalPadding: 16
-    readonly property int readFromStartGap: 42
-    readonly property int readFromStartHorizontalPadding: 16
-    readonly property int listWidth: 82
-    readonly property int listHeight: 338
-    readonly property int listBodyHeight: 330
-    readonly property int listNotchWidth: 18
-    readonly property int listNotchHeight: 8
-    readonly property int listRadius: 12
+    readonly property int toolbarDeleteLeftInset: uiTokens.readerToolbarOuterActionInset
+    readonly property int toolbarHotkeysLeftInset: toolbarDeleteLeftInset + toolbarIconSize + uiTokens.readerToolButtonWideSpacing
+    readonly property int toolbarSettingsLeftInset: toolbarHotkeysLeftInset + toolbarIconSize + uiTokens.readerToolButtonSpacing
+    readonly property int toolbarThemeLeftInset: toolbarSettingsLeftInset + toolbarIconSize + uiTokens.readerToolButtonSpacing
+    readonly property int toolbarCopyRightInset: uiTokens.readerToolbarOuterActionInset
+    readonly property int toolbarFavoritesRightInset: toolbarCopyRightInset + toolbarIconSize + uiTokens.readerToolButtonWideSpacing
+    readonly property int toolbarBookmarkRightInset: toolbarFavoritesRightInset + toolbarIconSize + uiTokens.readerToolButtonSpacing
+    readonly property int toolbarMagnifierRightInset: toolbarBookmarkRightInset + toolbarIconSize + uiTokens.readerToolButtonWideSpacing
+    readonly property int toolbarFullScreenRightInset: toolbarMagnifierRightInset + toolbarIconSize + uiTokens.readerToolButtonSpacing
+    readonly property int toolbarTwoPageRightInset: toolbarFullScreenRightInset + toolbarIconSize + uiTokens.readerToolButtonSpacing
+    readonly property int toolbarOnePageRightInset: toolbarTwoPageRightInset + toolbarIconSize + uiTokens.readerToolButtonSpacing
+    readonly property int toolbarMangaRightInset: toolbarOnePageRightInset + toolbarIconSize + uiTokens.readerToolButtonWideSpacing
+    readonly property int sideButtonWidth: uiTokens.readerSideButtonWidth
+    readonly property int sideButtonHeight: uiTokens.readerSideButtonHeight
+    readonly property int sideButtonOffset: uiTokens.readerSideButtonOffset
+    readonly property int sideButtonImageGap: uiTokens.readerSideButtonImageGap
+    readonly property int sideButtonHoverRadius: uiTokens.readerSideButtonHoverRadius
+    readonly property int counterMinWidth: uiTokens.readerCounterMinWidth
+    readonly property int counterHeight: uiTokens.readerCounterHeight
+    readonly property int counterBottomMargin: uiTokens.readerCounterBottomMargin
+    readonly property int counterHorizontalPadding: uiTokens.readerCounterHorizontalPadding
+    readonly property int readFromStartGap: uiTokens.readerFooterActionGap
+    readonly property int readFromStartHorizontalPadding: uiTokens.readerFooterActionHorizontalPadding
+    readonly property int listWidth: uiTokens.readerPageListWidth
+    readonly property int listHeight: uiTokens.readerPageListHeight
+    readonly property int listBodyHeight: uiTokens.readerPageListBodyHeight
+    readonly property int listNotchWidth: uiTokens.readerPageListNotchWidth
+    readonly property int listNotchHeight: uiTokens.readerPageListNotchHeight
+    readonly property int listRadius: uiTokens.readerPageListRadius
     readonly property int listRowHoverWidth: 64
     readonly property int listRowHoverHeight: 18
-    readonly property int listFontPx: 14
-    readonly property int listScrollGutterWidth: 12
-    readonly property int listScrollThumbWidth: 8
-    readonly property int listScrollThumbMinHeight: 36
-    readonly property int listScrollThumbInset: 4
-    readonly property int pageListBottomImageGap: 10
-    readonly property int pageListFadeDurationMs: 120
-    readonly property int bookmarkDecorationWidth: 33
-    readonly property int bookmarkDecorationHeight: 104
-    readonly property int bookmarkDecorationRightEdgeOffset: 220
-    readonly property int bookmarkDecorationTopOffset: -4
+    readonly property int listFontPx: uiTokens.readerPageListFontPx
+    readonly property int listScrollGutterWidth: uiTokens.readerPageListScrollGutterWidth
+    readonly property int listScrollThumbWidth: uiTokens.readerPageListScrollThumbWidth
+    readonly property int listScrollThumbMinHeight: uiTokens.readerPageListScrollThumbMinHeight
+    readonly property int listScrollThumbInset: uiTokens.readerPageListScrollThumbInset
+    readonly property int pageListBottomImageGap: uiTokens.readerPageListBottomImageGap
+    readonly property int pageListFadeDurationMs: uiTokens.readerPageListFadeDurationMs
+    readonly property int bookmarkDecorationWidth: uiTokens.readerBookmarkDecorationWidth
+    readonly property int bookmarkDecorationHeight: uiTokens.readerBookmarkDecorationHeight
+    readonly property int bookmarkDecorationRightEdgeOffset: uiTokens.readerBookmarkDecorationRightEdgeOffset
+    readonly property int bookmarkDecorationTopOffset: uiTokens.readerBookmarkDecorationTopOffset
     readonly property int magnifierBlockSize: {
         const preset = String(magnifierSizePreset || "Medium")
-        if (preset === "Small") return 224
-        if (preset === "Large") return 350
-        return 280
+        if (preset === "Small") return uiTokens.readerMagnifierBlockSmall
+        if (preset === "Large") return uiTokens.readerMagnifierBlockLarge
+        return uiTokens.readerMagnifierBlockMedium
     }
-    readonly property int magnifierBlockGap: 12
-    readonly property int magnifierCursorSize: 18
+    readonly property int magnifierBlockGap: uiTokens.readerMagnifierBlockGap
+    readonly property int magnifierCursorSize: uiTokens.readerMagnifierCursorSize
     readonly property real magnifierZoomFactor: 2.4
     readonly property bool keyboardInputEnabled: root.visible && !root.inputSuspended
     readonly property var readerThemeDark: ({
-        panelColor: "#000000",
-        chromeColor: "#333333",
-        textColor: "#ffffff",
-        hoverFieldColor: "#333333",
-        mutedTextColor: "#8a8a8a",
-        disabledColor: "#666666",
-        errorColor: "#f87171",
-        pageListFillColor: "#cc000000",
-        toolbarToggleActiveColor: "#ee2d02",
-        readingModeActiveColor: "#89857a"
+        panelColor: themeColors.readerDarkPanelColor,
+        chromeColor: themeColors.readerDarkChromeColor,
+        textColor: themeColors.readerDarkTextColor,
+        hoverFieldColor: themeColors.readerDarkHoverFieldColor,
+        mutedTextColor: themeColors.readerDarkMutedTextColor,
+        disabledColor: themeColors.readerDarkDisabledColor,
+        errorColor: themeColors.readerDarkErrorColor,
+        pageListFillColor: themeColors.readerDarkPageListFillColor,
+        toolbarToggleActiveColor: themeColors.readerDarkToolbarToggleActiveColor,
+        readingModeActiveColor: themeColors.readerDarkReadingModeActiveColor
     })
     readonly property var readerThemeLight: ({
-        panelColor: "#f5f1e6",
-        chromeColor: "#333333",
-        textColor: "#1f1e1c",
-        hoverFieldColor: "#ccc9c4",
-        mutedTextColor: "#8a8a8a",
-        disabledColor: "#666666",
-        errorColor: "#f87171",
-        pageListFillColor: "#ccc9c4",
-        toolbarToggleActiveColor: "#ee2d02",
-        readingModeActiveColor: "#89857a"
+        panelColor: themeColors.readerLightPanelColor,
+        chromeColor: themeColors.readerLightChromeColor,
+        textColor: themeColors.readerLightTextColor,
+        hoverFieldColor: themeColors.readerLightHoverFieldColor,
+        mutedTextColor: themeColors.readerLightMutedTextColor,
+        disabledColor: themeColors.readerLightDisabledColor,
+        errorColor: themeColors.readerLightErrorColor,
+        pageListFillColor: themeColors.readerLightPageListFillColor,
+        toolbarToggleActiveColor: themeColors.readerLightToolbarToggleActiveColor,
+        readingModeActiveColor: themeColors.readerLightReadingModeActiveColor
     })
     readonly property var readerTheme: lightThemeEnabled ? readerThemeLight : readerThemeDark
     readonly property color panelColor: readerTheme.panelColor
@@ -158,7 +160,7 @@ Popup {
     readonly property color pageListFillColor: readerTheme.pageListFillColor
     readonly property color toolbarToggleActiveColor: readerTheme.toolbarToggleActiveColor
     readonly property color readingModeActiveColor: readerTheme.readingModeActiveColor
-    readonly property color actionToastTextColor: "#ffffff"
+    readonly property color actionToastTextColor: themeColors.textPrimary
     readonly property color pageListMenuFillColor: root.lightThemeEnabled
         ? root.pageListFillColor
         : pageListMenuStyle.backgroundColor
@@ -683,7 +685,7 @@ Popup {
         text: ""
         color: root.actionToastTextColor
         font.family: root.uiFontFamily
-        font.pixelSize: 13
+        font.pixelSize: uiTokens.readerActionToastTextPx
         font.bold: true
     }
 
@@ -775,10 +777,10 @@ Popup {
                     visible: root.canGoPreviousIssue
                     clickEnabled: root.canGoPreviousIssue
                     hoverBackgroundColor: root.hoverFieldColor
-                    hoverCornerRadius: 6
+                    hoverCornerRadius: root.toolButtonRadius
                     mirrorIcon: true
-                    icon.width: 10
-                    icon.height: 12
+                    icon.width: uiTokens.readerIssueArrowIconWidth
+                    icon.height: uiTokens.readerIssueArrowIconHeight
                     icon.source: uiTokens.readerIssueArrow
                     onClicked: root.previousIssueRequested()
                 }
@@ -792,9 +794,9 @@ Popup {
                     visible: root.canGoNextIssue
                     clickEnabled: root.canGoNextIssue
                     hoverBackgroundColor: root.hoverFieldColor
-                    hoverCornerRadius: 6
-                    icon.width: 10
-                    icon.height: 12
+                    hoverCornerRadius: root.toolButtonRadius
+                    icon.width: uiTokens.readerIssueArrowIconWidth
+                    icon.height: uiTokens.readerIssueArrowIconHeight
                     icon.source: uiTokens.readerIssueArrow
                     onClicked: root.nextIssueRequested()
                 }
@@ -1391,7 +1393,7 @@ Popup {
                 text: "Loading..."
                 color: root.textColor
                 font.family: root.uiFontFamily
-                font.pixelSize: 14
+                font.pixelSize: root.listFontPx
             }
 
         }
@@ -1466,12 +1468,12 @@ Popup {
             height: root.sideButtonHeight
             x: root.sideButtonOffset
             y: Math.round((parent.height - height) / 2)
-            hoverCornerRadius: 6
+            hoverCornerRadius: root.sideButtonHoverRadius
             clickEnabled: root.mangaModeEnabled ? root.canGoNextPage : root.canGoPreviousPage
             hoverBackgroundColor: root.hoverFieldColor
             mirrorIcon: true
-            icon.width: 24
-            icon.height: 72
+            icon.width: uiTokens.readerPageArrowIconWidth
+            icon.height: uiTokens.readerPageArrowIconHeight
             icon.source: uiTokens.readerPageArrow
             onClicked: {
                 if (root.mangaModeEnabled) {
@@ -1488,11 +1490,11 @@ Popup {
             height: root.sideButtonHeight
             x: parent.width - root.sideButtonOffset - width
             y: Math.round((parent.height - height) / 2)
-            hoverCornerRadius: 6
+            hoverCornerRadius: root.sideButtonHoverRadius
             clickEnabled: root.mangaModeEnabled ? root.canGoPreviousPage : root.canGoNextPage
             hoverBackgroundColor: root.hoverFieldColor
-            icon.width: 24
-            icon.height: 72
+            icon.width: uiTokens.readerPageArrowIconWidth
+            icon.height: uiTokens.readerPageArrowIconHeight
             icon.source: uiTokens.readerPageArrow
             onClicked: {
                 if (root.mangaModeEnabled) {
@@ -1528,7 +1530,7 @@ Popup {
                     text: "Read from start"
                     color: readFromStartHoverButton.foregroundColor
                     font.family: root.uiFontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: uiTokens.readerFooterActionTextPx
                     font.bold: true
                 }
             }
@@ -1537,7 +1539,7 @@ Popup {
                 id: readFromStartTextMetrics
                 text: "Read from start"
                 font.family: root.uiFontFamily
-                font.pixelSize: 13
+                font.pixelSize: uiTokens.readerFooterActionTextPx
                 font.bold: true
             }
         }
@@ -1567,7 +1569,7 @@ Popup {
                     text: "Mark as read"
                     color: markAsReadHoverButton.foregroundColor
                     font.family: root.uiFontFamily
-                    font.pixelSize: 13
+                    font.pixelSize: uiTokens.readerFooterActionTextPx
                     font.bold: true
                 }
             }
@@ -1576,7 +1578,7 @@ Popup {
                 id: markAsReadTextMetrics
                 text: "Mark as read"
                 font.family: root.uiFontFamily
-                font.pixelSize: 13
+                font.pixelSize: uiTokens.readerFooterActionTextPx
                 font.bold: true
             }
         }
@@ -1600,7 +1602,7 @@ Popup {
                 opacity: pageCounterMouse.containsMouse || root.pageListVisible ? 1 : 0
 
                 Behavior on opacity {
-                    NumberAnimation { duration: 120 }
+                    NumberAnimation { duration: uiTokens.readerCounterFadeDurationMs }
                 }
             }
 
@@ -1609,7 +1611,7 @@ Popup {
                 text: root.pageCounterText
                 color: root.textColor
                 font.family: root.uiFontFamily
-                font.pixelSize: 14
+                font.pixelSize: uiTokens.readerCounterTextPx
                 font.bold: true
             }
 
@@ -1617,7 +1619,7 @@ Popup {
                 id: pageCounterTextMetrics
                 text: root.pageCounterText
                 font.family: root.uiFontFamily
-                font.pixelSize: 14
+                font.pixelSize: uiTokens.readerCounterTextPx
                 font.bold: true
             }
 

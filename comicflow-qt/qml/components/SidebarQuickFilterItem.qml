@@ -5,6 +5,7 @@ Item {
     id: root
 
     ThemeColors { id: themeColors }
+    UiTokens { id: uiTokens }
 
     property string filterKey: ""
     property string title: ""
@@ -21,15 +22,15 @@ Item {
     signal clicked()
 
     width: sidebarWidth
-    implicitHeight: 24
+    implicitHeight: uiTokens.sidebarRowHeight
 
     Rectangle {
         id: hoverRect
-        width: 268
-        height: 24
+        width: uiTokens.sidebarRowWidth
+        height: uiTokens.sidebarRowHeight
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
-        radius: 3
+        radius: uiTokens.sidebarRowRadius
         color: (rowMouseArea.containsMouse || root.selected) ? root.hoverColor : "transparent"
 
         MouseArea {
@@ -44,10 +45,10 @@ Item {
         Image {
             id: filterIcon
             anchors.left: parent.left
-            anchors.leftMargin: 6
+            anchors.leftMargin: uiTokens.sidebarRowIconLeftMargin
             anchors.verticalCenter: parent.verticalCenter
-            width: implicitWidth > 0 ? implicitWidth : 16
-            height: implicitHeight > 0 ? implicitHeight : 16
+            width: implicitWidth > 0 ? implicitWidth : uiTokens.sidebarQuickFilterIconSize
+            height: implicitHeight > 0 ? implicitHeight : uiTokens.sidebarQuickFilterIconSize
             source: (rowMouseArea.containsMouse || root.selected)
                 ? root.activeIconSource
                 : root.idleIconSource
@@ -58,7 +59,7 @@ Item {
         Label {
             id: filterLabel
             anchors.left: parent.left
-            anchors.leftMargin: 34
+            anchors.leftMargin: uiTokens.sidebarRowLabelLeftMargin
             anchors.verticalCenter: parent.verticalCenter
             width: Math.max(10, countLabel.x - x - 8)
             text: root.title
@@ -72,7 +73,7 @@ Item {
         Label {
             id: countLabel
             anchors.right: parent.right
-            anchors.rightMargin: 8
+            anchors.rightMargin: uiTokens.sidebarRowCountRightMargin
             anchors.verticalCenter: parent.verticalCenter
             text: String(root.issueCount)
             color: root.textColor

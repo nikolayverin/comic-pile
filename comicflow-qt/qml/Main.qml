@@ -136,6 +136,7 @@ ApplicationWindow {
     property color topBarInnerShadowColor: "#555555"
     property color bottomBarInnerShadowColor: "#000000"
     property color sidebarRowHoverColor: themeColors.sidebarRowHoverColor
+    property color sidebarDropHoverAccentColor: themeColors.sidebarDropHoverAccentColor
     property color loadErrorBannerBg: themeColors.loadErrorBannerBg
     property color loadErrorBannerText: themeColors.loadErrorBannerText
     property color dbHealthBannerBg: themeColors.dbHealthBannerBg
@@ -147,6 +148,7 @@ ApplicationWindow {
     property color readerOverlayBorderColor: themeColors.readerOverlayBorderColor
     property color readerLoadingChipBgColor: themeColors.readerLoadingChipBgColor
     property color readerProgressChipBgColor: themeColors.readerProgressChipBgColor
+    property color libraryEmptyStateTextColor: themeColors.libraryEmptyStateTextColor
     property real gridTileOpacity: 0.72
     property int fontUiPrimary: uiTypography.uiBasePx
     property int fontUiMuted: uiTypography.uiMutedPx

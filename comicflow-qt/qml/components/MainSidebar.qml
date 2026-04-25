@@ -95,9 +95,9 @@ Rectangle {
         Item {
             id: sidebarSearchShell
             x: (parent.width - width) / 2
-            y: 20
-            width: 268
-            height: 29
+            y: uiTokensRef ? uiTokensRef.sidebarSearchTop : 20
+            width: uiTokensRef ? uiTokensRef.sidebarSearchShellWidth : 268
+            height: uiTokensRef ? uiTokensRef.sidebarSearchShellHeight : 29
 
             Image {
                 anchors.fill: parent
@@ -110,8 +110,8 @@ Rectangle {
                 id: sidebarSearchIcon
                 x: 10
                 anchors.verticalCenter: parent.verticalCenter
-                width: 14
-                height: 14
+                width: uiTokensRef ? uiTokensRef.sidebarSearchIconSize : 14
+                height: uiTokensRef ? uiTokensRef.sidebarSearchIconSize : 14
                 source: uiTokensRef ? uiTokensRef.searchIcon : ""
                 fillMode: Image.PreserveAspectFit
                 smooth: true
@@ -147,9 +147,9 @@ Rectangle {
         Column {
             id: sidebarQuickFiltersColumn
             x: 0
-            y: 68
+            y: uiTokensRef ? uiTokensRef.sidebarQuickFiltersTop : 68
             width: parent.width
-            spacing: 6
+            spacing: uiTokensRef ? uiTokensRef.sidebarQuickFilterSpacing : 6
 
             SidebarQuickFilterItem {
                 title: AppText.sidebarQuickFilterLastImport
@@ -228,7 +228,7 @@ Rectangle {
             y: librarySectionLabel.y + librarySectionLabel.height + 19
             width: parent.width
             height: Math.max(120, addFilesDropPanel.y - (rootObject ? rootObject.sidebarSeriesListBottomGap : 16) - y)
-            spacing: 6
+            spacing: uiTokensRef ? uiTokensRef.sidebarSeriesListSpacing : 6
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             readonly property real effectiveFadeHeight: Math.max(
@@ -328,24 +328,24 @@ Rectangle {
             id: seriesScrollLayer
             x: parent.width - width - 8
             y: seriesListView.y
-            width: 8
+            width: uiTokensRef ? uiTokensRef.sidebarScrollThumbWidth : 8
             height: seriesListView.height
             visible: seriesListView.contentHeight > seriesListView.height
             z: 2
             flickable: seriesListView
             thumbWidth: width
-            thumbMinHeight: 36
+            thumbMinHeight: uiTokensRef ? uiTokensRef.sidebarScrollThumbMinHeight : 36
             thumbColor: rootObject ? rootObject.bgSidebarEnd : "transparent"
         }
 
         Item {
             id: addFilesDropPanel
-            width: 274
-            height: 173
+            width: uiTokensRef ? uiTokensRef.sidebarDropPanelWidth : 274
+            height: uiTokensRef ? uiTokensRef.sidebarDropPanelHeight : 173
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 19
-            readonly property color hoverAccentColor: "#b7b7b7"
+            anchors.bottomMargin: uiTokensRef ? uiTokensRef.sidebarDropPanelBottomMargin : 19
+            readonly property color hoverAccentColor: rootObject ? rootObject.sidebarDropHoverAccentColor : "#b7b7b7"
             readonly property bool hoverActive: !(
                     rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                 ) && (dropZoneMouseArea.containsMouse || dropZoneSubtitleLinkMouseArea.containsMouse)
@@ -442,8 +442,8 @@ Rectangle {
 
             Image {
                 id: addFilesDropIcon
-                width: 52
-                height: 55
+                width: uiTokensRef ? uiTokensRef.sidebarDropIconWidth : 52
+                height: uiTokensRef ? uiTokensRef.sidebarDropIconHeight : 55
                 anchors.top: parent.top
                 anchors.topMargin: 20
                 anchors.horizontalCenter: parent.horizontalCenter

@@ -772,21 +772,21 @@ Item {
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
-    height: visible ? 87 : 0
+    height: visible ? uiTokens.libraryQuickFilterChromeHeight : 0
     visible: rightPane.quickFilterMode
     z: 2
 
     Item {
-        x: 40
-        y: 30
-        width: Math.max(0, parent.width - 80)
-        height: 27
+        x: uiTokens.libraryQuickFilterTitleX
+        y: uiTokens.libraryQuickFilterTitleY
+        width: Math.max(0, parent.width - uiTokens.libraryQuickFilterTitleSideInset)
+        height: uiTokens.libraryQuickFilterTitleHeight
 
         Image {
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 27
-            height: 27
+            width: uiTokens.libraryQuickFilterTitleIconSize
+            height: uiTokens.libraryQuickFilterTitleIconSize
             source: root.quickFilterTitleIconSource(root.sidebarQuickFilterKey)
             fillMode: Image.PreserveAspectFit
             smooth: true
@@ -794,12 +794,12 @@ Item {
 
         Text {
             anchors.left: parent.left
-            anchors.leftMargin: 37
+            anchors.leftMargin: uiTokens.libraryQuickFilterTitleTextLeftMargin
             anchors.verticalCenter: parent.verticalCenter
             text: root.quickFilterTitleText(root.sidebarQuickFilterKey)
             color: root.textPrimary
             font.family: root.uiFontFamily
-            font.pixelSize: 20
+            font.pixelSize: root.fontUiHeading
             font.weight: Font.Bold
         }
     }
@@ -814,7 +814,7 @@ Item {
     visible: rightPane.quickFilterMode && height > 0
     z: 1
 
-    readonly property int edgeThickness: 21
+    readonly property int edgeThickness: uiTokens.libraryGridEdgeThickness
 
     Image {
         anchors.left: parent.left
@@ -862,19 +862,19 @@ Item {
         bottomMargin: safeZoneBottom
         property int spacing: 0
         property int cardHeight: root.libraryGridDensity === "Compact"
-            ? 312
+            ? uiTokens.libraryGridCardHeightCompact
             : root.libraryGridDensity === "Comfortable"
-                ? 344
-                : 328
+                ? uiTokens.libraryGridCardHeightComfortable
+                : uiTokens.libraryGridCardHeightDefault
         property int minCardWidth: root.libraryGridDensity === "Compact"
-            ? 196
+            ? uiTokens.libraryGridMinCardWidthCompact
             : root.libraryGridDensity === "Comfortable"
-                ? 220
-                : 208
-        property int safeZoneLeft: 40
-        property int safeZoneRight: 40
+                ? uiTokens.libraryGridMinCardWidthComfortable
+                : uiTokens.libraryGridMinCardWidthDefault
+        property int safeZoneLeft: uiTokens.libraryGridSafeHorizontal
+        property int safeZoneRight: uiTokens.libraryGridSafeHorizontal
         property int safeZoneTop: rightPane.activeGridSafeTop
-        property int safeZoneBottom: 18
+        property int safeZoneBottom: uiTokens.libraryGridSafeBottom
         property int layoutWidth: Math.max(1, width - safeZoneLeft - safeZoneRight)
         property int columns: Math.max(1, Math.floor((layoutWidth + spacing) / (minCardWidth + spacing)))
         property int cardWidth: Math.max(minCardWidth, Math.floor((layoutWidth - ((columns - 1) * spacing)) / columns))
@@ -1032,9 +1032,9 @@ Item {
     Text {
         anchors.centerIn: parent
         text: rightPane.activeEmptyStateText
-        color: "#515151"
+        color: root.libraryEmptyStateTextColor
         font.family: root.uiFontFamily
-        font.pixelSize: 20
+        font.pixelSize: root.fontUiHeading
         font.weight: Font.Bold
         visible: rightPane.activeEmptyStateVisible
         z: 3
@@ -1046,9 +1046,9 @@ Item {
         visible: true
         z: 4
 
-        readonly property int edgeThickness: 21
-        readonly property int cornerWidth: 21
-        readonly property int cornerHeight: 155
+        readonly property int edgeThickness: uiTokens.libraryGridEdgeThickness
+        readonly property int cornerWidth: uiTokens.libraryGridEdgeThickness
+        readonly property int cornerHeight: uiTokens.libraryGridCornerHeight
 
         Image {
             anchors.left: parent.left

@@ -59,6 +59,10 @@ QtObject {
         readonly property color onLight: "#000000"
         readonly property color settingsSidebarIdle: "#f1f1f1"
         readonly property color popupStatusDetail: "#9f9f9f"
+        readonly property color aboutSubtitle: "#8ba4c0"
+        readonly property color aboutMuted: "#a9a9a9"
+        readonly property color aboutLink: "#78b7ff"
+        readonly property color emptyState: "#515151"
     }
 
     readonly property QtObject border: QtObject {
@@ -89,6 +93,33 @@ QtObject {
         readonly property color settingsSidebarSelectedFill: "#000000"
         readonly property color settingsSidebarPressedFill: "#080808"
         readonly property color actionPressedFill: "#101010"
+        readonly property color sidebarDropHoverAccent: "#b7b7b7"
+    }
+
+    readonly property QtObject readerDark: QtObject {
+        readonly property color panel: "#000000"
+        readonly property color chrome: "#333333"
+        readonly property color text: "#ffffff"
+        readonly property color hoverField: "#333333"
+        readonly property color mutedText: "#8a8a8a"
+        readonly property color disabled: "#666666"
+        readonly property color error: "#f87171"
+        readonly property color pageListFill: "#cc000000"
+        readonly property color toolbarToggleActive: "#ee2d02"
+        readonly property color readingModeActive: "#89857a"
+    }
+
+    readonly property QtObject readerLight: QtObject {
+        readonly property color panel: "#f5f1e6"
+        readonly property color chrome: "#333333"
+        readonly property color text: "#1f1e1c"
+        readonly property color hoverField: "#ccc9c4"
+        readonly property color mutedText: "#8a8a8a"
+        readonly property color disabled: "#666666"
+        readonly property color error: "#f87171"
+        readonly property color pageListFill: "#ccc9c4"
+        readonly property color toolbarToggleActive: "#ee2d02"
+        readonly property color readingModeActive: "#89857a"
     }
 
     readonly property QtObject accent: QtObject {
@@ -224,6 +255,11 @@ QtObject {
     readonly property color settingsPreviewDefaultTopColor: surface.settingsPreviewDefaultTop
     readonly property color settingsPreviewTextureColor: surface.settingsPreviewTexture
     readonly property color settingsPreviewCustomColor: surface.settingsPreviewCustom
+    readonly property color sidebarDropHoverAccentColor: state.sidebarDropHoverAccent
+    readonly property color libraryEmptyStateTextColor: text.emptyState
+    readonly property color aboutSubtitleTextColor: text.aboutSubtitle
+    readonly property color aboutMutedTextColor: text.aboutMuted
+    readonly property color aboutLinkTextColor: text.aboutLink
     readonly property color popupActionHoverEdgeColor: border.actionHoverEdge
     readonly property color popupPrimaryActionHoverEdgeColor: border.popupActionHoverEdge
     readonly property color popupActionPressedColor: state.actionPressedFill
@@ -232,4 +268,24 @@ QtObject {
     readonly property color popupStatusDetailTextColor: text.popupStatusDetail
     readonly property color popupSuccessColor: accent.success
     readonly property color popupFailureColor: accent.failure
+    readonly property color readerDarkPanelColor: readerDark.panel
+    readonly property color readerDarkChromeColor: readerDark.chrome
+    readonly property color readerDarkTextColor: readerDark.text
+    readonly property color readerDarkHoverFieldColor: readerDark.hoverField
+    readonly property color readerDarkMutedTextColor: readerDark.mutedText
+    readonly property color readerDarkDisabledColor: readerDark.disabled
+    readonly property color readerDarkErrorColor: readerDark.error
+    readonly property color readerDarkPageListFillColor: readerDark.pageListFill
+    readonly property color readerDarkToolbarToggleActiveColor: readerDark.toolbarToggleActive
+    readonly property color readerDarkReadingModeActiveColor: readerDark.readingModeActive
+    readonly property color readerLightPanelColor: readerLight.panel
+    readonly property color readerLightChromeColor: readerLight.chrome
+    readonly property color readerLightTextColor: readerLight.text
+    readonly property color readerLightHoverFieldColor: readerLight.hoverField
+    readonly property color readerLightMutedTextColor: readerLight.mutedText
+    readonly property color readerLightDisabledColor: readerLight.disabled
+    readonly property color readerLightErrorColor: readerLight.error
+    readonly property color readerLightPageListFillColor: readerLight.pageListFill
+    readonly property color readerLightToolbarToggleActiveColor: readerLight.toolbarToggleActive
+    readonly property color readerLightReadingModeActiveColor: readerLight.readingModeActive
 }

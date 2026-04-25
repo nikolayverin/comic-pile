@@ -7,7 +7,14 @@ PopupDialogWindow {
 
     signal updateDetailsRequested()
 
-    readonly property string aboutLinkColor: "#78b7ff"
+    UiTokens { id: uiTokens }
+    Typography { id: typography }
+    ThemeColors { id: themeColors }
+
+    readonly property string aboutLinkColor: String(themeColors.aboutLinkTextColor)
+    readonly property color aboutPrimaryTextColor: themeColors.textPrimary
+    readonly property color aboutMutedTextColor: themeColors.aboutMutedTextColor
+    readonly property color aboutSubtitleTextColor: themeColors.aboutSubtitleTextColor
     readonly property string repositoryUrl: "https://github.com/nikolayverin/comic-pile"
     readonly property string projectLicenseUrl: repositoryUrl + "/blob/main/LICENSE"
     readonly property string qtLicensesUrl: repositoryUrl + "/blob/main/release/License/03-QT-NOTICE.txt"
@@ -37,8 +44,8 @@ PopupDialogWindow {
     debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     title: ""
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
-    width: 434
-    height: 664
+    width: uiTokens.aboutDialogWidth
+    height: uiTokens.aboutDialogHeight
 
     onCloseRequested: close()
 
@@ -74,23 +81,23 @@ PopupDialogWindow {
         Text {
             id: aboutTitle
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 4
+            y: uiTokens.aboutTitleY
             text: "About"
-            color: "#ffffff"
+            color: dialog.aboutPrimaryTextColor
             font.family: Qt.application.font.family
-            font.pixelSize: 12
+            font.pixelSize: typography.aboutTitlePx
             font.weight: Font.Medium
         }
 
         Image {
             id: appIcon
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 38
-            width: 256
-            height: 256
+            y: uiTokens.aboutIconY
+            width: uiTokens.aboutIconSize
+            height: uiTokens.aboutIconSize
             source: "qrc:/qt/qml/ComicPile/assets/ui/about-app-icon-256.png"
-            sourceSize.width: 256
-            sourceSize.height: 256
+            sourceSize.width: uiTokens.aboutIconSize
+            sourceSize.height: uiTokens.aboutIconSize
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -98,11 +105,11 @@ PopupDialogWindow {
         Text {
             id: appName
             anchors.horizontalCenter: parent.horizontalCenter
-            y: appIcon.y + appIcon.height + 12
+            y: appIcon.y + appIcon.height + uiTokens.aboutAppNameGap
             text: "Comic Pile"
-            color: "#ffffff"
+            color: dialog.aboutPrimaryTextColor
             font.family: Qt.application.font.family
-            font.pixelSize: 34
+            font.pixelSize: typography.aboutBrandPx
             font.weight: Font.Bold
         }
 
@@ -111,24 +118,24 @@ PopupDialogWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             y: appName.y + appName.implicitHeight
             text: "comic reader and library manager"
-            color: "#8ba4c0"
+            color: dialog.aboutSubtitleTextColor
             font.family: Qt.application.font.family
-            font.pixelSize: 12
+            font.pixelSize: typography.aboutBodyPx
         }
 
         GridLayout {
             id: infoGrid
-            x: 126
-            y: appSubtitle.y + appSubtitle.implicitHeight + 24
+            x: uiTokens.aboutInfoGridX
+            y: appSubtitle.y + appSubtitle.implicitHeight + uiTokens.aboutInfoGridTopGap
             columns: 2
-            columnSpacing: 18
-            rowSpacing: 6
+            columnSpacing: uiTokens.aboutInfoGridColumnSpacing
+            rowSpacing: uiTokens.aboutInfoGridRowSpacing
 
             Text {
                 text: "Created by"
-                color: "#a9a9a9"
+                color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignRight
                 Layout.alignment: Qt.AlignRight
@@ -136,16 +143,16 @@ PopupDialogWindow {
 
             Text {
                 text: "Nikolay Verin"
-                color: "#ffffff"
+                color: dialog.aboutPrimaryTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
             }
 
             Text {
                 text: "Made with"
-                color: "#a9a9a9"
+                color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignRight
                 Layout.alignment: Qt.AlignRight
@@ -153,16 +160,16 @@ PopupDialogWindow {
 
             Text {
                 text: "CODEX by OpenAI"
-                color: "#ffffff"
+                color: dialog.aboutPrimaryTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
             }
 
             Text {
                 text: "Built with"
-                color: "#a9a9a9"
+                color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignRight
                 Layout.alignment: Qt.AlignRight
@@ -170,16 +177,16 @@ PopupDialogWindow {
 
             Text {
                 text: "Qt 6, QML, C++, SQLite"
-                color: "#ffffff"
+                color: dialog.aboutPrimaryTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
             }
 
             Text {
                 text: "Licenses"
-                color: "#a9a9a9"
+                color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignRight
                 verticalAlignment: Text.AlignTop
@@ -187,15 +194,15 @@ PopupDialogWindow {
             }
 
             Column {
-                spacing: 6
+                spacing: uiTokens.aboutInfoGridRowSpacing
 
                 Text {
                     id: projectLicenseLink
                     property bool hovered: false
                     text: dialog.aboutLinkText(dialog.projectLicenseUrl, "Project License", hovered)
-                    color: "#ffffff"
+                    color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
-                    font.pixelSize: 12
+                    font.pixelSize: typography.aboutBodyPx
                     textFormat: Text.RichText
                     onLinkActivated: function(link) { dialog.openExternalLink(link) }
 
@@ -217,9 +224,9 @@ PopupDialogWindow {
                     id: qtLicensesLink
                     property bool hovered: false
                     text: dialog.aboutLinkText(dialog.qtLicensesUrl, "Qt Licenses", hovered)
-                    color: "#ffffff"
+                    color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
-                    font.pixelSize: 12
+                    font.pixelSize: typography.aboutBodyPx
                     textFormat: Text.RichText
                     onLinkActivated: function(link) { dialog.openExternalLink(link) }
 
@@ -241,9 +248,9 @@ PopupDialogWindow {
                     id: thirdPartyLicensesLink
                     property bool hovered: false
                     text: dialog.aboutLinkText(dialog.thirdPartyLicensesUrl, "Third-Party Licenses", hovered)
-                    color: "#ffffff"
+                    color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
-                    font.pixelSize: 12
+                    font.pixelSize: typography.aboutBodyPx
                     textFormat: Text.RichText
                     onLinkActivated: function(link) { dialog.openExternalLink(link) }
 
@@ -264,9 +271,9 @@ PopupDialogWindow {
 
             Text {
                 text: "Source Code"
-                color: "#a9a9a9"
+                color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignRight
                 Layout.alignment: Qt.AlignRight
@@ -276,9 +283,9 @@ PopupDialogWindow {
                 id: repositoryLink
                 property bool hovered: false
                 text: dialog.aboutLinkText(dialog.repositoryUrl, "GitHub Repository", hovered)
-                color: "#ffffff"
+                color: dialog.aboutPrimaryTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 textFormat: Text.RichText
                 onLinkActivated: function(link) { dialog.openExternalLink(link) }
 
@@ -298,9 +305,9 @@ PopupDialogWindow {
 
             Text {
                 text: "Build"
-                color: "#a9a9a9"
+                color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignRight
                 Layout.alignment: Qt.AlignRight
@@ -308,16 +315,16 @@ PopupDialogWindow {
 
             Text {
                 text: dialog.buildVersionText
-                color: "#ffffff"
+                color: dialog.aboutPrimaryTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
             }
 
             Text {
                 text: "Updates"
-                color: "#a9a9a9"
+                color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
-                font.pixelSize: 12
+                font.pixelSize: typography.aboutBodyPx
                 font.weight: Font.Medium
                 horizontalAlignment: Text.AlignRight
                 verticalAlignment: Text.AlignTop
@@ -325,7 +332,7 @@ PopupDialogWindow {
             }
 
             Column {
-                spacing: 6
+                spacing: uiTokens.aboutInfoGridRowSpacing
 
                 PopupActionButton {
                     id: checkForUpdatesButton
@@ -364,9 +371,9 @@ PopupDialogWindow {
                     visible: dialog.hasUpdateAvailable
                     property bool hovered: false
                     text: dialog.aboutLinkText("#", "View update", hovered)
-                    color: "#ffffff"
+                    color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
-                    font.pixelSize: 12
+                    font.pixelSize: typography.aboutBodyPx
                     textFormat: Text.RichText
                     onLinkActivated: function(link) { dialog.updateDetailsRequested() }
 
@@ -390,11 +397,11 @@ PopupDialogWindow {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            y: infoGrid.y + infoGrid.implicitHeight + 24
+            y: infoGrid.y + infoGrid.implicitHeight + uiTokens.aboutFooterTopGap
             text: "\u00a9 2026 Open-source project"
-            color: "#a9a9a9"
+            color: dialog.aboutMutedTextColor
             font.family: Qt.application.font.family
-            font.pixelSize: 12
+            font.pixelSize: typography.aboutBodyPx
         }
     }
 }

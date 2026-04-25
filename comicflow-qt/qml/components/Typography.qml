@@ -15,4 +15,7 @@ QtObject {
     readonly property int dialogHintPx: 11
     readonly property int comboItemPx: 12
     readonly property int closeGlyphPx: 11
+    readonly property int aboutTitlePx: 12
+    readonly property int aboutBrandPx: 34
+    readonly property int aboutBodyPx: 12
 }
