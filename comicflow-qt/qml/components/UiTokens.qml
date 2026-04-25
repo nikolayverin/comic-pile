@@ -5,8 +5,6 @@ QtObject {
     readonly property string appWindowTitle: "Comic Pile"
     readonly property string searchPlaceholder: "Search"
     readonly property string inventoryRebuildStatus: "Library Or Database Changed. Rebuilding Inventory..."
-    readonly property string settingsSoonLabel: "Settings (soon)"
-    readonly property string aboutSoonLabel: "About Comic Pile (soon)"
     readonly property string unknownSeriesLabel: "Unknown series"
 
     readonly property int readerOuterMargin: 24
