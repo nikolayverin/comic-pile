@@ -205,15 +205,20 @@ echo [OK] Release build finished.
 echo APP: %STAGE_DIR%
 echo EXE: %STAGE_EXE%
 echo DATA: %DATABASE_DST%
-exit /b 0
+goto :success
 
 :requireFile
 if exist "%~1" exit /b 0
 echo [FAIL] %~2 was not found: %~1
 exit /b 1
 
+:success
+endlocal
+exit /b 0
+
 :fail
 echo.
 echo [FAIL] Release build failed.
 echo Check log: %BUILD_LOG%
+endlocal
 exit /b 1
