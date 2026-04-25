@@ -1,6 +1,7 @@
 #include "storage/readersessionops.h"
 
 #include "common/scopedsqlconnectionremoval.h"
+#include "storage/sqliteconnectionutils.h"
 
 #include <QUuid>
 #include <QSqlDatabase>
@@ -31,10 +32,10 @@ ReaderIssueRecord loadReaderIssueRecord(const QString &dbPath, int comicId)
         .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
 
-    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (!db.open()) {
-        result.error = QStringLiteral("Failed to open database: %1").arg(db.lastError().text());
+    QSqlDatabase db;
+    QString openError;
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
+        result.error = openError;
         return result;
     }
 
@@ -82,10 +83,10 @@ QString saveReaderProgress(
         .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
 
-    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (!db.open()) {
-        return QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
+    QSqlDatabase db;
+    QString openError;
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
+        return openError;
     }
 
     QSqlQuery query(db);
@@ -117,10 +118,10 @@ QString saveReaderBookmark(
         .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
 
-    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (!db.open()) {
-        return QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
+    QSqlDatabase db;
+    QString openError;
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
+        return openError;
     }
 
     QSqlQuery query(db);
@@ -158,10 +159,10 @@ QString saveReaderFavorite(
         .arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     const ScopedSqlConnectionRemoval cleanupConnection(connectionName);
 
-    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
-    db.setDatabaseName(dbPath);
-    if (!db.open()) {
-        return QStringLiteral("Failed to open DB: %1").arg(db.lastError().text());
+    QSqlDatabase db;
+    QString openError;
+    if (!ComicStorageSqlite::openDatabaseConnection(db, dbPath, connectionName, openError)) {
+        return openError;
     }
 
     QSqlQuery query(db);

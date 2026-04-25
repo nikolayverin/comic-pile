@@ -135,7 +135,7 @@ if exist "%BUNDLED_7Z_DIR%\7z.dll" (
 if exist "%STAGE_DIR%\qmltooling" rmdir /S /Q "%STAGE_DIR%\qmltooling" >nul 2>nul
 
 echo [5/5] Copy release Database...
-robocopy "%DATABASE_SRC%" "%DATABASE_DST%" /MIR /XD ".runtime" >nul
+robocopy "%DATABASE_SRC%" "%DATABASE_DST%" /MIR /XD ".runtime" /XF "library.db-wal" "library.db-shm" "library.db-journal" >nul
 set "ROBOCOPY_RC=%ERRORLEVEL%"
 if %ROBOCOPY_RC% GEQ 8 (
     echo [FAIL] Could not copy release Database.

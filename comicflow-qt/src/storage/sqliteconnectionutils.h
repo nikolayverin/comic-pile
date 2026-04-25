@@ -6,6 +6,8 @@ class QSqlDatabase;
 
 namespace ComicStorageSqlite {
 
+int connectionBusyTimeoutMs();
+
 bool openDatabaseConnection(
     QSqlDatabase &db,
     const QString &dbPath,
