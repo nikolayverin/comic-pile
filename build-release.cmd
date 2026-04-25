@@ -32,6 +32,10 @@ set "QT_LABS_SETTINGS_DST=%STAGE_DIR%\qml\Qt\labs\settings"
 set "QT_LABS_SETTINGS_DLL_SRC=%QT_BIN%\Qt6LabsSettings.dll"
 set "QT_LABS_SETTINGS_DLL_DST=%STAGE_DIR%\Qt6LabsSettings.dll"
 set "BUNDLED_7Z_DIR=%ROOT%\tools\7zip"
+set "BUNDLED_DJVU_RUNTIME_DIR=%ROOT%\tools\djvulibre\runtime"
+set "BUNDLED_DJVU_NOTICE=%ROOT%\tools\djvulibre\NOTICE.txt"
+set "BUNDLED_DJVU_SOURCE_ARCHIVE=%ROOT%\tools\djvulibre\djvulibre-3.5.29.real.tar.gz"
+set "DJVU_RUNTIME_DST=%STAGE_DIR%\tools\djvulibre"
 set "BUNDLED_QWEBP_DLL=%ROOT%\tools\qt-imageformats\6.10.2\mingw_64\plugins\imageformats\qwebp.dll"
 set "IMAGEFORMATS_DIR=%STAGE_DIR%\imageformats"
 set "SYSTEM_7Z_EXE=C:\Program Files\7-Zip\7z.exe"
@@ -58,6 +62,20 @@ if errorlevel 1 exit /b 1
 call :requireFile "%QT_BIN%\qmake.exe" "Qt runtime"
 if errorlevel 1 exit /b 1
 call :requireFile "%WINDEPLOYQT%" "windeployqt"
+if errorlevel 1 exit /b 1
+call :requireFile "%BUNDLED_DJVU_RUNTIME_DIR%\ddjvu.exe" "DjVu runtime ddjvu"
+if errorlevel 1 exit /b 1
+call :requireFile "%BUNDLED_DJVU_RUNTIME_DIR%\djvudump.exe" "DjVu runtime djvudump"
+if errorlevel 1 exit /b 1
+call :requireFile "%BUNDLED_DJVU_RUNTIME_DIR%\djvused.exe" "DjVu runtime djvused"
+if errorlevel 1 exit /b 1
+call :requireFile "%BUNDLED_DJVU_RUNTIME_DIR%\libdjvulibre.dll" "DjVu runtime library"
+if errorlevel 1 exit /b 1
+call :requireFile "%BUNDLED_DJVU_RUNTIME_DIR%\COPYING.txt" "DjVu runtime license"
+if errorlevel 1 exit /b 1
+call :requireFile "%BUNDLED_DJVU_NOTICE%" "DjVu runtime notice"
+if errorlevel 1 exit /b 1
+call :requireFile "%BUNDLED_DJVU_SOURCE_ARCHIVE%" "DjVu source archive"
 if errorlevel 1 exit /b 1
 
 echo [Comic Pile] Release build start
@@ -131,6 +149,23 @@ if exist "%BUNDLED_7Z_DIR%\7z.dll" (
     copy /Y "%BUNDLED_7Z_DIR%\7z.dll" "%STAGE_DIR%\7z.dll" >nul 2>nul
 ) else if exist "%SYSTEM_7Z_DLL%" (
     copy /Y "%SYSTEM_7Z_DLL%" "%STAGE_DIR%\7z.dll" >nul 2>nul
+)
+if not exist "%DJVU_RUNTIME_DST%" mkdir "%DJVU_RUNTIME_DST%" >nul 2>nul
+robocopy "%BUNDLED_DJVU_RUNTIME_DIR%" "%DJVU_RUNTIME_DST%" ddjvu.exe djvudump.exe djvused.exe libdjvulibre.dll libjpeg.dll libtiff.dll libz.dll COPYING.txt >nul
+set "ROBOCOPY_RC=%ERRORLEVEL%"
+if %ROBOCOPY_RC% GEQ 8 (
+    echo [FAIL] Could not copy DjVu runtime.
+    exit /b 1
+)
+copy /Y "%BUNDLED_DJVU_NOTICE%" "%DJVU_RUNTIME_DST%\NOTICE.txt" >nul 2>nul
+if errorlevel 1 (
+    echo [FAIL] Could not copy DjVu notice.
+    exit /b 1
+)
+copy /Y "%BUNDLED_DJVU_SOURCE_ARCHIVE%" "%DJVU_RUNTIME_DST%\djvulibre-3.5.29.tar.gz" >nul 2>nul
+if errorlevel 1 (
+    echo [FAIL] Could not copy DjVu source archive.
+    exit /b 1
 )
 if exist "%STAGE_DIR%\qmltooling" rmdir /S /Q "%STAGE_DIR%\qmltooling" >nul 2>nul
 
