@@ -18,8 +18,11 @@ Item {
     property real topBoundaryY: 0
     property bool hideIfOutOfBounds: false
     readonly property int fadeDurationMs: 120
-    readonly property bool interactionActive: root.presented
-        && (menuHoverHandler.hovered || editButton.interactionActive || replaceButton.interactionActive || deleteButton.interactionActive)
+    readonly property bool pointerInteractionActive: menuHoverHandler.hovered
+        || editButton.interactionActive
+        || replaceButton.interactionActive
+        || deleteButton.interactionActive
+    readonly property bool interactionActive: root.presented && pointerInteractionActive
     readonly property real anchorCenterX: {
         if (!root.parent || !root.anchorItem) return 0
         return root.anchorItem.mapToItem(root.parent, root.anchorItem.width / 2, 0).x
@@ -200,7 +203,7 @@ Item {
 
     HoverHandler {
         id: menuHoverHandler
-        enabled: root.hoverUiEnabled && root.presented
+        enabled: root.hoverUiEnabled
         acceptedDevices: PointerDevice.Mouse
     }
 }

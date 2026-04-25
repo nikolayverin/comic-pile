@@ -35,11 +35,12 @@ Rectangle {
     property Item actionMenuBoundsItem: null
     property bool actionMenuDismissed: false
     property bool openingInProgress: false
+    property bool actionMenuInteractionRetained: false
 
     readonly property bool coverHovered: root.hoverUiEnabled && coverHoverHandler.hovered
     readonly property bool menuHovered: root.hoverUiEnabled
         && hoverActionBarLoader.item !== null
-        && hoverActionBarLoader.item.interactionActive
+        && hoverActionBarLoader.item.pointerInteractionActive
     readonly property bool hoverRetained: root.hoverUiEnabled && actionMenuHoldTimer.running
     readonly property bool effectiveHover: root.hoverUiEnabled && (coverHovered || menuHovered || hoverRetained)
     readonly property bool hasReadyCover: root.coverSource.length > 0 && coverImage.status === Image.Ready
@@ -82,7 +83,7 @@ Rectangle {
     readonly property bool actionMenuVisible: root.hoverUiEnabled
         && !root.actionMenuSuppressed
         && !root.actionMenuDismissed
-        && (coverHovered || menuHovered || hoverRetained)
+        && (coverHovered || actionMenuInteractionRetained || hoverRetained)
     readonly property int hoverCaptionLineLimit: 2
     readonly property int actionMenuOffsetAboveCover: 14
     readonly property Item actionMenuOverlay: Overlay.overlay
@@ -110,11 +111,13 @@ Rectangle {
     function refreshActionMenuHold() {
         if (!root.hoverUiEnabled || root.actionMenuSuppressed) {
             actionMenuHoldTimer.stop()
+            root.actionMenuInteractionRetained = false
             root.actionMenuDismissed = false
             return
         }
 
         if (!root.coverHovered && !root.menuHovered && !actionMenuHoldTimer.running) {
+            root.actionMenuInteractionRetained = false
             root.actionMenuDismissed = false
         }
 
@@ -267,7 +270,8 @@ Rectangle {
         id: hoverActionBarLoader
         active: root.hoverUiEnabled
             && !root.actionMenuSuppressed
-            && (root.coverHovered || root.menuHovered || root.hoverRetained)
+            && !root.actionMenuDismissed
+            && (root.coverHovered || root.actionMenuInteractionRetained || root.hoverRetained)
         asynchronous: false
         sourceComponent: Component {
             HoverActionBar {
@@ -319,12 +323,22 @@ Rectangle {
     }
 
     onCoverHoveredChanged: refreshActionMenuHold()
-    onMenuHoveredChanged: refreshActionMenuHold()
+    onMenuHoveredChanged: {
+        if (root.menuHovered) {
+            root.actionMenuInteractionRetained = true
+            refreshActionMenuHold()
+            return
+        }
+
+        refreshActionMenuHold()
+        root.actionMenuInteractionRetained = false
+    }
     onActionMenuSuppressedChanged: refreshActionMenuHold()
     onHoverUiEnabledChanged: refreshActionMenuHold()
 
     function dismissActionMenu() {
         actionMenuHoldTimer.stop()
+        root.actionMenuInteractionRetained = false
         root.actionMenuDismissed = true
     }
 
@@ -362,7 +376,7 @@ Rectangle {
 
     MouseArea {
         id: unreadHotspotArea
-        visible: root.coverReadStateVisible && coverReadOverlay.status === Image.Ready
+        visible: root.coverReadStateVisible
         enabled: root.hoverUiEnabled
         x: Math.round(coverReadOverlay.x + coverReadOverlay.width - width)
         y: Math.round(coverReadOverlay.y)

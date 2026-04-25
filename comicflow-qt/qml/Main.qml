@@ -324,10 +324,16 @@ ApplicationWindow {
     property alias libraryLoading: libraryBrowseController.libraryLoading
     property bool cbrBackendAvailable: false
     property string cbrBackendMissingMessage: ""
-    property string libraryDataRootPath: String(libraryModel.dataRoot || "")
+    property string libraryDataRootPath: (typeof libraryModel !== "undefined" && libraryModel)
+        ? String(libraryModel.dataRoot || "")
+        : ""
     property string libraryFolderPath: childPath(libraryDataRootPath, "Library")
     property string libraryRuntimeFolderPath: childPath(libraryDataRootPath, ".runtime")
-    property string pendingLibraryDataRelocationPath: String(libraryModel.pendingDataRootRelocationPath() || "")
+    property string pendingLibraryDataRelocationPath: (typeof libraryModel !== "undefined"
+            && libraryModel
+            && typeof libraryModel.pendingDataRootRelocationPath === "function")
+        ? String(libraryModel.pendingDataRootRelocationPath() || "")
+        : ""
     property var importSeriesKeysBeforeBatch: ({})
     property bool importFocusNewSeriesAfterReload: false
     property string pendingImportPostReloadAction: ""
