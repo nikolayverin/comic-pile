@@ -304,6 +304,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/UpdateAvailableDialog.qml
         qml/components/UpdateDownloadDialog.qml
         qml/components/WhatsNewDialog.qml
+        qml/components/HelpContent.js
         qml/components/HelpDialog.qml
         qml/components/SettingsDialog.qml
         qml/components/SettingsRadioGroup.qml
