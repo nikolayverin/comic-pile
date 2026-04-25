@@ -61,14 +61,14 @@ var appearanceTextureOptions = [
     {
         key: "Craft 02",
         label: "Craft 02",
-        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/8-grid-tile-cradt-2-512px.png",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/8-grid-tile-craft-2-512px.png",
         tileSize: 512,
         previewUseDefaultBase: false
     },
     {
         key: "Craft 01",
         label: "Craft 01",
-        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/9-grid-tile-cradt-1-512px.png",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/9-grid-tile-craft-1-512px.png",
         tileSize: 512,
         previewUseDefaultBase: false
     },
@@ -89,7 +89,7 @@ var appearanceTextureOptions = [
     {
         key: "Cardboard",
         label: "Cardboard",
-        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/12-grid-tile-ccardbosrd-512px.png",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/12-grid-tile-cardboard-512px.png",
         tileSize: 512,
         previewUseDefaultBase: false
     },
@@ -103,7 +103,7 @@ var appearanceTextureOptions = [
     {
         key: "Fabric",
         label: "Fabric",
-        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/14-grid-tile-fabtic-512px.png",
+        source: "qrc:/qt/qml/ComicPile/assets/ui/grid-backgrounds/14-grid-tile-fabric-512px.png",
         tileSize: 512,
         previewUseDefaultBase: false
     },

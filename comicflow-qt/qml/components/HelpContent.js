@@ -210,7 +210,7 @@ var sections = [
                     screenshotSource: "qrc:/qt/qml/ComicPile/assets/ui/help/22-auto-check-for-updates.png",
                     screenshotTitle: "Automatically check for updates setting",
                     bodyHtmlAfterScreenshot: "Turning that option off stops automatic update checks, but you can still use <b>Check for updates</b> in <b>About</b> whenever you want to check manually.",
-                    screenshotSourceAfter: "qrc:/qt/qml/ComicPile/assets/ui/help/23-check-for-updatet.png",
+                    screenshotSourceAfter: "qrc:/qt/qml/ComicPile/assets/ui/help/23-check-for-update.png",
                     screenshotTitleAfter: "Check for updates in About"
                 },
                 {

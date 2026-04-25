@@ -341,13 +341,13 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-folder.png
         assets/icons/icon-folder-hover.png
         assets/icons/icon-folder-opened.png
-        assets/icons/icon-boormarks-hover.png
-        assets/icons/icon-boormarks-idle.png
+        assets/icons/icon-bookmarks-hover.png
+        assets/icons/icon-bookmarks-idle.png
         assets/icons/copy.svg
-        assets/icons/icon-favorits-hover.png
-        assets/icons/icon-favorits-idle.png
+        assets/icons/icon-favorites-hover.png
+        assets/icons/icon-favorites-idle.png
         assets/icons/icon-title-bookmark.png
-        assets/icons/icon-title-favorit.png
+        assets/icons/icon-title-favorite.png
         assets/icons/icon-title-last-import.png
         assets/icons/icon-popup-info.svg
         assets/icons/icon-last-import-hover.png
@@ -355,7 +355,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-reader-bookmark.svg
         assets/icons/icon-reader-delete.svg
         assets/icons/icon-reader-settings.svg
-        assets/icons/icon-reader-favorits.svg
+        assets/icons/icon-reader-favorites.svg
         assets/icons/icon-reader-copy.svg
         assets/icons/icon-reader-magnifier-shadow.svg
         assets/icons/icon-reader-manga.svg
@@ -393,13 +393,13 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/grid-backgrounds/5-grid-tile-linen-512px.png
         assets/ui/grid-backgrounds/6-grid-tile-felt-512px.png
         assets/ui/grid-backgrounds/7-grid-tile-cartographer-1-512px.png
-        assets/ui/grid-backgrounds/8-grid-tile-cradt-2-512px.png
-        assets/ui/grid-backgrounds/9-grid-tile-cradt-1-512px.png
+        assets/ui/grid-backgrounds/8-grid-tile-craft-2-512px.png
+        assets/ui/grid-backgrounds/9-grid-tile-craft-1-512px.png
         assets/ui/grid-backgrounds/10-grid-tile-cork-1-512px.png
         assets/ui/grid-backgrounds/11-grid-tile-cork-2-512px.png
-        assets/ui/grid-backgrounds/12-grid-tile-ccardbosrd-512px.png
+        assets/ui/grid-backgrounds/12-grid-tile-cardboard-512px.png
         assets/ui/grid-backgrounds/13-grid-tile-crosslines-512px.png
-        assets/ui/grid-backgrounds/14-grid-tile-fabtic-512px.png
+        assets/ui/grid-backgrounds/14-grid-tile-fabric-512px.png
         assets/ui/grid-backgrounds/15-grid-tile-strains-512px.png
         assets/ui/logo-after-shock-round.png
         assets/ui/logo-archie-comics-wide.png
@@ -414,7 +414,7 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/logo-dupuis-wide.png
         assets/ui/logo-dynamite-wide.png
         assets/ui/logo-glenat-wide.png
-        assets/ui/logo-hakesensha-wide.png
+        assets/ui/logo-hakusensha-wide.png
         assets/ui/logo-humanoids-standard.png
         assets/ui/logo-idw-publishing-round.png
         assets/ui/logo-image-comics-tall.png
@@ -424,7 +424,7 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/logo-oni-press-wide.png
         assets/ui/logo-panini-comics-wide.png
         assets/ui/logo-rebellion-wide.png
-        assets/ui/logo-shogakui-wide.png
+        assets/ui/logo-shogakukan-wide.png
         assets/ui/logo-shueisha-standard.png
         assets/ui/logo-square-enix-wide.png
         assets/ui/logo-titan-comics-tall.png
@@ -434,7 +434,7 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/logo-viz-media-wide.png
         assets/ui/icon-reader-page-arrow.svg
         assets/ui/icon-reader-issue-arrow.svg
-        assets/ui/reader-boornark.svg
+        assets/ui/reader-bookmark.svg
         assets/ui/grid-corner-bl.png
         assets/ui/grid-corner-br.png
         assets/ui/grid-edge-left.png
@@ -466,7 +466,7 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/help/20-downloading-failed.png
         assets/ui/help/21-install-update.png
         assets/ui/help/22-auto-check-for-updates.png
-        assets/ui/help/23-check-for-updatet.png
+        assets/ui/help/23-check-for-update.png
         assets/textures/sidebar_dither_noise.png
 )
 
