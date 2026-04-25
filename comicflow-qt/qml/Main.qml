@@ -73,7 +73,7 @@ ApplicationWindow {
         appSettingsController.appearanceLibraryBackgroundCustomImagePath || ""
     )
     readonly property string libraryBackgroundCustomImageResolvedPath: String(
-        resolveLibraryBackgroundStoredPath(libraryBackgroundCustomImageStoredPath) || ""
+        settingsActionController.resolveLibraryBackgroundStoredPath(libraryBackgroundCustomImageStoredPath) || ""
     )
     readonly property string libraryBackgroundCustomImageMode: String(
         appSettingsController.appearanceLibraryBackgroundImageMode || "Fill"
@@ -100,9 +100,6 @@ ApplicationWindow {
     readonly property int libraryTextureTilePixelSize: SettingsCatalog.appearanceTextureTilePixelSize(
         libraryBackgroundTexturePreset
     )
-    readonly property int libraryBackgroundImageMaxBytes: 8 * 1024 * 1024
-    readonly property int libraryBackgroundTileImageMaxBytes: 1 * 1024 * 1024
-
     property color bgApp: themeColors.bgApp
     property color bgSidebarStart: themeColors.bgSidebarStart
     property color bgSidebarEnd: themeColors.bgSidebarEnd
@@ -177,7 +174,7 @@ ApplicationWindow {
     property real shadowSoftOpacity: 0.28
     property real shadowHeavyOpacity: 0.45
 
-    property var selectedIds: ({})
+    property alias selectedIds: issueSelectionController.selectedIds
     property alias actionResultMessage: popupController.actionResultMessage
     property alias pendingDeleteId: deleteController.pendingDeleteId
     property alias deleteErrorHeadline: deleteController.deleteErrorHeadline
@@ -334,7 +331,7 @@ ApplicationWindow {
     property string pendingImportPostReloadAction: ""
     property bool pendingConfiguredLaunchViewApply: true
     property string lastPresentedLibraryLoadError: ""
-    property bool libraryBackgroundImageMigrationInProgress: false
+    property alias libraryBackgroundImageMigrationInProgress: settingsActionController.libraryBackgroundImageMigrationInProgress
     property bool firstRunOnboardingActive: false
     property int firstRunOnboardingStep: 1
     readonly property int firstRunSidebarHighlightX: Math.round((root.sidebarWidth - root.firstRunDropZoneHighlightWidth) / 2)
@@ -464,6 +461,10 @@ ApplicationWindow {
         issuesGridRefreshDebounceRef: issuesGridRefreshDebounce
     }
 
+    IssueSelectionController {
+        id: issueSelectionController
+    }
+
     SeriesSelectionController {
         id: seriesSelectionController
         rootObject: root
@@ -503,6 +504,16 @@ ApplicationWindow {
         seriesHeaderDialogRef: seriesHeaderDialog
         deleteConfirmDialogRef: deleteConfirmDialog
         deleteErrorDialogRef: deleteErrorDialog
+    }
+
+    SettingsActionController {
+        id: settingsActionController
+        rootObject: root
+        libraryModelRef: libraryModel
+        appSettingsControllerRef: appSettingsController
+        popupControllerRef: popupController
+        startupControllerRef: startupController
+        settingsDialogRef: settingsDialog
     }
 
     NavigationSurfaceController {
@@ -660,34 +671,19 @@ ApplicationWindow {
     }
 
     function runtimeDebugLog(category, message) {
-        const tag = String(category || "").trim()
-        const text = String(message || "").trim()
-        if (tag.length < 1 || text.length < 1) return
-        const startupTextLogsEnabled = libraryModel
-            && typeof libraryModel.startupTextLogsEnabled === "function"
-            && libraryModel.startupTextLogsEnabled()
-        if (!startupDebugLogsEnabled && !startupTextLogsEnabled) return
-        if (!libraryModel || typeof libraryModel.appendStartupDebugLog !== "function") return
-        libraryModel.appendStartupDebugLog("[" + tag + "] " + text)
+        startupController.runtimeDebugLog(category, message)
     }
 
     function isSelected(id) {
-        return selectedIds[String(id)] === true
+        return issueSelectionController.isSelected(id)
     }
 
     function setSelected(id, checked) {
-        const key = String(id)
-        const next = Object.assign({}, selectedIds)
-        if (checked) {
-            next[key] = true
-        } else {
-            delete next[key]
-        }
-        selectedIds = next
+        issueSelectionController.setSelected(id, checked)
     }
 
     function clearSelection() {
-        selectedIds = ({})
+        issueSelectionController.clearSelection()
     }
 
     function rememberContinueReadingTarget(comicId, seriesKey, displayTitle, persistState) {
@@ -903,61 +899,16 @@ ApplicationWindow {
         return base.replace(/[\\\/]+$/, "") + "\\" + child
     }
 
-    function looksLikeAbsoluteLocalPath(pathValue) {
-        const normalized = String(pathValue || "").trim().replace(/\//g, "\\")
-        return /^[A-Za-z]:\\/.test(normalized) || normalized.startsWith("\\\\")
-    }
-
     function resolveLibraryBackgroundStoredPath(pathValue) {
-        const storedPath = String(pathValue || "").trim()
-        if (storedPath.length < 1) return ""
-        if (libraryModel && typeof libraryModel.resolveStoredPathAgainstDataRoot === "function") {
-            return String(libraryModel.resolveStoredPathAgainstDataRoot(storedPath) || "")
-        }
-        return storedPath
+        return settingsActionController.resolveLibraryBackgroundStoredPath(pathValue)
     }
 
     function storeLibraryBackgroundImageSelection(sourcePath, showErrorPopup) {
-        const candidatePath = String(sourcePath || "").trim()
-        if (candidatePath.length < 1) return ""
-
-        if (!libraryModel || typeof libraryModel.storeLibraryBackgroundImage !== "function") {
-            if (showErrorPopup) {
-                showSettingsError("Failed to save custom background image.")
-            }
-            return ""
-        }
-
-        const result = libraryModel.storeLibraryBackgroundImage(candidatePath) || {}
-        if (!Boolean(result.ok)) {
-            if (showErrorPopup) {
-                showSettingsError(String(result.error || "Failed to save custom background image."))
-            }
-            return ""
-        }
-
-        return String(result.storedPath || "")
+        return settingsActionController.storeLibraryBackgroundImageSelection(sourcePath, showErrorPopup)
     }
 
     function migrateLibraryBackgroundImageSettingIfNeeded() {
-        if (libraryBackgroundImageMigrationInProgress) return
-
-        const storedPath = String(libraryBackgroundCustomImageStoredPath || "").trim()
-        if (!looksLikeAbsoluteLocalPath(storedPath)) return
-
-        const resolvedPath = String(libraryBackgroundCustomImageResolvedPath || "").trim()
-        if (resolvedPath.length < 1) return
-
-        libraryBackgroundImageMigrationInProgress = true
-        const migratedStoredPath = storeLibraryBackgroundImageSelection(resolvedPath, false)
-        libraryBackgroundImageMigrationInProgress = false
-
-        if (migratedStoredPath.length > 0 && migratedStoredPath !== storedPath) {
-            appSettingsController.setSettingValue(
-                "appearance_library_background_custom_image_path",
-                migratedStoredPath
-            )
-        }
+        settingsActionController.migrateLibraryBackgroundImageSettingIfNeeded()
     }
 
     onLibraryBackgroundCustomImageStoredPathChanged: migrateLibraryBackgroundImageSettingIfNeeded()
@@ -1094,46 +1045,26 @@ ApplicationWindow {
     }
 
     function showSettingsActionResultPayload(payload) {
-        if (settingsDialog && settingsDialog.visible) {
-            popupController.showMappedActionResultAbovePopup(payload, settingsDialog)
-            return
-        }
-        popupController.showMappedActionResult(payload)
+        settingsActionController.showSettingsActionResultPayload(payload)
     }
 
     function showSettingsError(messageText, detailsText, buttonText, actionKey, filePath, titleOverride) {
-        showSettingsActionResultPayload(AppErrorMapper.defaultActionResultPayload(
-            String(messageText || ""),
-            String(titleOverride || AppText.popupActionErrorTitle),
-            String(detailsText || ""),
-            String(buttonText || ""),
-            String(actionKey || ""),
-            String(filePath || "")
-        ))
+        settingsActionController.showSettingsError(
+            messageText,
+            detailsText,
+            buttonText,
+            actionKey,
+            filePath,
+            titleOverride
+        )
     }
 
     function presentLibraryLoadError(messageText) {
-        const message = String(messageText || "").trim()
-        if (message.length < 1) return
-        showSettingsActionResultPayload(AppErrorMapper.libraryLoadFailure(message))
+        settingsActionController.presentLibraryLoadError(messageText)
     }
 
     function scheduleLibraryDataRelocationFromSettings() {
-        const initialPath = String(
-            pendingLibraryDataRelocationPath
-            || libraryDataRootPath
-            || ""
-        )
-        const selectedPath = String(libraryModel.browseDataRootFolder(initialPath) || "")
-        if (selectedPath.length < 1) return
-
-        const result = libraryModel.scheduleDataRootRelocation(selectedPath)
-        if (!Boolean((result || {}).ok)) {
-            showSettingsError(String((result || {}).error || AppText.mainFailedScheduleLibraryLocation))
-            return
-        }
-
-        pendingLibraryDataRelocationPath = String((result || {}).pendingPath || selectedPath || "")
+        settingsActionController.scheduleLibraryDataRelocationFromSettings()
     }
 
     function isSilentReplaceStateError(messageText) {
@@ -1301,80 +1232,27 @@ ApplicationWindow {
     }
 
     function chooseSevenZipPathFromSettings() {
-        const initialPath = String(sevenZipConfiguredPath || sevenZipEffectivePath || "")
-        const selectedPath = String(libraryModel.browseArchiveFile(initialPath) || "")
-        if (selectedPath.length < 1) return
-
-        const applyError = String(libraryModel.setSevenZipExecutablePath(selectedPath) || "").trim()
-        if (applyError.length > 0) {
-            showSettingsError(applyError)
-            return
-        }
-
-        refreshCbrSupportState()
-        startupController.requestSnapshotSave()
+        settingsActionController.chooseSevenZipPathFromSettings()
     }
 
     function verifySevenZipFromSettings() {
-        refreshCbrSupportState()
+        settingsActionController.verifySevenZipFromSettings()
     }
 
     function checkStorageAccessFromSettings() {
-        const result = libraryModel.checkStorageAccess()
-        const ok = Boolean((result || {}).ok)
-        settingsDialog.storageAccessCheckState = ok ? "success" : "failure"
-        settingsDialog.storageAccessResultText = String(
-            (result || {}).statusText || (ok ? "All good" : "Needs attention")
-        )
-        settingsDialog.storageAccessHintText = ok
-            ? ""
-            : String((result || {}).hintText || "")
+        settingsActionController.checkStorageAccessFromSettings()
     }
 
     function resetSettingsToDefaults() {
-        if (appSettingsController && typeof appSettingsController.resetAllSettingsToDefaults === "function") {
-            appSettingsController.resetAllSettingsToDefaults()
-        }
-        refreshCbrSupportState()
-        startupController.requestSnapshotSave()
+        settingsActionController.resetSettingsToDefaults()
     }
 
     function chooseLibraryBackgroundImageFromSettings() {
-        const currentPath = String(libraryBackgroundCustomImageResolvedPath || "")
-        const selectedPath = String(libraryModel.browseImageFile(currentPath) || "")
-        if (selectedPath.length < 1) return
-
-        const limitBytes = libraryBackgroundCustomImageMode === "Tile"
-            ? libraryBackgroundTileImageMaxBytes
-            : libraryBackgroundImageMaxBytes
-        const sizeBytes = fileSizeBytes(selectedPath)
-        if (sizeBytes > limitBytes) {
-            const label = libraryBackgroundCustomImageMode === "Tile" ? "1 MB" : "8 MB"
-            showSettingsError(AppText.backgroundImageTooLargeMessage(label))
-            return
-        }
-
-        const storedPath = storeLibraryBackgroundImageSelection(selectedPath, true)
-        if (storedPath.length < 1) return
-
-        appSettingsController.setSettingValue("appearance_library_background_custom_image_path", storedPath)
-        appSettingsController.setSettingValue("appearance_library_background", "Custom image")
+        settingsActionController.chooseLibraryBackgroundImageFromSettings()
     }
 
     function setLibraryBackgroundImageModeFromSettings(nextMode) {
-        const mode = String(nextMode || "").trim()
-        if (mode.length < 1) return
-        if (mode === "Tile") {
-            const currentPath = String(libraryBackgroundCustomImageResolvedPath || "")
-            if (currentPath.length > 0) {
-                const sizeBytes = fileSizeBytes(currentPath)
-                if (sizeBytes > libraryBackgroundTileImageMaxBytes) {
-                    showSettingsError(AppText.mainTileModeImageLimit)
-                    return
-                }
-            }
-        }
-        appSettingsController.setSettingValue("appearance_library_background_image_mode", mode)
+        settingsActionController.setLibraryBackgroundImageModeFromSettings(nextMode)
     }
 
     function quickAddFilesFromDialog() {

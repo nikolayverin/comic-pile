@@ -100,6 +100,14 @@ Item {
         libraryModelRef.appendStartupLog(line)
     }
 
+    function runtimeDebugLog(category, message) {
+        const tag = String(category || "").trim()
+        const text = String(message || "").trim()
+        if (tag.length < 1 || text.length < 1 || !libraryModelRef || !startupLoggingEnabled()) return
+        if (typeof libraryModelRef.appendStartupDebugLog !== "function") return
+        libraryModelRef.appendStartupDebugLog("[" + tag + "] " + text)
+    }
+
     function windowVisibilityLabel(visibilityValue) {
         if (visibilityValue === Window.Windowed) return "windowed"
         if (visibilityValue === Window.Maximized) return "maximized"

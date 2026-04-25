@@ -211,6 +211,7 @@ qt_add_qml_module(comic_pile_qt
         qml/controllers/StartupSnapshotController.qml
         qml/controllers/WindowDisplayController.qml
         qml/controllers/AppSettingsController.qml
+        qml/controllers/SettingsActionController.qml
         qml/controllers/ReaderCoverController.qml
         qml/controllers/ReaderDisplayModeController.qml
         qml/controllers/ReaderSessionController.qml
@@ -218,6 +219,7 @@ qt_add_qml_module(comic_pile_qt
         qml/controllers/ReadingContinuationController.qml
         qml/controllers/NavigationSurfaceController.qml
         qml/controllers/LibraryBrowseController.qml
+        qml/controllers/IssueSelectionController.qml
         qml/controllers/SeriesSelectionController.qml
         qml/controllers/MetadataDialogController.qml
         qml/controllers/ReaderSpreadLayout.js

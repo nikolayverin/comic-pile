@@ -65,6 +65,8 @@ Item {
 
     function launchLog(message) { startupTelemetry.launchLog(message) }
 
+    function runtimeDebugLog(category, message) { startupTelemetry.runtimeDebugLog(category, message) }
+
     function windowVisibilityLabel(visibilityValue) { return startupTelemetry.windowVisibilityLabel(visibilityValue) }
 
     function shouldTraceWindowState() { return startupTelemetry.shouldTraceWindowState() }
