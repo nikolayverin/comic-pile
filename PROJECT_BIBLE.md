@@ -1,0 +1,822 @@
+# Comic Pile Project Bible
+
+Last updated: 2026-04-25
+
+## Current project state
+- Main focus: stabilize public-release behavior, update flow, and portable storage expectations while preserving the current UI and responsiveness.
+- Startup baseline in code:
+  - restore UI snapshot from `.runtime/startup-snapshot.json`,
+  - keep the root window hidden until saved geometry/state is applied,
+  - reveal primary UI content only after the first visually stable startup phase,
+  - use a startup preview layer or dark startup mask to hide intermediate first-frame composition,
+  - run async DB health preflight (diagnostics-first, with UI warning only on failure),
+  - run a delayed post-start inventory check for `Database/Library`,
+  - only block the UI and rebuild inventory if the library files actually changed.
+- Main shell is now structurally split instead of being one monolithic screen:
+  - sidebar lives in `MainSidebar`,
+  - right-side library content lives in `MainLibraryPane`,
+  - dialogs and overlays live in `MainDialogHost`,
+  - startup visual layer lives in `MainStartupLayer`,
+  - startup state lives in `MainStartupState`.
+- Startup/runtime responsibilities are now split more explicitly:
+  - `StartupController` coordinates startup flow,
+  - `StartupSnapshotController` owns snapshot save/restore and startup preview flow,
+  - `StartupTelemetryController` owns startup and launch telemetry.
+- Application bootstrap is now thinner:
+  - launch bootstrap helpers are separated from `main.cpp`,
+  - data-root relocation bootstrap is separated from `main.cpp`.
+- `ComicsListModel` is no longer maintained as one giant implementation block:
+  - startup/runtime,
+  - reader,
+  - hero,
+  - metadata,
+  - delete,
+  - import
+  now live in dedicated implementation files.
+- Shared popup/dialog style system exists in QML components:
+  - `PopupStyle`,
+  - `PopupSurface`,
+  - `PopupFieldBackground`,
+  - `PopupActionButton`,
+  - `PopupCloseButton`,
+  - `PopupCloseBehavior`,
+  - `PopupModalOverlay`.
+- Shared popup/menu family also exists in QML components:
+  - `PopupMenuStyle`,
+  - `PopupMenuListView`,
+  - `ContextMenuPopup`,
+  - `MetadataDropdownField`.
+- Shared popup style is currently applied to:
+  - `Issue Metadata`,
+  - `Series Metadata` (`Edit Series` / bulk mode),
+  - import-related dialogs (`progress`, `conflict`, `failed imports`),
+  - delete-related dialogs (`series delete`, `issue confirm`, `delete error`),
+  - action error dialog.
+- Shared popup/menu family is currently applied to:
+  - top bar menus,
+  - series row `3-dots` menu,
+  - metadata dropdown menus in issue/series popups.
+- `Settings` is now a real product surface with working sections:
+  - `General`,
+  - `Reader`,
+  - `Import & Archives`,
+  - `Library & Data`,
+  - `Appearance`,
+  - `Safety`.
+- `Settings -> General` now includes `Automatically check for updates`.
+- Main-shell navigation helper surfaces now exist:
+  - top helper row: `Continue reading`, `Next unread`,
+  - bottom helper controls: issue order toggle and quick `Grid density`.
+- Hero behavior is intentionally simplified:
+  - hero and grid stay in one shared scroll flow,
+  - there is no dedicated topbar hero restore action,
+  - `Settings -> Appearance -> Show hero block` is the only product-level hero visibility toggle.
+- `Import & Archives` now explicitly shows three visible format groups:
+  - archive formats,
+  - direct image formats,
+  - document formats (`PDF`, `DJVU`).
+- `Library & Data` now supports moving the active library-data root to a new folder after restart:
+  - the pending destination is shown in Settings,
+  - restart launches a dedicated migration window,
+  - successful migration removes the previous data folder instead of leaving a duplicate active copy,
+  - relocated libraries now resolve issue paths against the active data root instead of staying pinned to the old location.
+- `Library & Data` now also includes `Check storage access`, which verifies write access for the active data folder, library folder, runtime folder, and database file, then reports a compact status in Settings.
+- `Help -> About` now opens a dedicated compact popup with app identity, credits, build info, manual update checking, and current update state.
+- First-run onboarding is now a finished product surface:
+  - it auto-opens only once on the first clean launch,
+  - later app restarts do not retrigger it,
+  - `Help -> Quick tour` reopens it on demand.
+- Full in-app `Help` is now a live product surface with screenshots, import/storage guidance, troubleshooting, and bug-report guidance.
+- A dedicated update-flow surface package is now live:
+  - `Help -> What's new`,
+  - `About -> Check for updates`,
+  - `Update available`,
+  - `Downloading update`,
+  - portable `Install update` helper flow,
+  - dedicated `Updating Comic Pile` Help section with screenshots and manual-update guidance.
+- Windows GitHub Actions CI now reaches a successful Windows build again; current remaining annotation is only a Node-runtime deprecation warning in third-party actions.
+- A clean public release flow now exists:
+  - root `README.md` is now public-facing,
+  - root `LICENSE` uses `MIT` for Comic Pile's own code,
+  - `release/README.txt` and `release/License/` form the packaged release-side readme/legal set,
+  - `build-release.cmd` stages a clean portable app into `_release_build/Comics-Pile`,
+  - the repository now includes the bundled starter `Database` used by the public release,
+  - release staging excludes runtime logs and SQLite sidecar files from the packaged starter database.
+- The repository is now public and the first GitHub Release is published:
+  - latest public version/tag verified on 2026-04-20: `v0.14.15`,
+  - portable Windows zip release,
+  - GitHub Issues are now the public bug-report path.
+- Persistent portable state is app-folder-owned:
+  - app-local `Database` stores the library,
+  - app preferences and update-flow state use app-local `ComicPile.ini`,
+  - update install protects `Database` and `ComicPile.ini`,
+  - temporary download/import/conversion/helper files may still use system temp when that is safer than writing into a protected app folder.
+- Shared popup outside-click behavior now routes through common overlay primitives; dialogs marked `NoAutoClose` remain blocking.
+- Reader/library stability baseline now includes:
+  - `Next unread` follows the same saved target as `Continue reading`,
+  - stale hero background jobs are prevented from overriding refreshed series state,
+  - import-driven issue updates invalidate series hero cache,
+  - reader warm-up page requests are coalesced into one stable async flow.
+- Reader popup is now a real product surface, not a temporary viewer:
+  - one-page and two-page reading modes exist,
+  - manga mode exists with RTL-oriented reading behavior,
+  - issue-to-issue navigation exists inside the reader,
+  - a dedicated in-reader hotkeys popup exists,
+  - one saved reader bookmark per issue now exists as a real persisted state,
+  - a real persisted issue favorite state now exists,
+  - sidebar quick-access filters now exist for `Last Import`, `Favorites`, `Bookmarks`,
+  - reader fullscreen now uses the app window fullscreen state and restores the previous window geometry/state on exit.
+- Reader light theme was aligned to the current UI language:
+  - text and active arrow/icon color in light reader = `#1f1e1c`,
+  - hover fields in light reader (top controls, side arrows, bottom pills) = `#ccc9c4`,
+  - page-list popup body + bottom notch in light reader = `#ccc9c4`.
+- Current dark-theme baseline is now consolidated into the shared theme token system and reusable UI components.
+- Shared popup/menu scrollbar math and reader page-list scrollbar math are normalized so the thumb reaches true top/bottom bounds and stays correct with dynamic content height changes.
+- Series Header edit dialog now previews the currently active custom cover/background (what user sees in hero), not an outdated fallback image.
+- Hero notch fill behavior is stabilized for default window size by keeping extra hero-background bleed under the notch sampling area.
+- Assisted metadata UI and ComicVine integration are removed from the product and codebase; visible metadata flow is fully manual today.
+
+## Product priorities
+- Fast startup.
+- Predictable local data behavior.
+- Easy visual iteration.
+- Portable usage (no installer required for day-to-day testing).
+- First public release should stay easy to download, understand, and report issues against.
+- No silent destructive data changes.
+- Minimal friction from import to first reading page (avoid feature bloat).
+- Minimize user-facing error noise: prefer short actionable messages over technical detail, and do not split one user-visible failure into multiple low-level error variants unless that changes the user's decision.
+
+## Branding
+- Product name: `Comic Pile`.
+
+## Git workflow
+- Keep `main` as the stable branch.
+- Create a separate branch for each noticeable fix, feature, or UI task.
+- Merge finished task branches back into `main`.
+- Write commit messages in English.
+
+## Current implementation structure
+- Main UI composition:
+  - `Main.qml` remains the root shell,
+  - `MainSidebar` owns sidebar, search, quick filters and series list,
+  - `MainLibraryPane` owns hero, grid and split-scroll behavior,
+  - `MainDialogHost` owns dialogs, overlays and reader host,
+  - `MainStartupLayer` owns startup mask, preview and rebuild-overlay visuals,
+  - `MainStartupState` owns startup-facing UI state.
+- Startup/runtime structure:
+  - `main.cpp` is now a thinner application entry layer,
+  - launch bootstrap helpers are separated from the app entry,
+  - data-root relocation bootstrap is separated from the app entry,
+  - startup snapshot flow is separated from startup orchestration,
+  - startup telemetry/logging is separated from startup orchestration.
+- Storage/model structure:
+  - `comicslistmodel.cpp` keeps the shared model contract and common helpers,
+  - domain-heavy behavior is split into dedicated implementation files for startup, reader, hero, metadata, delete and import,
+  - runtime database connections use a shared SQLite policy helper for busy timeout, foreign keys, WAL journal mode and synchronous mode.
+
+## Window/runtime shell (implemented)
+- Default window: `1440x980` when the current display can fit it.
+- On smaller displays, the app launches maximized to the available screen area instead of opening an oversized window.
+- In the display-constrained launch mode:
+  - the app does not allow shrinking below that maximized state,
+  - resize handles are disabled,
+  - the topbar maximize/restore button is disabled.
+- Frameless window with custom topbar controls.
+- Core frame sizes:
+  - sidebar width: `320px`,
+  - topbar height: `70px`,
+  - bottombar height: `56px`.
+- Window geometry/state is persisted in startup snapshot:
+  - `windowed` (`x/y/width/height`),
+  - `maximized`,
+  - `fullscreen`,
+  - display-constrained maximized launch on smaller screens.
+
+## Topbar/menu contract (current code)
+- Visible top-level items: `File`, `Settings`, `Help`.
+- `Window` top-level menu is removed.
+- `File` popup contains:
+  - `Add Files`,
+  - `Add Folder`,
+  - `Exit`.
+- `Settings` opens the real settings surface.
+- `Help` currently contains:
+  - `Quick tour`,
+  - `What's new`,
+  - `View Help`,
+  - `About`,
+- Custom window controls:
+  - minimize / maximize-restore / close,
+  - maximize/restore is disabled when the app is in display-constrained launch mode,
+  - close hover color: `#FF1800`.
+- Critical decision popup behavior:
+  - if the user tries to close the application while a critical decision popup is open, the app does not close;
+  - the main window is restored/activated and the blocking popup is highlighted instead.
+
+## Navigation helper surfaces (current code)
+- Top helper row:
+  - `Continue reading`: opens the last saved reading target.
+  - `Next unread`: opens the next unread issue relative to that same saved reading target.
+- Bottom helper row:
+  - left-side issue order toggle: `1 -> 9` / `9 -> 1`,
+  - right-side segmented `Grid density`: `Compact`, `Default`, `Comfortable`.
+
+## Popup and menu family (current code)
+- Shared popup body/dialog primitives are used across metadata, import, delete, action-result and helper dialogs.
+- Shared popup overlay behavior now decides both background blocking and outside-click dismissal in one place.
+- Safe non-blocking modal surfaces such as metadata dialogs can be dismissed by outside click; blocking decision dialogs remain blocking.
+- Shared menu/dropdown primitives are used across:
+  - top bar menus,
+  - series row menu,
+  - metadata dropdowns in issue/series editors.
+- Current menu contract:
+  - items are left-aligned inside a centered text block,
+  - menu width is derived from the longest visible item,
+  - text block horizontal padding is `14px` on each side,
+  - row height is `24px`,
+  - body radius is `12px`,
+  - popup arrow size is `20x10`.
+- Overflowing menus use a shared custom scrollbar:
+  - transparent gutter `12px` wide,
+  - white rounded thumb,
+  - visible only when the menu body actually overflows,
+  - thumb position is normalized across the full scroll range (no early stop before bottom).
+- Legacy top-bar `Popups` developer preview menu is removed from the visible product shell.
+
+## Sidebar behavior and visuals
+- No virtual `All series` item.
+- One selected series drives right panel content.
+- Search block:
+  - position: centered, `y=20`,
+  - size: `268x29`,
+  - background: `search.png`,
+  - icon: `search-icon.svg` (`50%` idle, `100%` hover/focus).
+- Quick-access block under search (implemented):
+  - fixed items:
+    - `Last Import`,
+    - `Favorites`,
+    - `Bookmarks`,
+  - uses dedicated idle/hover icons per item,
+  - selected state reuses the hover icon,
+  - item row contract matches sidebar series rows:
+    - same hover/selected rectangle,
+    - issue count on the right,
+    - no `3-dots` menu.
+- `Library` heading (implemented):
+  - sits below quick filters with the same vertical rhythm as search-to-filters,
+  - font size `12px`,
+  - white text,
+  - hard black shadow `2px` downward, no blur.
+- Series list viewport:
+  - starts below the `Library` heading block,
+  - adaptive height with clipping,
+  - bottom fade zone enabled (`128px` effective max, adaptive clamp).
+- Series row:
+  - size: `268x24`,
+  - spacing: `6px`,
+  - hover/selected fill: `#80000000`,
+  - radius: `3px`,
+  - folder icon slot starts `6px` from row left,
+  - title text starts `34px` from row left,
+  - counter `22px` from row right,
+  - `3-dots` icon `8px` from row right,
+  - row text size: `13px`.
+- Series icons:
+  - idle: `icon-folder.png`,
+  - hover: `icon-folder-hover.png`,
+  - selected: `icon-folder-opened.png`.
+- Sidebar custom scrollbar:
+  - knob only (no track/arrows),
+  - width `8px`, rounded,
+  - right offset `8px`,
+  - color baseline matches sidebar dark end,
+  - visible only on overflow.
+
+## Sidebar quick-access filter behavior (implemented)
+- `Last Import`:
+  - represents the most recent import session, not a permanent flat `Last Added` history,
+  - is replaced by the next import session,
+  - persists across app restart until the next import.
+- `Favorites`:
+  - shows issues with persisted favorite state,
+  - grid is ordered by favorite-added time (newest first).
+- `Bookmarks`:
+  - shows issues with persisted reader bookmarks,
+  - grid is ordered by bookmark-added time (newest first).
+- Filter selection behavior:
+  - clicking a filter switches the right side into a dedicated grid-only filter mode,
+  - hero and notch are hidden in that mode,
+  - clicking any series row immediately clears the active filter and returns to normal series mode.
+- Filter-mode header:
+  - top spacing `30px`,
+  - icon `27x27`,
+  - title font `20px`, bold, white,
+  - first grid row begins `30px` below the header.
+- Filter-mode empty states:
+  - centered in the grid body,
+  - font `20px`, bold,
+  - color `#515151`,
+  - current messages:
+    - `No recent import yet`,
+    - `No favorite issues yet`,
+    - `No bookmarked issues yet`.
+
+## Sidebar series menu (implemented)
+- Single series selection menu:
+  - `Add Issues`,
+  - `Edit Series`,
+  - `Show Folder`,
+  - `Delete Files`.
+- `Add Issues` now goes through the main batch import flow (file picker + import queue).
+- From a series row menu, `Add Issues` passes series override = selected series title.
+- Multi-series selection (`Shift+click` range):
+  - menu switches to:
+    - `Bulk Edit`,
+    - `Delete Selected`.
+- Keyboard delete for selected series:
+  - `Delete` / `Backspace`.
+
+## Drop zone (sidebar)
+- Container: `274x173`, centered.
+- Bottom offset: `19px` above bottombar.
+- Border asset: `drop-zone-border.svg`.
+- Icon asset: `drop-icon.svg` (`52x55`, top offset `20px`).
+- Hover/drag highlight is procedural (code radial), not PNG.
+- Click opens picker; drag-drop imports.
+- User-facing intent:
+  - drop comics into the library,
+  - supports archives and image folders.
+
+## Hero block (implemented)
+- Height: `360px`.
+- Base fill: `#0E0E0E`.
+- Background shading via `hero-9-slice.png`.
+- Background image is optional, centered, oversized to cover hero width/height, and rendered with low-opacity atmospheric treatment (`~0.08`).
+- Series cover block:
+  - layer frame: `172x256` at `(x=25, y=19)`,
+  - image shell: `158x243`,
+  - shading overlay: `cover-shading.png`.
+- Publisher logo block:
+  - size `72x72`,
+  - top margin `14`,
+  - right margin `32`,
+  - source mapped by publisher key (e.g. Marvel, IDW Publishing, Shueisha logos).
+- Series Header dialog preview:
+  - if a custom hero cover/background is already set by the user, the dialog opens with that same custom image in preview.
+- Hero text area:
+  - starts `36px` after cover layer,
+  - summary block height `120` with max `7` lines,
+  - displays series-level fields:
+    - `Series`,
+    - `Summary` (from series metadata table),
+    - `Year`,
+    - `Volume`,
+    - `Publisher`,
+    - `Genres`.
+
+## Hero/grid seam and collapse (implemented)
+- Notch size: `54x26`.
+- Notch belongs to grid top seam and fades out on collapse progress.
+- Notch now reuses the current hero background crop under its shadow/edge overlay when hero background art is available, instead of using a flat black fill.
+- Hero background sampling keeps extra vertical bleed so the notch stays fully filled even in default window size (without requiring window resize).
+- Hero and grid stay in one shared scroll flow:
+  - upward scrolling collapses hero first, then continues through the grid,
+  - if the user wants to see hero again, they return upward in that same flow,
+  - disabling `Show hero block` in `Settings` hides hero globally instead of routing through a local restore action.
+- If window resize/maximize removes real grid overflow, hero auto-expands and grid scroll is reset to top.
+
+## Grid layout and issue cards (implemented)
+- Grid content area:
+  - `GridView` with adaptive columns.
+- Grid metrics:
+  - density-aware card sizing:
+    - `Compact`: min card width `196`, card height `312`,
+    - `Default`: min card width `208`, card height `328`,
+    - `Comfortable`: min card width `220`, card height `344`,
+  - spacing: `0`,
+  - safe zones:
+    - left `40`,
+    - right `40`,
+    - top `26`,
+    - bottom `18`.
+- Cover in card:
+  - logical slot `170x260`, centered in card.
+  - wide-cover handling:
+    - threshold ratio `0.85`,
+    - wider sources use crop mode.
+- Card overlays:
+  - default: `cover-default.png`,
+  - hover: `cover-hover.png`,
+  - read: `cover-read.png`,
+  - read cancel hover: `cover-read-cancel.png`,
+  - hover glow: `cover-hover-glow.png`.
+- Card badges:
+  - read status badge remains on the cover,
+  - bookmark badge now appears on issue cards when an issue has a saved bookmark.
+- Hover interactions:
+  - lift animation: `-4px` (`~110ms`),
+  - caption under cover appears on hover only,
+  - max 2 lines, centered, elided.
+- Card action menu:
+  - global overlay layer (not clipped by grid/notch),
+  - pill style hover action bar (`30px` body height),
+  - actions: `Edit`, `Replace`, `Delete`.
+- Read state shortcut:
+  - hotspot `25x25` on read badge toggles `mark unread` (sets current page to `0`).
+
+## Grid visuals
+- Base fill: `#191919`.
+- Dot texture: `grid-tile.png`, opacity `0.72`, non-scrolling background layer.
+- Edge shadows/gradients via assets:
+  - `grid-edge-left.png`,
+  - `grid-edge-right.png`,
+  - `grid-edge-bottom.png`,
+  - `grid-corner-bl.png`,
+  - `grid-corner-br.png`.
+- Right panel custom scrollbar:
+  - transparent field,
+  - width `8`,
+  - right offset `8`,
+  - black rounded thumb,
+  - visible only on overflow.
+- Split scroll model:
+  - scroll input first collapses the hero block,
+  - then continues through grid content,
+  - wheel/touchpad scrolling is smoothed,
+  - drag on the right scrollbar thumb is direct.
+
+## Metadata model and editing
+- Issue-level metadata editor remains available (`Edit Metadata` dialog).
+- Issue metadata popup fields are limited to:
+  - `series`,
+  - `volume`,
+  - `issueNumber`,
+  - `title`,
+  - `publisher`,
+  - `year`,
+  - `month`,
+  - `ageRating`,
+  - credits (`writer/penciller/inker/colorist/letterer/coverArtist/editor`),
+  - `storyArc`,
+  - `characters`.
+- Manual metadata input behavior:
+  - `Year` can be typed manually,
+  - `Month` can be typed manually and is normalized to a canonical month name on focus loss,
+  - text normalization runs on focus loss for key fields to reduce broken casing from manual input.
+- Current normalization rules:
+  - title-like single-line fields (`series`, `title`, `publisher`, `seriesTitle`) are normalized to human-readable title case,
+  - credits and character lists are normalized as readable name lists,
+  - series summary uses soft sentence-case normalization,
+  - year input is reduced to digits only,
+  - month input accepts typed month names and common near-matches, then resolves to canonical month text.
+- Issue metadata popup does not include:
+  - `summary`,
+  - `genres`,
+  - `readStatus`,
+  - `currentPage`.
+- Series-level editor (`Edit Series Metadata`) updates shared series fields:
+  - `series`,
+  - `volume`,
+  - `genres`,
+  - `seriesTitle`,
+  - `publisher`,
+  - `year`,
+  - `month`,
+  - `ageRating`,
+  - `series summary` (separate table).
+- Series summary storage is independent (`series_metadata`) and does not overwrite issue summaries.
+- No separate series publication status exists in the current library model/UI (`Ongoing` / `Irregular` / `Ended` / `On Hiatus` are not implemented as a stored series field).
+- Bulk metadata edit exists:
+  - issue-level bulk dialog for selected issues,
+  - series-level bulk mode when multiple series are selected (applies only non-empty fields in bulk mode).
+- Metadata API status:
+  - no third-party metadata integration is currently shipped in the product;
+  - metadata editing is manual in the visible application flow;
+  - any future assisted metadata flow should be introduced only when match confidence and UX are reliable enough.
+
+## Import UX and policy (current implementation)
+- Import runs as batch queue.
+- Import-related popups are a necessary interruption and should stay minimal: only show what is needed for the next user decision, not a technical diagnostic dump.
+- During import:
+  - full-screen dim overlay (`70%` black),
+  - centered progress dialog (`454x194`):
+    - title `Import in progress`,
+    - `Current file` line:
+      - left: current filename,
+      - right: `processedFiles / totalFiles`,
+    - progress bar (green `#77D632`) + right-aligned percent,
+    - `Cancel` button,
+    - top-right circular `X` (same as cancel).
+- Progress percent is computed by total batch bytes (with file-count fallback).
+- Bottom status bar keeps passive text/progress only (no import action buttons).
+- Successful batch: no success popup.
+- After import, if the batch created exactly one new series and at least one issue in it was imported successfully, the UI automatically switches to that series in the sidebar and right panel.
+- Errors: `Import Errors` dialog with scrollable list.
+- `Import Errors` is a lightweight post-import report, not a technical log.
+- Per-file failures shown in `Import Errors` should stay normalized into a small set of user-facing reasons.
+- File-access failures in `Import Errors` should remain generalized as one user-facing reason (`Access denied or file locked`) instead of being split into narrower technical subtypes.
+- `CBR` without backend: import returns a user-facing error; there is no dedicated visible recovery popup in the normal flow.
+- Duplicate conflicts pause import and open decision modal:
+  - `Replace`,
+  - `Import as new`,
+  - `Skip`.
+- `Replace` behavior:
+  - re-links existing DB record to new archive while preserving metadata;
+  - old archive file is deleted on successful batch commit;
+  - if batch is cancelled, replacement changes are rolled back and old link is restored.
+- Image-folder import:
+  - any folder that directly contains supported image files is treated as one issue source;
+  - this applies recursively at any nesting depth;
+  - if a parent folder has direct image files and also contains child folders with their own direct image files, the parent becomes one issue and each child folder becomes an additional separate issue;
+  - image folders are packaged into internal `.cbz` before normal import continues;
+  - mixed folders are allowed: unsupported files inside a folder are ignored as long as at least one supported image exists.
+
+## Import grouping and restore/matching
+- `Add Folder`:
+  - recursively expands folder sources,
+  - imports nested archives and supported image folders,
+  - any nested folder with direct supported images is imported as its own issue source,
+  - parent/root folder images are not merged together with child-folder images,
+  - does not force one blanket series override for the whole container folder.
+- `Add Files`:
+  - series inferred from filename/fallback rules.
+- `Add Issues` from series row menu:
+  - opens file picker,
+  - imports via batch flow with series override = current series title.
+- Internal archive normalization:
+  - supported archives are normalized to internal `.cbz` in `Database/Library/<Series Folder>/`.
+  - both imported archives and imported image folders end up as normalized internal `.cbz` library copies.
+  - internal page filenames are unified into sequential names like `000001.ext`, `000002.ext`.
+  - original user source files/folders are not modified in place; only the internal library copy is repacked/renamed.
+  - when source archive is `ZIP/CBZ` and contains `ComicInfo.xml`, that metadata file is preserved during normalization.
+  - supported archive import formats: `.cbz`, `.zip`, `.cbr`, `.rar`, `.7z`, `.cb7`, `.cbt`, `.tar` (`.cbr/.rar/.7z/.cb7/.cbt/.tar` depend on the bundled 7-Zip backend).
+  - supported document import formats: `.pdf`, `.djvu`, `.djv` (`.djvu/.djv` require bundled `DjVuLibre/ddjvu`).
+  - `PDF` and `DJVU/DJV` imports are normalized into internal page-image `.cbz` library copies, so the reader keeps using the same page flow after import.
+  - supported direct image-folder formats: `.jpg`, `.jpeg`, `.png`, `.bmp`, `.webp`.
+- Missing-row restore priority:
+  1. exact `file_path`,
+  2. exact `filename` among missing/stale,
+  3. `series + issue` (+volume when present) among missing/stale,
+  4. strict normalized filename signature among missing/stale.
+- Duplicate conflict decision popup is implemented in import flow.
+
+## Library filesystem layout (implemented)
+- Archives are stored under per-series folders inside `Database/Library`.
+- The active library-data root is movable to another folder from `Settings -> Library & Data`.
+- After a successful data-root transfer:
+  - the new location becomes the active library-data root,
+  - the previous library-data folder is removed.
+- Startup migration auto-normalizes old flat layouts into series folders.
+- Series folder naming is readable and collision-safe (suffixes like `(2)` when needed).
+- File move scenarios are handled:
+  - bulk series edits / series merge effects,
+  - replace during duplicate import flow.
+- Empty library folders are cleaned automatically after moves/deletes.
+
+## Delete/missing policy
+- Series delete and issue delete (file mode):
+  - remove archive file from disk,
+  - keep DB row as missing (hidden from lists).
+- Missing rows are reusable for future re-import restore.
+- Junk missing rows without meaningful metadata are purged to limit DB clutter.
+- Delete policy:
+  - issue delete removes archive file from disk and keeps metadata row for restore.
+
+## Startup/hydration and health checks
+- Startup sequence:
+  - restore snapshot content/state,
+  - accept snapshot as the initial working UI state,
+  - defer inventory verification until after the visually stable first frame,
+  - reveal primary app content only after startup visual stabilization,
+  - rebuild only on confirmed library-file changes.
+- Snapshot safety rule:
+  - if saved startup content is empty or stale while the live library still has valid issues, live library state wins and the UI should rebuild from the library instead of preserving an empty screen loop.
+- DB health preflight:
+  - async check (`exists/open/quick_check/write lock`),
+  - result is logged for diagnostics,
+  - failed result can surface a compact warning banner in UI.
+- Inventory verification policy:
+  - delayed after startup, not part of cold launch cost;
+  - compares the `Database/Library` filesystem state only;
+  - does not use `library.db` writes as a rebuild trigger for startup verification;
+  - if the check reports no change, no overlay is shown and no rebuild runs;
+  - if the check reports a real library change, a blocking overlay is shown and inventory rebuild starts.
+- Startup logs are written to runtime startup log path for diagnostics.
+- Launch diagnostics now use a top-level `launch` timeline:
+  - `main_enter`,
+  - `qapplication_created`,
+  - `single_instance_ready`,
+  - `engine_created`,
+  - `library_model_created`,
+  - `load_main_qml_begin`,
+  - `main_qml_object_created`,
+  - `load_main_qml_end`,
+  - `root_window_visible`,
+  - `ui_ready`,
+  - `ui_stable`.
+- Window-start diagnostics also include `window_trace` events for geometry/visibility transitions during startup.
+- Startup preview capture exists (`webp` with jpg fallback), but preview overlay remains disabled by default in normal startup flow.
+
+## Runtime caches
+- Reader page cache: `.runtime/reader-cache`.
+- Thumbnail cache: `.runtime/thumb-cache`.
+- Persistent cover store: `Database/Covers/...`.
+- Preferred thumbnail format: `webp` when supported (fallback `jpg`).
+- Cache clear action in Settings is planned but not yet fully exposed in UI.
+
+## Reader (implemented)
+- Reader shell:
+  - centered popup reader surface with black base and custom top/bottom chrome,
+  - issue title centered in the top bar,
+  - previous/next issue arrows in the top bar are shown only when that direction is available.
+- Reader page navigation:
+  - previous/next page side arrows,
+  - previous/next issue via top arrows and hotkeys,
+  - current page/progress persists per issue,
+  - `Read from Start` action returns the current issue to page `1`,
+  - page-flow navigation now crosses issue boundaries:
+    - last page -> first page of next issue,
+    - first page -> last page of previous issue.
+- Reader bottom controls:
+  - left pill: `Read from Start`,
+  - center pill: page counter / page picker,
+  - right pill: `Mark as Read`.
+- Reader light theme polish:
+  - text and shared icon/arrow color: `#1f1e1c`,
+  - interactive hover fields in light theme: `#ccc9c4`,
+  - page-list popup background + notch in light theme: `#ccc9c4`,
+  - page-list selected row and scrollbar thumb in light theme now align with the same panel/hover palette.
+- `Mark as Read` behavior:
+  - marks the current issue as read,
+  - clears that issue's saved bookmark,
+  - opens the next issue immediately when one exists,
+  - resets the next issue's saved `continue reading` position so it opens from cover,
+  - closes the reader on the last issue.
+- Reading modes:
+  - `1 page` mode,
+  - `2 pages` mode,
+  - `Manga mode` with reversed reading direction and manga-aware spread behavior.
+- Two-page mode rules:
+  - page `1` is always shown alone as cover,
+  - after cover, reading proceeds in paired spreads when possible,
+  - wide merged spreads are detected and shown alone,
+  - wide-page detection uses issue page metrics and a width threshold baseline around `20%` over normal page width,
+  - the displayed pair is centered as one shared block within the available image field,
+  - page counter reflects the real visible pages, for example `12-13/26`.
+- Copy behavior:
+  - copy current image is enabled only in `1 page`,
+  - copy is intentionally disabled in `2 pages`.
+- Reader bookmark system:
+  - each issue can have exactly one saved reader bookmark,
+  - bookmark is set/removed from the reader bookmark action,
+  - bookmark stores a separate manual return point inside the issue,
+  - `Continue reading` still prefers the latest real in-progress page over the bookmark,
+  - bookmark is rendered as a decorative ribbon above the reader,
+  - on the bookmarked page it is fully visible,
+  - on other pages it remains as a clipped visible ribbon; clicking it returns to the bookmarked page,
+  - bookmark state is also exposed on issue data for grid badges and sidebar filter views.
+- Reader favorite system:
+  - favorite is now a real persisted per-issue state,
+  - it is toggleable from the reader,
+  - it is exposed to the library grid/filter system via the `Favorites` sidebar filter.
+- Reader toolbar actions currently present:
+  - `1 page`,
+  - `2 pages`,
+  - manga mode,
+  - reader fullscreen,
+  - bookmark,
+  - favorite,
+  - copy one page,
+  - hotkeys/info popup,
+  - magnifier mode,
+  - close.
+- Reader fullscreen mode:
+  - uses the application window fullscreen state,
+  - expands the app to the current screen and covers the taskbar,
+  - remembers the previous window state/geometry and restores it on exit,
+  - keeps the normal stable reader container instead of using a separate fullscreen reader layer.
+- Magnifier mode:
+  - toggled from the top toolbar or by hotkey,
+  - while active, the cursor becomes a magnifier over page content,
+  - press-and-hold shows a `280x280` magnifier block,
+  - the block grows from cursor to top-left by default,
+  - repositions inward at top/right/other field edges,
+  - in `2 pages` mode it magnifies the specific page under the cursor.
+- Reader hotkeys currently implemented:
+  - `Left Arrow`, `Page Up`: previous page,
+  - `Right Arrow`, `Page Down`: next page,
+  - `A`, `D`: previous/next issue,
+  - `B`: toggle bookmark,
+  - `F`: toggle favorite,
+  - `P`: switch reading mode,
+  - `S`: toggle reader fullscreen,
+  - `Z`: toggle magnifier mode,
+  - `Ctrl+C`: copy current page (`1 page` only),
+  - `I`: toggle hotkeys popup,
+  - `1`: read from start,
+  - `M`: mark as read,
+  - `Esc`: close reader.
+
+## Typography tokens (current)
+- UI font family: `Inter`.
+- Tokens:
+  - `fontUiPrimary = 13px`,
+  - `fontUiMuted = 11px`,
+  - `fontUiSmall = 9px`,
+  - `fontUiHeading = 20px`.
+
+## Color baseline (current)
+- `bg_app`: `#000000`.
+- `bg_sidebar`: gradient `#292929 -> #191919` + subtle dither texture (`opacity 0.05`).
+- `bg_topbar`: `#303030 -> #191919`.
+- `bg_bottombar`: `#212121 -> #191919`.
+- `bg_hero_base`: `#0E0E0E`.
+- `bg_grid_base`: `#191919`.
+- Frame lines:
+  - topbar bottom: `#000000`,
+  - sidebar right: `#2F2F2F`,
+  - bottombar top: `#2F2F2F`.
+
+## Deferred items (aligned with TODO)
+- Continue `Settings -> Appearance` as an active product-surface polish area:
+  - cover grid background behavior/options,
+  - reduce motion.
+- Deferred / R&D:
+  - user-selectable library background modes (`solid`, `tile texture`, `custom image`) with safe scaling behavior.
+- Deferred / Product Expansion:
+  - consider additional library types beyond comics.
+- Deferred / Navigation:
+  - add alphabetical grouping in sidebar series list.
+- Product / Reader:
+  - `PDF` support is now integrated through import-time normalization into internal page-image `.cbz`,
+  - `DJVU` support is now integrated through import-time normalization into internal page-image `.cbz`.
+- Deferred / Platform Integration:
+  - add a custom file icon for archive formats associated with the app.
+- Deferred / Theme Exploration:
+  - evaluate whether a light theme makes product sense; keep it as an idea only for now, not a committed direction.
+
+## Ideas for the future
+- If assisted metadata returns later, it should come back as a provider-agnostic `Comic Pile` metadata platform, not as a direct `ComicVine`-style product dependency.
+- Short-term direction:
+  - keep visible metadata editing manual until assisted matching is reliable enough;
+  - introduce any future metadata assistance behind one internal match-payload contract instead of binding product UX to one external source.
+- Post-release staged direction:
+  - `Stage 1`: define an internal `metadata match payload` contract inside the app;
+  - `Stage 2`: use that payload for optional client-to-server signature submission;
+  - `Stage 3`: merge returned normalized metadata back into the local library;
+  - `Stage 4`: evolve server-side storage into a canonical metadata dataset;
+  - `Stage 5`: expose a first-party metadata API once dataset quality is high enough.
+- Internal `metadata match payload` should exist before any public sync/API layer:
+  - one stable structure for:
+    - local match requests,
+    - remote ingest payloads,
+    - normalized metadata responses,
+    - confidence/source annotations;
+  - this should be treated as the compatibility boundary for future metadata updates after release.
+- Client-to-server ingestion concept:
+  - app sends minimal issue signatures only, not comic archives or pages;
+  - preferred payload:
+    - `series`,
+    - `issue number`,
+    - `year`,
+    - `volume`,
+    - `publisher`,
+    - normalized filename hints,
+    - optional archive/hash signature for stronger dedupe;
+  - upload should be explicit `opt-in`, framed as library enrichment / update support.
+- Server-side processing concept:
+  - ingest raw signatures from user libraries;
+  - run parser + normalizer + dedupe pipeline;
+  - merge equivalent records into a canonical issue/series dataset;
+  - store provenance and confidence, not just flattened final text;
+  - support manual moderation for ambiguous matches.
+- Return path to the client:
+  - send back normalized metadata patches for the user library;
+  - eventually expose a dedicated `Comic Pile` metadata API;
+  - move runtime matching away from external fuzzy search toward own exact/canonical records.
+- Product/privacy rules for this direction:
+  - never upload comic page images or full archives as part of normal metadata sync;
+  - send only the minimum metadata/signature set required for matching;
+  - clearly separate user-local library state from shared canonical metadata;
+  - let users control participation and future re-sync behavior.
+- Long-term benefit:
+  - better match quality than one-shot `ComicVine` guessing,
+  - less dependence on external API limits/availability,
+  - ability to improve metadata quality over time as the shared dataset grows,
+  - clean path to a first-party metadata API once enough canonical coverage exists.
+
+## Reader and navigation direction (next)
+- Keep reader scope focused: improve core reading ergonomics first, avoid "feature-per-click" expansion.
+- Remaining reader controls to add:
+  - zoom (`in/out/reset`),
+  - fit mode (`fit width` / `fit page`),
+  - rotation (`left/right`).
+- Next sidebar/navigation work:
+  - add alphabetical grouping in sidebar navigation,
+  - show only letters that actually contain series,
+  - place `0-9` before alphabetic groups,
+  - do not add collapse/expand in the first iteration.
+
+## Agent workflow rule
+- Before proposing or implementing tasks, verify this file.
+- If implementation plan conflicts with this file, resolve mismatch with user first.
