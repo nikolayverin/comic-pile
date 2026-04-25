@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 import "../controllers"
+import "ReaderPopupUtils.js" as ReaderPopupUtils
 
 Popup {
     id: root
@@ -173,53 +174,9 @@ Popup {
     readonly property int pageAreaTop: toolbarHeight
     readonly property int pageAreaBottomInset: footerBandHeight
     readonly property int actionToastRightMargin: 14 + Math.round((closeButtonSize - closeIconSize) / 2)
-    readonly property string pageCounterText: {
-        const total = Math.max(0, Number(pageCount || 0))
-        if (total < 1) return ""
-
-        const pages = Array.isArray(displayPages) ? displayPages : []
-        const indexes = []
-        for (let i = 0; i < pages.length; i += 1) {
-            const page = pages[i] || {}
-            const index = Number(page.pageIndex)
-            if (index < 0 || index >= total) continue
-            if (indexes.indexOf(index) >= 0) continue
-            indexes.push(index)
-        }
-
-        indexes.sort(function(left, right) { return left - right })
-
-        if (indexes.length > 1) {
-            return String(indexes[0] + 1) + "-" + String(indexes[indexes.length - 1] + 1) + "/" + String(total)
-        }
-
-        if (indexes.length === 1) {
-            return String(indexes[0] + 1) + "/" + String(total)
-        }
-
-        return String(pageIndex + 1) + "/" + String(total)
-    }
-    readonly property var pageListMenuItems: {
-        const total = Math.max(0, Number(pageCount || 0))
-        const items = []
-        for (let i = 0; i < total; i += 1) {
-            items.push({
-                text: String(i + 1),
-                pageIndex: i,
-                highlighted: i === root.pageIndex
-            })
-        }
-        return items
-    }
-    readonly property bool hasDisplayContent: {
-        const pages = Array.isArray(displayPages) ? displayPages : []
-        for (let i = 0; i < pages.length; i += 1) {
-            if (String((pages[i] || {}).imageSource || "").length > 0) {
-                return true
-            }
-        }
-        return String(imageSource || "").length > 0
-    }
+    readonly property string pageCounterText: ReaderPopupUtils.pageCounterText(pageCount, pageIndex, displayPages)
+    readonly property var pageListMenuItems: ReaderPopupUtils.pageListMenuItems(pageCount, pageIndex)
+    readonly property bool hasDisplayContent: ReaderPopupUtils.hasDisplayContent(displayPages, imageSource)
     property alias pageListVisible: popupStateController.pageListVisible
     property alias shortcutsPopupVisible: popupStateController.shortcutsPopupVisible
     property alias shortcutEntries: popupStateController.shortcutEntries
@@ -573,142 +530,6 @@ Popup {
                 ctx.strokeStyle = borderColor
                 ctx.lineWidth = borderWidth
                 ctx.stroke()
-            }
-        }
-    }
-
-    component ReaderHelpPopup: Item {
-        id: helpPopup
-
-        property var entries: []
-        readonly property int cardWidth: 344
-        readonly property int sidePadding: 30
-        readonly property int topPadding: 18
-        readonly property int bottomPadding: 26
-        readonly property int titleFontPx: 13
-        readonly property int titleToListGap: 40
-        readonly property int rowSpacing: 14
-        readonly property int actionColumnWidth: 132
-        readonly property int separatorColumnWidth: 28
-        readonly property int keysColumnWidth: 112
-        readonly property int contentWidth: actionColumnWidth + separatorColumnWidth + keysColumnWidth
-
-        signal dismissRequested()
-
-        anchors.fill: parent
-        z: 20
-
-        MouseArea {
-            anchors.fill: parent
-            hoverEnabled: true
-            onClicked: helpPopup.dismissRequested()
-        }
-
-        Rectangle {
-            id: helpCard
-            width: helpPopup.cardWidth
-            height: helpPopup.topPadding
-                + helpTitle.implicitHeight
-                + helpPopup.titleToListGap
-                + helpList.implicitHeight
-                + helpPopup.bottomPadding
-            anchors.centerIn: parent
-            radius: popupStyle.popupRadius
-            color: root.panelColor
-
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-            }
-
-            HoverButton {
-                width: popupStyle.closeButtonSize
-                height: popupStyle.closeButtonSize
-                anchors.top: parent.top
-                anchors.topMargin: popupStyle.closeTopMargin
-                anchors.right: parent.right
-                anchors.rightMargin: popupStyle.closeRightMargin
-                cornerRadius: width / 2
-                onClicked: helpPopup.dismissRequested()
-
-                CloseIcon {
-                    width: popupStyle.closeGlyphSize
-                    height: popupStyle.closeGlyphSize
-                    anchors.centerIn: parent
-                    strokeColor: root.textColor
-                }
-            }
-
-            Text {
-                id: helpTitle
-                anchors.top: parent.top
-                anchors.topMargin: helpPopup.topPadding
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "Hotkeys"
-                color: root.textColor
-                font.family: root.uiFontFamily
-                font.pixelSize: helpPopup.titleFontPx
-                font.bold: false
-            }
-
-            Column {
-                id: helpList
-                width: helpPopup.contentWidth
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: parent.top
-                anchors.topMargin: helpPopup.topPadding + helpTitle.implicitHeight + helpPopup.titleToListGap
-                spacing: helpPopup.rowSpacing
-
-                Repeater {
-                    model: helpPopup.entries
-
-                    delegate: Item {
-                        width: helpList.width
-                        height: Math.max(actionText.implicitHeight, keysText.implicitHeight)
-
-                        Text {
-                            id: actionText
-                            width: helpPopup.actionColumnWidth
-                            anchors.left: parent.left
-                            anchors.top: parent.top
-                            text: modelData.action
-                            color: root.textColor
-                            font.family: root.uiFontFamily
-                            font.pixelSize: 13
-                            font.bold: false
-                            horizontalAlignment: Text.AlignRight
-                        }
-
-                        Text {
-                            id: separatorText
-                            width: helpPopup.separatorColumnWidth
-                            anchors.left: parent.left
-                            anchors.leftMargin: helpPopup.actionColumnWidth
-                            anchors.top: parent.top
-                            text: "\u2014"
-                            color: root.textColor
-                            font.family: root.uiFontFamily
-                            font.pixelSize: 13
-                            font.bold: false
-                            horizontalAlignment: Text.AlignHCenter
-                        }
-
-                        Text {
-                            id: keysText
-                            width: helpPopup.keysColumnWidth
-                            anchors.left: parent.left
-                            anchors.leftMargin: helpPopup.actionColumnWidth + helpPopup.separatorColumnWidth
-                            anchors.top: parent.top
-                            text: String(modelData.keysText || "")
-                            color: root.textColor
-                            font.family: root.uiFontFamily
-                            font.pixelSize: 13
-                            font.bold: false
-                            lineHeight: 18
-                            lineHeightMode: Text.FixedHeight
-                        }
-                    }
-                }
             }
         }
     }
@@ -1143,9 +964,18 @@ Popup {
             }
         }
 
-        ReaderHelpPopup {
+        ReaderShortcutsPopup {
             visible: root.shortcutsPopupVisible
             entries: root.shortcutEntries
+            uiFontFamily: root.uiFontFamily
+            panelColor: root.panelColor
+            textColor: root.textColor
+            hoverFieldColor: root.hoverFieldColor
+            popupRadius: popupStyle.popupRadius
+            closeButtonSize: popupStyle.closeButtonSize
+            closeGlyphSize: popupStyle.closeGlyphSize
+            closeTopMargin: popupStyle.closeTopMargin
+            closeRightMargin: popupStyle.closeRightMargin
             onDismissRequested: popupStateController.shortcutsPopupVisible = false
         }
 

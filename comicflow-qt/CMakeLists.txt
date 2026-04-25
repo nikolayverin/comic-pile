@@ -247,6 +247,8 @@ qt_add_qml_module(comic_pile_qt
         qml/components/PopupMenuSurface.qml
         qml/components/PopupMenuListView.qml
         qml/components/VerticalScrollThumb.qml
+        qml/components/ReaderPopupUtils.js
+        qml/components/ReaderShortcutsPopup.qml
         qml/components/PopupSurface.qml
         qml/components/InsetEdgeSurface.qml
         qml/components/PopupFieldBackground.qml

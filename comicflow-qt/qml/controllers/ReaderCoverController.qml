@@ -93,6 +93,7 @@ Item {
     }
 
     function setReaderViewMode(mode) {
+        traceReader("view mode set mode=" + String(mode || ""))
         readerDisplayModeController.setReaderViewMode(mode)
     }
 
@@ -1049,6 +1050,13 @@ Item {
         const finalizedComicId = Number(root.readerComicId || 0)
         const finalizedSeriesKey = String(root.readerSeriesKey || "").trim()
         const finalizedReaderTitle = String(root.readerTitle || "").trim()
+        traceReader(
+            "finalize begin"
+            + " comicId=" + String(finalizedComicId)
+            + " pageIndex=" + String(root.readerPageIndex || 0)
+            + " pageCount=" + String(root.readerPageCount || 0)
+            + " showErrorDialog=" + String(showErrorDialog === true)
+        )
         if (libraryModelRef && typeof libraryModelRef.appendStartupDebugLog === "function") {
             libraryModelRef.appendStartupDebugLog(
                 "[continue-reading] finalize reader"
@@ -1096,13 +1104,20 @@ Item {
         clearPendingReaderPersistGuard()
         resetReaderLayoutState()
         root.readerFinalizing = false
+        traceReader(
+            "finalize done"
+            + " comicId=" + String(finalizedComicId)
+            + " persisted=" + String(persisted)
+        )
     }
 
     function closeReader() {
         if (readerDialog && readerDialog.visible) {
+            traceReader("close requested target=popup")
             readerDialog.reject()
             return
         }
+        traceReader("close requested target=session")
         finalizeReaderSession(true)
     }
 
