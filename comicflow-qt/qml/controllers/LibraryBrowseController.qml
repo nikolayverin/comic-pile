@@ -19,6 +19,9 @@ Item {
     property var volumeListModelRef: null
     property var mainLibraryPaneRef: null
     property var issuesGridRefreshDebounceRef: null
+    readonly property string textLanguage: rootObject
+        ? String(rootObject.appLanguage || AppText.fallbackLanguageCode)
+        : AppText.fallbackLanguageCode
 
     property string selectedSeriesKey: ""
     property string selectedSeriesTitle: ""
@@ -99,17 +102,17 @@ Item {
 
     function quickFilterTitleText(filterKey) {
         const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return AppText.quickFilterLastImportedIssuesTitle
-        if (key === "favorites") return AppText.quickFilterFavoriteIssuesTitle
-        if (key === "bookmarks") return AppText.quickFilterBookmarkedIssuesTitle
+        if (key === "last_import") return AppText.t("quickFilterLastImportedIssuesTitle", textLanguage)
+        if (key === "favorites") return AppText.t("quickFilterFavoriteIssuesTitle", textLanguage)
+        if (key === "bookmarks") return AppText.t("quickFilterBookmarkedIssuesTitle", textLanguage)
         return ""
     }
 
     function quickFilterEmptyText(filterKey) {
         const key = String(filterKey || "").trim().toLowerCase()
-        if (key === "last_import") return AppText.quickFilterLastImportedEmpty
-        if (key === "favorites") return AppText.quickFilterFavoriteEmpty
-        if (key === "bookmarks") return AppText.quickFilterBookmarkedEmpty
+        if (key === "last_import") return AppText.t("quickFilterLastImportedEmpty", textLanguage)
+        if (key === "favorites") return AppText.t("quickFilterFavoriteEmpty", textLanguage)
+        if (key === "bookmarks") return AppText.t("quickFilterBookmarkedEmpty", textLanguage)
         return ""
     }
 

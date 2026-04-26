@@ -24,7 +24,10 @@ Item {
     property bool menuMergeMode: false
     property string menuDeleteLabel: AppText.sidebarMenuDeleteFiles
     property string menuShowFolderLabel: AppText.sidebarMenuShowFolder
-    readonly property string menuEditLabel: menuBulkEditMode ? AppText.sidebarMenuBulkEdit : AppText.sidebarMenuEditSeries
+    property string textLanguage: AppText.fallbackLanguageCode
+    readonly property string menuEditLabel: menuBulkEditMode
+        ? localizedText("sidebarMenuBulkEdit")
+        : localizedText("sidebarMenuEditSeries")
     property string uiFontFamily: Qt.application.font.family
     property int uiFontPixelSize: typography.uiBasePx
     property color textColor: themeColors.textPrimary
@@ -61,7 +64,7 @@ Item {
         const items = []
         if (!menuDeleteOnly) {
             items.push({
-                text: AppText.sidebarMenuAddIssues,
+                text: localizedText("sidebarMenuAddIssues"),
                 action: "addIssues",
                 enabled: !importInProgress
             })
@@ -74,7 +77,7 @@ Item {
         }
         if (menuMergeMode) {
             items.push({
-                text: AppText.sidebarMenuMergeIntoSeries,
+                text: localizedText("sidebarMenuMergeIntoSeries"),
                 action: "mergeSeries"
             })
         }
@@ -89,6 +92,10 @@ Item {
             action: "deleteSeries"
         })
         return items
+    }
+
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
     }
 
     Rectangle {

@@ -14,6 +14,9 @@ Rectangle {
     property var startupControllerRef: null
     property var uiTokensRef: null
     property var seriesListModelRef: null
+    readonly property string textLanguage: rootObject
+        ? String(rootObject.appLanguage || AppText.fallbackLanguageCode)
+        : AppText.fallbackLanguageCode
 
     property alias seriesListViewRef: seriesListView
 
@@ -22,6 +25,10 @@ Rectangle {
     Layout.maximumWidth: Layout.preferredWidth
     Layout.fillHeight: true
     color: rootObject ? rootObject.bgSidebarEnd : "transparent"
+
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
 
     Rectangle {
         anchors.left: parent.left
@@ -152,7 +159,7 @@ Rectangle {
             spacing: uiTokensRef ? uiTokensRef.sidebarQuickFilterSpacing : 6
 
             SidebarQuickFilterItem {
-                title: AppText.sidebarQuickFilterLastImport
+                title: sidebarPanel.localizedText("sidebarQuickFilterLastImport")
                 issueCount: rootObject ? rootObject.sidebarQuickFilterCount("last_import") : 0
                 selected: rootObject ? rootObject.sidebarQuickFilterKey === "last_import" : false
                 sidebarWidth: rootObject ? rootObject.sidebarWidth : 320
@@ -166,7 +173,7 @@ Rectangle {
             }
 
             SidebarQuickFilterItem {
-                title: AppText.sidebarQuickFilterFavorites
+                title: sidebarPanel.localizedText("sidebarQuickFilterFavorites")
                 issueCount: rootObject ? rootObject.sidebarQuickFilterCount("favorites") : 0
                 selected: rootObject ? rootObject.sidebarQuickFilterKey === "favorites" : false
                 sidebarWidth: rootObject ? rootObject.sidebarWidth : 320
@@ -180,7 +187,7 @@ Rectangle {
             }
 
             SidebarQuickFilterItem {
-                title: AppText.sidebarQuickFilterBookmarks
+                title: sidebarPanel.localizedText("sidebarQuickFilterBookmarks")
                 issueCount: rootObject ? rootObject.sidebarQuickFilterCount("bookmarks") : 0
                 selected: rootObject ? rootObject.sidebarQuickFilterKey === "bookmarks" : false
                 sidebarWidth: rootObject ? rootObject.sidebarWidth : 320
@@ -204,7 +211,7 @@ Rectangle {
             Text {
                 x: 0
                 y: 2
-                text: AppText.sidebarLibrarySection
+                text: sidebarPanel.localizedText("sidebarLibrarySection")
                 color: rootObject ? rootObject.uiTextShadow : "transparent"
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: 12
@@ -214,7 +221,7 @@ Rectangle {
             Text {
                 x: 0
                 y: 0
-                text: AppText.sidebarLibrarySection
+                text: sidebarPanel.localizedText("sidebarLibrarySection")
                 color: rootObject ? rootObject.textPrimary : "white"
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: 12
@@ -281,8 +288,10 @@ Rectangle {
                 menuDeleteLabel: (rootObject
                     && rootObject.selectedSeriesCount() > 1
                     && rootObject.isSeriesSelected(seriesKey))
-                    ? AppText.sidebarMenuDeleteSelected
-                    : AppText.sidebarMenuDeleteFiles
+                    ? sidebarPanel.localizedText("sidebarMenuDeleteSelected")
+                    : sidebarPanel.localizedText("sidebarMenuDeleteFiles")
+                menuShowFolderLabel: sidebarPanel.localizedText("sidebarMenuShowFolder")
+                textLanguage: sidebarPanel.textLanguage
                 uiFontFamily: rootObject ? rootObject.uiFontFamily : ""
                 uiFontPixelSize: rootObject ? rootObject.fontPxUiBase : 14
                 textColor: rootObject ? rootObject.textPrimary : "white"
@@ -493,7 +502,7 @@ Rectangle {
                         ? addFilesDropPanel.hoverAccentColor
                     : (rootObject ? rootObject.dropZoneTextColor : "white")
                 z: 1
-                text: AppText.sidebarDropZoneTitle
+                text: sidebarPanel.localizedText("sidebarDropZoneTitle")
             }
 
             Text {
@@ -529,7 +538,7 @@ Rectangle {
                     color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                         ? "transparent"
                         : (rootObject ? rootObject.uiTextShadow : "transparent")
-                    text: AppText.sidebarDropZoneSubtitleLineOne
+                    text: sidebarPanel.localizedText("sidebarDropZoneSubtitleLineOne")
                 }
 
                 Row {
@@ -542,7 +551,7 @@ Rectangle {
                         color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                             ? "transparent"
                             : (rootObject ? rootObject.uiTextShadow : "transparent")
-                        text: AppText.sidebarDropZoneSubtitleLineTwoPrefix
+                        text: sidebarPanel.localizedText("sidebarDropZoneSubtitleLineTwoPrefix")
                     }
 
                     Text {
@@ -552,7 +561,7 @@ Rectangle {
                         color: rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
                             ? "transparent"
                             : (rootObject ? rootObject.uiTextShadow : "transparent")
-                        text: AppText.sidebarDropZoneSubtitleLink
+                        text: sidebarPanel.localizedText("sidebarDropZoneSubtitleLink")
                     }
                 }
             }
@@ -575,7 +584,7 @@ Rectangle {
                         : addFilesDropPanel.hoverActive
                             ? addFilesDropPanel.hoverAccentColor
                         : (rootObject ? rootObject.dropZoneTextColor : "white")
-                    text: AppText.sidebarDropZoneSubtitleLineOne
+                    text: sidebarPanel.localizedText("sidebarDropZoneSubtitleLineOne")
                 }
 
                 Row {
@@ -591,7 +600,7 @@ Rectangle {
                             : addFilesDropPanel.hoverActive
                                 ? addFilesDropPanel.hoverAccentColor
                             : (rootObject ? rootObject.dropZoneTextColor : "white")
-                        text: AppText.sidebarDropZoneSubtitleLineTwoPrefix
+                        text: sidebarPanel.localizedText("sidebarDropZoneSubtitleLineTwoPrefix")
                     }
 
                     Text {
@@ -604,7 +613,7 @@ Rectangle {
                             : addFilesDropPanel.hoverActive
                                 ? addFilesDropPanel.hoverAccentColor
                             : (rootObject ? rootObject.dropZoneTextColor : "white")
-                        text: AppText.sidebarDropZoneSubtitleLink
+                        text: sidebarPanel.localizedText("sidebarDropZoneSubtitleLink")
 
                         MouseArea {
                             id: dropZoneSubtitleLinkMouseArea
@@ -648,14 +657,17 @@ Rectangle {
                     }
                     if (paths.length < 1) {
                         if (popupControllerRef) {
-                            popupControllerRef.showActionResult(AppText.sidebarDropNoLocalFiles, true)
+                            popupControllerRef.showActionResult(
+                                sidebarPanel.localizedText("sidebarDropNoLocalFiles"),
+                                true
+                            )
                         }
                         return
                     }
                     if (rootObject && rootObject.startImportFromSourcePaths(
                                 paths,
                                 { importIntent: "global_add" },
-                                AppText.sidebarDropNoSupportedSources
+                                sidebarPanel.localizedText("sidebarDropNoSupportedSources")
                             )) {
                         drop.acceptProposedAction()
                     }

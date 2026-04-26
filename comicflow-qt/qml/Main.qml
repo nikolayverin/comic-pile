@@ -62,6 +62,7 @@ ApplicationWindow {
     readonly property string windowTitleLabel: devBuildBadgeText.length > 0
         ? (uiTokens.appWindowTitle + " [" + devBuildBadgeText + "]")
         : uiTokens.appWindowTitle
+    readonly property string appLanguage: String(appSettingsController.generalAppLanguage || AppText.fallbackLanguageCode)
 
     readonly property string libraryBackgroundMode: String(appSettingsController.appearanceLibraryBackground || "Default")
     readonly property color libraryBackgroundSolidColor: appSettingsController.appearanceLibraryBackgroundSolidColor
@@ -2525,7 +2526,7 @@ ApplicationWindow {
                 font.pixelSize: root.fontPxDropTitle
                 font.bold: true
                 color: "#FFFFFF"
-                text: AppText.sidebarDropZoneTitle
+                text: AppText.t("sidebarDropZoneTitle", root.appLanguage)
             }
 
             Column {
@@ -2540,7 +2541,7 @@ ApplicationWindow {
                     font.family: root.uiFontFamily
                     font.pixelSize: root.fontPxDropSubtitle
                     color: "#FFFFFF"
-                    text: AppText.sidebarDropZoneSubtitleLineOne
+                    text: AppText.t("sidebarDropZoneSubtitleLineOne", root.appLanguage)
                 }
 
                 Row {
@@ -2551,7 +2552,7 @@ ApplicationWindow {
                         font.family: root.uiFontFamily
                         font.pixelSize: root.fontPxDropSubtitle
                         color: "#FFFFFF"
-                        text: AppText.sidebarDropZoneSubtitleLineTwoPrefix
+                        text: AppText.t("sidebarDropZoneSubtitleLineTwoPrefix", root.appLanguage)
                     }
 
                     Text {
@@ -2559,7 +2560,7 @@ ApplicationWindow {
                         font.pixelSize: root.fontPxDropSubtitle
                         font.underline: true
                         color: "#FFFFFF"
-                        text: AppText.sidebarDropZoneSubtitleLink
+                        text: AppText.t("sidebarDropZoneSubtitleLink", root.appLanguage)
                     }
                 }
             }
