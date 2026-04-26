@@ -14,6 +14,9 @@
 
 **Bugfixes**
 
+**Release package**
+- Fixed the portable release package so bundled **DjVu** support is included with the app.
+
 **Updates**
 - Tightened the **Downloading update** popup layout and fixed the single-item progress animation so the progress bar stays visually stable and inside the rounded track.
 - Fixed the failed state in **Downloading update** so the progress bar no longer keeps animating after an error and mock failed downloads no longer misleadingly run to 100% first.

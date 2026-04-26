@@ -22,9 +22,8 @@ The 7-Zip FAQ states that when parts of 7-Zip are used, documentation should:
 - state that 7-Zip is licensed under the GNU LGPL
 - provide a link to www.7-zip.org where source code can be found
 
-This release notice is intended to satisfy that documentation-level requirement in a clear user-facing form.
+This release notice documents that bundled 7-Zip usage in a clear user-facing form.
 
-Recommended release-package follow-up:
-- include this notice in the release package
-- include the relevant license text copies required for the bundled 7-Zip distribution path after final legal review
-
+Release-package notes:
+- this notice is included in the release package
+- 7-Zip source code is available through the official 7-Zip links above

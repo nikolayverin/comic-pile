@@ -1,6 +1,6 @@
 Comic Pile - License Bundle
 
-This folder is intended for the release package that ships next to the portable app.
+This folder is included with the release package that ships next to the portable app.
 
 Its purpose is to gather:
 - the Comic Pile project license
@@ -8,7 +8,7 @@ Its purpose is to gather:
 - third-party notices for bundled runtime components
 - bundled public-domain comics attribution
 
-Current license bundle set for the first public release:
+Current license bundle set for the portable release:
 - Comic Pile project license
 - source-code availability note for Comic Pile
 - Qt runtime notice

@@ -3,12 +3,14 @@
 Comic Pile is a portable Windows app for building, organizing, and reading a local comics library.
 
 It is designed around a simple flow:
-- add files from your computer
+- add comic files from your computer
 - keep them in one local library
+- browse issues visually
 - edit series and issue details when needed
 - open issues in a focused reader
+- update the portable app without rebuilding the library
 
-## Current first-release scope
+## First public release
 
 - local-library workflow
 - issue and series metadata editing
@@ -17,6 +19,7 @@ It is designed around a simple flow:
 - in-app update flow with `Check for updates`, `Update available`, `Downloading update`, and `Install update`
 - bundled startup demo library with 2 public-domain series and 5 issues
 - portable release package with the library stored next to the app in `Database/`
+- bundled 7-Zip and DjVu support
 
 ## Portable app behavior
 
@@ -26,13 +29,14 @@ That means:
 - no installer is required
 - the app can be unpacked and launched directly
 - the bundled starter library lives next to the app in `Database/`
-- current app builds can check GitHub Releases and apply portable updates in place while keeping the existing `Database` and `ComicPile.ini`
+- app settings are stored in `ComicPile.ini` next to the app
+- future portable updates are designed to replace app files while keeping `Database/` and `ComicPile.ini` in place
 
 ## Demo library
 
 Comic Pile ships with a small starter library so a new user can browse and read immediately after launch.
 
-Current starter library direction:
+Current starter library:
 - `Popular Comics`
 - `Space Action`
 - 5 bundled public-domain issues total
@@ -57,3 +61,12 @@ The working Qt/C++ application lives in `comicflow-qt/`.
 
 Local build notes currently live in:
 - `comicflow-qt/README.md`
+
+## Project status
+
+Comic Pile is early public-release software.
+
+The current work is focused on:
+- stabilizing the portable Windows release
+- improving the reader and library workflow
+- keeping local library data predictable during app updates

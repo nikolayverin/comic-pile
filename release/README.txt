@@ -5,8 +5,10 @@ Portable release notes
 1. Launch `Comic Pile.exe`.
 2. The app uses the `Database` folder next to the app as its starter library.
 3. This release includes a small demo library so you can browse and read immediately.
-4. During normal app use, Comic Pile can create runtime state inside `Database/.runtime`.
-5. To look for a newer portable release from inside the app, open `Help -> About` and use `Check for updates`.
+4. App settings are stored in `ComicPile.ini` next to the app.
+5. Bundled 7-Zip and DjVu runtime tools are included for supported archive/document formats.
+6. During normal app use, Comic Pile can create runtime state inside `Database/.runtime`.
+7. To look for a newer portable release from inside the app, open `Help -> About` and use `Check for updates`.
 
 Bundled public-domain demo comics:
 - Courtesy of ComicBookPlus.Com

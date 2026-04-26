@@ -39,7 +39,7 @@ Result:
   - `Database`
   - `README.txt`
   - `License`
-  - bundled runtime/tools such as `7z.exe` and `7z.dll`
+  - bundled runtime/tools such as `7z.exe`, `7z.dll`, and `tools/djvulibre/ddjvu.exe`
 
 ## Manual CMake build
 
