@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "SettingsCatalog.js" as SettingsCatalog
+import "AppLanguageCatalog.js" as AppLanguageCatalog
 import "AppText.js" as AppText
 
 PopupDialogWindow {
@@ -149,6 +150,24 @@ PopupDialogWindow {
         if (settingsController && typeof settingsController.setSettingValue === "function") {
             settingsController.setSettingValue(valueKey, nextValue)
         }
+    }
+
+    function displaySettingValue(valueKey, fallbackValue) {
+        const key = String(valueKey || "")
+        const value = settingValue(key, fallbackValue)
+        if (key === "general_app_language") {
+            return AppLanguageCatalog.labelForCode(value)
+        }
+        return String(value || "")
+    }
+
+    function setDisplaySettingValue(valueKey, nextDisplayValue) {
+        const key = String(valueKey || "")
+        if (key === "general_app_language") {
+            setSettingValue(key, AppLanguageCatalog.codeForLabel(nextDisplayValue))
+            return
+        }
+        setSettingValue(key, nextDisplayValue)
     }
 
     Timer {
@@ -368,9 +387,9 @@ PopupDialogWindow {
                             anchors.rightMargin: dialog.optionControlRightMargin
                             anchors.verticalCenter: parent.verticalCenter
                             options: modelData.options || []
-                            currentText: dialog.settingValue(modelData.valueKey, "")
+                            currentText: dialog.displaySettingValue(modelData.valueKey, "")
                             onActivated: function(index, text) {
-                                dialog.setSettingValue(modelData.valueKey, text)
+                                dialog.setDisplaySettingValue(modelData.valueKey, text)
                             }
                         }
 

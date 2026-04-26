@@ -42,6 +42,7 @@ var settingsAppearanceSection = "Appearance"
 var settingsSafetySection = "Safety"
 
 var settingsGeneralAutomaticallyCheckForUpdates = "Automatically check for updates"
+var settingsGeneralAppLanguage = "App language"
 var settingsGeneralOpenReaderFullscreenByDefault = "Open reader in fullscreen by default"
 var settingsGeneralAfterImport = "After import:"
 var settingsGeneralDefaultViewAfterLaunch = "Default view after launch:"

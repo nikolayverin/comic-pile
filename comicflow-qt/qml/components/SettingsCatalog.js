@@ -15,6 +15,7 @@ function optionKeys(entries) {
 var generalAfterImportOptions = ["Focus imported series", "Open last import", "Do nothing"]
 var generalDefaultViewAfterLaunchOptions = ["First series in library", "Last import", "Remember last state"]
 var generalAppLanguageOptions = AppLanguageCatalog.languageCodes(true)
+var generalAppLanguageVisibleOptions = AppLanguageCatalog.languageLabels(false)
 var readerDefaultReadingModeOptions = ["1 page", "2 pages"]
 var readerMagnifierSizeOptions = ["Small", "Medium", "Large"]
 var readerPageEdgeBehaviorOptions = ["Continue", "Stop at boundary"]
@@ -160,6 +161,12 @@ var sectionOptionRows = {
             label: AppText.settingsGeneralAutomaticallyCheckForUpdates,
             controlType: "checkbox",
             valueKey: "general_automatically_check_for_updates"
+        },
+        {
+            label: AppText.settingsGeneralAppLanguage,
+            controlType: "dropdown",
+            valueKey: "general_app_language",
+            options: generalAppLanguageVisibleOptions
         },
         {
             label: AppText.settingsGeneralOpenReaderFullscreenByDefault,
