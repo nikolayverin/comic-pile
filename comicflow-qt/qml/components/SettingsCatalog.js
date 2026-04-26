@@ -1,5 +1,6 @@
 .pragma library
 .import "AppText.js" as AppText
+.import "AppLanguageCatalog.js" as AppLanguageCatalog
 
 function optionKeys(entries) {
     const result = []
@@ -13,6 +14,7 @@ function optionKeys(entries) {
 
 var generalAfterImportOptions = ["Focus imported series", "Open last import", "Do nothing"]
 var generalDefaultViewAfterLaunchOptions = ["First series in library", "Last import", "Remember last state"]
+var generalAppLanguageOptions = AppLanguageCatalog.languageCodes(true)
 var readerDefaultReadingModeOptions = ["1 page", "2 pages"]
 var readerMagnifierSizeOptions = ["Small", "Medium", "Large"]
 var readerPageEdgeBehaviorOptions = ["Continue", "Stop at boundary"]
@@ -267,6 +269,7 @@ var defaultSettingsState = {
     general_open_reader_fullscreen_by_default: false,
     general_after_import: "Focus imported series",
     general_default_view_after_launch: "Remember last state",
+    general_app_language: AppLanguageCatalog.fallbackLanguageCode,
 
     reader_remember_last_reader_mode: true,
     reader_default_reading_mode: "1 page",
@@ -397,6 +400,14 @@ var settingDescriptors = [
         ]
     },
     {
+        valueKey: "general_app_language",
+        controllerProperty: "generalAppLanguage",
+        storeProperty: "generalAppLanguage",
+        defaultValue: defaultSettingsState.general_app_language,
+        normalization: "choice",
+        options: generalAppLanguageOptions
+    },
+    {
         valueKey: "reader_remember_last_reader_mode",
         controllerProperty: "readerRememberLastReaderMode",
         storeProperty: "readerRememberLastReaderMode",
@@ -505,6 +516,7 @@ var defaultGeneralAutomaticallyCheckForUpdates = defaultSettingsState.general_au
 var defaultGeneralOpenReaderFullscreenByDefault = defaultSettingsState.general_open_reader_fullscreen_by_default
 var defaultGeneralAfterImport = defaultSettingsState.general_after_import
 var defaultGeneralDefaultViewAfterLaunch = defaultSettingsState.general_default_view_after_launch
+var defaultGeneralAppLanguage = defaultSettingsState.general_app_language
 var defaultReaderRememberLastReaderMode = defaultSettingsState.reader_remember_last_reader_mode
 var defaultReaderDefaultReadingMode = defaultSettingsState.reader_default_reading_mode
 var defaultReaderMagnifierSize = defaultSettingsState.reader_magnifier_size

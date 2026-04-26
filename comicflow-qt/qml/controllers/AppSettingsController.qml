@@ -13,6 +13,7 @@ Item {
     readonly property bool defaultGeneralOpenReaderFullscreenByDefault: SettingsCatalog.defaultGeneralOpenReaderFullscreenByDefault
     readonly property string defaultGeneralAfterImport: SettingsCatalog.defaultGeneralAfterImport
     readonly property string defaultGeneralDefaultViewAfterLaunch: SettingsCatalog.defaultGeneralDefaultViewAfterLaunch
+    readonly property string defaultGeneralAppLanguage: SettingsCatalog.defaultGeneralAppLanguage
     readonly property bool defaultReaderRememberLastReaderMode: SettingsCatalog.defaultReaderRememberLastReaderMode
     readonly property string defaultReaderDefaultReadingMode: SettingsCatalog.defaultReaderDefaultReadingMode
     readonly property string defaultReaderMagnifierSize: SettingsCatalog.defaultReaderMagnifierSize
@@ -219,6 +220,7 @@ Item {
         property bool generalOpenReaderFullscreenByDefault: controller.defaultGeneralOpenReaderFullscreenByDefault
         property string generalAfterImport: controller.defaultGeneralAfterImport
         property string generalDefaultViewAfterLaunch: controller.defaultGeneralDefaultViewAfterLaunch
+        property string generalAppLanguage: controller.defaultGeneralAppLanguage
         property bool readerRememberLastReaderMode: controller.defaultReaderRememberLastReaderMode
         property string readerDefaultReadingMode: controller.defaultReaderDefaultReadingMode
         property string readerMagnifierSize: controller.defaultReaderMagnifierSize
@@ -262,6 +264,11 @@ Item {
         "general_default_view_after_launch",
         settingsStore.generalDefaultViewAfterLaunch,
         defaultGeneralDefaultViewAfterLaunch
+    )
+    property string generalAppLanguage: normalizeSettingValue(
+        "general_app_language",
+        settingsStore.generalAppLanguage,
+        defaultGeneralAppLanguage
     )
     property bool readerRememberLastReaderMode: normalizeSettingValue(
         "reader_remember_last_reader_mode",
@@ -380,6 +387,8 @@ Item {
     onGeneralAfterImportChanged: syncConfiguredSetting("general_after_import")
 
     onGeneralDefaultViewAfterLaunchChanged: syncConfiguredSetting("general_default_view_after_launch")
+
+    onGeneralAppLanguageChanged: syncConfiguredSetting("general_app_language")
 
     onReaderRememberLastReaderModeChanged: syncConfiguredSetting("reader_remember_last_reader_mode")
 
