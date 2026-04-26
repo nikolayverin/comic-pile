@@ -10,6 +10,9 @@ Item {
     property var popupStyleTokensRef: null
     property var themeColorsRef: null
     property var libraryModelRef: null
+    property string textLanguage: dialogRef
+        ? String(dialogRef.textLanguage || AppText.fallbackLanguageCode)
+        : AppText.fallbackLanguageCode
 
     signal chooseLibraryBackgroundImageRequested()
     signal libraryBackgroundImageModeRequested(string mode)
@@ -94,6 +97,10 @@ Item {
         }
     }
 
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
+
     function localFileSource(pathValue) {
         const input = String(pathValue || "").trim()
         if (input.length < 1) return ""
@@ -132,7 +139,7 @@ Item {
         id: libraryBackgroundLabel
         x: 0
         y: 0
-        text: AppText.settingsAppearanceCoverGridBackground
+        text: root.localizedText("settingsAppearanceCoverGridBackground")
         color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
         font.family: Qt.application.font.family
         font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11
@@ -162,7 +169,9 @@ Item {
                     anchors.fill: parent
                     chromeVisible: sourceSlotHover.hovered
                         || String(parent.modelData.key || "") === root.backgroundSource
-                    title: parent.modeKey === "Custom image" ? AppText.settingsAppearanceCustomShort : String(parent.modelData.label || "")
+                    title: parent.modeKey === "Custom image"
+                        ? root.localizedText("settingsAppearanceCustomShort")
+                        : String(parent.modelData.label || "")
                     selected: String(parent.modelData.key || "") === root.backgroundSource
                     bodyColor: themeColorsRef ? themeColorsRef.settingsBackgroundChoiceBodyColor : "#333333"
                     cornerRadius: 6
@@ -369,7 +378,7 @@ Item {
 
             Text {
                 anchors.centerIn: parent
-                text: AppText.settingsAppearanceUseBuiltInBackground
+                text: root.localizedText("settingsAppearanceUseBuiltInBackground")
                 color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
                 font.family: Qt.application.font.family
                 font.pixelSize: 11
@@ -573,7 +582,9 @@ Item {
                 id: chooseCustomBackgroundButton
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.hasCustomImage ? AppText.commonChange : AppText.commonUpload
+                text: root.hasCustomImage
+                    ? root.localizedText("commonChange")
+                    : root.localizedText("commonUpload")
                 textPixelSize: 13
                 cornerRadius: Math.round(height / 2)
                 minimumWidth: 92
@@ -598,7 +609,7 @@ Item {
         Text {
             x: 0
             y: Math.round((parent.height - implicitHeight) / 2)
-            text: AppText.settingsAppearanceGridDensity
+            text: root.localizedText("settingsAppearanceGridDensity")
             color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
             font.family: Qt.application.font.family
             font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11
@@ -625,7 +636,7 @@ Item {
         Text {
             x: 0
             y: Math.round((parent.height - implicitHeight) / 2)
-            text: AppText.settingsAppearanceShowHeroBlock
+            text: root.localizedText("settingsAppearanceShowHeroBlock")
             color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
             font.family: Qt.application.font.family
             font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11
@@ -651,7 +662,7 @@ Item {
         Text {
             x: 0
             y: Math.round((parent.height - implicitHeight) / 2)
-            text: AppText.settingsAppearanceShowBookmarkRibbon
+            text: root.localizedText("settingsAppearanceShowBookmarkRibbon")
             color: popupStyleTokensRef ? popupStyleTokensRef.textColor : "white"
             font.family: Qt.application.font.family
             font.pixelSize: dialogRef ? dialogRef.optionTextSize : 11

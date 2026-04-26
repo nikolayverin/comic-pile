@@ -147,39 +147,44 @@ function appearanceTextureUsesDefaultBase(textureKey) {
 var appearanceBackgroundImageModeOptions = ["Fit", "Fill", "Stretch", "Tile"]
 var appearanceBackgroundTileSizeOptions = ["64x64px", "256x256px", "512x512px"]
 var settingsSections = [
-    { key: "general", label: AppText.settingsGeneralSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-pencil-ruler.svg" },
-    { key: "reader", label: AppText.settingsReaderSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-book-open-text.svg" },
-    { key: "import_archives", label: AppText.settingsImportArchivesSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-download.svg" },
-    { key: "library_data", label: AppText.settingsLibraryDataSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-library-big.svg" },
-    { key: "appearance", label: AppText.settingsAppearanceSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-appearance.svg" },
-    { key: "safety", label: AppText.settingsSafetySection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-shield-check.svg" }
+    { key: "general", labelKey: "settingsGeneralSection", label: AppText.settingsGeneralSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-pencil-ruler.svg" },
+    { key: "reader", labelKey: "settingsReaderSection", label: AppText.settingsReaderSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-book-open-text.svg" },
+    { key: "import_archives", labelKey: "settingsImportArchivesSection", label: AppText.settingsImportArchivesSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-download.svg" },
+    { key: "library_data", labelKey: "settingsLibraryDataSection", label: AppText.settingsLibraryDataSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-library-big.svg" },
+    { key: "appearance", labelKey: "settingsAppearanceSection", label: AppText.settingsAppearanceSection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-appearance.svg" },
+    { key: "safety", labelKey: "settingsSafetySection", label: AppText.settingsSafetySection, iconSource: "qrc:/qt/qml/ComicPile/assets/icons/icon-shield-check.svg" }
 ]
 
 var sectionOptionRows = {
     general: [
         {
+            labelKey: "settingsGeneralAutomaticallyCheckForUpdates",
             label: AppText.settingsGeneralAutomaticallyCheckForUpdates,
             controlType: "checkbox",
             valueKey: "general_automatically_check_for_updates"
         },
         {
+            labelKey: "settingsGeneralAppLanguage",
             label: AppText.settingsGeneralAppLanguage,
             controlType: "dropdown",
             valueKey: "general_app_language",
             options: generalAppLanguageVisibleOptions
         },
         {
+            labelKey: "settingsGeneralOpenReaderFullscreenByDefault",
             label: AppText.settingsGeneralOpenReaderFullscreenByDefault,
             controlType: "checkbox",
             valueKey: "general_open_reader_fullscreen_by_default"
         },
         {
+            labelKey: "settingsGeneralAfterImport",
             label: AppText.settingsGeneralAfterImport,
             controlType: "dropdown",
             valueKey: "general_after_import",
             options: generalAfterImportOptions
         },
         {
+            labelKey: "settingsGeneralDefaultViewAfterLaunch",
             label: AppText.settingsGeneralDefaultViewAfterLaunch,
             controlType: "dropdown",
             valueKey: "general_default_view_after_launch",
@@ -188,34 +193,40 @@ var sectionOptionRows = {
     ],
     reader: [
         {
+            labelKey: "settingsReaderDefaultReadingMode",
             label: AppText.settingsReaderDefaultReadingMode,
             controlType: "segmented",
             valueKey: "reader_default_reading_mode",
             options: readerDefaultReadingModeOptions
         },
         {
+            labelKey: "settingsReaderRememberLastReaderMode",
             label: AppText.settingsReaderRememberLastReaderMode,
             controlType: "switch",
             valueKey: "reader_remember_last_reader_mode"
         },
         {
+            labelKey: "settingsReaderMagnifierSize",
             label: AppText.settingsReaderMagnifierSize,
             controlType: "segmented",
             valueKey: "reader_magnifier_size",
             options: readerMagnifierSizeOptions
         },
         {
+            labelKey: "settingsReaderPageEdgeBehavior",
             label: AppText.settingsReaderPageEdgeBehavior,
             controlType: "segmented",
             valueKey: "reader_page_edge_behavior",
             options: readerPageEdgeBehaviorOptions
         },
         {
+            labelKey: "settingsReaderAutoOpenBookmarkedPage",
             label: AppText.settingsReaderAutoOpenBookmarkedPage,
             controlType: "switch",
             valueKey: "reader_auto_open_bookmarked_page_instead_of_last_page"
         },
         {
+            labelKey: "settingsReaderShowActionNotifications",
             label: AppText.settingsReaderShowActionNotifications,
             controlType: "switch",
             valueKey: "reader_show_action_notifications"
@@ -225,23 +236,27 @@ var sectionOptionRows = {
     library_data: [],
     appearance: [
         {
+            labelKey: "settingsAppearanceCoverGridBackground",
             label: AppText.settingsAppearanceCoverGridBackground,
             controlType: "dropdown",
             valueKey: "appearance_library_background",
             options: appearanceBackgroundSourceModeKeys
         },
         {
+            labelKey: "settingsAppearanceGridDensity",
             label: AppText.settingsAppearanceGridDensity,
             controlType: "segmented",
             valueKey: "appearance_grid_density",
             options: appearanceGridDensityOptions
         },
         {
+            labelKey: "settingsAppearanceShowHeroBlock",
             label: AppText.settingsAppearanceShowHeroBlock,
             controlType: "switch",
             valueKey: "appearance_show_hero_block"
         },
         {
+            labelKey: "settingsAppearanceShowBookmarkRibbon",
             label: AppText.settingsAppearanceShowBookmarkRibbon,
             controlType: "switch",
             valueKey: "reader_show_bookmark_ribbon_on_grid_covers"
@@ -249,22 +264,26 @@ var sectionOptionRows = {
     ],
     safety: [
         {
-            label: "Confirm before deleting files",
+            labelKey: "settingsSafetyConfirmBeforeDeletingFiles",
+            label: AppText.settingsSafetyConfirmBeforeDeletingFiles,
             controlType: "switch",
             valueKey: "safety_confirm_before_deleting_files"
         },
         {
-            label: "Confirm before deleting series",
+            labelKey: "settingsSafetyConfirmBeforeDeletingSeries",
+            label: AppText.settingsSafetyConfirmBeforeDeletingSeries,
             controlType: "switch",
             valueKey: "safety_confirm_before_deleting_series"
         },
         {
-            label: "Confirm before replace",
+            labelKey: "settingsSafetyConfirmBeforeReplace",
+            label: AppText.settingsSafetyConfirmBeforeReplace,
             controlType: "switch",
             valueKey: "safety_confirm_before_replace"
         },
         {
-            label: "Confirm before deleting page",
+            labelKey: "settingsSafetyConfirmBeforeDeletingPage",
+            label: AppText.settingsSafetyConfirmBeforeDeletingPage,
             controlType: "switch",
             valueKey: "safety_confirm_before_deleting_page"
         }

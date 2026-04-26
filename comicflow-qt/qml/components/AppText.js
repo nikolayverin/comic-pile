@@ -65,6 +65,10 @@ var translations = {
         settingsAppearanceGridDensity: "Grid density",
         settingsAppearanceShowHeroBlock: "Show hero block",
         settingsAppearanceShowBookmarkRibbon: "Show bookmark ribbon on grid covers",
+        settingsSafetyConfirmBeforeDeletingFiles: "Confirm before deleting files",
+        settingsSafetyConfirmBeforeDeletingSeries: "Confirm before deleting series",
+        settingsSafetyConfirmBeforeReplace: "Confirm before replace",
+        settingsSafetyConfirmBeforeDeletingPage: "Confirm before deleting page",
 
         settingsSevenZipPath: "7-Zip path:",
         settingsVerifySevenZip: "Verify 7-Zip",
@@ -279,6 +283,10 @@ var settingsAppearanceCustomShort = t("settingsAppearanceCustomShort")
 var settingsAppearanceGridDensity = t("settingsAppearanceGridDensity")
 var settingsAppearanceShowHeroBlock = t("settingsAppearanceShowHeroBlock")
 var settingsAppearanceShowBookmarkRibbon = t("settingsAppearanceShowBookmarkRibbon")
+var settingsSafetyConfirmBeforeDeletingFiles = t("settingsSafetyConfirmBeforeDeletingFiles")
+var settingsSafetyConfirmBeforeDeletingSeries = t("settingsSafetyConfirmBeforeDeletingSeries")
+var settingsSafetyConfirmBeforeReplace = t("settingsSafetyConfirmBeforeReplace")
+var settingsSafetyConfirmBeforeDeletingPage = t("settingsSafetyConfirmBeforeDeletingPage")
 
 var settingsSevenZipPath = t("settingsSevenZipPath")
 var settingsVerifySevenZip = t("settingsVerifySevenZip")

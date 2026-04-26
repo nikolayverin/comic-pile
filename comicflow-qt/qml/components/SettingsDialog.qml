@@ -73,6 +73,9 @@ PopupDialogWindow {
     readonly property int appearanceOptionsGap: 12
     readonly property var settingsSections: SettingsCatalog.settingsSections
     readonly property var sectionOptionRows: SettingsCatalog.sectionOptionRows
+    readonly property string textLanguage: settingsController
+        ? String(settingsController.generalAppLanguage || AppText.fallbackLanguageCode)
+        : AppText.fallbackLanguageCode
 
     PopupStyle {
         id: styleTokens
@@ -110,12 +113,24 @@ PopupDialogWindow {
     function conciseSevenZipVerifyMessage() {
         const rawText = String(dialog.sevenZipStatusMessage || "").trim()
         if (rawText.length < 1) {
-            return AppText.settingsSevenZipUnavailable
+            return localizedText("settingsSevenZipUnavailable")
         }
         if (rawText.toLowerCase().indexOf("missing") >= 0) {
-            return AppText.settingsSevenZipUnavailable
+            return localizedText("settingsSevenZipUnavailable")
         }
         return rawText
+    }
+
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
+
+    function catalogLabel(entry) {
+        const labelKey = String((entry || {}).labelKey || "").trim()
+        if (labelKey.length > 0) {
+            return localizedText(labelKey)
+        }
+        return String((entry || {}).label || "")
     }
 
     function selectedSectionLabel() {
@@ -124,7 +139,7 @@ PopupDialogWindow {
         for (let i = 0; i < sections.length; i += 1) {
             const entry = sections[i] || {}
             if (String(entry.key || "") === key) {
-                return String(entry.label || "")
+                return catalogLabel(entry)
             }
         }
         return ""
@@ -257,7 +272,7 @@ PopupDialogWindow {
             id: settingsTitle
             x: dialog.menuTextGlobalX
             y: dialog.menuTop - dialog.titleToMenuGap - implicitHeight
-            text: AppText.popupSettingsTitle
+            text: dialog.localizedText("popupSettingsTitle")
             color: styleTokens.textColor
             font.family: Qt.application.font.family
             font.pixelSize: 13
@@ -313,7 +328,7 @@ PopupDialogWindow {
                         x: dialog.menuTextGlobalX - dialog.menuLeft
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.verticalCenterOffset: parent.pressed ? 1 : 0
-                        text: String(parent.modelData.label || "")
+                        text: dialog.catalogLabel(parent.modelData)
                         color: parent.selected || parent.hovered
                             ? styleTokens.textColor
                             : themeColors.settingsSidebarIdleTextColor
@@ -375,7 +390,7 @@ PopupDialogWindow {
                             y: parent.isRadioGroup
                                 ? Math.round((markAsReadRadioGroup.indicatorSize - implicitHeight) / 2)
                                 : Math.round((parent.height - implicitHeight) / 2)
-                            text: String(modelData.label || "")
+                            text: dialog.catalogLabel(modelData)
                             color: styleTokens.textColor
                             font.family: Qt.application.font.family
                             font.pixelSize: dialog.optionTextSize
@@ -465,7 +480,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: 14
-                    text: AppText.commonReset
+                    text: dialog.localizedText("commonReset")
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -536,7 +551,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: resetSettingsButton.y + Math.round((resetSettingsButton.height - implicitHeight) / 2)
-                    text: AppText.settingsResetToDefault
+                    text: dialog.localizedText("settingsResetToDefault")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -549,6 +564,7 @@ PopupDialogWindow {
                 libraryModelRef: dialog.libraryModelRef
                 popupStyleTokensRef: styleTokens
                 themeColorsRef: themeColors
+                textLanguage: dialog.textLanguage
                 visible: dialog.selectedSection === "appearance"
                 x: 0
                 y: dialog.optionListTop
@@ -573,7 +589,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: Math.round((dialog.optionRowPitch - height) / 2)
-                    text: AppText.commonChoose
+                    text: dialog.localizedText("commonChoose")
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -590,7 +606,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: AppText.settingsSevenZipPath
+                    text: dialog.localizedText("settingsSevenZipPath")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -621,7 +637,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: dialog.optionRowPitch + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: AppText.settingsVerifySevenZip
+                    text: dialog.localizedText("settingsVerifySevenZip")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -701,7 +717,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: AppText.commonCheck
+                    text: dialog.localizedText("commonCheck")
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -746,7 +762,7 @@ PopupDialogWindow {
                     readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
-                    text: AppText.settingsSupportedArchiveFormats
+                    text: dialog.localizedText("settingsSupportedArchiveFormats")
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -778,7 +794,7 @@ PopupDialogWindow {
                     readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 24
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
-                    text: AppText.settingsSupportedImageFormats
+                    text: dialog.localizedText("settingsSupportedImageFormats")
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -801,7 +817,7 @@ PopupDialogWindow {
                     readonly property real infoTop: verifySevenZipButton.y + verifySevenZipButton.height + 16 + 48
                     x: 0
                     y: infoTop + Math.round((14 - implicitHeight) / 2)
-                    text: AppText.settingsSupportedDocumentFormats
+                    text: dialog.localizedText("settingsSupportedDocumentFormats")
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -840,7 +856,7 @@ PopupDialogWindow {
                     anchors.right: parent.right
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: Math.round((dialog.optionRowPitch - height) / 2)
-                    text: AppText.commonOpen
+                    text: dialog.localizedText("commonOpen")
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -858,7 +874,7 @@ PopupDialogWindow {
                 Text {
                     x: 0
                     y: Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: AppText.settingsLibraryDataLocation
+                    text: dialog.localizedText("settingsLibraryDataLocation")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -890,7 +906,7 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: AppText.commonOpen
+                    text: dialog.localizedText("commonOpen")
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -909,7 +925,7 @@ PopupDialogWindow {
                     x: 0
                     y: dialog.optionRowPitch
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: AppText.settingsLibraryFolder
+                    text: dialog.localizedText("settingsLibraryFolder")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -943,7 +959,7 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch * 2
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: AppText.commonOpen
+                    text: dialog.localizedText("commonOpen")
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -962,7 +978,7 @@ PopupDialogWindow {
                     x: 0
                     y: dialog.optionRowPitch * 2
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: AppText.settingsRuntimeFolder
+                    text: dialog.localizedText("settingsRuntimeFolder")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -996,7 +1012,7 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: dialog.optionRowPitch * 3
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: AppText.commonCheck
+                    text: dialog.localizedText("commonCheck")
                     textPixelSize: 13
                     cornerRadius: Math.round(height / 2)
                     minimumWidth: 92
@@ -1012,7 +1028,7 @@ PopupDialogWindow {
                     pressedEdgeColor: dialog.actionPressedEdgeColor
                     onClicked: {
                         dialog.storageAccessCheckState = "running"
-                        dialog.storageAccessResultText = AppText.settingsChecking
+                        dialog.storageAccessResultText = dialog.localizedText("settingsChecking")
                         dialog.storageAccessHintText = ""
                         dialog.checkStorageAccessRequested()
                     }
@@ -1091,7 +1107,7 @@ PopupDialogWindow {
                     x: 0
                     y: dialog.optionRowPitch * 3
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: AppText.settingsCheckStorageAccess
+                    text: dialog.localizedText("settingsCheckStorageAccess")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -1143,7 +1159,9 @@ PopupDialogWindow {
                     anchors.rightMargin: dialog.optionControlRightMargin
                     y: libraryDataContent.relocationBlockTop
                         + Math.round((dialog.optionRowPitch - height) / 2)
-                    text: libraryDataContent.hasPendingMove ? AppText.commonChange : AppText.commonChoose
+                    text: libraryDataContent.hasPendingMove
+                        ? dialog.localizedText("commonChange")
+                        : dialog.localizedText("commonChoose")
                     textPixelSize: 13
                     cornerRadius: 10
                     minimumWidth: 92
@@ -1161,7 +1179,7 @@ PopupDialogWindow {
                     x: 0
                     y: libraryDataContent.relocationBlockTop
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
-                    text: AppText.settingsMoveLibraryData
+                    text: dialog.localizedText("settingsMoveLibraryData")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: dialog.optionTextSize
@@ -1184,7 +1202,7 @@ PopupDialogWindow {
                         + Math.round((dialog.optionRowPitch - implicitHeight) / 2)
                     text: libraryDataContent.hasPendingMove
                         ? String(dialog.libraryDataPendingMovePath || "")
-                        : AppText.settingsNoDestinationSelected
+                        : dialog.localizedText("settingsNoDestinationSelected")
                     color: libraryDataContent.hasPendingMove ? styleTokens.textColor : styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 13
@@ -1196,7 +1214,7 @@ PopupDialogWindow {
                     x: dialog.importPrimaryLabelWidth
                     y: libraryDataContent.relocationBlockTop + dialog.optionRowPitch + 1
                     width: parent.width - x - dialog.optionControlRightMargin
-                    text: AppText.settingsScheduledAfterRestart
+                    text: dialog.localizedText("settingsScheduledAfterRestart")
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
@@ -1208,7 +1226,7 @@ PopupDialogWindow {
                         + dialog.optionRowPitch
                         + (libraryDataContent.hasPendingMove ? 17 : 9)
                     width: parent.width - dialog.optionControlRightMargin
-                    text: AppText.settingsRelocationHint
+                    text: dialog.localizedText("settingsRelocationHint")
                     color: styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 11
