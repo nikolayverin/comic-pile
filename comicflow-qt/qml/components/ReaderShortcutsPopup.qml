@@ -1,9 +1,11 @@
 import QtQuick
+import "AppText.js" as AppText
 
 Item {
     id: root
 
     property var entries: []
+    property string textLanguage: AppText.fallbackLanguageCode
     property string uiFontFamily: Qt.application.font.family
     property color panelColor: "#000000"
     property color textColor: "#ffffff"
@@ -116,7 +118,7 @@ Item {
             anchors.top: parent.top
             anchors.topMargin: root.topPadding
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "Hotkeys"
+            text: AppText.t("readerHotkeysTitle", root.textLanguage)
             color: root.textColor
             font.family: root.uiFontFamily
             font.pixelSize: root.titleFontPx

@@ -1,4 +1,5 @@
 import QtQuick
+import "../components/AppText.js" as AppText
 
 Item {
     id: controller
@@ -20,22 +21,27 @@ Item {
     property real magnifierCursorY: 0
     property bool pageListVisible: false
     property bool shortcutsPopupVisible: false
-    property var shortcutEntries: [
-        { "action": "Previous page", "keysText": "Left Arrow\nPage Up" },
-        { "action": "Next page", "keysText": "Right Arrow\nPage Down" },
-        { "action": "Previous issue", "keysText": "A" },
-        { "action": "Next issue", "keysText": "D" },
-        { "action": "Toggle bookmark", "keysText": "B" },
-        { "action": "Toggle favorite", "keysText": "F" },
-        { "action": "Switch reading mode", "keysText": "P" },
-        { "action": "Toggle full screen", "keysText": "S" },
-        { "action": "Toggle magnifier", "keysText": "Z" },
-        { "action": "Copy one page", "keysText": "Ctrl+C" },
-        { "action": "Mark as read", "keysText": "M" },
-        { "action": "Toggle hotkeys", "keysText": "I" },
-        { "action": "Read from start", "keysText": "1" },
-        { "action": "Close reader", "keysText": "Esc" }
+    readonly property string textLanguage: popupRoot ? String(popupRoot.textLanguage || AppText.fallbackLanguageCode) : AppText.fallbackLanguageCode
+    readonly property var shortcutEntries: [
+        { "action": localizedText("readerShortcutPreviousPage"), "keysText": "Left Arrow\nPage Up" },
+        { "action": localizedText("readerShortcutNextPage"), "keysText": "Right Arrow\nPage Down" },
+        { "action": localizedText("readerShortcutPreviousIssue"), "keysText": "A" },
+        { "action": localizedText("readerShortcutNextIssue"), "keysText": "D" },
+        { "action": localizedText("readerShortcutToggleBookmark"), "keysText": "B" },
+        { "action": localizedText("readerShortcutToggleFavorite"), "keysText": "F" },
+        { "action": localizedText("readerShortcutSwitchReadingMode"), "keysText": "P" },
+        { "action": localizedText("readerShortcutToggleFullScreen"), "keysText": "S" },
+        { "action": localizedText("readerShortcutToggleMagnifier"), "keysText": "Z" },
+        { "action": localizedText("readerShortcutCopyOnePage"), "keysText": "Ctrl+C" },
+        { "action": localizedText("readerMarkAsRead"), "keysText": "M" },
+        { "action": localizedText("readerShortcutToggleHotkeys"), "keysText": "I" },
+        { "action": localizedText("readerReadFromStart"), "keysText": "1" },
+        { "action": localizedText("readerShortcutCloseReader"), "keysText": "Esc" }
     ]
+
+    function localizedText(key) {
+        return AppText.t(key, textLanguage)
+    }
 
     function toggleReadingViewMode() {
         if (!popupRoot) return

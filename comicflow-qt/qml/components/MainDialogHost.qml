@@ -184,6 +184,7 @@ Item {
         hostHeight: root.height
         uiFontFamily: root.uiFontFamily
         issueTitle: readerSessionController.issueTitle
+        textLanguage: dialogHost.textLanguage
         imageSource: readerSessionController.imageSource
         displayPages: readerSessionController.displayPages
         errorText: readerSessionController.errorText
@@ -211,11 +212,11 @@ Item {
         onReadingViewModeChangeRequested: function(mode) {
             readerSessionController.setReaderViewMode(mode)
             if (String(mode || "") === "one_page") {
-                readerDialog.showActionToast("One-page mode is enabled")
+                readerDialog.showActionToast(AppText.t("readerToastOnePageModeEnabled", dialogHost.textLanguage))
                 return
             }
             if (String(mode || "") === "two_page") {
-                readerDialog.showActionToast("Two-page mode is enabled")
+                readerDialog.showActionToast(AppText.t("readerToastTwoPageModeEnabled", dialogHost.textLanguage))
             }
         }
         onBookmarkRequested: {
@@ -223,7 +224,11 @@ Item {
             readerSessionController.toggleReaderBookmark()
             const isActive = Boolean(readerSessionController.bookmarkActive)
             if (wasActive === isActive) return
-            readerDialog.showActionToast(isActive ? "Page bookmarked" : "Bookmark removed")
+            readerDialog.showActionToast(
+                isActive
+                    ? AppText.t("readerToastPageBookmarked", dialogHost.textLanguage)
+                    : AppText.t("readerToastBookmarkRemoved", dialogHost.textLanguage)
+            )
         }
         onBookmarkJumpRequested: readerSessionController.jumpToReaderBookmark()
         onFavoriteRequested: {
@@ -233,8 +238,8 @@ Item {
             if (wasActive === isActive) return
             readerDialog.showActionToast(
                 isActive
-                    ? "Issue added to Favorites"
-                    : "Issue removed from Favorites"
+                    ? AppText.t("readerToastIssueAddedToFavorites", dialogHost.textLanguage)
+                    : AppText.t("readerToastIssueRemovedFromFavorites", dialogHost.textLanguage)
             )
         }
         onDeletePageRequested: function(pageIndex) {
@@ -247,15 +252,15 @@ Item {
             if (wasEnabled === isEnabled) return
             readerDialog.showActionToast(
                 isEnabled
-                    ? "Manga reading mode is enabled"
-                    : "Manga reading mode is disabled"
+                    ? AppText.t("readerToastMangaModeEnabled", dialogHost.textLanguage)
+                    : AppText.t("readerToastMangaModeDisabled", dialogHost.textLanguage)
             )
         }
         onSettingsRequested: root.openSettingsDialog("reader", true)
         onCopyImageRequested: {
             const copyError = String(readerSessionController.copyCurrentReaderImage() || "").trim()
             if (copyError.length < 1) {
-                readerDialog.showActionToast("Page image copied")
+                readerDialog.showActionToast(AppText.t("readerToastPageImageCopied", dialogHost.textLanguage))
             }
         }
         onMarkAsReadRequested: readerSessionController.markCurrentReaderIssueReadAndAdvance()
@@ -303,7 +308,7 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         textLanguage: dialogHost.textLanguage
-        messageText: "Вы уверены что хотите удалить эту страницу?"
+        messageText: AppText.t("readerDeletePageConfirmMessage", dialogHost.textLanguage)
         primaryButtonText: AppText.t("commonOk", dialogHost.textLanguage)
         secondaryButtonText: AppText.t("commonCancel", dialogHost.textLanguage)
         onPrimaryRequested: root.confirmDeleteReaderPage()

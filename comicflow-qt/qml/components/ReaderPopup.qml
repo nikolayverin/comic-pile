@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 import "../controllers"
+import "AppText.js" as AppText
 import "ReaderPopupUtils.js" as ReaderPopupUtils
 
 Popup {
@@ -40,6 +41,7 @@ Popup {
     property bool favoriteActive: false
     property bool actionNotificationsEnabled: true
     property bool inputSuspended: false
+    property string textLanguage: AppText.fallbackLanguageCode
     property string magnifierSizePreset: "Medium"
     property alias magnifierModeEnabled: popupStateController.magnifierModeEnabled
     property alias magnifierOverlayVisible: popupStateController.magnifierOverlayVisible
@@ -236,8 +238,8 @@ Popup {
         if (!actionNotificationsEnabled) return
         showActionToast(
             popupStateController.magnifierModeEnabled
-                ? "Magnifier is enabled"
-                : "Magnifier is disabled"
+                ? localizedText("readerToastMagnifierEnabled")
+                : localizedText("readerToastMagnifierDisabled")
         )
     }
 
@@ -262,6 +264,10 @@ Popup {
         if (!actionNotificationsEnabled || text.length < 1 || !root.visible) return
         actionToast.text = text
         actionToastAnimation.restart()
+    }
+
+    function localizedText(key) {
+        return AppText.t(key, root.textLanguage)
     }
 
     component HoverButton: Item {
@@ -969,6 +975,7 @@ Popup {
         ReaderShortcutsPopup {
             visible: root.shortcutsPopupVisible
             entries: root.shortcutEntries
+            textLanguage: root.textLanguage
             uiFontFamily: root.uiFontFamily
             panelColor: root.panelColor
             textColor: root.textColor
@@ -1390,7 +1397,7 @@ Popup {
             Text {
                 anchors.centerIn: parent
                 visible: root.loading && !root.hasDisplayContent
-                text: "Loading..."
+                text: root.localizedText("readerLoading")
                 color: root.textColor
                 font.family: root.uiFontFamily
                 font.pixelSize: root.listFontPx
@@ -1527,7 +1534,7 @@ Popup {
 
                 Text {
                     anchors.centerIn: parent
-                    text: "Read from start"
+                    text: root.localizedText("readerReadFromStart")
                     color: readFromStartHoverButton.foregroundColor
                     font.family: root.uiFontFamily
                     font.pixelSize: uiTokens.readerFooterActionTextPx
@@ -1537,7 +1544,7 @@ Popup {
 
             TextMetrics {
                 id: readFromStartTextMetrics
-                text: "Read from start"
+                text: root.localizedText("readerReadFromStart")
                 font.family: root.uiFontFamily
                 font.pixelSize: uiTokens.readerFooterActionTextPx
                 font.bold: true
@@ -1566,7 +1573,7 @@ Popup {
 
                 Text {
                     anchors.centerIn: parent
-                    text: "Mark as read"
+                    text: root.localizedText("readerMarkAsRead")
                     color: markAsReadHoverButton.foregroundColor
                     font.family: root.uiFontFamily
                     font.pixelSize: uiTokens.readerFooterActionTextPx
@@ -1576,7 +1583,7 @@ Popup {
 
             TextMetrics {
                 id: markAsReadTextMetrics
-                text: "Mark as read"
+                text: root.localizedText("readerMarkAsRead")
                 font.family: root.uiFontFamily
                 font.pixelSize: uiTokens.readerFooterActionTextPx
                 font.bold: true
