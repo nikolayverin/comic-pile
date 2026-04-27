@@ -54,6 +54,7 @@ Popup {
     property string errorText: ""
     property string previewErrorText: ""
     property string pendingFocusField: ""
+    property string textLanguage: AppText.fallbackLanguageCode
     readonly property bool bulkMode: dialogMode === "bulk"
     readonly property bool mergeMode: dialogMode === "merge"
     readonly property bool volumeEditable: !bulkMode && !mergeMode
@@ -232,6 +233,10 @@ Popup {
         return active ? 1.0 : 0.58
     }
 
+    function localizedText(key) {
+        return AppText.t(key, seriesMetaDialog.textLanguage)
+    }
+
     function focusTextInput(control) {
         if (!control || typeof control.forceActiveFocus !== "function") return
         control.forceActiveFocus()
@@ -286,8 +291,10 @@ Popup {
         id: shell
         popupStyle: popupStyle
         title: seriesMetaDialog.mergeMode
-            ? AppText.seriesMetaTitleMerge
-            : (seriesMetaDialog.bulkMode ? AppText.seriesMetaTitleBulk : AppText.seriesMetaTitleSingle)
+            ? seriesMetaDialog.localizedText("seriesMetaTitleMerge")
+            : (seriesMetaDialog.bulkMode
+                ? seriesMetaDialog.localizedText("seriesMetaTitleBulk")
+                : seriesMetaDialog.localizedText("seriesMetaTitleSingle"))
         onCloseRequested: seriesMetaDialog.cancelRequested()
 
         PopupContentGeometry {
@@ -325,7 +332,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.yGeneral
-            text: AppText.seriesMetaSectionGeneral
+            text: seriesMetaDialog.localizedText("seriesMetaSectionGeneral")
             color: popupStyle.textColor
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -333,7 +340,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: AppText.seriesMetaLabelSeries
+            text: seriesMetaDialog.localizedText("seriesMetaLabelSeries")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.bulkMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -370,7 +377,7 @@ Popup {
         Label {
             x: shell.rightColX + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: AppText.seriesMetaLabelVolume
+            text: seriesMetaDialog.localizedText("seriesMetaLabelVolume")
             color: seriesMetaDialog.labelColor(seriesMetaDialog.volumeEditable)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -398,7 +405,7 @@ Popup {
         Label {
             x: shell.rightCol2X + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: AppText.seriesMetaLabelGenres
+            text: seriesMetaDialog.localizedText("seriesMetaLabelGenres")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -424,7 +431,7 @@ Popup {
         Label {
             x: shell.rightCol3X + shell.labelInsetX
             y: shell.ySeriesLabel
-            text: AppText.seriesMetaLabelPublisher
+            text: seriesMetaDialog.localizedText("seriesMetaLabelPublisher")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -458,7 +465,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.yTitleLabel
-            text: AppText.seriesMetaLabelSeriesTitle
+            text: seriesMetaDialog.localizedText("seriesMetaLabelSeriesTitle")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -495,7 +502,7 @@ Popup {
         Label {
             x: shell.rightColX + shell.labelInsetX
             y: shell.yTitleLabel
-            text: AppText.seriesMetaLabelYear
+            text: seriesMetaDialog.localizedText("seriesMetaLabelYear")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -523,7 +530,7 @@ Popup {
         Label {
             x: shell.rightCol2X + shell.labelInsetX
             y: shell.yTitleLabel
-            text: AppText.seriesMetaLabelMonth
+            text: seriesMetaDialog.localizedText("seriesMetaLabelMonth")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -549,7 +556,7 @@ Popup {
         Label {
             x: shell.rightCol3X + shell.labelInsetX
             y: shell.yTitleLabel
-            text: AppText.seriesMetaLabelAgeRating
+            text: seriesMetaDialog.localizedText("seriesMetaLabelAgeRating")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -574,7 +581,7 @@ Popup {
         Label {
             x: shell.generalX + shell.labelInsetX
             y: shell.ySummaryLabel
-            text: AppText.seriesMetaLabelSummary
+            text: seriesMetaDialog.localizedText("seriesMetaLabelSummary")
             color: seriesMetaDialog.labelColor(!seriesMetaDialog.mergeMode)
             font.pixelSize: popupStyle.dialogHintFontSize
         }
@@ -622,7 +629,7 @@ Popup {
 
         PopupInlineErrorMessage {
             visible: seriesMetaDialog.inlineErrorText.length > 0
-            headline: AppText.seriesMetaInlineErrorHeadline
+            headline: seriesMetaDialog.localizedText("seriesMetaInlineErrorHeadline")
             message: seriesMetaDialog.inlineErrorText
             textColor: popupStyle.textColor
             anchors.left: parent.left
@@ -651,7 +658,9 @@ Popup {
                 hoverColor: popupStyle.footerButtonHoverColor
                 textColor: popupStyle.textColor
                 textPixelSize: popupStyle.footerButtonTextSize
-                text: seriesMetaDialog.mergeMode ? AppText.seriesMetaButtonMerge : AppText.seriesMetaButtonSave
+                text: seriesMetaDialog.mergeMode
+                    ? seriesMetaDialog.localizedText("seriesMetaButtonMerge")
+                    : seriesMetaDialog.localizedText("seriesMetaButtonSave")
                 onClicked: seriesMetaDialog.saveRequested()
             }
 
@@ -664,7 +673,7 @@ Popup {
                 hoverColor: popupStyle.footerButtonHoverColor
                 textColor: popupStyle.textColor
                 textPixelSize: popupStyle.footerButtonTextSize
-                text: "Cancel"
+                text: seriesMetaDialog.localizedText("commonCancel")
                 onClicked: seriesMetaDialog.cancelRequested()
             }
 

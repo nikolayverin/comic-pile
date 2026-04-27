@@ -165,6 +165,7 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         dangerColor: root.dangerColor
+        textLanguage: dialogHost.textLanguage
         onSaveRequested: function(draft) {
             root.requestApplyIssueMetadataEdit(draft)
         }
@@ -286,8 +287,8 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         textLanguage: dialogHost.textLanguage
-        primaryButtonText: "Fill from library"
-        secondaryButtonText: "Keep current values"
+        primaryButtonText: AppText.t("issueMetaAutofillFillFromLibrary", dialogHost.textLanguage)
+        secondaryButtonText: AppText.t("issueMetaAutofillKeepCurrentValues", dialogHost.textLanguage)
         onPrimaryRequested: root.acceptIssueMetadataSuggestion()
         onSecondaryRequested: root.skipIssueMetadataSuggestion()
     }
@@ -297,8 +298,8 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         textLanguage: dialogHost.textLanguage
-        primaryButtonText: "Fill Fields"
-        secondaryButtonText: "Keep Current"
+        primaryButtonText: AppText.t("seriesMetaAutofillFillFields", dialogHost.textLanguage)
+        secondaryButtonText: AppText.t("seriesMetaAutofillKeepCurrent", dialogHost.textLanguage)
         onPrimaryRequested: root.acceptSeriesMetadataSuggestion()
         onSecondaryRequested: root.skipSeriesMetadataSuggestion()
     }
@@ -329,6 +330,7 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         dangerColor: root.dangerColor
+        textLanguage: dialogHost.textLanguage
         dialogMode: root.editingSeriesDialogMode
         previewErrorText: ""
         monthOptions: root.seriesMetaMonthOptions

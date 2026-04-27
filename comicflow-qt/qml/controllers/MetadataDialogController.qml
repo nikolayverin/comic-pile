@@ -26,6 +26,15 @@ Item {
         return rootObject
     }
 
+    function textLanguage() {
+        const root = activeRoot()
+        return root ? String(root.appLanguage || AppText.fallbackLanguageCode) : AppText.fallbackLanguageCode
+    }
+
+    function localizedText(key) {
+        return AppText.t(key, textLanguage())
+    }
+
     function seriesMetaMonthNameFromNumber(monthNumber) {
         const root = activeRoot()
         const value = Number(monthNumber || 0)
@@ -66,7 +75,7 @@ Item {
         const root = activeRoot()
         if (!root || !libraryModelRef) return false
         if (!editingComic) {
-            root.metadataDialog.errorText = AppText.metadataNothingSelected
+            root.metadataDialog.errorText = localizedText("metadataNothingSelected")
             return false
         }
 
@@ -115,7 +124,8 @@ Item {
             const suggestionIssueLabel = String(suggestion.issueNumber || draft.issueNumber || "")
             root.issueMetadataAutofillConfirmDialog.messageText = AppText.issueAutofillMessage(
                 suggestionIssueLabel,
-                suggestionSeriesLabel
+                suggestionSeriesLabel,
+                textLanguage()
             )
             root.issueMetadataAutofillConfirmDialog.open()
             return
@@ -171,7 +181,7 @@ Item {
             : (root.selectedSeriesContext || ({}))
         const key = String(seriesKey || selectionContext.seriesKey || "").trim()
         if (key.length < 1) {
-            popupControllerRef.showActionResult(AppText.metadataSelectSeriesFirst, true)
+            popupControllerRef.showActionResult(localizedText("metadataSelectSeriesFirst"), true)
             return
         }
 
@@ -381,7 +391,8 @@ Item {
             pendingSeriesMetadataSuggestion = suggestion
             const suggestionLabel = String(suggestion.displayTitle || root.seriesMetaSeriesField.text || "this series")
             root.seriesMetadataAutofillConfirmDialog.messageText = AppText.seriesAutofillMessage(
-                suggestionLabel
+                suggestionLabel,
+                textLanguage()
             )
             root.seriesMetadataAutofillConfirmDialog.open()
             return
@@ -451,7 +462,7 @@ Item {
             .map(function(k) { return String(k || "").trim() })
             .filter(function(k) { return k.length > 0 })
         if (normalizedKeys.length < 1) {
-            root.seriesMetaDialog.errorText = AppText.metadataSeriesContextMissing
+            root.seriesMetaDialog.errorText = localizedText("metadataSeriesContextMissing")
             return false
         }
 
@@ -477,7 +488,7 @@ Item {
         }
 
         if (ids.length < 1) {
-            root.seriesMetaDialog.errorText = AppText.metadataNoIssuesFound
+            root.seriesMetaDialog.errorText = localizedText("metadataNoIssuesFound")
             return false
         }
         const dedupMap = ({})
@@ -523,7 +534,7 @@ Item {
         const applyMap = {}
         if (mergeMode) {
             if (seriesValue.length < 1) {
-                root.seriesMetaDialog.errorText = AppText.metadataMergeTargetRequired
+                root.seriesMetaDialog.errorText = localizedText("metadataMergeTargetRequired")
                 return false
             }
             values.series = seriesValue
@@ -546,7 +557,7 @@ Item {
                     && seriesTitleValue.length < 1
                     && yearValue.length < 1
                     && genresValue.length < 1) {
-                root.seriesMetaDialog.errorText = AppText.metadataBulkEditFieldRequired
+                root.seriesMetaDialog.errorText = localizedText("metadataBulkEditFieldRequired")
                 return false
             }
         } else {
@@ -575,7 +586,7 @@ Item {
             const verify = libraryModelRef.loadComicMetadata(verifyId)
             if (verify && verify.error) {
                 startupControllerRef.startupLog("seriesDialog verify error: " + String(verify.error || "unknown"))
-                root.seriesMetaDialog.errorText = String(verify.error || AppText.metadataSaveVerificationFailed)
+                root.seriesMetaDialog.errorText = String(verify.error || localizedText("metadataSaveVerificationFailed"))
                 return false
             }
 
@@ -595,7 +606,7 @@ Item {
                     + " verifyMonth=\"" + String(verify.month || "") + "\""
                     + " verifyAgeRating=\"" + String(verify.ageRating || "") + "\""
                 )
-                root.seriesMetaDialog.errorText = AppText.metadataSaveMismatch
+                root.seriesMetaDialog.errorText = localizedText("metadataSaveMismatch")
                 root.scheduleModelReconcile(true)
                 return false
             }

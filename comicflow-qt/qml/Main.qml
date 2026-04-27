@@ -1318,7 +1318,7 @@ ApplicationWindow {
             )
             return
         }
-        popupController.showActionResult(AppText.metadataSeriesContextMissing, true)
+        popupController.showActionResult(AppText.t("metadataSeriesContextMissing", root.appLanguage), true)
     }
 
     function performReplaceIssueArchive(comicId, selectedPath, sourceType) {

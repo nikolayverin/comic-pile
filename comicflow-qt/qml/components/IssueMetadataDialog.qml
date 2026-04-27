@@ -28,6 +28,7 @@ Popup {
     property bool metadataApplyingState: false
     property string errorText: ""
     property string metadataRawIssueNumber: ""
+    property string textLanguage: AppText.fallbackLanguageCode
     property var metadataInitialState: ({})
     property var metadataYearOptions: []
     property var metadataMonthOptions: [
@@ -261,6 +262,10 @@ Popup {
         metadataDirty = false
     }
 
+    function localizedText(key) {
+        return AppText.t(key, metadataDialog.textLanguage)
+    }
+
     background: PopupSurface {
         cornerRadius: popupStyle.popupRadius
         fillColor: popupStyle.popupFillColor
@@ -270,7 +275,7 @@ Popup {
     contentItem: PopupDialogShell {
         id: metadataShell
         popupStyle: popupStyle
-        title: "Issue Metadata"
+        title: metadataDialog.localizedText("issueMetaTitle")
         onCloseRequested: metadataDialog.close()
 
         Item {
@@ -331,7 +336,7 @@ Popup {
             Label {
                 x: metadataContent.generalX + metadataContent.labelInsetX
                 y: metadataContent.yGeneral
-                text: "General"
+                text: metadataDialog.localizedText("seriesMetaSectionGeneral")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.sectionLabelFontPx
             }
@@ -339,7 +344,7 @@ Popup {
             Label {
                 x: metadataContent.generalX + metadataContent.labelInsetX
                 y: metadataContent.ySeriesLabel
-                text: "Series"
+                text: metadataDialog.localizedText("seriesMetaLabelSeries")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -371,7 +376,7 @@ Popup {
             Label {
                 x: metadataContent.rightColX + metadataContent.labelInsetX
                 y: metadataContent.ySeriesLabel
-                text: "Volume"
+                text: metadataDialog.localizedText("seriesMetaLabelVolume")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -399,7 +404,7 @@ Popup {
             Label {
                 x: metadataContent.rightCol2X + metadataContent.labelInsetX
                 y: metadataContent.ySeriesLabel
-                text: "Issue"
+                text: metadataDialog.localizedText("issueMetaLabelIssue")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -425,7 +430,7 @@ Popup {
             Label {
                 x: metadataContent.rightCol3X + metadataContent.labelInsetX
                 y: metadataContent.ySeriesLabel
-                text: "Publisher"
+                text: metadataDialog.localizedText("seriesMetaLabelPublisher")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -457,7 +462,7 @@ Popup {
             Label {
                 x: metadataContent.generalX + metadataContent.labelInsetX
                 y: metadataContent.yTitleLabel
-                text: "Title"
+                text: metadataDialog.localizedText("issueMetaLabelTitle")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -489,7 +494,7 @@ Popup {
             Label {
                 x: metadataContent.rightColX + metadataContent.labelInsetX
                 y: metadataContent.yTitleLabel
-                text: "Year"
+                text: metadataDialog.localizedText("seriesMetaLabelYear")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -515,7 +520,7 @@ Popup {
             Label {
                 x: metadataContent.rightCol2X + metadataContent.labelInsetX
                 y: metadataContent.yTitleLabel
-                text: "Month"
+                text: metadataDialog.localizedText("seriesMetaLabelMonth")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -540,7 +545,7 @@ Popup {
             Label {
                 x: metadataContent.rightCol3X + metadataContent.labelInsetX
                 y: metadataContent.yTitleLabel
-                text: "Age rating"
+                text: metadataDialog.localizedText("seriesMetaLabelAgeRating")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.labelFontPx
             }
@@ -564,12 +569,12 @@ Popup {
             Label {
                 x: metadataContent.creditsX + metadataContent.labelInsetX
                 y: metadataContent.yCredits
-                text: "Credits"
+                text: metadataDialog.localizedText("issueMetaSectionCredits")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.sectionLabelFontPx
             }
 
-            Label { x: metadataContent.creditsX + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: "Writer/s"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.creditsX + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: metadataDialog.localizedText("issueMetaLabelWriters"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.creditsX + metadataContent.creditsFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yWriterLabel + popupStyle.copyIconTopOffset
@@ -597,7 +602,7 @@ Popup {
                 fillColor: popupStyle.fieldFillColor
             }
 
-            Label { x: metadataContent.creditsX + metadataContent.creditsColStep + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: "Penciller/s"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.creditsX + metadataContent.creditsColStep + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: metadataDialog.localizedText("issueMetaLabelPencillers"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.creditsX + metadataContent.creditsColStep + metadataContent.creditsFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yWriterLabel + popupStyle.copyIconTopOffset
@@ -625,7 +630,7 @@ Popup {
                 fillColor: popupStyle.fieldFillColor
             }
 
-            Label { x: metadataContent.creditsX + metadataContent.creditsColStep * 2 + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: "Inker/s"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.creditsX + metadataContent.creditsColStep * 2 + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: metadataDialog.localizedText("issueMetaLabelInkers"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.creditsX + metadataContent.creditsColStep * 2 + metadataContent.creditsFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yWriterLabel + popupStyle.copyIconTopOffset
@@ -653,7 +658,7 @@ Popup {
                 fillColor: popupStyle.fieldFillColor
             }
 
-            Label { x: metadataContent.creditsX + metadataContent.creditsColStep * 3 + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: "Colorist/s"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.creditsX + metadataContent.creditsColStep * 3 + metadataContent.labelInsetX; y: metadataContent.yWriterLabel; text: metadataDialog.localizedText("issueMetaLabelColorists"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.creditsX + metadataContent.creditsColStep * 3 + metadataContent.creditsFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yWriterLabel + popupStyle.copyIconTopOffset
@@ -681,7 +686,7 @@ Popup {
                 fillColor: popupStyle.fieldFillColor
             }
 
-            Label { x: metadataContent.creditsX + metadataContent.labelInsetX; y: metadataContent.yLetterLabel; text: "Letter/s"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.creditsX + metadataContent.labelInsetX; y: metadataContent.yLetterLabel; text: metadataDialog.localizedText("issueMetaLabelLetterers"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.creditsX + metadataContent.creditsFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yLetterLabel + popupStyle.copyIconTopOffset
@@ -709,7 +714,7 @@ Popup {
                 fillColor: popupStyle.fieldFillColor
             }
 
-            Label { x: metadataContent.creditsX + metadataContent.creditsColStep + metadataContent.labelInsetX; y: metadataContent.yLetterLabel; text: "Cover artist/s"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.creditsX + metadataContent.creditsColStep + metadataContent.labelInsetX; y: metadataContent.yLetterLabel; text: metadataDialog.localizedText("issueMetaLabelCoverArtists"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.creditsX + metadataContent.creditsColStep + metadataContent.creditsFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yLetterLabel + popupStyle.copyIconTopOffset
@@ -737,7 +742,7 @@ Popup {
                 fillColor: popupStyle.fieldFillColor
             }
 
-            Label { x: metadataContent.creditsX + metadataContent.creditsColStep * 2 + metadataContent.labelInsetX; y: metadataContent.yLetterLabel; text: "Editor/s"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.creditsX + metadataContent.creditsColStep * 2 + metadataContent.labelInsetX; y: metadataContent.yLetterLabel; text: metadataDialog.localizedText("issueMetaLabelEditors"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.creditsX + metadataContent.creditsColStep * 2 + metadataContent.creditsFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yLetterLabel + popupStyle.copyIconTopOffset
@@ -768,12 +773,12 @@ Popup {
             Label {
                 x: metadataContent.storyX + metadataContent.labelInsetX
                 y: metadataContent.yStoryMeta
-                text: "Story & meta"
+                text: metadataDialog.localizedText("issueMetaSectionStoryMeta")
                 color: popupStyle.textColor
                 font.pixelSize: metadataContent.sectionLabelFontPx
             }
 
-            Label { x: metadataContent.storyX + metadataContent.labelInsetX; y: metadataContent.yStoryLabel; text: "Story arc"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.storyX + metadataContent.labelInsetX; y: metadataContent.yStoryLabel; text: metadataDialog.localizedText("issueMetaLabelStoryArc"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.storyX + metadataContent.storyFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yStoryLabel + popupStyle.copyIconTopOffset
@@ -801,7 +806,7 @@ Popup {
                 fillColor: popupStyle.fieldFillColor
             }
 
-            Label { x: metadataContent.storyX + metadataContent.storyColStep + metadataContent.labelInsetX; y: metadataContent.yStoryLabel; text: "Characters"; color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
+            Label { x: metadataContent.storyX + metadataContent.storyColStep + metadataContent.labelInsetX; y: metadataContent.yStoryLabel; text: metadataDialog.localizedText("issueMetaLabelCharacters"); color: popupStyle.textColor; font.pixelSize: metadataContent.labelFontPx }
             PopupCopyButton {
                 x: metadataContent.storyX + metadataContent.storyColStep + metadataContent.storyFieldWidth - popupStyle.copyIconRightInset - popupStyle.copyIconSize
                 y: metadataContent.yStoryLabel + popupStyle.copyIconTopOffset
@@ -849,7 +854,7 @@ Popup {
 
             PopupInlineErrorMessage {
                 visible: metadataDialog.errorText.length > 0
-                headline: AppText.seriesMetaInlineErrorHeadline
+                headline: metadataDialog.localizedText("seriesMetaInlineErrorHeadline")
                 message: metadataDialog.errorText
                 textColor: popupStyle.textColor
                 anchors.left: parent.left
@@ -879,7 +884,7 @@ Popup {
                     hoverColor: popupStyle.footerButtonHoverColor
                     textColor: popupStyle.textColor
                     textPixelSize: popupStyle.footerButtonTextSize
-                    text: "Save"
+                    text: metadataDialog.localizedText("seriesMetaButtonSave")
                     enabled: metadataDialog.metadataDirty
                     onClicked: metadataDialog.saveRequested(metadataDialog.currentState())
                 }
@@ -894,7 +899,7 @@ Popup {
                     hoverColor: popupStyle.footerButtonHoverColor
                     textColor: popupStyle.textColor
                     textPixelSize: popupStyle.footerButtonTextSize
-                    text: "Reset"
+                    text: metadataDialog.localizedText("commonReset")
                     enabled: metadataDialog.metadataDirty
                     onClicked: metadataDialog.resetRequested()
                 }
@@ -909,7 +914,7 @@ Popup {
                     hoverColor: popupStyle.footerButtonHoverColor
                     textColor: popupStyle.textColor
                     textPixelSize: popupStyle.footerButtonTextSize
-                    text: "Cancel"
+                    text: metadataDialog.localizedText("commonCancel")
                     onClicked: metadataDialog.close()
                 }
 
