@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Window
+import "AppText.js" as AppText
 
 Rectangle {
     id: root
@@ -29,6 +30,7 @@ Rectangle {
     property color windowControlCloseHoverColor: themeColors.uiWindowControlCloseHover
     property string uiFontFamily: Qt.application.font.family
     property int uiFontPixelSize: typography.uiBasePx
+    property string textLanguage: AppText.fallbackLanguageCode
     property bool importInProgress: false
     property string centerLabel: uiTokens.appTitle
     property bool isFullscreen: false
@@ -80,6 +82,10 @@ Rectangle {
         orientation: Gradient.Vertical
         GradientStop { position: 0.0; color: root.topColor }
         GradientStop { position: 1.0; color: root.bottomColor }
+    }
+
+    function localizedText(key) {
+        return AppText.t(key, root.textLanguage)
     }
 
     Canvas {
@@ -245,13 +251,13 @@ Rectangle {
 
         TopMenuTextButton {
             id: fileTopMenuButton
-            labelText: "File"
+            labelText: root.localizedText("topMenuFile")
             menuPopup: fileMenuPopup
         }
 
         TopMenuTextButton {
             id: helpTopMenuButton
-            labelText: "Help"
+            labelText: root.localizedText("topMenuHelp")
             menuPopup: helpMenuPopup
         }
 
@@ -267,14 +273,14 @@ Rectangle {
         spacing: root.helperButtonsSpacing
 
         NavigationHelperButton {
-            text: "Continue reading"
+            text: root.localizedText("navigationContinueReadingTitle")
             fontFamily: root.uiFontFamily
             enabled: root.continueReadingEnabled
             onClicked: root.continueReadingRequested()
         }
 
         NavigationHelperButton {
-            text: "Next unread"
+            text: root.localizedText("navigationNextUnreadTitle")
             fontFamily: root.uiFontFamily
             onClicked: root.nextUnreadRequested()
         }
@@ -471,10 +477,10 @@ Rectangle {
         showArrow: true
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(fileMenuPopup, visible)
         menuItems: [
-            { text: "Add files", action: "add_files", enabled: !root.importInProgress },
-            { text: "Add folder", action: "add_folder", enabled: !root.importInProgress },
-            { text: "Settings", action: "settings" },
-            { text: "Exit", action: "exit" }
+            { text: root.localizedText("topMenuAddFiles"), action: "add_files", enabled: !root.importInProgress },
+            { text: root.localizedText("topMenuAddFolder"), action: "add_folder", enabled: !root.importInProgress },
+            { text: root.localizedText("topMenuSettings"), action: "settings" },
+            { text: root.localizedText("topMenuExit"), action: "exit" }
         ]
         onItemTriggered: function(index, action) {
             if (action === "add_files") {
@@ -497,10 +503,10 @@ Rectangle {
         showArrow: true
         onVisibleChanged: root.handleTopMenuPopupVisibilityChanged(helpMenuPopup, visible)
         menuItems: [
-            { text: "Quick tour", action: "quick_tour" },
-            { text: "What's new", action: "whats_new", visible: root.whatsNewAvailable },
-            { text: "View Help", action: "view_help" },
-            { text: "About", action: "about" }
+            { text: root.localizedText("topMenuQuickTour"), action: "quick_tour" },
+            { text: root.localizedText("topMenuWhatsNew"), action: "whats_new", visible: root.whatsNewAvailable },
+            { text: root.localizedText("topMenuViewHelp"), action: "view_help" },
+            { text: root.localizedText("topMenuAbout"), action: "about" }
         ]
         onItemTriggered: function(index, action) {
             if (action === "quick_tour") {

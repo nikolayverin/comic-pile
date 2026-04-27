@@ -2110,6 +2110,7 @@ ApplicationWindow {
             windowControlCloseHoverColor: root.uiWindowControlCloseHover
             uiFontFamily: root.uiFontFamily
             uiFontPixelSize: root.fontPxUiBase
+            textLanguage: root.appLanguage
             importInProgress: root.importInProgress
             isFullscreen: root.visibility === Window.FullScreen
             windowMaximized: root.visibility === Window.Maximized
