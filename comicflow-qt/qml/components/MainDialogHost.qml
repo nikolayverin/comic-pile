@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "AppText.js" as AppText
 
 Item {
     id: dialogHost
@@ -30,6 +31,7 @@ Item {
     readonly property var seriesHeaderController: seriesHeaderControllerRef
     readonly property var libraryModel: libraryModelRef
     readonly property var failedImportItemsModel: failedImportItemsModelRef
+    readonly property string textLanguage: root ? String(root.appLanguage || AppText.fallbackLanguageCode) : AppText.fallbackLanguageCode
 
     property alias importModalOverlayRef: importModalOverlay
     property alias importConflictDialogRef: importConflictDialog
@@ -104,6 +106,7 @@ Item {
         id: importConflictDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         titleText: importController.importConflictDialogTitle(root.importConflictContext)
         messageText: importController.importConflictDialogMessage(root.importConflictContext)
         secondaryActionText: importController.importConflictDialogSecondaryLabel(root.importConflictContext)
@@ -132,6 +135,7 @@ Item {
         id: seriesDeleteConfirmDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         questionText: root.seriesDeleteQuestionText(popupStyleTokens.dialogBodyEmphasisFontSize)
         criticalAttentionTarget: root.criticalPopupAttentionTarget
         criticalAttentionColor: root.criticalPopupAttentionColor
@@ -144,6 +148,7 @@ Item {
         id: failedImportsDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         itemsModel: failedImportItemsModel
         actionsEnabled: !root.importInProgress
         onRetryRequested: importController.retryFailedImportAt(index)
@@ -263,6 +268,7 @@ Item {
         id: actionResultDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         payload: popupController.actionResultPayload
         popupStackLayer: popupController.actionResultLayered ? 20 : 0
         onClosed: popupController.handleActionResultDialogClosed()
@@ -273,6 +279,7 @@ Item {
         id: issueMetadataAutofillConfirmDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         primaryButtonText: "Fill from library"
         secondaryButtonText: "Keep current values"
         onPrimaryRequested: root.acceptIssueMetadataSuggestion()
@@ -283,6 +290,7 @@ Item {
         id: seriesMetadataAutofillConfirmDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         primaryButtonText: "Fill Fields"
         secondaryButtonText: "Keep Current"
         onPrimaryRequested: root.acceptSeriesMetadataSuggestion()
@@ -293,9 +301,10 @@ Item {
         id: readerDeletePageConfirmDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         messageText: "Вы уверены что хотите удалить эту страницу?"
-        primaryButtonText: "OK"
-        secondaryButtonText: "Cancel"
+        primaryButtonText: AppText.t("commonOk", dialogHost.textLanguage)
+        secondaryButtonText: AppText.t("commonCancel", dialogHost.textLanguage)
         onPrimaryRequested: root.confirmDeleteReaderPage()
         onSecondaryRequested: root.cancelDeleteReaderPageConfirmation()
     }
@@ -419,6 +428,7 @@ Item {
         id: deleteConfirmDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         criticalAttentionTarget: root.criticalPopupAttentionTarget
         criticalAttentionColor: root.criticalPopupAttentionColor
         onClosed: popupController.handleDeleteConfirmDialogClosed()
@@ -429,6 +439,7 @@ Item {
         id: deleteErrorDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         payload: deleteController.deleteErrorPayload
         retryActive: root.deleteRetryInProgress
         retryStatusText: root.deleteRetryStatusText

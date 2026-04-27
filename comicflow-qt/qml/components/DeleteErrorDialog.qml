@@ -12,6 +12,7 @@ PopupDialogWindow {
     property string detailsText: String((payload || {}).details || (payload || {}).detailsText || "")
     property string systemText: String((payload || {}).systemText || "")
     property string primaryPath: String((payload || {}).primaryPath || (payload || {}).filePath || "")
+    property string textLanguage: AppText.fallbackLanguageCode
     property bool retryActive: false
     property string retryStatusText: ""
     readonly property int textColumnMinWidth: 120
@@ -48,7 +49,7 @@ PopupDialogWindow {
     debugName: "delete-error-dialog"
     debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     titleTopMargin: 12
-    title: dialog.headline.length > 0 ? dialog.headline : AppText.popupDeleteErrorTitle
+    title: dialog.headline.length > 0 ? dialog.headline : AppText.t("popupDeleteErrorTitle", dialog.textLanguage)
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: Math.max(
         deleteErrorFooter.requiredDialogWidth,
@@ -111,7 +112,7 @@ PopupDialogWindow {
 
             Text {
                 visible: dialog.systemText.length > 0
-                text: AppText.popupSystemPrefix + dialog.systemText
+                text: AppText.t("popupSystemPrefix", dialog.textLanguage) + dialog.systemText
                 color: styleTokens.subtleTextColor
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
@@ -139,7 +140,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: dialog.retryStatusText.length > 0 ? dialog.retryStatusText : AppText.popupDeleteRetrying
+                text: dialog.retryStatusText.length > 0 ? dialog.retryStatusText : AppText.t("popupDeleteRetrying", dialog.textLanguage)
                 color: styleTokens.subtleTextColor
                 font.pixelSize: 12
             }
@@ -165,7 +166,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: dialog.retryActive ? AppText.commonRetrying : AppText.commonRetry
+                text: dialog.retryActive ? AppText.t("commonRetrying", dialog.textLanguage) : AppText.t("commonRetry", dialog.textLanguage)
                 enabled: !dialog.retryActive
                 onClicked: dialog.retryRequested()
             }
@@ -179,7 +180,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.popupOpenFolder
+                text: AppText.t("popupOpenFolder", dialog.textLanguage)
                 enabled: dialog.primaryPath.length > 0 && !dialog.retryActive
                 onClicked: dialog.openFolderRequested()
             }
@@ -193,7 +194,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.commonClose
+                text: AppText.t("commonClose", dialog.textLanguage)
                 enabled: !dialog.retryActive
                 onClicked: dialog.close()
             }
@@ -214,7 +215,7 @@ PopupDialogWindow {
         TextMetrics {
             id: deleteSystemMetrics
             font.pixelSize: 12
-            text: dialog.systemText.length > 0 ? (AppText.popupSystemPrefix + dialog.systemText) : ""
+            text: dialog.systemText.length > 0 ? (AppText.t("popupSystemPrefix", dialog.textLanguage) + dialog.systemText) : ""
         }
     }
 }

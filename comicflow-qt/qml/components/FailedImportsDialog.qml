@@ -7,6 +7,7 @@ PopupDialogWindow {
     id: dialog
 
     property var itemsModel: null
+    property string textLanguage: AppText.fallbackLanguageCode
     property bool actionsEnabled: true
     readonly property int itemCount: itemsModel && typeof itemsModel.count === "number"
         ? itemsModel.count
@@ -65,7 +66,7 @@ PopupDialogWindow {
 
     popupStyle: styleTokens
     titleTopMargin: 12
-    title: AppText.popupImportErrorsTitle
+    title: AppText.t("popupImportErrorsTitle", dialog.textLanguage)
     showCloseButton: false
     closePolicy: Popup.NoAutoClose
     width: Math.min(availableDialogWidth, preferredDialogWidth)
@@ -101,7 +102,7 @@ PopupDialogWindow {
             blockSpacing: 18
 
             Text {
-                text: AppText.popupImportErrorsIntro
+                text: AppText.t("popupImportErrorsIntro", dialog.textLanguage)
                 color: styleTokens.subtleTextColor
                 font.pixelSize: 12
                 wrapMode: Text.WordWrap
@@ -185,7 +186,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.commonRetry
+                text: AppText.t("commonRetry", dialog.textLanguage)
                 enabled: dialog.actionsEnabled && itemCount > 0
                 onClicked: dialog.retryRequested(0)
             }
@@ -199,7 +200,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.commonSkip
+                text: AppText.t("commonSkip", dialog.textLanguage)
                 enabled: dialog.actionsEnabled && itemCount > 0
                 onClicked: dialog.skipRequested(0)
             }
@@ -213,7 +214,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.commonSkipAll
+                text: AppText.t("commonSkipAll", dialog.textLanguage)
                 enabled: dialog.actionsEnabled && itemCount > 0
                 onClicked: dialog.skipAllRequested()
             }
@@ -222,7 +223,7 @@ PopupDialogWindow {
         TextMetrics {
             id: failedImportsIntroMetrics
             font.pixelSize: 12
-            text: AppText.popupImportErrorsIntro
+            text: AppText.t("popupImportErrorsIntro", dialog.textLanguage)
         }
 
         TextMetrics {

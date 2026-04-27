@@ -7,7 +7,8 @@ PopupDialogWindow {
     id: dialog
 
     property var payload: ({})
-    property string dialogTitle: String((payload || {}).title || AppText.popupActionErrorTitle)
+    property string textLanguage: AppText.fallbackLanguageCode
+    property string dialogTitle: String((payload || {}).title || AppText.t("popupActionErrorTitle", textLanguage))
     property string message: String((payload || {}).body || (payload || {}).message || "")
     property string detailsText: String((payload || {}).details || (payload || {}).detailsText || "")
     property string secondaryActionText: String((payload || {}).actionLabel || (payload || {}).buttonText || "")
@@ -135,7 +136,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.commonOk
+                text: AppText.t("commonOk", dialog.textLanguage)
                 onClicked: dialog.close()
             }
         }

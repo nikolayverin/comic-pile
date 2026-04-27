@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "AppText.js" as AppText
 
 PopupConfirmDialog {
     id: dialog
@@ -20,8 +21,8 @@ PopupConfirmDialog {
     messageText: dialog.questionText
     messageTextFormat: Text.RichText
 
-    primaryButtonText: "Delete"
-    secondaryButtonText: "Cancel"
+    primaryButtonText: AppText.t("commonDelete", dialog.textLanguage)
+    secondaryButtonText: AppText.t("commonCancel", dialog.textLanguage)
 
     onSecondaryRequested: cancelConfirmed()
     onPrimaryRequested: {

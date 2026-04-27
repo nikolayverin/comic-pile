@@ -35,9 +35,10 @@ Item {
     property var secondaryLayerHostPopup: null
 
     property var actionResultPayload: AppMessagePayload.payload({})
+    readonly property string textLanguage: rootObject ? String(rootObject.appLanguage || AppText.fallbackLanguageCode) : AppText.fallbackLanguageCode
     property var criticalPopupAttentionTarget: null
     readonly property string actionResultMessage: String((actionResultPayload || {}).body || "")
-    readonly property string actionResultTitle: String((actionResultPayload || {}).title || AppText.popupActionErrorTitle)
+    readonly property string actionResultTitle: String((actionResultPayload || {}).title || localizedText("popupActionErrorTitle"))
     readonly property string actionResultDetailsText: String((actionResultPayload || {}).details || "")
     readonly property string actionResultSecondaryText: String((actionResultPayload || {}).actionLabel || "")
     readonly property string actionResultSecondaryPath: String((actionResultPayload || {}).filePath || "")
@@ -76,6 +77,10 @@ Item {
 
     function root() {
         return rootObject
+    }
+
+    function localizedText(key) {
+        return AppText.t(key, textLanguage)
     }
 
     function tracePopupLayer(message) {
@@ -297,7 +302,7 @@ Item {
         if (!Boolean(isError)) return
         showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
             message,
-            AppText.popupActionErrorTitle,
+            localizedText("popupActionErrorTitle"),
             "",
             "",
             "",
@@ -308,7 +313,7 @@ Item {
     function showActionResultWithDetails(message, detailsText) {
         showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
             message,
-            AppText.popupActionErrorTitle,
+            localizedText("popupActionErrorTitle"),
             detailsText,
             "",
             "",
@@ -319,9 +324,9 @@ Item {
     function showActionResultWithFolder(message, detailsText, filePath, buttonText) {
         showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
             message,
-            AppText.popupActionErrorTitle,
+            localizedText("popupActionErrorTitle"),
             detailsText,
-            filePath ? String(buttonText || AppText.popupOpenFolder) : "",
+            filePath ? String(buttonText || localizedText("popupOpenFolder")) : "",
             "",
             filePath
         ))
@@ -331,7 +336,7 @@ Item {
         const explicitTitle = String((actionResultPayload || {}).title || "").trim()
         showMappedActionResult(AppErrorMapper.defaultActionResultPayload(
             message,
-            explicitTitle.length > 0 ? explicitTitle : AppText.popupActionErrorTitle,
+            explicitTitle.length > 0 ? explicitTitle : localizedText("popupActionErrorTitle"),
             detailsText,
             buttonText,
             actionKey,
@@ -415,7 +420,7 @@ Item {
     function handleActionResultDialogClosed() {
         secondaryLayerHostPopup = null
         actionResultPayload = AppMessagePayload.payload({
-            title: AppText.popupActionErrorTitle,
+            title: localizedText("popupActionErrorTitle"),
             body: "",
             details: "",
             actionLabel: "",

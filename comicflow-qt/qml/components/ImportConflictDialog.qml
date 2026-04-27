@@ -8,10 +8,11 @@ PopupDialogWindow {
 
     ThemeColors { id: themeColors }
 
-    property string titleText: AppText.popupImportConflictTitle
-    property string messageText: AppText.popupImportConflictMessage
-    property string secondaryActionText: AppText.popupImportConflictKeepCurrent
-    property string primaryActionText: AppText.popupImportConflictReplace
+    property string textLanguage: AppText.fallbackLanguageCode
+    property string titleText: AppText.t("popupImportConflictTitle", textLanguage)
+    property string messageText: AppText.t("popupImportConflictMessage", textLanguage)
+    property string secondaryActionText: AppText.t("popupImportConflictKeepCurrent", textLanguage)
+    property string primaryActionText: AppText.t("popupImportConflictReplace", textLanguage)
     property string incomingLabel: ""
     property string existingLabel: ""
     property string nextIncomingLabel: ""
@@ -75,7 +76,7 @@ PopupDialogWindow {
 
                 Text {
                     visible: dialog.incomingLabel.length > 0
-                    text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupIncomingArchive + "</font> "
+                    text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.t("popupIncomingArchive", dialog.textLanguage) + "</font> "
                         + "<font color=\"" + styleTokens.textColor + "\">"
                         + dialog.incomingLabel
                         + "</font>"
@@ -87,7 +88,7 @@ PopupDialogWindow {
 
                 Text {
                     visible: dialog.existingLabel.length > 0
-                    text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupExistingRecord + "</font> "
+                    text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.t("popupExistingRecord", dialog.textLanguage) + "</font> "
                         + "<font color=\"" + styleTokens.textColor + "\">"
                         + dialog.existingLabel
                         + "</font>"
@@ -111,7 +112,7 @@ PopupDialogWindow {
 
                     Text {
                         visible: dialog.nextIncomingLabel.length > 0
-                        text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupIncomingArchive + "</font> "
+                        text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.t("popupIncomingArchive", dialog.textLanguage) + "</font> "
                             + "<font color=\"" + styleTokens.textColor + "\">"
                             + dialog.nextIncomingLabel
                             + "</font>"
@@ -123,7 +124,7 @@ PopupDialogWindow {
 
                     Text {
                         visible: dialog.nextExistingLabel.length > 0
-                        text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.popupExistingRecord + "</font> "
+                        text: "<font color=\"" + styleTokens.hintTextColor + "\">" + AppText.t("popupExistingRecord", dialog.textLanguage) + "</font> "
                             + "<font color=\"" + styleTokens.textColor + "\">"
                             + dialog.nextExistingLabel
                             + "</font>"
@@ -193,7 +194,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.commonSkipAll
+                text: AppText.t("commonSkipAll", dialog.textLanguage)
                 enabled: !dialog.progressActive
                 onClicked: dialog.skipAllRequested()
             }
@@ -208,7 +209,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: AppText.commonReplaceAll
+                text: AppText.t("commonReplaceAll", dialog.textLanguage)
                 enabled: !dialog.progressActive
                 onClicked: dialog.replaceAllRequested()
             }

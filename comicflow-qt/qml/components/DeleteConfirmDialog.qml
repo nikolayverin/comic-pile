@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "AppText.js" as AppText
 
 PopupConfirmDialog {
     id: dialog
@@ -16,8 +17,8 @@ PopupConfirmDialog {
     minimumDialogHeight: styleTokens.deleteConfirmMinHeight
     messageText: "Delete archive file from database?"
 
-    primaryButtonText: "Delete"
-    secondaryButtonText: "Cancel"
+    primaryButtonText: AppText.t("commonDelete", dialog.textLanguage)
+    secondaryButtonText: AppText.t("commonCancel", dialog.textLanguage)
 
     onSecondaryRequested: close()
     onPrimaryRequested: {

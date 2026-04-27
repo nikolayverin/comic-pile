@@ -16,10 +16,11 @@ PopupDialogWindow {
     readonly property int availableDialogHeight: hostHeight > 0
         ? hostHeight - 80
         : minimumDialogHeight
+    property string textLanguage: AppText.fallbackLanguageCode
     property bool busy: false
     property string busyText: ""
-    property string primaryButtonText: AppText.commonOk
-    property string secondaryButtonText: AppText.commonCancel
+    property string primaryButtonText: AppText.t("commonOk", textLanguage)
+    property string secondaryButtonText: AppText.t("commonCancel", textLanguage)
     property var criticalAttentionTarget: null
     property color criticalAttentionColor: themeColors.dialogAttentionColor
 
@@ -74,7 +75,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: dialog.busyText.length > 0 ? dialog.busyText : AppText.commonWorking
+                text: dialog.busyText.length > 0 ? dialog.busyText : AppText.t("commonWorking", dialog.textLanguage)
                 color: dialog.popupStyle ? dialog.popupStyle.subtleTextColor : themeColors.subtleTextColor
                 font.pixelSize: dialog.popupStyle ? dialog.popupStyle.dialogBodyFontSize : 13
                 wrapMode: Text.WordWrap
