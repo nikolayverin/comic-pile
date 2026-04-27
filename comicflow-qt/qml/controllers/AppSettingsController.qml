@@ -1,5 +1,6 @@
 import QtQuick
 import QtCore
+import "../components/AppLanguageCatalog.js" as AppLanguageCatalog
 import "../components/SettingsCatalog.js" as SettingsCatalog
 
 Item {
@@ -14,6 +15,7 @@ Item {
     readonly property string defaultGeneralAfterImport: SettingsCatalog.defaultGeneralAfterImport
     readonly property string defaultGeneralDefaultViewAfterLaunch: SettingsCatalog.defaultGeneralDefaultViewAfterLaunch
     readonly property string defaultGeneralAppLanguage: SettingsCatalog.defaultGeneralAppLanguage
+    readonly property bool defaultGeneralAppLanguageAutoInitialized: false
     readonly property bool defaultReaderRememberLastReaderMode: SettingsCatalog.defaultReaderRememberLastReaderMode
     readonly property string defaultReaderDefaultReadingMode: SettingsCatalog.defaultReaderDefaultReadingMode
     readonly property string defaultReaderMagnifierSize: SettingsCatalog.defaultReaderMagnifierSize
@@ -132,6 +134,34 @@ Item {
         }
     }
 
+    function systemLocaleName() {
+        const locale = Qt.locale()
+        return locale && typeof locale.name !== "undefined" ? String(locale.name || "") : ""
+    }
+
+    function autoDetectedGeneralAppLanguage() {
+        return AppLanguageCatalog.languageCodeForLocale(systemLocaleName(), false)
+    }
+
+    function initializeGeneralAppLanguageFromSystem() {
+        if (Boolean(settingsStore.generalAppLanguageAutoInitialized)) {
+            return
+        }
+
+        const currentLanguage = normalizeSettingValue(
+            "general_app_language",
+            settingsStore.generalAppLanguage,
+            defaultGeneralAppLanguage
+        )
+        if (currentLanguage !== defaultGeneralAppLanguage) {
+            settingsStore.generalAppLanguageAutoInitialized = true
+            return
+        }
+
+        settingsStore.generalAppLanguageAutoInitialized = true
+        settingsStore.generalAppLanguage = autoDetectedGeneralAppLanguage()
+    }
+
     function syncAppearanceSetting(valueKey) {
         syncConfiguredSetting(valueKey)
     }
@@ -185,6 +215,9 @@ Item {
         const key = String(valueKey || "")
         const descriptor = configuredSettingDescriptor(key)
         if (descriptor) {
+            if (key === "general_app_language") {
+                settingsStore.generalAppLanguageAutoInitialized = true
+            }
             const propertyName = String(descriptor.controllerProperty || "").trim()
             if (propertyName.length > 0) {
                 controller[propertyName] = normalizeConfiguredSetting(
@@ -209,6 +242,7 @@ Item {
     function resetAllSettingsToDefaults() {
         const wasOnboardingCompleted = Boolean(onboardingCompleted)
         applySettingsSnapshot(SettingsCatalog.defaultSettingsSnapshot())
+        settingsStore.generalAppLanguageAutoInitialized = true
         onboardingCompleted = wasOnboardingCompleted
     }
 
@@ -221,6 +255,7 @@ Item {
         property string generalAfterImport: controller.defaultGeneralAfterImport
         property string generalDefaultViewAfterLaunch: controller.defaultGeneralDefaultViewAfterLaunch
         property string generalAppLanguage: controller.defaultGeneralAppLanguage
+        property bool generalAppLanguageAutoInitialized: controller.defaultGeneralAppLanguageAutoInitialized
         property bool readerRememberLastReaderMode: controller.defaultReaderRememberLastReaderMode
         property string readerDefaultReadingMode: controller.defaultReaderDefaultReadingMode
         property string readerMagnifierSize: controller.defaultReaderMagnifierSize
@@ -449,4 +484,6 @@ Item {
     onSafetyConfirmBeforeDeletingPageChanged: syncConfiguredSetting("safety_confirm_before_deleting_page")
 
     onOnboardingCompletedChanged: settingsStore.onboardingCompleted = onboardingCompleted
+
+    Component.onCompleted: initializeGeneralAppLanguageFromSystem()
 }
