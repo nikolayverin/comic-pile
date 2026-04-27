@@ -84,6 +84,7 @@ Item {
     ImportProgressOverlay {
         id: importModalOverlay
         active: root.importInProgress
+        textLanguage: dialogHost.textLanguage
         blockedByModalPopup: root.anyManagedModalPopupVisible
         criticalAttentionTarget: root.criticalPopupAttentionTarget
         criticalAttentionColor: root.criticalPopupAttentionColor
@@ -385,6 +386,7 @@ Item {
         id: updateAvailableDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         onDownloadRequested: root.startUpdateDownloadFlow()
     }
 
@@ -392,6 +394,7 @@ Item {
         id: updateDownloadDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         onInstallRequested: root.handleDownloadedUpdateInstallRequested()
     }
 

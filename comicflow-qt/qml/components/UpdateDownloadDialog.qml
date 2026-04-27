@@ -1,12 +1,14 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
 
     signal installRequested()
 
+    property string textLanguage: AppText.fallbackLanguageCode
     readonly property var downloadRef: (typeof releaseDownloadService !== "undefined") ? releaseDownloadService : null
     readonly property bool downloadActive: Boolean(downloadRef) && Boolean(downloadRef.downloadActive)
     readonly property bool downloadProgressKnown: Boolean(downloadRef) && Boolean(downloadRef.downloadProgressKnown)
@@ -27,7 +29,7 @@ PopupDialogWindow {
     readonly property bool progressBlockActive: dialog.downloadActive
         || dialog.installReady
         || dialog.downloadFailed
-    readonly property string reservedAlertMessageText: "The update download timed out before it could finish."
+    readonly property string reservedAlertMessageText: AppText.t("updateDownloadTimedOut", dialog.textLanguage)
     readonly property int minimumDialogHeight: 232
     readonly property int maximumDialogHeight: 520
     readonly property int availableDialogHeight: hostHeight > 0
@@ -42,7 +44,7 @@ PopupDialogWindow {
     popupStyle: styleTokens
     debugName: "update-download-dialog"
     debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
-    title: "Downloading update"
+    title: AppText.t("updateDownloadTitle", dialog.textLanguage)
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: 560
     height: Math.min(availableDialogHeight, Math.max(minimumDialogHeight, downloadBody.implicitHeight))
@@ -64,7 +66,7 @@ PopupDialogWindow {
             popupStyle: styleTokens
             active: dialog.progressBlockActive
             reserveSpace: true
-            titleText: "Current file"
+            titleText: AppText.t("importProgressCurrentFile", dialog.textLanguage)
             currentFileName: dialog.currentAssetNameText
             showFileCounter: false
             percentOnlyStatus: true
@@ -87,7 +89,7 @@ PopupDialogWindow {
                 anchors.right: parent.right
                 anchors.top: parent.top
                 visible: dialog.downloadErrorText.length > 0
-                headline: "Download failed"
+                headline: AppText.t("updateDownloadFailed", dialog.textLanguage)
                 message: dialog.downloadErrorText
                 textColor: styleTokens.textColor
             }
@@ -100,7 +102,7 @@ PopupDialogWindow {
                 visible: true
                 opacity: 0
                 enabled: false
-                headline: "Download failed"
+                headline: AppText.t("updateDownloadFailed", dialog.textLanguage)
                 message: dialog.downloadErrorText.length > 0
                     ? dialog.downloadErrorText
                     : dialog.reservedAlertMessageText
@@ -123,7 +125,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Cancel"
+                text: AppText.t("commonCancel", dialog.textLanguage)
                 onClicked: dialog.closeRequested()
             }
 
@@ -138,7 +140,7 @@ PopupDialogWindow {
                 hoverEdgeColor: "#e2ff40"
                 textColor: "#000000"
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Install update"
+                text: AppText.t("updateDownloadInstall", dialog.textLanguage)
                 enabled: dialog.installReady
                 onClicked: dialog.installRequested()
             }

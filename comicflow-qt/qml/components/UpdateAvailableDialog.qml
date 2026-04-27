@@ -1,12 +1,14 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
 
     signal downloadRequested()
 
+    property string textLanguage: AppText.fallbackLanguageCode
     readonly property var updatesRef: (typeof releaseCheckService !== "undefined") ? releaseCheckService : null
     readonly property string latestVersionText: String(updatesRef && updatesRef.latestVersion || "").trim()
     readonly property string latestAssetNameText: String(updatesRef && updatesRef.latestAssetName || "").trim()
@@ -20,7 +22,7 @@ PopupDialogWindow {
             return dialog.releaseNameText
         }
         if (dialog.latestVersionText.length > 0) {
-            return "Patch " + dialog.latestVersionText
+            return AppText.tf("updateAvailablePatchLabel", { version: dialog.latestVersionText }, dialog.textLanguage)
         }
         return ""
     }
@@ -51,7 +53,7 @@ PopupDialogWindow {
     popupStyle: styleTokens
     debugName: "update-available-dialog"
     debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
-    title: "Update available"
+    title: AppText.t("updateAvailableTitle", dialog.textLanguage)
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: 560
     height: Math.min(
@@ -82,7 +84,7 @@ PopupDialogWindow {
     function normalizedReleaseNotes(notesText) {
         const normalized = String(notesText || "").replace(/\r\n/g, "\n").trim()
         if (normalized.length < 1) {
-            return "Release notes are available for this update."
+            return AppText.t("updateAvailableReleaseNotesFallback", dialog.textLanguage)
         }
         return normalized
     }
@@ -114,7 +116,7 @@ PopupDialogWindow {
                     anchors.top: parent.top
                     anchors.right: releaseLabel.left
                     anchors.rightMargin: 16
-                    text: "What's new"
+                    text: AppText.t("topMenuWhatsNew", dialog.textLanguage)
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: styleTokens.dialogBodyEmphasisFontSize
@@ -208,7 +210,7 @@ PopupDialogWindow {
                     hoverColor: styleTokens.footerButtonHoverColor
                     textColor: styleTokens.textColor
                     textPixelSize: styleTokens.footerButtonTextSize
-                    text: "Later"
+                    text: AppText.t("updateAvailableLater", dialog.textLanguage)
                     onClicked: dialog.close()
                 }
 
@@ -223,7 +225,7 @@ PopupDialogWindow {
                     hoverEdgeColor: "#e2ff40"
                     textColor: "#000000"
                     textPixelSize: styleTokens.footerButtonTextSize
-                    text: "Download update"
+                    text: AppText.t("updateAvailableDownload", dialog.textLanguage)
                     enabled: dialog.updateDownloadUrl.length > 0
                     onClicked: dialog.downloadRequested()
                 }

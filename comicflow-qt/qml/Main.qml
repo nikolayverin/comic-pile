@@ -974,8 +974,8 @@ ApplicationWindow {
         const assetName = String(updateAvailableDialog.latestAssetNameText || "").trim()
         if (downloadUrl.length < 1) {
             popupController.showMappedActionResult({
-                title: "Update download",
-                body: "No update download link is available for this release."
+                title: AppText.t("updateDownloadActionTitle", root.appLanguage),
+                body: AppText.t("updateDownloadNoLink", root.appLanguage)
             })
             return
         }
@@ -987,8 +987,8 @@ ApplicationWindow {
     function handleDownloadedUpdateInstallRequested() {
         if (typeof releaseInstallService === "undefined" || !releaseInstallService || !updateDownloadDialog) {
             popupController.showMappedActionResult({
-                title: "Install update",
-                body: "Comic Pile couldn't start the update helper."
+                title: AppText.t("updateInstallActionTitle", root.appLanguage),
+                body: AppText.t("updateInstallHelperStartFailed", root.appLanguage)
             })
             return
         }
@@ -997,7 +997,7 @@ ApplicationWindow {
         const installError = String(releaseInstallService.installDownloadedRelease(packagePath) || "").trim()
         if (installError.length > 0) {
             popupController.showMappedActionResult({
-                title: "Install update",
+                title: AppText.t("updateInstallActionTitle", root.appLanguage),
                 body: installError
             })
         }

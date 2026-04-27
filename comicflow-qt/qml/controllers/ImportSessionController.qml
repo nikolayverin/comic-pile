@@ -15,6 +15,7 @@ Item {
     property var importConflictDialogRef: null
     property var failedImportsDialogRef: null
     property var failedImportItemsModelRef: null
+    readonly property string textLanguage: rootObject ? String(rootObject.appLanguage || AppText.fallbackLanguageCode) : AppText.fallbackLanguageCode
 
     property bool importInProgress: false
     property int importTotal: 0
@@ -681,44 +682,48 @@ Item {
         return importConflictTier(context) === "exact"
     }
 
+    function localizedText(key) {
+        return AppText.t(key, textLanguage)
+    }
+
     function importConflictDialogTitle(context) {
         if (importConflictCode(context) === "restore_review_required") {
-            return "Restore Existing Issue?"
+            return localizedText("importConflictRestoreTitle")
         }
         const tier = importConflictTier(context)
-        if (tier === "very_likely") return "Possible Duplicate Found"
-        if (tier === "weak") return "Suspicious Match Found"
-        return "Issue Already Exists"
+        if (tier === "very_likely") return localizedText("importConflictPossibleDuplicateTitle")
+        if (tier === "weak") return localizedText("importConflictSuspiciousMatchTitle")
+        return localizedText("popupImportConflictTitle")
     }
 
     function importConflictDialogMessage(context) {
         if (importConflictCode(context) === "restore_review_required") {
-            return "This archive looks close to a deleted issue in this series, but the match is not exact. Restore that issue or import this as a new issue:"
+            return localizedText("importConflictRestoreMessage")
         }
         const tier = importConflictTier(context)
         if (tier === "very_likely") {
-            return "This looks like the same issue in your library, but the archive is not an exact file match. Replace the existing file or import this as a new issue:"
+            return localizedText("importConflictPossibleDuplicateMessage")
         }
         if (tier === "weak") {
-            return "This might be related to an existing issue, but the match is weak. Import it as a new issue or skip this file:"
+            return localizedText("importConflictSuspiciousMatchMessage")
         }
-        return "This archive matches an existing issue in your library. Choose what to do:"
+        return localizedText("popupImportConflictMessage")
     }
 
     function importConflictDialogSecondaryLabel(context) {
-        if (importConflictCode(context) === "restore_review_required") return "Import as new"
+        if (importConflictCode(context) === "restore_review_required") return localizedText("importConflictImportAsNew")
         const tier = importConflictTier(context)
-        if (tier === "very_likely") return "Import as new"
-        if (tier === "weak") return "Skip"
-        return "Keep current"
+        if (tier === "very_likely") return localizedText("importConflictImportAsNew")
+        if (tier === "weak") return localizedText("commonSkip")
+        return localizedText("popupImportConflictKeepCurrent")
     }
 
     function importConflictDialogPrimaryLabel(context) {
-        if (importConflictCode(context) === "restore_review_required") return "Restore existing"
+        if (importConflictCode(context) === "restore_review_required") return localizedText("importConflictRestoreExisting")
         const tier = importConflictTier(context)
-        if (tier === "weak") return "Import as new"
-        if (tier === "very_likely") return "Replace existing"
-        return "Replace"
+        if (tier === "weak") return localizedText("importConflictImportAsNew")
+        if (tier === "very_likely") return localizedText("importConflictReplaceExisting")
+        return localizedText("popupImportConflictReplace")
     }
 
     function importConflictSecondaryAction(context) {

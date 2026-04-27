@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 import "AppSharedUtils.js" as AppSharedUtils
 
 Item {
@@ -25,6 +26,7 @@ Item {
     property int cleanupTotalCount: 0
     property int cleanupProcessedCount: 0
     property string cleanupCurrentFileName: ""
+    property string textLanguage: AppText.fallbackLanguageCode
     property alias dialogItem: importProgressDialog
     readonly property bool presented: active && !blockedByModalPopup
     readonly property int fadeDurationMs: 150
@@ -83,25 +85,29 @@ Item {
         if (!importQueue || importQueue.length < 1) return ""
         return fileNameFromPath(queueEntryPath(importQueue[0]))
     }
-    readonly property string dialogTitle: cancelFlowActive ? "Cancelling Import" : "Import In Progress"
-    readonly property string progressTitleText: cleanupActive ? "Cleanup progress" : "Current file"
+    readonly property string dialogTitle: cancelFlowActive
+        ? AppText.t("importProgressTitleCancelling", textLanguage)
+        : AppText.t("importProgressTitleInProgress", textLanguage)
+    readonly property string progressTitleText: cleanupActive
+        ? AppText.t("importProgressCleanupProgress", textLanguage)
+        : AppText.t("importProgressCurrentFile", textLanguage)
     readonly property string effectiveCurrentFileName: cleanupActive
-        ? (cleanupCurrentFileName.length > 0 ? cleanupCurrentFileName : "Cleaning up imported items...")
+        ? (cleanupCurrentFileName.length > 0 ? cleanupCurrentFileName : AppText.t("importProgressCleaningImportedItems", textLanguage))
         : (cancelPending
-            ? (currentFileName.length > 0 ? currentFileName : "Waiting for a safe stop...")
+            ? (currentFileName.length > 0 ? currentFileName : AppText.t("importProgressWaitingSafeStop", textLanguage))
             : (currentFileName.length > 0
                 ? currentFileName
                 : (queuedPreviewFileName.length > 0
                     ? queuedPreviewFileName
-                    : (importQueue.length > 0 ? "Preparing import..." : "Finalizing..."))))
+                    : (importQueue.length > 0 ? AppText.t("importProgressPreparingImport", textLanguage) : AppText.t("importProgressFinalizing", textLanguage)))))
     readonly property int effectiveTotalCount: cleanupActive ? Math.max(0, cleanupTotalCount) : totalCount
     readonly property int effectiveProcessedCount: cleanupActive
         ? Math.max(0, Math.min(cleanupTotalCount, cleanupProcessedCount))
         : processedCounterValue
     readonly property real effectiveProgressFraction: cleanupActive ? cleanupProgressFraction : progressFraction
     readonly property string progressStatusText: cleanupActive
-        ? "Cleaning up..."
-        : (cancelPending ? "Cancelling..." : "")
+        ? AppText.t("importProgressCleaningUp", textLanguage)
+        : (cancelPending ? AppText.t("importProgressCancelling", textLanguage) : "")
     readonly property bool progressForceIndeterminate: cancelPending && !cleanupActive
 
     PopupStyle {
@@ -204,7 +210,11 @@ Item {
                         hoverColor: popupStyle.footerButtonHoverColor
                         textColor: popupStyle.textColor
                         textPixelSize: popupStyle.footerButtonTextSize
-                        text: root.cleanupActive ? "Cleaning up..." : (root.cancelPending ? "Cancelling..." : "Cancel")
+                        text: root.cleanupActive
+                            ? AppText.t("importProgressCleaningUp", root.textLanguage)
+                            : (root.cancelPending
+                                ? AppText.t("importProgressCancelling", root.textLanguage)
+                                : AppText.t("commonCancel", root.textLanguage))
                         enabled: !root.cancelFlowActive
                         onClicked: root.cancelRequested()
                     }
