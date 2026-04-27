@@ -2588,15 +2588,18 @@ ApplicationWindow {
                     : root.firstRunOnboardingStep === 4
                         ? Math.round(primaryHighlight.y - height)
                         : root.firstRunStep5BubbleTopMargin
-            source: root.firstRunOnboardingStep === 1
-                ? uiTokens.onboardingStep1Bubble
-                : root.firstRunOnboardingStep === 2
-                    ? uiTokens.onboardingStep2Bubble
-                    : root.firstRunOnboardingStep === 3
-                        ? uiTokens.onboardingStep3Bubble
-                        : root.firstRunOnboardingStep === 4
-                            ? uiTokens.onboardingStep4Bubble
-                            : ""
+            source: uiTokens.onboardingAssetSource(
+                root.firstRunOnboardingStep === 1
+                    ? "step1"
+                    : root.firstRunOnboardingStep === 2
+                        ? "step2"
+                        : root.firstRunOnboardingStep === 3
+                            ? "step3"
+                            : root.firstRunOnboardingStep === 4
+                                ? "step4"
+                                : "",
+                root.appLanguage
+            )
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -2606,7 +2609,7 @@ ApplicationWindow {
             visible: root.firstRunOnboardingStep === 5
             x: Math.round(primaryHighlight.x + (primaryHighlight.width - width) / 2 + root.firstRunStep5TopBubbleOffsetX)
             y: Math.round(primaryHighlight.y + root.firstRunStep5BubbleTopMargin)
-            source: uiTokens.onboardingStep5BubbleTop
+            source: uiTokens.onboardingAssetSource("step5Top", root.appLanguage)
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -2616,7 +2619,7 @@ ApplicationWindow {
             visible: root.firstRunOnboardingStep === 5
             x: Math.round(secondaryHighlight.x + (secondaryHighlight.width - width) / 2)
             y: Math.round(secondaryHighlight.y - root.firstRunStep5BottomBubbleBottomGap - height)
-            source: uiTokens.onboardingStep5BubbleBottom
+            source: uiTokens.onboardingAssetSource("step5Bottom", root.appLanguage)
             fillMode: Image.PreserveAspectFit
             smooth: true
         }
@@ -2651,7 +2654,7 @@ ApplicationWindow {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: onboardingBackMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingBackButton
+                    source: uiTokens.onboardingAssetSource("back", root.appLanguage)
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                 }
@@ -2685,7 +2688,7 @@ ApplicationWindow {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: onboardingNextMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingNextButton
+                    source: uiTokens.onboardingAssetSource("next", root.appLanguage)
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                 }
@@ -2710,7 +2713,7 @@ ApplicationWindow {
                 id: onboardingFullMenuSlash
                 x: 95 - (width / 2)
                 y: height - 10 - (height / 2)
-                source: uiTokens.onboardingSlash
+                source: uiTokens.onboardingAssetSource("slash", root.appLanguage)
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }
@@ -2729,7 +2732,7 @@ ApplicationWindow {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: -2
-                source: uiTokens.onboardingSlash
+                source: uiTokens.onboardingAssetSource("slash", root.appLanguage)
                 fillMode: Image.PreserveAspectFit
                 smooth: true
             }
@@ -2745,7 +2748,7 @@ ApplicationWindow {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: onboardingCompactNextMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingNextButton
+                    source: uiTokens.onboardingAssetSource("next", root.appLanguage)
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                 }
@@ -2785,7 +2788,7 @@ ApplicationWindow {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: onboardingFinalBackMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingBackButton
+                    source: uiTokens.onboardingAssetSource("back", root.appLanguage)
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                     z: 1
@@ -2811,7 +2814,7 @@ ApplicationWindow {
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.verticalCenterOffset: onboardingFinalCloseNavMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingCloseNavButton
+                    source: uiTokens.onboardingAssetSource("close", root.appLanguage)
                     fillMode: Image.PreserveAspectFit
                     smooth: true
                     z: 1
@@ -2829,7 +2832,7 @@ ApplicationWindow {
             Image {
                 x: 95 - (width / 2)
                 y: height - 10 - (height / 2)
-                source: uiTokens.onboardingSlash
+                source: uiTokens.onboardingAssetSource("slash", root.appLanguage)
                 fillMode: Image.PreserveAspectFit
                 smooth: true
                 z: 1

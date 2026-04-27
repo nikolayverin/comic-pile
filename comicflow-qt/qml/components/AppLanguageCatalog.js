@@ -3,14 +3,14 @@
 var fallbackLanguageCode = "en"
 
 var languageOptions = [
-    { code: "en", label: "English", ready: true },
-    { code: "es", label: "Spanish", ready: false },
-    { code: "de", label: "German", ready: false },
-    { code: "fr", label: "French", ready: false },
-    { code: "ja", label: "Japanese", ready: false },
-    { code: "ko", label: "Korean", ready: false },
-    { code: "zh-Hans", label: "Chinese Simplified", ready: false },
-    { code: "zh-Hant", label: "Chinese Traditional", ready: false }
+    { code: "en", label: "English", ready: true, onboardingReady: true },
+    { code: "es", label: "Spanish", ready: false, onboardingReady: false },
+    { code: "de", label: "German", ready: false, onboardingReady: false },
+    { code: "fr", label: "French", ready: false, onboardingReady: false },
+    { code: "ja", label: "Japanese", ready: false, onboardingReady: false },
+    { code: "ko", label: "Korean", ready: false, onboardingReady: false },
+    { code: "zh-Hans", label: "Chinese Simplified", ready: false, onboardingReady: false },
+    { code: "zh-Hant", label: "Chinese Traditional", ready: false, onboardingReady: false }
 ]
 
 function allLanguages() {
@@ -21,7 +21,7 @@ function visibleLanguages() {
     const result = []
     for (let i = 0; i < languageOptions.length; i += 1) {
         const option = languageOptions[i] || {}
-        if (option.ready === true) {
+        if (option.ready === true && option.onboardingReady === true) {
             result.push(option)
         }
     }
@@ -64,7 +64,12 @@ function normalizeLanguageCode(code) {
 
 function isLanguageAvailable(code, includeHidden) {
     const option = languageForCode(code)
-    return option !== null && (includeHidden === true || option.ready === true)
+    return option !== null && (includeHidden === true || (option.ready === true && option.onboardingReady === true))
+}
+
+function isOnboardingReady(code) {
+    const option = languageForCode(code)
+    return option !== null && option.onboardingReady === true
 }
 
 function mappedLanguageCodeForLocale(localeName) {

@@ -284,6 +284,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/SeriesContext.js
         qml/components/AppLanguageCatalog.js
         qml/components/AppText.js
+        qml/components/OnboardingAssets.js
         qml/components/AppSharedUtils.js
         qml/components/AppErrorMapper.js
         qml/components/SettingsCatalog.js
