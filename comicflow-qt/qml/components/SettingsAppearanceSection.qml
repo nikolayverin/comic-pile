@@ -101,6 +101,49 @@ Item {
         return AppText.t(textKey, textLanguage)
     }
 
+    function displayOptionValue(valueKey, optionValue) {
+        return dialogRef && typeof dialogRef.displayOptionValue === "function"
+            ? dialogRef.displayOptionValue(valueKey, optionValue)
+            : AppText.settingsOptionLabel(valueKey, optionValue, textLanguage)
+    }
+
+    function displayOptionValues(valueKey, options) {
+        if (dialogRef && typeof dialogRef.displayOptionValues === "function") {
+            return dialogRef.displayOptionValues(valueKey, options)
+        }
+        const source = normalizedOptionArray(options)
+        const result = []
+        for (let i = 0; i < source.length; i += 1) {
+            result.push(displayOptionValue(valueKey, source[i]))
+        }
+        return result
+    }
+
+    function displaySettingValue(valueKey, fallbackValue) {
+        return dialogRef && typeof dialogRef.displaySettingValue === "function"
+            ? dialogRef.displaySettingValue(valueKey, fallbackValue)
+            : displayOptionValue(valueKey, settingValue(valueKey, fallbackValue))
+    }
+
+    function storedOptionValueForDisplay(valueKey, displayValue, options) {
+        return dialogRef && typeof dialogRef.storedOptionValueForDisplay === "function"
+            ? dialogRef.storedOptionValueForDisplay(valueKey, displayValue, options)
+            : String(displayValue || "")
+    }
+
+    function normalizedOptionArray(options) {
+        if (!options) return []
+        if (Array.isArray(options)) return options
+        if (typeof options.length === "number") {
+            const normalized = []
+            for (let i = 0; i < options.length; i += 1) {
+                normalized.push(options[i])
+            }
+            return normalized
+        }
+        return []
+    }
+
     function localFileSource(pathValue) {
         const input = String(pathValue || "").trim()
         if (input.length < 1) return ""
@@ -171,7 +214,7 @@ Item {
                         || String(parent.modelData.key || "") === root.backgroundSource
                     title: parent.modeKey === "Custom image"
                         ? root.localizedText("settingsAppearanceCustomShort")
-                        : String(parent.modelData.label || "")
+                        : root.displayOptionValue("appearance_library_background", parent.modelData.key)
                     selected: String(parent.modelData.key || "") === root.backgroundSource
                     bodyColor: themeColorsRef ? themeColorsRef.settingsBackgroundChoiceBodyColor : "#333333"
                     cornerRadius: 6
@@ -556,10 +599,14 @@ Item {
                 id: customImageModeChoice
                 x: 0
                 anchors.verticalCenter: parent.verticalCenter
-                options: SettingsCatalog.appearanceBackgroundImageModeOptions
-                currentText: root.customImageMode
+                options: root.displayOptionValues("appearance_library_background_image_mode", SettingsCatalog.appearanceBackgroundImageModeOptions)
+                currentText: root.displaySettingValue("appearance_library_background_image_mode", root.customImageMode)
                 onActivated: function(index, text) {
-                    root.libraryBackgroundImageModeRequested(text)
+                    root.libraryBackgroundImageModeRequested(root.storedOptionValueForDisplay(
+                        "appearance_library_background_image_mode",
+                        text,
+                        SettingsCatalog.appearanceBackgroundImageModeOptions
+                    ))
                 }
             }
 
@@ -571,10 +618,17 @@ Item {
                 readonly property real availableWidth: Math.max(0, rightEdge - leftEdge)
                 x: leftEdge + Math.round(Math.max(0, availableWidth - width) / 2)
                 anchors.verticalCenter: parent.verticalCenter
-                options: SettingsCatalog.appearanceBackgroundTileSizeOptions
-                currentText: root.customTileSize
+                options: root.displayOptionValues("appearance_library_background_tile_size", SettingsCatalog.appearanceBackgroundTileSizeOptions)
+                currentText: root.displaySettingValue("appearance_library_background_tile_size", root.customTileSize)
                 onActivated: function(index, text) {
-                    root.setSettingValue("appearance_library_background_tile_size", text)
+                    root.setSettingValue(
+                        "appearance_library_background_tile_size",
+                        root.storedOptionValueForDisplay(
+                            "appearance_library_background_tile_size",
+                            text,
+                            SettingsCatalog.appearanceBackgroundTileSizeOptions
+                        )
+                    )
                 }
             }
 
@@ -619,10 +673,13 @@ Item {
             anchors.right: parent.right
             anchors.rightMargin: dialogRef ? dialogRef.optionControlRightMargin : 30
             anchors.verticalCenter: parent.verticalCenter
-            options: SettingsCatalog.appearanceGridDensityOptions
-            currentText: String(root.settingValue("appearance_grid_density", "Default"))
+            options: root.displayOptionValues("appearance_grid_density", SettingsCatalog.appearanceGridDensityOptions)
+            currentText: root.displaySettingValue("appearance_grid_density", "Default")
             onActivated: function(index, text) {
-                root.setSettingValue("appearance_grid_density", text)
+                root.setSettingValue(
+                    "appearance_grid_density",
+                    root.storedOptionValueForDisplay("appearance_grid_density", text, SettingsCatalog.appearanceGridDensityOptions)
+                )
             }
         }
     }

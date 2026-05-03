@@ -225,6 +225,11 @@ Popup {
     function traceMenuPopup(message) {
         const target = debugLogTarget
         if (!target || typeof target.appendStartupDebugLog !== "function") return
+        if (typeof target.appendStartupLog === "function") {
+            target.appendStartupLog(
+                "[popup-layer] " + popupDebugLabel() + " " + String(message || "")
+            )
+        }
         target.appendStartupDebugLog(
             "[popup-layer] " + popupDebugLabel() + " " + String(message || "")
         )

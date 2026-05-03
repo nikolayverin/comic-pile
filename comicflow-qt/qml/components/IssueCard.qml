@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "IssueNumberText.js" as IssueNumberText
+import "AppText.js" as AppText
 
 Rectangle {
     id: root
@@ -25,6 +26,7 @@ Rectangle {
     property color selectedOverlayColor: themeColors.cardSelectedOverlay
     property string uiFontFamily: Qt.application.font.family
     property int uiFontPixelSize: typography.uiBasePx
+    property string textLanguage: AppText.fallbackLanguageCode
     property color textShadowColor: themeColors.uiTextShadow
     property color actionMenuBackgroundColor: themeColors.fieldFillColor
     property color actionMenuHoverColor: themeColors.uiActionHoverBackground
@@ -36,11 +38,10 @@ Rectangle {
     property bool actionMenuDismissed: false
     property bool openingInProgress: false
     property bool actionMenuInteractionRetained: false
+    property bool actionMenuPointerActive: false
 
     readonly property bool coverHovered: root.hoverUiEnabled && coverHoverHandler.hovered
-    readonly property bool menuHovered: root.hoverUiEnabled
-        && hoverActionBarLoader.item !== null
-        && hoverActionBarLoader.item.pointerInteractionActive
+    readonly property bool menuHovered: root.hoverUiEnabled && root.actionMenuPointerActive
     readonly property bool hoverRetained: root.hoverUiEnabled && actionMenuHoldTimer.running
     readonly property bool effectiveHover: root.hoverUiEnabled && (coverHovered || menuHovered || hoverRetained)
     readonly property bool hasReadyCover: root.coverSource.length > 0 && coverImage.status === Image.Ready
@@ -188,7 +189,7 @@ Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
                     anchors.top: openingIndicator.bottom
                     anchors.topMargin: 10
-                    text: "Opening..."
+                    text: AppText.t("readerLoading", root.textLanguage)
                     color: root.textPrimary
                     font.family: root.uiFontFamily
                     font.pixelSize: Math.max(12, root.uiFontPixelSize)
@@ -273,6 +274,7 @@ Rectangle {
             && !root.actionMenuDismissed
             && (root.coverHovered || root.actionMenuInteractionRetained || root.hoverRetained)
         asynchronous: false
+        onActiveChanged: if (!active) root.actionMenuPointerActive = false
         sourceComponent: Component {
             HoverActionBar {
                 parent: Overlay.overlay
@@ -285,23 +287,28 @@ Rectangle {
                 textColor: root.textPrimary
                 uiFontFamily: root.uiFontFamily
                 uiFontPixelSize: root.uiFontPixelSize
+                textLanguage: root.textLanguage
                 hoverUiEnabled: root.hoverUiEnabled
+                onPointerInteractionActiveChanged: root.actionMenuPointerActive = pointerInteractionActive
                 onEditRequested: {
+                    const card = root
                     root.dismissActionMenu()
                     Qt.callLater(function() {
-                        root.editRequested()
+                        card.editRequested()
                     })
                 }
                 onReplaceRequested: {
+                    const card = root
                     root.dismissActionMenu()
                     Qt.callLater(function() {
-                        root.replaceRequested()
+                        card.replaceRequested()
                     })
                 }
                 onDeleteRequested: {
+                    const card = root
                     root.dismissActionMenu()
                     Qt.callLater(function() {
-                        root.deleteRequested()
+                        card.deleteRequested()
                     })
                 }
             }

@@ -30,6 +30,21 @@ Rectangle {
         return AppText.t(textKey, textLanguage)
     }
 
+    function traceMetadataMenu(message) {
+        if (libraryModelRef && typeof libraryModelRef.appendStartupLog === "function") {
+            libraryModelRef.appendStartupLog("[metadata-dialog] sidebar " + String(message || ""))
+        }
+        if (startupControllerRef && typeof startupControllerRef.launchLog === "function") {
+            startupControllerRef.launchLog("metadata-dialog sidebar " + String(message || ""))
+        }
+        if (startupControllerRef && typeof startupControllerRef.startupLog === "function") {
+            startupControllerRef.startupLog("metadata-dialog sidebar " + String(message || ""))
+        }
+        if (startupControllerRef && typeof startupControllerRef.runtimeDebugLog === "function") {
+            startupControllerRef.runtimeDebugLog("metadata-dialog", "sidebar " + String(message || ""))
+        }
+    }
+
     Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
@@ -268,6 +283,7 @@ Rectangle {
                 sidebarWidth: rootObject ? rootObject.sidebarWidth : 320
                 itemIndex: index
                 dismissToken: rootObject ? rootObject.seriesMenuDismissToken : 0
+                debugLogTarget: libraryModelRef
                 seriesKey: String(model.seriesKey || "")
                 seriesName: String(model.seriesTitle || "")
                 seriesIssueCount: Number(model.count || 0)
@@ -317,14 +333,20 @@ Rectangle {
                 onDismissMenusRequested: if (rootObject) rootObject.seriesMenuDismissToken += 1
                 onAddFilesRequested: if (rootObject) rootObject.quickAddFilesFromDialog()
                 onAddIssueRequested: if (rootObject) rootObject.quickAddFilesForSeries(seriesKey)
-                onEditSeriesRequested: if (rootObject) rootObject.openSeriesMetadataDialog(
-                    seriesKey,
-                    seriesName,
-                    "",
-                    rootObject.selectedSeriesCount() > 1 && rootObject.isSeriesSelected(seriesKey)
-                        ? "bulk"
-                        : "single"
-                )
+                onEditSeriesRequested: {
+                    if (rootObject) {
+                        const requestedMode = rootObject.selectedSeriesCount() > 1 && rootObject.isSeriesSelected(seriesKey)
+                            ? "bulk"
+                            : "single"
+                        traceMetadataMenu(
+                            "edit requested key=" + String(seriesKey || "")
+                            + " title=\"" + String(seriesName || "") + "\""
+                            + " mode=" + requestedMode
+                            + " selectedCount=" + String(rootObject.selectedSeriesCount())
+                        )
+                        rootObject.openSeriesMetadataDialog(seriesKey, seriesName, "", requestedMode)
+                    }
+                }
                 onMergeSeriesRequested: if (rootObject) rootObject.openSeriesMergeDialog(seriesKey, seriesName)
                 onShowFolderRequested: if (rootObject) rootObject.openSeriesFolder(seriesKey, seriesName)
                 onClearSelectionRequested: if (rootObject) rootObject.clearSelection()

@@ -4,13 +4,13 @@ var fallbackLanguageCode = "en"
 
 var languageOptions = [
     { code: "en", label: "English", ready: true, onboardingReady: true },
-    { code: "es", label: "Spanish", ready: false, onboardingReady: false },
-    { code: "de", label: "German", ready: false, onboardingReady: false },
-    { code: "fr", label: "French", ready: false, onboardingReady: false },
-    { code: "ja", label: "Japanese", ready: false, onboardingReady: false },
-    { code: "ko", label: "Korean", ready: false, onboardingReady: false },
-    { code: "zh-Hans", label: "Chinese Simplified", ready: false, onboardingReady: false },
-    { code: "zh-Hant", label: "Chinese Traditional", ready: false, onboardingReady: false }
+    { code: "es", label: "Español", ready: true, onboardingReady: true },
+    { code: "de", label: "Deutsch", ready: true, onboardingReady: true },
+    { code: "fr", label: "Français", ready: true, onboardingReady: true },
+    { code: "ja", label: "日本語", ready: true, onboardingReady: true },
+    { code: "ko", label: "한국어", ready: true, onboardingReady: true },
+    { code: "zh-Hans", label: "简体中文", ready: true, onboardingReady: true },
+    { code: "zh-Hant", label: "繁體中文", ready: false, onboardingReady: false }
 ]
 
 function allLanguages() {

@@ -35,6 +35,21 @@ Item {
         return AppText.t(key, textLanguage())
     }
 
+    function traceMetadataDialog(message) {
+        if (libraryModelRef && typeof libraryModelRef.appendStartupLog === "function") {
+            libraryModelRef.appendStartupLog("[metadata-dialog] " + String(message || ""))
+        }
+        if (startupControllerRef && typeof startupControllerRef.launchLog === "function") {
+            startupControllerRef.launchLog("metadata-dialog " + message)
+        }
+        if (startupControllerRef && typeof startupControllerRef.startupLog === "function") {
+            startupControllerRef.startupLog("metadata-dialog " + message)
+        }
+        if (startupControllerRef && typeof startupControllerRef.runtimeDebugLog === "function") {
+            startupControllerRef.runtimeDebugLog("metadata-dialog", message)
+        }
+    }
+
     function seriesMetaMonthNameFromNumber(monthNumber) {
         const root = activeRoot()
         const value = Number(monthNumber || 0)
@@ -54,21 +69,41 @@ Item {
     function openMetadataEditor(comic) {
         const root = activeRoot()
         if (!root || !libraryModelRef || !popupControllerRef) return
-
-        let loaded = libraryModelRef.loadComicMetadata(comic.id)
-        if (loaded && loaded.error) {
-            libraryModelRef.reload()
-            loaded = libraryModelRef.loadComicMetadata(comic.id)
-        }
-        if (loaded && loaded.error) {
-            editingComic = null
+        if (!root.metadataDialog || typeof root.metadataDialog.openForState !== "function") {
+            traceMetadataDialog("issue open aborted: metadata dialog is unavailable")
             return
         }
 
-        editingComic = comic
-        const values = loaded || comic || {}
+        const sourceComic = comic || {}
+        const comicId = Number(sourceComic.id || 0)
+        if (comicId < 1) {
+            traceMetadataDialog("issue open aborted: invalid comic id=" + String(sourceComic.id || ""))
+            popupControllerRef.showActionResult(localizedText("metadataNothingSelected"), true)
+            return
+        }
+
+        traceMetadataDialog("issue open requested comicId=" + String(comicId))
+        let loaded = libraryModelRef.loadComicMetadata(comicId)
+        if (loaded && loaded.error) {
+            traceMetadataDialog("issue metadata load failed before reload comicId=" + String(comicId)
+                + " error=" + String(loaded.error || ""))
+            libraryModelRef.reload()
+            loaded = libraryModelRef.loadComicMetadata(comicId)
+        }
+        if (loaded && loaded.error) {
+            editingComic = null
+            traceMetadataDialog("issue open aborted after reload comicId=" + String(comicId)
+                + " error=" + String(loaded.error || ""))
+            popupControllerRef.showActionResult(String(loaded.error || localizedText("metadataNothingSelected")), true)
+            return
+        }
+
+        editingComic = Object.assign({}, sourceComic, { id: comicId })
+        const values = loaded || editingComic || {}
         popupControllerRef.closeAllManagedPopups(root.metadataDialog)
         root.metadataDialog.openForState(values)
+        traceMetadataDialog("issue opened comicId=" + String(comicId)
+            + " visible=" + String(Boolean(root.metadataDialog.visible)))
     }
 
     function saveMetadata(draftState) {
@@ -180,7 +215,15 @@ Item {
             ? root.currentSelectedSeriesContext()
             : (root.selectedSeriesContext || ({}))
         const key = String(seriesKey || selectionContext.seriesKey || "").trim()
+        traceMetadataDialog(
+            "series open requested key=" + key
+            + " rawKey=" + String(seriesKey || "")
+            + " title=\"" + String(seriesTitle || selectionContext.seriesTitle || "") + "\""
+            + " mode=" + String(mode || "")
+            + " selectedCount=" + String(typeof root.selectedSeriesCount === "function" ? root.selectedSeriesCount() : 0)
+        )
         if (key.length < 1) {
+            traceMetadataDialog("series open aborted: empty series key")
             popupControllerRef.showActionResult(localizedText("metadataSelectSeriesFirst"), true)
             return
         }
@@ -315,6 +358,11 @@ Item {
         root.seriesMetaDialog.pendingFocusField = String(focusField || "").trim()
         root.seriesMetaDialog.errorText = ""
         popupControllerRef.openExclusivePopup(root.seriesMetaDialog)
+        traceMetadataDialog(
+            "series opened key=" + key
+            + " mode=" + effectiveMode
+            + " visible=" + String(Boolean(root.seriesMetaDialog.visible))
+        )
     }
 
     function openSeriesMergeDialog(seriesKey, seriesTitle) {

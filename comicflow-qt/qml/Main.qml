@@ -683,6 +683,31 @@ ApplicationWindow {
         startupController.runtimeDebugLog(category, message)
     }
 
+    function displaySettingOption(valueKey, optionValue) {
+        return AppText.settingsOptionLabel(valueKey, optionValue, root.appLanguage)
+    }
+
+    function displaySettingOptions(valueKey, options) {
+        const source = options || []
+        const result = []
+        for (let i = 0; i < source.length; i += 1) {
+            result.push(displaySettingOption(valueKey, source[i]))
+        }
+        return result
+    }
+
+    function storedSettingOptionForDisplay(valueKey, displayValue, options) {
+        const selected = String(displayValue || "")
+        const source = options || []
+        for (let i = 0; i < source.length; i += 1) {
+            const optionValue = String(source[i] || "")
+            if (displaySettingOption(valueKey, optionValue) === selected) {
+                return optionValue
+            }
+        }
+        return selected
+    }
+
     function isSelected(id) {
         return issueSelectionController.isSelected(id)
     }
@@ -882,13 +907,42 @@ ApplicationWindow {
         return slashPath.substring(0, idx).replace(/\//g, "\\")
     }
 
+    function resolveStoredFilePathForOpen(pathValue) {
+        const normalized = normalizeImportPath(pathValue)
+        if (normalized.length < 1) return ""
+        if (libraryModel && typeof libraryModel.resolveStoredPathAgainstDataRoot === "function") {
+            const resolved = String(libraryModel.resolveStoredPathAgainstDataRoot(normalized) || "").trim()
+            if (resolved.length > 0) return resolved
+        }
+        return normalized
+    }
+
     function openFolderForPath(pathValue) {
-        const folderPath = parentFolderPath(pathValue)
-        if (folderPath.length < 1) return false
+        const resolvedPath = resolveStoredFilePathForOpen(pathValue)
+        const folderPath = parentFolderPath(resolvedPath)
+        if (folderPath.length < 1) {
+            if (libraryModel && typeof libraryModel.appendStartupLog === "function") {
+                libraryModel.appendStartupLog("[folder-open] failed: empty parent path source=" + String(pathValue || ""))
+            }
+            return false
+        }
         const url = startupController.toLocalFileUrl(folderPath)
-        if (url.length < 1) return false
-        Qt.openUrlExternally(url)
-        return true
+        if (url.length < 1) {
+            if (libraryModel && typeof libraryModel.appendStartupLog === "function") {
+                libraryModel.appendStartupLog("[folder-open] failed: empty url folder=" + folderPath)
+            }
+            return false
+        }
+        const opened = Qt.openUrlExternally(url)
+        if (libraryModel && typeof libraryModel.appendStartupLog === "function") {
+            libraryModel.appendStartupLog(
+                "[folder-open] source=" + String(pathValue || "")
+                + " resolved=" + resolvedPath
+                + " folder=" + folderPath
+                + " opened=" + String(opened)
+            )
+        }
+        return opened
     }
 
     function openExactFolderPath(pathValue) {
@@ -2271,10 +2325,23 @@ ApplicationWindow {
                 anchors.right: parent.right
                 anchors.rightMargin: 16
                 uiFontFamily: root.uiFontFamily
-                options: SettingsCatalog.appearanceGridDensityOptions
-                currentText: String(appSettingsController.appearanceGridDensity || "Default")
+                options: root.displaySettingOptions(
+                    "appearance_grid_density",
+                    SettingsCatalog.appearanceGridDensityOptions
+                )
+                currentText: root.displaySettingOption(
+                    "appearance_grid_density",
+                    appSettingsController.appearanceGridDensity || "Default"
+                )
                 onActivated: function(index, text) {
-                    appSettingsController.setSettingValue("appearance_grid_density", text)
+                    appSettingsController.setSettingValue(
+                        "appearance_grid_density",
+                        root.storedSettingOptionForDisplay(
+                            "appearance_grid_density",
+                            text,
+                            SettingsCatalog.appearanceGridDensityOptions
+                        )
+                    )
                 }
             }
 
@@ -2624,219 +2691,68 @@ ApplicationWindow {
             smooth: true
         }
 
-        Item {
+        OnboardingNavigationBlock {
             id: onboardingNavigationBlockFull
-            width: 182
-            height: 23
             x: onboardingStep1Bubble.x
-                + (root.firstRunOnboardingStep === 2 ? 367
+                + (root.firstRunOnboardingStep === 2 ? 357
                     : root.firstRunOnboardingStep === 3 ? 603
-                    : 671)
-                - (width / 2)
+                    : 658)
+                - anchorPointX
             y: onboardingStep1Bubble.y
                 + onboardingStep1Bubble.height
-                - (root.firstRunOnboardingStep === 2 ? 125
+                - (root.firstRunOnboardingStep === 2 ? 127
                     : root.firstRunOnboardingStep === 3 ? 154
-                    : 92)
-                - (height / 2)
+                    : 96)
+                - anchorPointY
             visible: root.firstRunOnboardingStep === 2
                 || root.firstRunOnboardingStep === 3
                 || root.firstRunOnboardingStep === 4
-
-            Item {
-                id: onboardingBackButtonHitbox
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: 84
-                height: 21
-
-                Image {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: onboardingBackMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingAssetSource("back", root.appLanguage)
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                }
-
-                MouseArea {
-                    id: onboardingBackMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (root.firstRunOnboardingStep === 5)
-                            root.firstRunOnboardingStep = 4
-                        else if (root.firstRunOnboardingStep === 4)
-                            root.firstRunOnboardingStep = 3
-                        else if (root.firstRunOnboardingStep === 3)
-                            root.firstRunOnboardingStep = 2
-                        else
-                            root.firstRunOnboardingStep = 1
-                    }
-                }
+            textLanguage: root.appLanguage
+            onBackRequested: {
+                if (root.firstRunOnboardingStep === 5)
+                    root.firstRunOnboardingStep = 4
+                else if (root.firstRunOnboardingStep === 4)
+                    root.firstRunOnboardingStep = 3
+                else if (root.firstRunOnboardingStep === 3)
+                    root.firstRunOnboardingStep = 2
+                else
+                    root.firstRunOnboardingStep = 1
             }
-
-            Item {
-                id: onboardingNextButtonHitbox
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: 76
-                height: 21
-
-                Image {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: onboardingNextMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingAssetSource("next", root.appLanguage)
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                }
-
-                MouseArea {
-                    id: onboardingNextMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (root.firstRunOnboardingStep === 2)
-                            root.firstRunOnboardingStep = 3
-                        else if (root.firstRunOnboardingStep === 3)
-                            root.firstRunOnboardingStep = 4
-                        else if (root.firstRunOnboardingStep === 4)
-                            root.firstRunOnboardingStep = 5
-                    }
-                }
-            }
-
-            Image {
-                id: onboardingFullMenuSlash
-                x: 95 - (width / 2)
-                y: height - 10 - (height / 2)
-                source: uiTokens.onboardingAssetSource("slash", root.appLanguage)
-                fillMode: Image.PreserveAspectFit
-                smooth: true
+            onNextRequested: {
+                if (root.firstRunOnboardingStep === 2)
+                    root.firstRunOnboardingStep = 3
+                else if (root.firstRunOnboardingStep === 3)
+                    root.firstRunOnboardingStep = 4
+                else if (root.firstRunOnboardingStep === 4)
+                    root.firstRunOnboardingStep = 5
             }
         }
 
-        Item {
+        OnboardingNavigationBlock {
             id: onboardingNavigationBlockCompact
-            width: 94
-            height: 23
-            x: onboardingStep1Bubble.x + 294 - (width / 2)
-            y: onboardingStep1Bubble.y + onboardingStep1Bubble.height - 290 - (height / 2)
+            x: onboardingStep1Bubble.x + 259 - anchorPointX
+            y: onboardingStep1Bubble.y + onboardingStep1Bubble.height - 290 - anchorPointY
             visible: root.firstRunOnboardingStep === 1
-
-            Image {
-                id: onboardingCompactMenuSlash
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.verticalCenterOffset: -2
-                source: uiTokens.onboardingAssetSource("slash", root.appLanguage)
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-            }
-
-            Item {
-                id: onboardingCompactNextButtonHitbox
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: 76
-                height: 21
-
-                Image {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: onboardingCompactNextMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingAssetSource("next", root.appLanguage)
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                }
-
-                MouseArea {
-                    id: onboardingCompactNextMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.firstRunOnboardingStep = 2
-                }
-            }
+            textLanguage: root.appLanguage
+            backVisible: false
+            onNextRequested: root.firstRunOnboardingStep = 2
         }
 
-        Item {
+        OnboardingNavigationBlock {
             id: onboardingNavigationBlockFinal
-            width: 182
-            height: 23
-            x: onboardingStep5BottomBubble.x + root.firstRunStep5NavOffsetXFromBubbleLeft - (width / 2)
+            x: onboardingStep5BottomBubble.x + root.firstRunStep5NavOffsetXFromBubbleLeft - anchorPointX
             y: onboardingStep5BottomBubble.y
                 + onboardingStep5BottomBubble.height
                 - root.firstRunStep5NavBottomInsetFromBubbleBottom
                 - root.firstRunStep5NavLift
-                - (height / 2)
+                - anchorPointY
             visible: root.firstRunOnboardingStep === 5
+            textLanguage: root.appLanguage
+            closeVisible: true
             z: 20
             opacity: 1.0
-
-            Item {
-                id: onboardingFinalBackButtonHitbox
-                anchors.left: parent.left
-                anchors.verticalCenter: parent.verticalCenter
-                width: 84
-                height: 21
-
-                Image {
-                    anchors.left: parent.left
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: onboardingFinalBackMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingAssetSource("back", root.appLanguage)
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                    z: 1
-                }
-
-                MouseArea {
-                    id: onboardingFinalBackMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.firstRunOnboardingStep = 4
-                }
-            }
-
-            Item {
-                id: onboardingFinalCloseButtonHitbox
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                width: 76
-                height: 21
-
-                Image {
-                    anchors.right: parent.right
-                    anchors.verticalCenter: parent.verticalCenter
-                    anchors.verticalCenterOffset: onboardingFinalCloseNavMouseArea.containsMouse ? -2 : 0
-                    source: uiTokens.onboardingAssetSource("close", root.appLanguage)
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                    z: 1
-                }
-
-                MouseArea {
-                    id: onboardingFinalCloseNavMouseArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.closeOnboarding()
-                }
-            }
-
-            Image {
-                x: 95 - (width / 2)
-                y: height - 10 - (height / 2)
-                source: uiTokens.onboardingAssetSource("slash", root.appLanguage)
-                fillMode: Image.PreserveAspectFit
-                smooth: true
-                z: 1
-            }
+            onBackRequested: root.firstRunOnboardingStep = 4
+            onCloseRequested: root.closeOnboarding()
         }
 
         Rectangle {

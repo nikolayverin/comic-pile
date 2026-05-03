@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 Rectangle {
     id: libraryPane
@@ -20,6 +21,7 @@ Rectangle {
     readonly property var seriesHeaderController: seriesHeaderControllerRef
     readonly property var deleteController: deleteControllerRef
     readonly property var metadataDialog: metadataDialogRef
+    readonly property string textLanguage: root ? String(root.appLanguage || AppText.fallbackLanguageCode) : AppText.fallbackLanguageCode
     // Temporary measurement mode for preparing raster publisher logos.
     // Keep disabled for normal hero logo presentation.
     property bool publisherLogoDebugMode: false
@@ -38,6 +40,19 @@ Rectangle {
 
     function setAbsoluteSplitScroll(targetValue) {
         rightPane.setAbsoluteSplitScroll(targetValue)
+    }
+
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
+
+    function traceMetadataIssue(message) {
+        if (typeof libraryModel !== "undefined" && libraryModel && typeof libraryModel.appendStartupLog === "function") {
+            libraryModel.appendStartupLog("[metadata-dialog] issue " + String(message || ""))
+        }
+        if (startupController && typeof startupController.launchLog === "function") {
+            startupController.launchLog("metadata-dialog issue " + String(message || ""))
+        }
     }
 
     Item {
@@ -554,7 +569,7 @@ Rectangle {
             x: 0
             y: 0
             width: parent.width
-            text: "Series:"
+            text: libraryPane.localizedText("seriesMetaLabelSeries") + ":"
             color: root.textMuted
             font.family: root.uiFontFamily
             font.pixelSize: root.fontUiMuted
@@ -581,7 +596,7 @@ Rectangle {
             x: 0
             y: heroSeriesTitleText.y + heroSeriesTitleText.implicitHeight + 24
             width: parent.width
-            text: "Summary:"
+            text: libraryPane.localizedText("seriesMetaLabelSummary") + ":"
             color: root.textMuted
             font.family: root.uiFontFamily
             font.pixelSize: root.fontUiMuted
@@ -648,7 +663,7 @@ Rectangle {
                 x: heroMetaGrid.pair1LabelX
                 y: heroMetaGrid.topRowY
                 width: heroMetaGrid.pairLabelWidth
-                text: "Year:"
+                text: libraryPane.localizedText("seriesMetaLabelYear") + ":"
                 color: root.textMuted
                 font.family: root.uiFontFamily
                 font.pixelSize: root.fontUiMuted
@@ -678,7 +693,7 @@ Rectangle {
                 x: heroMetaGrid.pair2LabelX
                 y: heroMetaGrid.topRowY
                 width: heroMetaGrid.pairLabelWidth
-                text: "Volume:"
+                text: libraryPane.localizedText("seriesMetaLabelVolume") + ":"
                 color: root.textMuted
                 font.family: root.uiFontFamily
                 font.pixelSize: root.fontUiMuted
@@ -708,7 +723,7 @@ Rectangle {
                 x: heroMetaGrid.pair3LabelX
                 y: heroMetaGrid.bottomRowY
                 width: heroMetaGrid.pairLabelWidth
-                text: "Publisher:"
+                text: libraryPane.localizedText("seriesMetaLabelPublisher") + ":"
                 color: root.textMuted
                 font.family: root.uiFontFamily
                 font.pixelSize: root.fontUiMuted
@@ -738,7 +753,7 @@ Rectangle {
                 x: heroMetaGrid.pair4LabelX
                 y: heroMetaGrid.bottomRowY
                 width: heroMetaGrid.pairLabelWidth
-                text: "Genres:"
+                text: libraryPane.localizedText("seriesMetaLabelGenres") + ":"
                 color: root.textMuted
                 font.family: root.uiFontFamily
                 font.pixelSize: root.fontUiMuted
@@ -902,6 +917,8 @@ Item {
         cellHeight: cardHeight + spacing
 
         delegate: Item {
+            id: issueDelegate
+
             readonly property var itemData: modelData || ({})
 
             readonly property int comicId: Number(itemData.id || 0)
@@ -976,6 +993,7 @@ Item {
                 actionMenuBackgroundColor: root.bgApp
                 actionMenuHoverColor: root.uiActionHoverBackground
                 actionMenuBoundsItem: rightPane
+                textLanguage: libraryPane.textLanguage
                 hoverOverlayColor: root.cardHoverOverlay
                 selectedOverlayColor: root.cardSelectedOverlay
                 onStartupCardCreated: {
@@ -993,36 +1011,41 @@ Item {
                     )
                 }
 
-                onReadRequested: root.openReader(parent.comicId, parent.title.length > 0 ? parent.title : parent.filename)
-                onSelectionToggled: function(checked) { root.setSelected(parent.comicId, checked) }
-                onToggleSelectedRequested: root.setSelected(parent.comicId, !root.isSelected(parent.comicId))
-                onDeleteRequested: deleteController.requestDelete(parent.comicId)
-                onMarkUnreadRequested: root.markIssueUnread(parent.comicId)
-                onReplaceRequested: root.replaceIssueArchive(parent.comicId)
+                onReadRequested: root.openReader(issueDelegate.comicId, issueDelegate.title.length > 0 ? issueDelegate.title : issueDelegate.filename)
+                onSelectionToggled: function(checked) { root.setSelected(issueDelegate.comicId, checked) }
+                onToggleSelectedRequested: root.setSelected(issueDelegate.comicId, !root.isSelected(issueDelegate.comicId))
+                onDeleteRequested: deleteController.requestDelete(issueDelegate.comicId)
+                onMarkUnreadRequested: root.markIssueUnread(issueDelegate.comicId)
+                onReplaceRequested: root.replaceIssueArchive(issueDelegate.comicId)
                 onEditRequested: {
+                    libraryPane.traceMetadataIssue(
+                        "edit requested comicId=" + String(issueDelegate.comicId)
+                        + " issue=\"" + String(issueDelegate.issueNumber || "") + "\""
+                        + " title=\"" + String(issueDelegate.title || issueDelegate.filename || "") + "\""
+                    )
                     root.openMetadataEditor({
-                        id: parent.comicId,
-                        series: parent.series,
-                        volume: parent.volume,
-                        title: parent.title,
-                        issueNumber: parent.issueNumber,
-                        publisher: parent.publisher,
-                        year: parent.year,
-                        month: parent.month,
-                        writer: parent.writer,
-                        penciller: parent.penciller,
-                        inker: parent.inker,
-                        colorist: parent.colorist,
-                        letterer: parent.letterer,
-                        coverArtist: parent.coverArtist,
-                        editor: parent.editor,
-                        storyArc: parent.storyArc,
-                        summary: parent.summary,
-                        characters: parent.characters,
-                        genres: parent.genres,
-                        ageRating: parent.ageRating,
-                        readStatus: parent.readStatus,
-                        currentPage: parent.currentPage
+                        id: issueDelegate.comicId,
+                        series: issueDelegate.series,
+                        volume: issueDelegate.volume,
+                        title: issueDelegate.title,
+                        issueNumber: issueDelegate.issueNumber,
+                        publisher: issueDelegate.publisher,
+                        year: issueDelegate.year,
+                        month: issueDelegate.month,
+                        writer: issueDelegate.writer,
+                        penciller: issueDelegate.penciller,
+                        inker: issueDelegate.inker,
+                        colorist: issueDelegate.colorist,
+                        letterer: issueDelegate.letterer,
+                        coverArtist: issueDelegate.coverArtist,
+                        editor: issueDelegate.editor,
+                        storyArc: issueDelegate.storyArc,
+                        summary: issueDelegate.summary,
+                        characters: issueDelegate.characters,
+                        genres: issueDelegate.genres,
+                        ageRating: issueDelegate.ageRating,
+                        readStatus: issueDelegate.readStatus,
+                        currentPage: issueDelegate.currentPage
                     })
                 }
             }

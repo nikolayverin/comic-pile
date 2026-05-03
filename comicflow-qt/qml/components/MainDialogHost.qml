@@ -416,6 +416,7 @@ Item {
         id: seriesHeaderDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         shuffleBackgroundEnabled: seriesHeaderController.canShuffleBackground()
         shuffleBackgroundBusy: seriesHeaderController.dialogBackgroundShuffleRequestId !== -1
         coverPreviewSource: seriesHeaderController.dialogCoverPath.length > 0

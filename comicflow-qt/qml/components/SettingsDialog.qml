@@ -41,10 +41,10 @@ PopupDialogWindow {
     readonly property color actionHoverEdgeColor: themeColors.popupActionHoverEdgeColor
     readonly property color actionPressedColor: themeColors.popupActionPressedColor
     readonly property color actionPressedEdgeColor: themeColors.popupActionPressedEdgeColor
-    readonly property int sidebarWidth: 190
+    readonly property int sidebarWidth: 226
     readonly property int menuTop: 52
     readonly property int menuLeft: 12
-    readonly property int menuItemWidth: 158
+    readonly property int menuItemWidth: 194
     readonly property int menuItemHeight: 24
     readonly property int menuItemRadius: 6
     readonly property int menuItemSpacing: 10
@@ -86,7 +86,7 @@ PopupDialogWindow {
     debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     title: ""
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
-    width: 820
+    width: 856
     height: 345
 
     onOpened: {
@@ -173,16 +173,55 @@ PopupDialogWindow {
         if (key === "general_app_language") {
             return AppLanguageCatalog.labelForCode(value)
         }
-        return String(value || "")
+        return displayOptionValue(key, value)
     }
 
-    function setDisplaySettingValue(valueKey, nextDisplayValue) {
+    function displayOptionValue(valueKey, optionValue) {
+        return AppText.settingsOptionLabel(valueKey, optionValue, textLanguage)
+    }
+
+    function normalizedOptionArray(options) {
+        if (!options) return []
+        if (Array.isArray(options)) return options
+        if (typeof options.length === "number") {
+            const normalized = []
+            for (let i = 0; i < options.length; i += 1) {
+                normalized.push(options[i])
+            }
+            return normalized
+        }
+        return []
+    }
+
+    function displayOptionValues(valueKey, options) {
+        const source = normalizedOptionArray(options)
+        const result = []
+        for (let i = 0; i < source.length; i += 1) {
+            result.push(displayOptionValue(valueKey, source[i]))
+        }
+        return result
+    }
+
+    function storedOptionValueForDisplay(valueKey, displayValue, options) {
+        const key = String(valueKey || "")
+        const selected = String(displayValue || "")
+        const source = normalizedOptionArray(options)
+        for (let i = 0; i < source.length; i += 1) {
+            const optionValue = String(source[i] || "")
+            if (displayOptionValue(key, optionValue) === selected) {
+                return optionValue
+            }
+        }
+        return selected
+    }
+
+    function setDisplaySettingValue(valueKey, nextDisplayValue, options) {
         const key = String(valueKey || "")
         if (key === "general_app_language") {
             setSettingValue(key, AppLanguageCatalog.codeForLabel(nextDisplayValue))
             return
         }
-        setSettingValue(key, nextDisplayValue)
+        setSettingValue(key, storedOptionValueForDisplay(key, nextDisplayValue, options))
     }
 
     Timer {
@@ -401,10 +440,10 @@ PopupDialogWindow {
                             anchors.right: parent.right
                             anchors.rightMargin: dialog.optionControlRightMargin
                             anchors.verticalCenter: parent.verticalCenter
-                            options: modelData.options || []
+                            options: dialog.displayOptionValues(modelData.valueKey, modelData.options || [])
                             currentText: dialog.displaySettingValue(modelData.valueKey, "")
                             onActivated: function(index, text) {
-                                dialog.setDisplaySettingValue(modelData.valueKey, text)
+                                dialog.setDisplaySettingValue(modelData.valueKey, text, modelData.options || [])
                             }
                         }
 
@@ -435,10 +474,10 @@ PopupDialogWindow {
                             anchors.right: parent.right
                             anchors.rightMargin: dialog.optionControlRightMargin
                             anchors.verticalCenter: parent.verticalCenter
-                            options: modelData.options || []
-                            currentText: String(dialog.settingValue(modelData.valueKey, ""))
+                            options: dialog.displayOptionValues(modelData.valueKey, modelData.options || [])
+                            currentText: dialog.displaySettingValue(modelData.valueKey, "")
                             onActivated: function(index, text) {
-                                dialog.setSettingValue(modelData.valueKey, text)
+                                dialog.setDisplaySettingValue(modelData.valueKey, text, modelData.options || [])
                             }
                         }
 
@@ -448,10 +487,10 @@ PopupDialogWindow {
                             anchors.right: parent.right
                             anchors.rightMargin: dialog.optionControlRightMargin
                             y: 0
-                            options: modelData.options || []
-                            currentText: String(dialog.settingValue(modelData.valueKey, ""))
+                            options: dialog.displayOptionValues(modelData.valueKey, modelData.options || [])
+                            currentText: dialog.displaySettingValue(modelData.valueKey, "")
                             onActivated: function(index, text) {
-                                dialog.setSettingValue(modelData.valueKey, text)
+                                dialog.setDisplaySettingValue(modelData.valueKey, text, modelData.options || [])
                             }
                         }
                     }
@@ -631,6 +670,7 @@ PopupDialogWindow {
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 13
+                    textFormat: Text.PlainText
                     elide: Text.ElideMiddle
                 }
 
@@ -897,6 +937,7 @@ PopupDialogWindow {
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 13
+                    textFormat: Text.PlainText
                     elide: Text.ElideMiddle
                 }
 
@@ -950,6 +991,7 @@ PopupDialogWindow {
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 13
+                    textFormat: Text.PlainText
                     elide: Text.ElideMiddle
                 }
 
@@ -1003,6 +1045,7 @@ PopupDialogWindow {
                     color: styleTokens.textColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 13
+                    textFormat: Text.PlainText
                     elide: Text.ElideMiddle
                 }
 
@@ -1206,6 +1249,7 @@ PopupDialogWindow {
                     color: libraryDataContent.hasPendingMove ? styleTokens.textColor : styleTokens.subtleTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: 13
+                    textFormat: Text.PlainText
                     elide: Text.ElideMiddle
                 }
 

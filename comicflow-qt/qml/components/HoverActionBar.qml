@@ -1,4 +1,5 @@
 import QtQuick
+import "AppText.js" as AppText
 
 Item {
     id: root
@@ -13,6 +14,7 @@ Item {
     property color textColor: themeColors.textPrimary
     property string uiFontFamily: Qt.application.font.family
     property int uiFontPixelSize: typography.uiBasePx
+    property string textLanguage: AppText.fallbackLanguageCode
     property bool hoverUiEnabled: true
     property bool presented: false
     property real topBoundaryY: 0
@@ -35,6 +37,10 @@ Item {
     signal editRequested()
     signal replaceRequested()
     signal deleteRequested()
+
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
 
     readonly property int bodyHorizontalPadding: 3
     readonly property int buttonHorizontalPadding: 12
@@ -119,7 +125,7 @@ Item {
                 id: editButton
                 height: root.buttonHeight
                 horizontalPadding: root.buttonHorizontalPadding
-                textLabel: "Edit"
+                textLabel: root.localizedText("issueMenuEdit")
                 textColor: root.textColor
                 hoverColor: root.hoverColor
                 uiFontFamily: root.uiFontFamily
@@ -132,7 +138,7 @@ Item {
                 id: replaceButton
                 height: root.buttonHeight
                 horizontalPadding: root.buttonHorizontalPadding
-                textLabel: "Replace"
+                textLabel: root.localizedText("issueMenuReplace")
                 textColor: root.textColor
                 hoverColor: root.hoverColor
                 uiFontFamily: root.uiFontFamily
@@ -145,7 +151,7 @@ Item {
                 id: deleteButton
                 height: root.buttonHeight
                 horizontalPadding: root.buttonHorizontalPadding
-                textLabel: "Delete"
+                textLabel: root.localizedText("issueMenuDelete")
                 textColor: root.textColor
                 hoverColor: root.hoverColor
                 uiFontFamily: root.uiFontFamily

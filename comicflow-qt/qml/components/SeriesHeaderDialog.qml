@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -10,6 +11,7 @@ PopupDialogWindow {
     property string errorText: ""
     property bool shuffleBackgroundEnabled: false
     property bool shuffleBackgroundBusy: false
+    property string textLanguage: AppText.fallbackLanguageCode
 
     signal uploadCoverRequested()
     signal uploadBackgroundRequested()
@@ -27,12 +29,17 @@ PopupDialogWindow {
     }
 
     popupStyle: styleTokens
-    title: "Series Header"
+    title: localizedText("seriesHeaderTitle")
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
     width: styleTokens.seriesHeaderWidth
     height: styleTokens.seriesHeaderHeight
 
     onCloseRequested: dialog.cancelRequested()
+
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
+
     component UploadPreviewCard: Item {
         id: card
 
@@ -270,7 +277,7 @@ PopupDialogWindow {
             spacing: headerLayout.sectionTitleToPreviewLabelsGap
 
             Label {
-                text: "Theme"
+                text: dialog.localizedText("seriesHeaderTheme")
                 color: styleTokens.textColor
                 font.pixelSize: styleTokens.dialogHintFontSize
             }
@@ -291,7 +298,7 @@ PopupDialogWindow {
                             id: coverTitleLabel
                             anchors.left: parent.left
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Main cover"
+                            text: dialog.localizedText("seriesHeaderMainCover")
                             color: styleTokens.textColor
                             font.pixelSize: styleTokens.dialogHintFontSize
                         }
@@ -314,7 +321,7 @@ PopupDialogWindow {
                         width: parent.width
                         height: headerLayout.coverHeight
                         source: dialog.coverPreviewSource
-                        uploadText: "Upload\ncover"
+                        uploadText: dialog.localizedText("seriesHeaderUploadCover")
                         onClicked: dialog.uploadCoverRequested()
                     }
                 }
@@ -332,7 +339,7 @@ PopupDialogWindow {
                             id: backgroundTitleLabel
                             anchors.left: backgroundHeaderItem.left
                             anchors.verticalCenter: parent.verticalCenter
-                            text: "Background"
+                            text: dialog.localizedText("seriesHeaderBackground")
                             color: styleTokens.textColor
                             font.pixelSize: styleTokens.dialogHintFontSize
                         }
@@ -349,7 +356,7 @@ PopupDialogWindow {
                             hoverColor: styleTokens.footerButtonHoverColor
                             textColor: styleTokens.textColor
                             textPixelSize: styleTokens.dialogHintFontSize
-                            text: "Shuffle"
+                            text: dialog.localizedText("seriesHeaderShuffle")
                             enabled: dialog.shuffleBackgroundEnabled && !dialog.shuffleBackgroundBusy
                             onClicked: dialog.shuffleBackgroundRequested()
                         }
@@ -402,7 +409,7 @@ PopupDialogWindow {
                         height: headerLayout.backgroundHeight
                         loading: dialog.shuffleBackgroundBusy
                         source: dialog.backgroundPreviewSource
-                        uploadText: "Upload\nbackground"
+                        uploadText: dialog.localizedText("seriesHeaderUploadBackground")
                         onClicked: dialog.uploadBackgroundRequested()
                     }
                 }
@@ -425,7 +432,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Save"
+                text: dialog.localizedText("seriesMetaButtonSave")
                 onClicked: dialog.saveRequested()
             }
 
@@ -438,7 +445,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Reset to default"
+                text: dialog.localizedText("seriesHeaderResetToDefault")
                 onClicked: dialog.resetRequested()
             }
 
@@ -451,7 +458,7 @@ PopupDialogWindow {
                 hoverColor: styleTokens.footerButtonHoverColor
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
-                text: "Cancel"
+                text: dialog.localizedText("commonCancel")
                 onClicked: dialog.cancelRequested()
             }
         }

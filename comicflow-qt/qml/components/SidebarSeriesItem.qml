@@ -17,6 +17,7 @@ Item {
     property int itemIndex: -1
     property int dismissToken: 0
     property int sidebarWidth: 320
+    property var debugLogTarget: null
     property bool selected: false
     property bool importInProgress: false
     property bool menuDeleteOnly: false
@@ -96,6 +97,19 @@ Item {
 
     function localizedText(textKey) {
         return AppText.t(textKey, textLanguage)
+    }
+
+    function traceSeriesMenu(message) {
+        const target = debugLogTarget
+        if (!target || typeof target.appendStartupLog !== "function") return
+        target.appendStartupLog(
+            "[metadata-dialog] sidebar-item "
+            + "key=" + String(root.seriesKey || "")
+            + " selected=" + String(root.selected)
+            + " bulk=" + String(root.menuBulkEditMode)
+            + " deleteOnly=" + String(root.menuDeleteOnly)
+            + " " + String(message || "")
+        )
     }
 
     Rectangle {
@@ -203,6 +217,10 @@ Item {
                 enabled: root.utilityVisible
                 cursorShape: Qt.PointingHandCursor
                 onClicked: function(mouse) {
+                    root.traceSeriesMenu(
+                        "dots clicked modifiers=" + String(mouse.modifiers)
+                        + " items=" + JSON.stringify(root.menuItems)
+                    )
                     root.dismissMenusRequested()
                     if (!root.selected) {
                         root.seriesSelectionRequested(mouse.modifiers)
@@ -225,6 +243,7 @@ Item {
             textColor: root.menuPopupTextColor
             disabledTextColor: root.menuPopupDisabledTextColor
             onItemTriggered: function(index, action) {
+                root.traceSeriesMenu("menu triggered index=" + String(index) + " action=" + String(action || ""))
                 if (action === "addIssues") {
                     root.addIssueRequested()
                     return

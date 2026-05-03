@@ -249,6 +249,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/VerticalScrollThumb.qml
         qml/components/ReaderPopupUtils.js
         qml/components/ReaderShortcutsPopup.qml
+        qml/components/OnboardingNavigationBlock.qml
         qml/components/PopupSurface.qml
         qml/components/InsetEdgeSurface.qml
         qml/components/PopupFieldBackground.qml
@@ -385,6 +386,30 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/onboarding/close.png
         assets/ui/onboarding/next.png
         assets/ui/onboarding/slash.png
+        assets/ui/onboarding/de/back.png
+        assets/ui/onboarding/de/close.png
+        assets/ui/onboarding/de/next.png
+        assets/ui/onboarding/de/step-1.png
+        assets/ui/onboarding/es/back.png
+        assets/ui/onboarding/es/close.png
+        assets/ui/onboarding/es/next.png
+        assets/ui/onboarding/es/step-1.png
+        assets/ui/onboarding/fr/back.png
+        assets/ui/onboarding/fr/close.png
+        assets/ui/onboarding/fr/next.png
+        assets/ui/onboarding/fr/step-1.png
+        assets/ui/onboarding/ja/back.png
+        assets/ui/onboarding/ja/close.png
+        assets/ui/onboarding/ja/next.png
+        assets/ui/onboarding/ja/step-1.png
+        assets/ui/onboarding/ko/back.png
+        assets/ui/onboarding/ko/close.png
+        assets/ui/onboarding/ko/next.png
+        assets/ui/onboarding/ko/step-1.png
+        assets/ui/onboarding/zh-Hans/back.png
+        assets/ui/onboarding/zh-Hans/close.png
+        assets/ui/onboarding/zh-Hans/next.png
+        assets/ui/onboarding/zh-Hans/step-1.png
         assets/ui/onboarding/step-1.png
         assets/ui/onboarding/step-2.png
         assets/ui/onboarding/step-3.png
