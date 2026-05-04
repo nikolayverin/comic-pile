@@ -18,12 +18,12 @@ var assetFiles = {
 }
 
 var localizedAssetKeysByLanguage = {
-    de: { back: true, close: true, next: true, step1: true },
-    es: { back: true, close: true, next: true, step1: true },
-    fr: { back: true, close: true, next: true, step1: true },
-    ja: { back: true, close: true, next: true, step1: true },
-    ko: { back: true, close: true, next: true, step1: true },
-    "zh-Hans": { back: true, close: true, next: true, step1: true }
+    de: { back: true, close: true, next: true, step1: true, step2: true },
+    es: { back: true, close: true, next: true, step1: true, step2: true },
+    fr: { back: true, close: true, next: true, step1: true, step2: true },
+    ja: { back: true, close: true, next: true, step1: true, step2: true },
+    ko: { back: true, close: true, next: true, step1: true, step2: true },
+    "zh-Hans": { back: true, close: true, next: true, step1: true, step2: true }
 }
 
 function assetFile(assetKey) {
