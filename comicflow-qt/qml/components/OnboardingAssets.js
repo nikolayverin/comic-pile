@@ -18,12 +18,12 @@ var assetFiles = {
 }
 
 var localizedAssetKeysByLanguage = {
-    de: { back: true, close: true, next: true, step1: true, step2: true, step3: true },
-    es: { back: true, close: true, next: true, step1: true, step2: true, step3: true },
-    fr: { back: true, close: true, next: true, step1: true, step2: true, step3: true },
-    ja: { back: true, close: true, next: true, step1: true, step2: true, step3: true },
-    ko: { back: true, close: true, next: true, step1: true, step2: true, step3: true },
-    "zh-Hans": { back: true, close: true, next: true, step1: true, step2: true, step3: true }
+    de: { back: true, close: true, next: true, step1: true, step2: true, step3: true, step4: true, step5Top: true, step5Bottom: true },
+    es: { back: true, close: true, next: true, step1: true, step2: true, step3: true, step4: true, step5Top: true, step5Bottom: true },
+    fr: { back: true, close: true, next: true, step1: true, step2: true, step3: true, step4: true, step5Top: true, step5Bottom: true },
+    ja: { back: true, close: true, next: true, step1: true, step2: true, step3: true, step4: true, step5Top: true, step5Bottom: true },
+    ko: { back: true, close: true, next: true, step1: true, step2: true, step3: true, step4: true, step5Top: true, step5Bottom: true },
+    "zh-Hans": { back: true, close: true, next: true, step1: true, step2: true, step3: true, step4: true, step5Top: true, step5Bottom: true }
 }
 
 function assetFile(assetKey) {
