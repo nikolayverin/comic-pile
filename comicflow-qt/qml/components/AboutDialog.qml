@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -33,6 +34,7 @@ PopupDialogWindow {
         return versionText + " (DEV " + buildText + ")"
     }
     readonly property bool hasUpdateAvailable: Boolean(updatesRef) && Boolean(updatesRef.hasReleaseInfo) && Boolean(updatesRef.latestVersionIsNewer)
+    property string textLanguage: AppText.fallbackLanguageCode
     property bool manualUpdateCheckPending: false
 
     PopupStyle {
@@ -61,6 +63,10 @@ PopupDialogWindow {
         return "<a href=\"" + url + "\" style=\"color:" + aboutLinkColor + "; text-decoration:" + decoration + ";\">" + label + "</a>"
     }
 
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
+
     Connections {
         target: dialog.updatesRef
 
@@ -82,7 +88,7 @@ PopupDialogWindow {
             id: aboutTitle
             anchors.horizontalCenter: parent.horizontalCenter
             y: uiTokens.aboutTitleY
-            text: "About"
+            text: dialog.localizedText("aboutTitle")
             color: dialog.aboutPrimaryTextColor
             font.family: Qt.application.font.family
             font.pixelSize: typography.aboutTitlePx
@@ -117,7 +123,7 @@ PopupDialogWindow {
             id: appSubtitle
             anchors.horizontalCenter: parent.horizontalCenter
             y: appName.y + appName.implicitHeight
-            text: "comic reader and library manager"
+            text: dialog.localizedText("aboutSubtitle")
             color: dialog.aboutSubtitleTextColor
             font.family: Qt.application.font.family
             font.pixelSize: typography.aboutBodyPx
@@ -132,7 +138,7 @@ PopupDialogWindow {
             rowSpacing: uiTokens.aboutInfoGridRowSpacing
 
             Text {
-                text: "Created by"
+                text: dialog.localizedText("aboutCreatedBy")
                 color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -149,7 +155,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: "Made with"
+                text: dialog.localizedText("aboutMadeWith")
                 color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -166,7 +172,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: "Built with"
+                text: dialog.localizedText("aboutBuiltWith")
                 color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -183,7 +189,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: "Licenses"
+                text: dialog.localizedText("aboutLicenses")
                 color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -199,7 +205,7 @@ PopupDialogWindow {
                 Text {
                     id: projectLicenseLink
                     property bool hovered: false
-                    text: dialog.aboutLinkText(dialog.projectLicenseUrl, "Project License", hovered)
+                    text: dialog.aboutLinkText(dialog.projectLicenseUrl, dialog.localizedText("aboutProjectLicense"), hovered)
                     color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: typography.aboutBodyPx
@@ -223,7 +229,7 @@ PopupDialogWindow {
                 Text {
                     id: qtLicensesLink
                     property bool hovered: false
-                    text: dialog.aboutLinkText(dialog.qtLicensesUrl, "Qt Licenses", hovered)
+                    text: dialog.aboutLinkText(dialog.qtLicensesUrl, dialog.localizedText("aboutQtLicenses"), hovered)
                     color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: typography.aboutBodyPx
@@ -247,7 +253,7 @@ PopupDialogWindow {
                 Text {
                     id: thirdPartyLicensesLink
                     property bool hovered: false
-                    text: dialog.aboutLinkText(dialog.thirdPartyLicensesUrl, "Third-Party Licenses", hovered)
+                    text: dialog.aboutLinkText(dialog.thirdPartyLicensesUrl, dialog.localizedText("aboutThirdPartyLicenses"), hovered)
                     color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: typography.aboutBodyPx
@@ -270,7 +276,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: "Source Code"
+                text: dialog.localizedText("aboutSourceCode")
                 color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -282,7 +288,7 @@ PopupDialogWindow {
             Text {
                 id: repositoryLink
                 property bool hovered: false
-                text: dialog.aboutLinkText(dialog.repositoryUrl, "GitHub Repository", hovered)
+                text: dialog.aboutLinkText(dialog.repositoryUrl, dialog.localizedText("aboutGitHubRepository"), hovered)
                 color: dialog.aboutPrimaryTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -304,7 +310,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: "Build"
+                text: dialog.localizedText("aboutBuild")
                 color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -321,7 +327,7 @@ PopupDialogWindow {
             }
 
             Text {
-                text: "Updates"
+                text: dialog.localizedText("aboutUpdates")
                 color: dialog.aboutMutedTextColor
                 font.family: Qt.application.font.family
                 font.pixelSize: typography.aboutBodyPx
@@ -337,13 +343,13 @@ PopupDialogWindow {
                 PopupActionButton {
                     id: checkForUpdatesButton
                     text: dialog.updatesRef && Boolean(dialog.updatesRef.checking)
-                        ? "Checking..."
+                        ? dialog.localizedText("aboutCheckingForUpdates")
                         : dialog.updatesRef
                           && Boolean(dialog.updatesRef.hasReleaseInfo)
                           && !Boolean(dialog.updatesRef.latestVersionIsNewer)
                           && String(dialog.updatesRef.lastError || "").trim().length < 1
-                            ? "You are up to date"
-                        : "Check for updates"
+                            ? dialog.localizedText("aboutUpToDate")
+                        : dialog.localizedText("aboutCheckForUpdates")
                     enabled: !!dialog.updatesRef
                         && !(dialog.updatesRef && Boolean(dialog.updatesRef.checking))
                         && !(dialog.updatesRef
@@ -370,7 +376,7 @@ PopupDialogWindow {
                     id: viewUpdateLink
                     visible: dialog.hasUpdateAvailable
                     property bool hovered: false
-                    text: dialog.aboutLinkText("#", "View update", hovered)
+                    text: dialog.aboutLinkText("#", dialog.localizedText("aboutViewUpdate"), hovered)
                     color: dialog.aboutPrimaryTextColor
                     font.family: Qt.application.font.family
                     font.pixelSize: typography.aboutBodyPx
@@ -398,7 +404,7 @@ PopupDialogWindow {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             y: infoGrid.y + infoGrid.implicitHeight + uiTokens.aboutFooterTopGap
-            text: "\u00a9 2026 Open-source project"
+            text: dialog.localizedText("aboutFooterOpenSource")
             color: dialog.aboutMutedTextColor
             font.family: Qt.application.font.family
             font.pixelSize: typography.aboutBodyPx

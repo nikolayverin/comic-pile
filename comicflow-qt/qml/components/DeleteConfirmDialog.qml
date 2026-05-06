@@ -12,10 +12,10 @@ PopupConfirmDialog {
     }
 
     popupStyle: styleTokens
-    title: "Delete Archive File"
+    title: AppText.t("deleteArchiveTitle", dialog.textLanguage)
     dialogWidth: styleTokens.deleteConfirmWidth
     minimumDialogHeight: styleTokens.deleteConfirmMinHeight
-    messageText: "Delete archive file from database?"
+    messageText: AppText.t("deleteArchiveMessage", dialog.textLanguage)
 
     primaryButtonText: AppText.t("commonDelete", dialog.textLanguage)
     secondaryButtonText: AppText.t("commonCancel", dialog.textLanguage)

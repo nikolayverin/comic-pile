@@ -9,3 +9,4 @@
 - Prepared **What's new** to load bundled release notes for the selected app language, with English fallback.
 
 **Bugfixes**
+

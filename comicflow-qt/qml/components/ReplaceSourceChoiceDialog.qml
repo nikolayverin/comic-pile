@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -9,6 +10,7 @@ PopupDialogWindow {
 
     property int dialogWidth: 440
     property int minimumDialogHeight: popupStyle ? popupStyle.confirmDialogMinHeight : 152
+    property string textLanguage: AppText.fallbackLanguageCode
     readonly property int availableDialogHeight: hostHeight > 0
         ? hostHeight - 80
         : minimumDialogHeight
@@ -28,6 +30,10 @@ PopupDialogWindow {
 
     onCloseRequested: cancelRequested()
 
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
+
     PopupBodyColumn {
         id: layout
         popupStyle: dialog.popupStyle
@@ -35,7 +41,7 @@ PopupDialogWindow {
 
         Text {
             Layout.fillWidth: true
-            text: "Choose what you want to replace the issue with."
+            text: dialog.localizedText("replaceSourceMessage")
             wrapMode: Text.WordWrap
             horizontalAlignment: Text.AlignHCenter
             color: dialog.popupStyle ? dialog.popupStyle.textColor : themeColors.textPrimary
@@ -44,7 +50,7 @@ PopupDialogWindow {
 
         Text {
             Layout.fillWidth: true
-            text: "You can replace it with another archive file or with a folder of ordered page images."
+            text: dialog.localizedText("replaceSourceHint")
             wrapMode: Text.WordWrap
             horizontalAlignment: Text.AlignHCenter
             color: dialog.popupStyle ? dialog.popupStyle.subtleTextColor : themeColors.subtleTextColor
@@ -66,7 +72,7 @@ PopupDialogWindow {
                 hoverColor: dialog.popupStyle ? dialog.popupStyle.footerButtonHoverColor : themeColors.footerButtonHoverColor
                 textColor: dialog.popupStyle ? dialog.popupStyle.textColor : themeColors.textPrimary
                 textPixelSize: dialog.popupStyle ? dialog.popupStyle.footerButtonTextSize : 13
-                text: "Image folder"
+                text: dialog.localizedText("replaceSourceImageFolder")
                 onClicked: dialog.imageFolderRequested()
             }
 
@@ -79,7 +85,7 @@ PopupDialogWindow {
                 hoverColor: dialog.popupStyle ? dialog.popupStyle.footerButtonHoverColor : themeColors.footerButtonHoverColor
                 textColor: dialog.popupStyle ? dialog.popupStyle.textColor : themeColors.textPrimary
                 textPixelSize: dialog.popupStyle ? dialog.popupStyle.footerButtonTextSize : 13
-                text: "Archive file"
+                text: dialog.localizedText("replaceSourceArchiveFile")
                 onClicked: dialog.archiveRequested()
             }
         }

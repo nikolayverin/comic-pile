@@ -320,6 +320,7 @@ Item {
         id: replaceSourceChoiceDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         onArchiveRequested: root.chooseReplaceIssueArchiveSource(root.pendingReplaceArchiveComicId, "archive")
         onImageFolderRequested: root.chooseReplaceIssueArchiveSource(root.pendingReplaceArchiveComicId, "image_folder")
         onCancelRequested: root.cancelReplaceIssueArchiveConfirmation()
@@ -379,6 +380,7 @@ Item {
         id: helpDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         escapeShortcutEnabled: !popupController.secondaryLayerPopupVisible
     }
 
@@ -386,6 +388,7 @@ Item {
         id: aboutDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         onUpdateDetailsRequested: root.openUpdateAvailableDialog()
     }
 
@@ -409,6 +412,7 @@ Item {
         id: whatsNewDialog
         hostWidth: root.width
         hostHeight: root.height
+        textLanguage: dialogHost.textLanguage
         onUpdateDetailsRequested: root.openUpdateAvailableDialog()
     }
 

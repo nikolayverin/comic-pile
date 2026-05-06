@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -10,6 +11,7 @@ PopupDialogWindow {
     PopupStyle { id: styleTokens }
 
     readonly property var updatesRef: (typeof releaseCheckService !== "undefined") ? releaseCheckService : null
+    property string textLanguage: AppText.fallbackLanguageCode
     readonly property bool hasKnownUpdateAvailable: Boolean(updatesRef)
         && Boolean(updatesRef.hasReleaseInfo)
         && Boolean(updatesRef.latestVersionIsNewer)
@@ -20,25 +22,21 @@ PopupDialogWindow {
         entryKey: "current",
         version: String(appVersion || "").trim(),
         label: String(appVersion || "").trim().length > 0
-            ? "Patch v" + String(appVersion || "").trim()
-            : "Patch notes",
+            ? AppText.tf("updateAvailablePatchLabel", { version: String(appVersion || "").trim() }, dialog.textLanguage)
+            : AppText.t("whatsNewPatchNotes", dialog.textLanguage),
         notes: String(appBundledWhatsNewText || "").trim().length > 0
             ? String(appBundledWhatsNewText || "").trim()
-            : "No bundled release notes are available for this build.",
+            : AppText.t("whatsNewNoBundledNotes", dialog.textLanguage),
         current: true
     })
-    readonly property var noteEntries: bundledEntriesRaw && bundledEntriesRaw.length > 0
-        ? bundledEntriesRaw
-        : [fallbackEntry]
+    readonly property string normalizedTextLanguage: AppText.normalizedLanguageCode(textLanguage)
+    readonly property var noteEntries: localizedNoteEntries()
     readonly property int clampedSelectedIndex: Math.max(0, Math.min(selectedIndex, noteEntries.length - 1))
     readonly property var selectedEntry: noteEntries.length > 0 ? noteEntries[clampedSelectedIndex] : fallbackEntry
-    readonly property string selectedEntryLabel: {
-        const label = String((selectedEntry || {}).label || "").trim()
-        return label.length > 0 ? label : "Patch notes"
-    }
+    readonly property string selectedEntryLabel: entryDisplayLabel(selectedEntry)
     readonly property string selectedEntryNotes: {
         const text = String((selectedEntry || {}).notes || "").trim()
-        return text.length > 0 ? text : "No bundled release notes are available for this build."
+        return text.length > 0 ? text : AppText.t("whatsNewNoBundledNotes", dialog.textLanguage)
     }
 
     readonly property int sidebarWidth: 252
@@ -97,6 +95,50 @@ PopupDialogWindow {
         selectedIndex = Math.max(0, Math.min(selectedIndex, noteEntries.length - 1))
     }
 
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
+    }
+
+    function entryDisplayLabel(entry) {
+        const version = String((entry || {}).version || "").trim()
+        if (version.length > 0) {
+            return AppText.tf("updateAvailablePatchLabel", { version: version }, dialog.textLanguage)
+        }
+        const label = String((entry || {}).label || "").trim()
+        return label.length > 0 ? label : AppText.t("whatsNewPatchNotes", dialog.textLanguage)
+    }
+
+    function localizedNoteEntries() {
+        const rawEntries = bundledEntriesRaw && bundledEntriesRaw.length > 0
+            ? bundledEntriesRaw
+            : [fallbackEntry]
+        const preferredLanguage = normalizedTextLanguage
+        const fallbackLanguage = AppText.fallbackLanguageCode
+        const keys = []
+        const groupedEntries = ({})
+
+        for (let i = 0; i < rawEntries.length; i += 1) {
+            const entry = rawEntries[i] || {}
+            const key = String(entry.entryKey || entry.version || entry.fileName || i)
+            const language = AppText.normalizedLanguageCode(String(entry.language || fallbackLanguage))
+            if (!groupedEntries[key]) {
+                groupedEntries[key] = ({ first: entry, byLanguage: ({}) })
+                keys.push(key)
+            }
+            if (!groupedEntries[key].byLanguage[language]) {
+                groupedEntries[key].byLanguage[language] = entry
+            }
+        }
+
+        const result = []
+        for (let keyIndex = 0; keyIndex < keys.length; keyIndex += 1) {
+            const group = groupedEntries[keys[keyIndex]] || {}
+            const byLanguage = group.byLanguage || {}
+            result.push(byLanguage[preferredLanguage] || byLanguage[fallbackLanguage] || group.first)
+        }
+        return result.length > 0 ? result : [fallbackEntry]
+    }
+
     Item {
         anchors.fill: parent
 
@@ -114,7 +156,7 @@ PopupDialogWindow {
             id: menuTitle
             x: dialog.menuTextGlobalX
             y: dialog.menuTop - dialog.titleToMenuGap - implicitHeight
-            text: "What's new"
+            text: dialog.localizedText("topMenuWhatsNew")
             color: styleTokens.textColor
             font.family: Qt.application.font.family
             font.pixelSize: 13
@@ -143,8 +185,7 @@ PopupDialogWindow {
 
                 readonly property bool selected: dialog.clampedSelectedIndex === index
                 readonly property string labelText: {
-                    const label = String((modelData || {}).label || "").trim()
-                    return label.length > 0 ? label : "Patch notes"
+                    return dialog.entryDisplayLabel(modelData)
                 }
 
                 InsetEdgeSurface {
@@ -256,7 +297,7 @@ PopupDialogWindow {
 
                         Text {
                             id: updateLink
-                            text: "View available update"
+                            text: dialog.localizedText("whatsNewViewAvailableUpdate")
                             color: "#78b7ff"
                             font.family: Qt.application.font.family
                             font.pixelSize: 12

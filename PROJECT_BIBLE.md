@@ -1,6 +1,6 @@
 # Comic Pile Project Bible
 
-Last updated: 2026-04-25
+Last updated: 2026-05-06
 
 ## Current project state
 - Main focus: stabilize public-release behavior, update flow, and portable storage expectations while preserving the current UI and responsiveness.
@@ -94,6 +94,13 @@ Last updated: 2026-04-25
   - `Downloading update`,
   - portable `Install update` helper flow,
   - dedicated `Updating Comic Pile` Help section with screenshots and manual-update guidance.
+- App language selection is being prepared as the first post-release patch product slice:
+  - user can choose the app language from Settings,
+  - short interface text should be owned by the shared language-aware text layer,
+  - English is the source and fallback language,
+  - first launch can choose a supported visible language from the system locale,
+  - Help text and `What's new` should be externalized into per-language content files,
+  - Help screenshots stay shared and may show English UI to avoid multiplying screenshot assets per language.
 - Windows GitHub Actions CI now reaches a successful Windows build again; current remaining annotation is only a Node-runtime deprecation warning in third-party actions.
 - A clean public release flow now exists:
   - root `README.md` is now public-facing,
@@ -148,6 +155,22 @@ Last updated: 2026-04-25
 
 ## Branding
 - Product name: `Comic Pile`.
+
+## Localization Contract
+
+- English is the canonical source language, default language, and fallback language.
+- Short UI strings, menu labels, setting names, common popup copy, and compact action labels should live in `AppText.js` language dictionaries.
+- Missing translation keys should fall back to English instead of leaving blank UI or breaking bindings.
+- The language dropdown should show language names in their own language, so a user can recover even if the current interface language is unfamiliar.
+- Onboarding remains image-based for now:
+  - localized bubble and navigation assets are selected by app language,
+  - English assets remain the fallback,
+  - adding a visible language requires its onboarding assets to be ready enough for first run.
+- Help text should be split into structured per-language files such as `comicflow-qt/content/help/help.en.json`.
+- `What's new` should be split into language-suffixed Markdown files under `release/WhatsNew/`, with `whats-new-patch-notes.en.md` as the active canonical source.
+- Released patch notes should be archived with version and language suffix, for example `0.15.4.en.md`.
+- Help screenshots remain shared and may show English UI unless a separate screenshot-localization pass is explicitly approved.
+- Chinese Simplified is the visible Chinese target for the first patch; Chinese Traditional may stay prepared internally but hidden until complete.
 
 ## Git workflow
 - Keep `main` as the stable branch.

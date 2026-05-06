@@ -15,7 +15,7 @@ PopupConfirmDialog {
     }
 
     popupStyle: styleTokens
-    title: "Delete Series Files"
+    title: AppText.t("deleteSeriesTitle", dialog.textLanguage)
     dialogWidth: styleTokens.seriesDeleteWidth
     minimumDialogHeight: styleTokens.seriesDeleteHeight
     messageText: dialog.questionText

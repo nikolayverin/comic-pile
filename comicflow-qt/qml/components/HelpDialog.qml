@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import "HelpContent.js" as HelpContent
+import "AppText.js" as AppText
 
 PopupDialogWindow {
     id: dialog
@@ -12,6 +13,7 @@ PopupDialogWindow {
     property string contentSectionKey: "getting_started"
     property string selectedSubsectionKey: ""
     property string requestedSection: ""
+    property string textLanguage: AppText.fallbackLanguageCode
     property string pendingScrollSubsectionKey: ""
     property bool hasSessionState: false
     property string sessionSectionKey: "getting_started"
@@ -454,6 +456,9 @@ PopupDialogWindow {
         const normalized = String(url || "").trim()
         if (!normalized.length) return
         Qt.openUrlExternally(normalized)
+    }
+    function localizedText(textKey) {
+        return AppText.t(textKey, textLanguage)
     }
     function sidebarRowsModel() {
         const rows = []
@@ -977,7 +982,7 @@ PopupDialogWindow {
                                             Text {
                                                 visible: !contentSectionBlock.hasScreenshotSource
                                                 width: parent.width
-                                                text: "Screenshot"
+                                                text: dialog.localizedText("helpScreenshot")
                                                 color: styleTokens.textColor
                                                 font.family: Qt.application.font.family
                                                 font.pixelSize: 13
@@ -1120,7 +1125,7 @@ PopupDialogWindow {
                                             Text {
                                                 visible: !contentSectionBlock.hasPostScreenshotSource
                                                 width: parent.width
-                                                text: "Screenshot"
+                                                text: dialog.localizedText("helpScreenshot")
                                                 color: styleTokens.textColor
                                                 font.family: Qt.application.font.family
                                                 font.pixelSize: 13

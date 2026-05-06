@@ -1277,12 +1277,14 @@ ApplicationWindow {
     function seriesDeleteQuestionText(emphasisPixelSize) {
         const emphasisSize = Math.max(1, Number(emphasisPixelSize || 13))
         if (pendingSeriesKeys.length > 1) {
-            return "Delete files for " + String(pendingSeriesKeys.length)
-                + " series (" + String(pendingSeriesIssueCount) + " issues) from disk?"
+            return AppText.tf("deleteSeriesMultipleQuestion", {
+                seriesCount: String(pendingSeriesKeys.length),
+                issueCount: String(pendingSeriesIssueCount)
+            }, root.appLanguage)
         }
-        return "Delete files for series "
+        return AppText.t("deleteSeriesSingleQuestionPrefix", root.appLanguage)
             + popupBodyStrongText(pendingSeriesTitle, emphasisSize)
-            + " from disk?"
+            + AppText.t("deleteSeriesSingleQuestionSuffix", root.appLanguage)
     }
 
     function refreshCbrSupportState() {

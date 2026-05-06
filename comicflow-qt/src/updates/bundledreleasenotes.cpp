@@ -12,7 +12,8 @@
 namespace {
 
 constexpr auto kBundledReleaseNotesDir = ":/qt/qml/ComicPile/release/WhatsNew";
-constexpr auto kActiveReleaseNotesFileName = "whats-new-patch-notes.md";
+constexpr auto kActiveReleaseNotesBaseName = "whats-new-patch-notes";
+constexpr auto kFallbackReleaseNotesLanguage = "en";
 
 QString normalizeReleaseNotesVersion(const QString &version)
 {
@@ -60,6 +61,55 @@ QString bundledReleaseNotesResourcePathForFileName(const QString &fileName)
     return QString::fromLatin1(kBundledReleaseNotesDir) + QLatin1Char('/') + trimmedFileName;
 }
 
+QStringList supportedReleaseNotesLanguages()
+{
+    return {
+        QStringLiteral("en"),
+        QStringLiteral("es"),
+        QStringLiteral("de"),
+        QStringLiteral("fr"),
+        QStringLiteral("ja"),
+        QStringLiteral("ko"),
+        QStringLiteral("zh-Hans"),
+        QStringLiteral("zh-Hant")
+    };
+}
+
+QString releaseNotesLanguageFromBaseName(const QString &fileBaseName)
+{
+    const QString baseName = fileBaseName.trimmed();
+    for (const QString &language : supportedReleaseNotesLanguages()) {
+        if (baseName.endsWith(QStringLiteral(".") + language, Qt::CaseInsensitive)) {
+            return language;
+        }
+    }
+    return QString::fromLatin1(kFallbackReleaseNotesLanguage);
+}
+
+QString releaseNotesCanonicalBaseName(const QString &fileBaseName)
+{
+    QString baseName = fileBaseName.trimmed();
+    for (const QString &language : supportedReleaseNotesLanguages()) {
+        const QString suffix = QStringLiteral(".") + language;
+        if (baseName.endsWith(suffix, Qt::CaseInsensitive)) {
+            baseName.chop(suffix.size());
+            return baseName.trimmed();
+        }
+    }
+    return baseName;
+}
+
+QString activeReleaseNotesFileNameForLanguage(const QString &language)
+{
+    const QString normalizedLanguage = language.trimmed().isEmpty()
+        ? QString::fromLatin1(kFallbackReleaseNotesLanguage)
+        : language.trimmed();
+    return QString::fromLatin1(kActiveReleaseNotesBaseName)
+        + QLatin1Char('.')
+        + normalizedLanguage
+        + QStringLiteral(".md");
+}
+
 QString readBundledReleaseNotesFile(const QString &resourcePath)
 {
     if (resourcePath.isEmpty()) {
@@ -78,15 +128,31 @@ QString bundledReleaseNotesResourcePathForVersion(const QString &version)
 {
     const QString normalizedVersion = normalizeReleaseNotesVersion(version);
     if (normalizedVersion.isEmpty()) {
-        return bundledReleaseNotesResourcePathForFileName(QString::fromLatin1(kActiveReleaseNotesFileName));
+        return bundledReleaseNotesResourcePathForFileName(
+            activeReleaseNotesFileNameForLanguage(QString::fromLatin1(kFallbackReleaseNotesLanguage)));
     }
 
-    const QString versionedFileName = normalizedVersion + QStringLiteral(".md");
+    const QString versionedFileName = normalizedVersion
+        + QLatin1Char('.')
+        + QString::fromLatin1(kFallbackReleaseNotesLanguage)
+        + QStringLiteral(".md");
     const QString versionedPath = bundledReleaseNotesResourcePathForFileName(versionedFileName);
     if (QFile::exists(versionedPath)) {
         return versionedPath;
     }
-    return bundledReleaseNotesResourcePathForFileName(QString::fromLatin1(kActiveReleaseNotesFileName));
+
+    const QString legacyVersionedPath = bundledReleaseNotesResourcePathForFileName(normalizedVersion + QStringLiteral(".md"));
+    if (QFile::exists(legacyVersionedPath)) {
+        return legacyVersionedPath;
+    }
+
+    const QString activePath = bundledReleaseNotesResourcePathForFileName(
+        activeReleaseNotesFileNameForLanguage(QString::fromLatin1(kFallbackReleaseNotesLanguage)));
+    if (QFile::exists(activePath)) {
+        return activePath;
+    }
+
+    return bundledReleaseNotesResourcePathForFileName(QStringLiteral("whats-new-patch-notes.md"));
 }
 
 QVariantMap buildBundledReleaseNotesEntry(
@@ -94,18 +160,21 @@ QVariantMap buildBundledReleaseNotesEntry(
     const QString &currentVersion,
     const QString &notesText)
 {
-    const bool activeEntry = fileName.compare(QString::fromLatin1(kActiveReleaseNotesFileName), Qt::CaseInsensitive) == 0;
     const QString fileBaseName = QFileInfo(fileName).completeBaseName().trimmed();
+    const QString canonicalBaseName = releaseNotesCanonicalBaseName(fileBaseName);
+    const QString language = releaseNotesLanguageFromBaseName(fileBaseName);
+    const bool activeEntry = canonicalBaseName.compare(QString::fromLatin1(kActiveReleaseNotesBaseName), Qt::CaseInsensitive) == 0;
     const QString entryVersion = activeEntry
         ? normalizeReleaseNotesVersion(currentVersion)
-        : normalizeReleaseNotesVersion(fileBaseName);
+        : normalizeReleaseNotesVersion(canonicalBaseName);
     const QString labelText = entryVersion.isEmpty()
         ? QStringLiteral("Patch notes")
         : QStringLiteral("Patch v%1").arg(entryVersion);
 
     QVariantMap entry;
-    entry.insert(QStringLiteral("entryKey"), activeEntry ? QStringLiteral("current") : fileBaseName);
+    entry.insert(QStringLiteral("entryKey"), activeEntry ? QStringLiteral("current") : canonicalBaseName);
     entry.insert(QStringLiteral("fileName"), fileName);
+    entry.insert(QStringLiteral("language"), language);
     entry.insert(QStringLiteral("version"), entryVersion);
     entry.insert(QStringLiteral("label"), labelText);
     entry.insert(QStringLiteral("title"), labelText);
