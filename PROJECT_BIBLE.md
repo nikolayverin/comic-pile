@@ -168,7 +168,7 @@ Last updated: 2026-05-06
   - adding a visible language requires its onboarding assets to be ready enough for first run.
 - Help text should be split into structured per-language files such as `comicflow-qt/content/help/help.en.json`.
 - `What's new` should be split into language-suffixed Markdown files under `release/WhatsNew/`, with `whats-new-patch-notes.en.md` as the active canonical source.
-- Released patch notes should be archived with version and language suffix, for example `0.15.4.en.md`.
+- Released patch notes should be archived with version and language suffix, for example `0.16.0.en.md`.
 - Help screenshots remain shared and may show English UI unless a separate screenshot-localization pass is explicitly approved.
 - Chinese Simplified is the visible Chinese target for the first patch; Chinese Traditional may stay prepared internally but hidden until complete.
 
