@@ -2,11 +2,16 @@
 
 **Einstellungen**
 - Die Option **App-Sprache** wurde unter **Einstellungen -> Allgemein** hinzugefügt.
-- Comic Pile kann beim ersten Start jetzt die Systemsprache verwenden, wenn diese Sprache unterstützt wird.
+- Comic Pile kann beim ersten Start jetzt eine unterstützte Systemsprache verwenden.
 - Lokalisierte Oberflächentexte und Onboarding-Assets wurden für Englisch, Spanisch, Deutsch, Französisch, Japanisch, Koreanisch und Chinesisch (vereinfacht) hinzugefügt.
 
 **Hilfe und Versionshinweise**
-- **Neuigkeiten** kann jetzt gebündelte Versionshinweise für die ausgewählte App-Sprache laden, mit englischem Fallback.
+- **Hilfe** und **Neuigkeiten** folgen jetzt der ausgewählten App-Sprache, mit englischem Fallback.
+
+**Updates**
+- Update-Popups zeigen jetzt klareren Kontext zu verfügbaren Updates, Download-Fortschritt und Installation.
 
 **Fehlerbehebungen**
 
+**Oberfläche**
+- Lokalisierte Popup-Layouts wurden verbessert, damit längere übersetzte Labels und Nachrichten zuverlässiger passen und lesbar bleiben.
