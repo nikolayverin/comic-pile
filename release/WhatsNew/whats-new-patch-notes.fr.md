@@ -15,3 +15,4 @@
 
 **Interface**
 - Les layouts de popups localisés ont été améliorés pour que les longs libellés et messages traduits tiennent mieux et restent plus lisibles.
+- L'onboarding peut maintenant être fermé avec **Échap** et parcouru avec les flèches, afin de récupérer plus facilement si la fenêtre s'ouvre hors écran.

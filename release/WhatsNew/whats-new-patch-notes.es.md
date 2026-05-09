@@ -15,3 +15,4 @@
 
 **Interfaz**
 - Se mejoraron los layouts de popups localizados para que las etiquetas y mensajes traducidos largos encajen y se lean mejor.
+- El onboarding ahora se puede cerrar con **Esc** y navegar con las flechas, para recuperarse mejor si la ventana se abre fuera de pantalla.

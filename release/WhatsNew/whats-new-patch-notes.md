@@ -15,3 +15,4 @@
 
 **Interface**
 - Improved localized popup layouts so longer translated labels and messages fit and read more reliably.
+- Onboarding can now be closed with **Esc** and navigated with arrow keys, making it easier to recover if the window opens off-screen.

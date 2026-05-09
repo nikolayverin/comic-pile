@@ -15,3 +15,4 @@
 
 **Oberfläche**
 - Lokalisierte Popup-Layouts wurden verbessert, damit längere übersetzte Labels und Nachrichten zuverlässiger passen und lesbar bleiben.
+- Das Onboarding kann jetzt mit **Esc** geschlossen und mit den Pfeiltasten durchlaufen werden, falls das Fenster außerhalb des Bildschirms startet.

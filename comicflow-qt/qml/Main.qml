@@ -1107,6 +1107,20 @@ ApplicationWindow {
         firstRunOnboardingStep = 1
     }
 
+    function previousOnboardingStep() {
+        if (!firstRunOnboardingActive) return
+        firstRunOnboardingStep = Math.max(1, firstRunOnboardingStep - 1)
+    }
+
+    function nextOnboardingStep() {
+        if (!firstRunOnboardingActive) return
+        if (firstRunOnboardingStep >= 5) {
+            closeOnboarding()
+            return
+        }
+        firstRunOnboardingStep = Math.min(5, firstRunOnboardingStep + 1)
+    }
+
     function showSettingsActionResultPayload(payload) {
         settingsActionController.showSettingsActionResultPayload(payload)
     }
@@ -2383,7 +2397,6 @@ ApplicationWindow {
         visible: root.firstRunOnboardingActive
         z: 3000
         focus: visible
-        Keys.priority: Keys.BeforeItem
 
         onVisibleChanged: {
             if (visible) {
@@ -2391,33 +2404,25 @@ ApplicationWindow {
             }
         }
 
-        Keys.onLeftPressed: function(event) {
-            if (root.firstRunOnboardingStep === 5)
-                root.firstRunOnboardingStep = 4
-            else if (root.firstRunOnboardingStep === 4)
-                root.firstRunOnboardingStep = 3
-            else if (root.firstRunOnboardingStep === 3)
-                root.firstRunOnboardingStep = 2
-            else if (root.firstRunOnboardingStep === 2)
-                root.firstRunOnboardingStep = 1
-            event.accepted = true
+        Shortcut {
+            sequence: "Escape"
+            context: Qt.ApplicationShortcut
+            enabled: root.firstRunOnboardingActive
+            onActivated: root.closeOnboarding()
         }
 
-        Keys.onRightPressed: function(event) {
-            if (root.firstRunOnboardingStep === 1)
-                root.firstRunOnboardingStep = 2
-            else if (root.firstRunOnboardingStep === 2)
-                root.firstRunOnboardingStep = 3
-            else if (root.firstRunOnboardingStep === 3)
-                root.firstRunOnboardingStep = 4
-            else if (root.firstRunOnboardingStep === 4)
-                root.firstRunOnboardingStep = 5
-            event.accepted = true
+        Shortcut {
+            sequence: "Left"
+            context: Qt.ApplicationShortcut
+            enabled: root.firstRunOnboardingActive && root.firstRunOnboardingStep > 1
+            onActivated: root.previousOnboardingStep()
         }
 
-        Keys.onEscapePressed: function(event) {
-            root.closeOnboarding()
-            event.accepted = true
+        Shortcut {
+            sequence: "Right"
+            context: Qt.ApplicationShortcut
+            enabled: root.firstRunOnboardingActive
+            onActivated: root.nextOnboardingStep()
         }
 
         Canvas {
@@ -2711,22 +2716,10 @@ ApplicationWindow {
                 || root.firstRunOnboardingStep === 4
             textLanguage: root.appLanguage
             onBackRequested: {
-                if (root.firstRunOnboardingStep === 5)
-                    root.firstRunOnboardingStep = 4
-                else if (root.firstRunOnboardingStep === 4)
-                    root.firstRunOnboardingStep = 3
-                else if (root.firstRunOnboardingStep === 3)
-                    root.firstRunOnboardingStep = 2
-                else
-                    root.firstRunOnboardingStep = 1
+                root.previousOnboardingStep()
             }
             onNextRequested: {
-                if (root.firstRunOnboardingStep === 2)
-                    root.firstRunOnboardingStep = 3
-                else if (root.firstRunOnboardingStep === 3)
-                    root.firstRunOnboardingStep = 4
-                else if (root.firstRunOnboardingStep === 4)
-                    root.firstRunOnboardingStep = 5
+                root.nextOnboardingStep()
             }
         }
 
@@ -2737,7 +2730,7 @@ ApplicationWindow {
             visible: root.firstRunOnboardingStep === 1
             textLanguage: root.appLanguage
             backVisible: false
-            onNextRequested: root.firstRunOnboardingStep = 2
+            onNextRequested: root.nextOnboardingStep()
         }
 
         OnboardingNavigationBlock {
@@ -2753,7 +2746,7 @@ ApplicationWindow {
             closeVisible: true
             z: 20
             opacity: 1.0
-            onBackRequested: root.firstRunOnboardingStep = 4
+            onBackRequested: root.previousOnboardingStep()
             onCloseRequested: root.closeOnboarding()
         }
 
