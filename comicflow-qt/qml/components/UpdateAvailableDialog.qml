@@ -42,6 +42,8 @@ PopupDialogWindow {
     readonly property int contentImplicitHeight: styleTokens.dialogBodyTopMargin
         + headerBlock.implicitHeight
         + styleTokens.dialogContentSpacing
+        + updateContextText.implicitHeight
+        + styleTokens.dialogContentSpacing
         + dialog.notesViewportPreferredHeight
         + dialog.footerZoneHeight
         + styleTokens.dialogBottomMargin
@@ -142,7 +144,7 @@ PopupDialogWindow {
                 id: notesViewportHost
                 anchors.left: parent.left
                 anchors.right: parent.right
-                anchors.top: headerBlock.bottom
+                anchors.top: updateContextText.bottom
                 anchors.topMargin: styleTokens.dialogContentSpacing
                 anchors.bottom: parent.bottom
 
@@ -181,6 +183,21 @@ PopupDialogWindow {
                     thumbInset: 0
                     thumbColor: "#111111"
                 }
+            }
+
+            Text {
+                id: updateContextText
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: headerBlock.bottom
+                anchors.topMargin: styleTokens.dialogContentSpacing
+                text: AppText.t("updateAvailableContext", dialog.textLanguage)
+                color: styleTokens.subtleTextColor
+                font.family: Qt.application.font.family
+                font.pixelSize: styleTokens.dialogBodyFontSize
+                wrapMode: Text.WordWrap
+                lineHeight: 1.2
+                lineHeightMode: Text.ProportionalHeight
             }
         }
 

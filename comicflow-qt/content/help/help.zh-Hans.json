@@ -1,0 +1,98 @@
+{
+  "sections": [
+    {
+      "key": "getting_started",
+      "label": "开始使用",
+      "leadHtml": "如果你是第一次使用 <b><i>Comic Pile</i></b>，先导入几本漫画，打开一个期数进入阅读器，再回到资料库看一看。这样就能快速理解应用的基本流程。",
+      "subsections": [
+        { "key": "what_is_comic_pile", "label": "Comic Pile 是什么？", "bodyHtml": "<b><i>Comic Pile</i></b> 是用于本地漫画和 manga 文件的资料库与阅读器。你可以导入电脑上的文件，在资料库中整理它们，按需要补充系列或期数信息，然后在阅读器中阅读。" },
+        { "key": "main_areas", "label": "应用的主要区域", "bodyHtml": "<b>主菜单</b><br><b>顶部栏</b>包含 <b>文件</b>、<b>帮助</b>、<b>继续阅读</b> 和 <b>下一个未读</b>。<br><br><b>资料库</b><br>包含搜索、<b>上次导入</b>、<b>收藏</b>、<b>书签</b> 和系列列表。<br><br><b>拖放区域</b><br>位于资料库底部，可以把支持的文件或文件夹拖到这里快速加入。<br><br><b>系列区域</b><br>显示所选系列和主要信息。<br><br><b>期数</b><br>显示当前系列或筛选结果中的期数。点击封面即可阅读。<br><br><b>网格控制</b><br>底部栏可调整期数排序和网格密度。", "screenshotTitle": "主界面地图" },
+        { "key": "what_do_i_do_first", "label": "第一步该做什么？", "bodyHtml": "可以按这个简单流程开始：<br><br>&bull; 把一个期数文件拖到 <b>拖放区域</b><br>&bull; 确认它出现在界面中<br>&bull; 点击封面打开阅读器<br><br>这样你就掌握了基本流程。", "screenshotTitle": "把文件放到这里开始" },
+        { "key": "after_import", "label": "如何确认导入成功？", "bodyHtml": "导入后检查两件事：<br>&bull; 导入的系列是否出现在 <b>资料库</b> 中<br>&bull; 期数是否出现在 <b>期数</b> 区域，并且点击封面后能在 <b>阅读器</b> 中打开", "screenshotTitle": "检查导入的系列和期数" }
+      ]
+    },
+    {
+      "key": "importing_comics",
+      "label": "导入漫画",
+      "subsections": [
+        { "key": "import_source_types", "label": "可以导入哪些文件？", "bodyHtml": "Comic Pile 可以导入多种来源，不只是压缩包。<br><br><b>压缩包</b>: <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>CB7</b>, <b>7Z</b>, <b>CBT</b>, <b>TAR</b><br>&bull; 通常一个压缩包就是一个期数<br><br><b>图片文件夹</b>: <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b>, <b>WEBP</b><br>&bull; 通常一个文件夹就是由页面图片组成的一个期数<br><br><b>多页文档</b>: <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br>&bull; 通常一个文档就是一个期数<br><br>部分压缩格式使用 Comic Pile 随附的 <b>7-Zip</b> 组件。" },
+        { "key": "file_structure", "label": "文件应该如何准备？", "bodyHtml": "尽量让每个期数有一个清晰的来源。<br><br><b>好的例子:</b><br>&bull; 每个期数一个压缩包，例如 <b>ComicsName 001.cbz</b><br>&bull; 每个期数一个文件夹，例如 <b>Series Name/Issue 001/</b><br><br>图片来源的页面名称应按阅读顺序排列。使用 <b>001</b>, <b>002</b>, <b>003</b> 这样的补零编号，可以避免 <b>1</b>, <b>10</b>, <b>2</b> 这类排序问题。<br><br>尽量避免把多个期数页面混在同一个文件夹、夹杂非页面文件，或使用不一致的命名。", "screenshotTitle": "整洁文件夹结构示例" },
+        { "key": "import_size", "label": "文件大小重要吗？", "bodyHtml": "Comic Pile 没有固定的 MB 限制。文件保留在你的电脑上。较大的来源主要会让导入时间更长。" },
+        { "key": "how_to_import", "label": "如何导入漫画？", "bodyHtml": "有三种方式：<br><br>&bull; 把文件或文件夹拖到 <b>拖放区域</b><br>&bull; 使用 <b>文件 -> 添加文件</b> 导入几个指定期数<br>&bull; 使用 <b>文件 -> 添加文件夹</b> 导入包含多个相关期数的文件夹" },
+        { "key": "duplicate_found", "label": "如果发现匹配的期数会怎样？", "bodyHtml": "导入过程中发现匹配项时，Comic Pile 会先打开确认弹窗。<br><br><b>传入压缩包</b>显示正在导入的文件，<b>现有记录</b>显示资料库中的期数。<br><br><b>1. 精确重复</b><br>如果确认是重复项，会显示 <b>期数已存在</b> 弹窗。你可以保留当前项、用新文件替换，或把同样选择应用到其余重复项。", "screenshotTitle": "精确重复弹窗", "bodyHtmlAfterScreenshot": "<b>2. 相关匹配</b><br>如果看起来相似但不是精确重复，会显示 <b>可能发现重复项</b> 弹窗。你可以作为新期数导入、跳过，或在有选项时替换现有期数。", "screenshotTitleAfter": "相关匹配弹窗" },
+        { "key": "import_errors_batch", "label": "出现 Import Errors 时怎么办？", "bodyHtml": "看到 <b>导入错误</b> 表示当前批次中的一部分文件没有成功导入。<br><br>修好文件后用 <b>重试</b>；只排除当前文件用 <b>跳过</b>；排除所有剩余失败项用 <b>全部跳过</b>。", "screenshotTitle": "导入过程中的错误弹窗" },
+        { "key": "after_import_flow", "label": "导入完成后会发生什么？", "bodyHtml": "导入完成后，第一个导入的系列会自动打开。你可以立即查看结果并打开期数。" }
+      ]
+    },
+    {
+      "key": "supported_formats",
+      "label": "支持的格式",
+      "subsections": [
+        { "key": "import_formats", "label": "可以导入哪些格式？", "bodyHtml": "Comic Pile 支持：<br><br><b>压缩包:</b> <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>7Z</b>, <b>CB7</b>, <b>CBT</b>, <b>TAR</b><br><b>文档:</b> <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br><b>图片文件夹:</b> 包含 <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b>, <b>WEBP</b> 页面的文件夹" },
+        { "key": "cbr_note", "label": "如果 CBR 无法导入？", "bodyHtml": "<b>CBR</b> 支持依赖 <b>7-Zip</b>。如果只有 CBR 失败，而 CBZ 或 PDF 正常，请在 <b>文件 -> 设置 -> 导入和压缩包</b> 中检查 7-Zip。<br><br>如果仍然失败，请先更新应用。7-Zip 已随 Comic Pile 提供。必要时也可以从 <a href=\"https://www.7-zip.org/\" style=\"color:#78b7ff; text-decoration:underline;\">https://www.7-zip.org/</a> 手动安装。" },
+        { "key": "after_import_normalization", "label": "可以导入图片文件夹吗？", "bodyHtml": "可以。只要最终文件夹直接包含一个期数的按阅读顺序排列的页面图片即可。<br><br><b>建议:</b><br>&bull; 每个期数一个文件夹<br>&bull; 使用 <b>Series Name 001</b> 这样的清晰名称<br>&bull; 保持页面文件名顺序<br>&bull; 不要混入其他期数的页面" },
+        { "key": "unsupported_formats", "label": "导入问题的常见原因是什么？", "bodyHtml": "常见原因：<br><br>&bull; 损坏的压缩包、文档或图片<br>&bull; 不在支持列表中的格式<br>&bull; 文件夹中混有多个期数的页面<br><br>不确定时，先用单个期数测试。" }
+      ]
+    },
+    {
+      "key": "library_data",
+      "label": "资料库和数据",
+      "subsections": [
+        { "key": "app_vs_data", "label": "什么保存在哪里？", "bodyHtml": "应用本身是你运行的程序。资料库数据单独保存，默认放在应用文件夹内。因此替换或更新应用文件时，资料库不会自动被删除。" },
+        { "key": "move_data_location", "label": "可以移动资料库数据位置吗？", "bodyHtml": "可以。打开 <b>文件 -> 设置 -> 资料库和数据</b>，使用 <b>移动资料库数据 -> 选择</b> 指定一个新的空文件夹。之后重启应用，转移就会执行。" },
+        { "key": "check_storage_access", "label": "什么时候使用检查存储访问？", "bodyHtml": "<b><i>检查存储访问</i></b> 用于怀疑文件访问或资料库位置有问题时。<br><br>例如：<br>&bull; 文件打不开<br>&bull; 很多期数同时失败<br>&bull; 导入因存储访问失败<br><br>如果一切正常，通常不需要使用它。", "screenshotTitle": "设置中的存储检查位置" },
+        { "key": "edit_one_issue", "label": "如何编辑单个期数？", "bodyHtml": "在 <b>资料库</b> 中打开系列，在 <b>期数</b> 区域找到目标期数，然后从菜单选择 <b>编辑</b>。你可以修改期数编号、标题、出版社、制作人员和故事信息。", "screenshotTitle": "期数菜单中的编辑操作" },
+        { "key": "edit_one_series", "label": "如何编辑系列信息？", "bodyHtml": "可以从系列的 <b>...</b> 菜单选择 <b>编辑系列</b>，也可以使用系列区域里的小编辑按钮。两种方式编辑的是同一组信息。", "screenshotTitle": "系列菜单中的编辑" },
+        { "key": "series_menu_actions", "label": "系列菜单里可以做什么？", "bodyHtml": "<b>...</b> 菜单会根据选择状态变化。单个系列可使用 <b>添加期数</b>、<b>编辑系列</b>、<b>删除文件</b>。<br><br>选择多个系列时，可能出现 <b>批量编辑</b>、<b>合并到系列</b>、<b>删除所选项</b> 等操作。" },
+        { "key": "fill_fields_popup", "label": "可以自动填充已保存的数据吗？", "bodyHtml": "可以。如果资料库里已经有保存过的期数或系列信息，保存时 Comic Pile 可以建议用它填充空字段。<br><br><b>从资料库填充</b>只填空字段。<b>保留当前值</b>会按当前表单内容保存。", "screenshotTitle": "填充字段弹窗" },
+        { "key": "replace_issue", "label": "如何替换期数？", "bodyHtml": "<b>替换</b>会保留资料库中的现有期数记录，只更换当前来源。适合用于同一期数的修正版或更好的副本。你可以选择压缩包文件或已排序的图片文件夹。", "screenshotTitle": "期数菜单中的替换操作" },
+        { "key": "last_import", "label": "上次导入是什么？", "bodyHtml": "<b><i>上次导入</i></b> 是显示最近导入会话的快速筛选。它不是永久书架。长期访问请在 <b>资料库</b> 中打开系列。", "screenshotTitle": "上次导入快速筛选" }
+      ]
+    },
+    {
+      "key": "updating_app",
+      "label": "更新 Comic Pile",
+      "leadHtml": "内置更新流程可以检查新的便携版发布、查看更新内容、在应用内下载，并在不替换资料库数据的情况下安装。",
+      "subsections": [
+        { "key": "check_for_updates", "label": "如何检查更新？", "bodyHtml": "打开 <b>帮助 -> 关于</b>，在 <b>更新</b> 区域点击 <b>检查更新</b>。如果有新版本，Comic Pile 会打开 <b>有可用更新</b> 弹窗。" },
+        { "key": "automatic_update_checks", "label": "会自动检查更新吗？", "bodyHtml": "会。Comic Pile 可以在使用过程中自动检查更新。你也可以在 <b>文件 -> 设置 -> 常规</b> 中关闭 <b>自动检查更新</b>。", "screenshotTitle": "自动检查更新设置", "bodyHtmlAfterScreenshot": "关闭后仍然可以随时在 <b>关于</b> 中手动检查。", "screenshotTitleAfter": "关于窗口中的检查更新" },
+        { "key": "view_update_details", "label": "有可用更新弹窗显示什么？", "bodyHtml": "它会显示最新版本和 <b>新增内容</b> 下的发布说明。稍后再看用 <b>稍后</b>，要下载则用 <b>下载更新</b>。", "screenshotTitle": "有可用更新弹窗" },
+        { "key": "whats_new_meaning", "label": "新增内容是什么？", "bodyHtml": "<b>帮助 -> 新增内容</b> 显示当前安装版本的补丁说明。如果已经检测到更新，更新弹窗会显示新版本的说明。" },
+        { "key": "download_install_flow", "label": "下载和安装如何工作？", "bodyHtml": "点击 <b>下载更新</b> 后，便携包会保存到临时位置。完成后 <b>安装更新</b> 会变为可用，应用会关闭、应用更新并重新启动。", "screenshotTitle": "下载后的安装按钮" },
+        { "key": "library_data_kept", "label": "资料库数据会保留吗？", "bodyHtml": "会。内置更新会保留 <b>Database</b> 文件夹和 <b>ComicPile.ini</b> 设置文件。" },
+        { "key": "update_errors", "label": "下载或安装失败怎么办？", "bodyHtml": "如果下载失败，先重试。可能只是临时网络问题。", "screenshotTitle": "下载失败弹窗", "bodyHtmlAfterScreenshot": "如果安装没有完成，请重试。必要时可以从 <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a> 下载最新便携版，关闭 Comic Pile 后替换应用文件。请保留 <b>Database</b> 和 <b>ComicPile.ini</b>。" }
+      ]
+    },
+    {
+      "key": "reader",
+      "label": "阅读器",
+      "subsections": [
+        { "key": "reader_overview", "label": "阅读器界面概览", "bodyHtml": "在 <b>期数</b> 中打开任意期数开始阅读。阅读器包含 <b>顶部栏</b>、<b>页面区域</b>、<b>左右箭头</b> 和 <b>底部控制</b>。Comic Pile 会从保存的位置继续打开。", "screenshotTitle": "阅读器布局" },
+        { "key": "reader_top_bar_left", "label": "顶部栏左侧", "bodyHtml": "这里有 <b>删除页面</b>、打开快捷键弹窗的 <b>信息</b>、阅读器 <b>设置</b>，以及浅色/深色 <b>主题</b> 切换。", "screenshotTitle": "阅读器顶部栏左侧" },
+        { "key": "reader_top_bar_center", "label": "顶部栏中间", "bodyHtml": "显示当前期数标题。左右箭头可在同一系列的上一个/下一个期数之间移动。快捷键：<b>A</b> / <b>D</b>。", "screenshotTitle": "阅读器顶部栏中间" },
+        { "key": "reader_top_bar_right", "label": "顶部栏右侧", "bodyHtml": "这里有 <b>漫画模式</b>、<b>1 页</b>、<b>2 页</b>、<b>全屏</b>、<b>放大镜</b>、<b>书签</b>、<b>收藏</b>、<b>复制</b> 和 <b>关闭</b>。", "screenshotTitle": "阅读器顶部栏右侧" },
+        { "key": "reader_bottom_controls", "label": "底部控制和翻页", "bodyHtml": "使用左右箭头或 <b>Left</b> / <b>Right</b> 翻页。底部包含 <b>从头阅读</b>、<b>标记为已读</b> 和页码计数。<b>漫画模式</b> 会反转方向。", "screenshotTitle": "阅读器底部控制" },
+        { "key": "reader_bookmarks_favorites", "label": "书签和收藏", "bodyHtml": "<b><i>书签</i></b> 会保存某个期数中的一个页面。<b><i>收藏</i></b> 会标记整个期数，方便在 <b>收藏</b> 筛选中找到。", "screenshotTitle": "书签标记" },
+        { "key": "continue_next_unread", "label": "继续阅读和下一个未读", "bodyHtml": "<b><i>继续阅读</i></b> 打开当前阅读目标。<b><i>下一个未读</i></b> 会在同一系列流程中打开下一个未读期数。", "screenshotTitleAfter": "继续阅读和下一个未读" }
+      ]
+    },
+    {
+      "key": "troubleshooting",
+      "label": "故障排除",
+      "subsections": [
+        { "key": "issue_does_not_open", "label": "期数打不开", "bodyHtml": "确认该期数仍在 <b>期数</b> 列表中，并尝试打开其他期数。如果很多期数同时失败，请在 <b>文件 -> 设置 -> 资料库和数据</b> 中运行 <b><i>检查存储访问</i></b>。" },
+        { "key": "import_failed", "label": "导入失败", "bodyHtml": "检查文件格式是否受支持、文件是否能在应用外打开，以及文件夹中是否包含支持的页面。如果只有 <b>CBR</b> 失败，请在 <b>导入和压缩包</b> 中检查 7-Zip。" },
+        { "key": "import_errors_popup", "label": "大型导入中只有一个压缩包失败？", "bodyHtml": "其余批次可能仍然正常。请在 <b>导入错误</b> 中查看失败文件，修复或替换后再重试。" },
+        { "key": "bug_reports", "label": "如何报告 bug？", "bodyHtml": "请在 <a href=\"https://github.com/nikolayverin/comic-pile/issues\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Issues</a> 报告 bug。写清发生了什么、预期结果、复现步骤、Windows 版本，以及 <b>关于</b> 中的 Comic Pile 版本会更有帮助。" }
+      ]
+    },
+    {
+      "key": "faq",
+      "label": "FAQ",
+      "subsections": [
+        { "key": "window_size_limits", "label": "为什么窗口不能更小？", "bodyHtml": "应用按一个能稳定展示完整界面的最小尺寸设计。如果可用屏幕小于 <b>1440 x 980</b>，Comic Pile 会按该屏幕最大化打开。" },
+        { "key": "critical_popup_close_block", "label": "为什么这个弹窗打开时不能关闭应用？", "bodyHtml": "某些弹窗需要用户先做决定，应用才能安全继续。弹窗打开期间会暂时阻止关闭应用，避免误跳过关键步骤。" }
+      ]
+    }
+  ]
+}

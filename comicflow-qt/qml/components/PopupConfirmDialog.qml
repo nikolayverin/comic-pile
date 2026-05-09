@@ -10,7 +10,7 @@ PopupDialogWindow {
 
     property string messageText: ""
     property int messageTextFormat: Text.PlainText
-    property int messageHorizontalAlignment: Text.AlignHCenter
+    property int messageHorizontalAlignment: Text.AlignLeft
     property int dialogWidth: 420
     property int minimumDialogHeight: popupStyle ? popupStyle.confirmDialogMinHeight : 138
     readonly property int availableDialogHeight: hostHeight > 0

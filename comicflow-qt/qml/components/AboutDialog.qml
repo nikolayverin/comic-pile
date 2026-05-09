@@ -356,6 +356,7 @@ PopupDialogWindow {
                             && Boolean(dialog.updatesRef.hasReleaseInfo)
                             && !Boolean(dialog.updatesRef.latestVersionIsNewer)
                             && String(dialog.updatesRef.lastError || "").trim().length < 1)
+                    Layout.preferredWidth: Math.min(implicitWidth, 190)
                     height: styleTokens.footerButtonHeight
                     minimumWidth: 168
                     horizontalPadding: styleTokens.footerButtonHorizontalPadding

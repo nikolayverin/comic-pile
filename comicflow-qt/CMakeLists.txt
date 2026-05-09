@@ -25,6 +25,15 @@ foreach(_comicpile_bundled_whats_new_file IN LISTS _comicpile_bundled_whats_new_
     )
 endforeach()
 
+file(GLOB _comicpile_help_content_files "${CMAKE_CURRENT_SOURCE_DIR}/content/help/*.json")
+foreach(_comicpile_help_content_file IN LISTS _comicpile_help_content_files)
+    get_filename_component(_comicpile_help_content_name "${_comicpile_help_content_file}" NAME)
+    set_source_files_properties(
+        "${_comicpile_help_content_file}"
+        PROPERTIES QT_RESOURCE_ALIAS "content/help/${_comicpile_help_content_name}"
+    )
+endforeach()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
@@ -366,6 +375,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-reader-two-page.svg
         assets/icons/icon-reader-full-screen.svg
         ${_comicpile_bundled_whats_new_files}
+        ${_comicpile_help_content_files}
         assets/icons/icon-reader-moon.svg
         assets/icons/icon-reader-sun.svg
         assets/icons/pencil-line-gray.svg

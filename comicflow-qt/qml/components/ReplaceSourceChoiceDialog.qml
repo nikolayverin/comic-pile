@@ -43,7 +43,7 @@ PopupDialogWindow {
             Layout.fillWidth: true
             text: dialog.localizedText("replaceSourceMessage")
             wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignHCenter
+            horizontalAlignment: Text.AlignLeft
             color: dialog.popupStyle ? dialog.popupStyle.textColor : themeColors.textPrimary
             font.pixelSize: dialog.popupStyle ? dialog.popupStyle.dialogBodyFontSize : 13
         }
@@ -52,7 +52,7 @@ PopupDialogWindow {
             Layout.fillWidth: true
             text: dialog.localizedText("replaceSourceHint")
             wrapMode: Text.WordWrap
-            horizontalAlignment: Text.AlignHCenter
+            horizontalAlignment: Text.AlignLeft
             color: dialog.popupStyle ? dialog.popupStyle.subtleTextColor : themeColors.subtleTextColor
             font.pixelSize: dialog.popupStyle ? dialog.popupStyle.dialogBodyFontSize : 13
         }

@@ -21,7 +21,11 @@ PopupDialogWindow {
         if (runtimeName.length > 0) {
             return runtimeName
         }
-        return String(assetNameText || "").trim()
+        const pendingName = String(assetNameText || "").trim()
+        if (pendingName.length > 0) {
+            return pendingName
+        }
+        return AppText.t("updateDownloadPreparingFile", dialog.textLanguage)
     }
     readonly property bool installReady: dialog.downloadedFilePath.length > 0 && !dialog.downloadActive
     readonly property int progressCounterValue: Math.max(0, Math.min(100, Math.round(dialog.downloadProgressFraction * 100)))
@@ -59,7 +63,18 @@ PopupDialogWindow {
     PopupBodyColumn {
         id: downloadBody
         popupStyle: styleTokens
-        spacing: 4
+        spacing: 12
+
+        Text {
+            Layout.fillWidth: true
+            text: AppText.t("updateDownloadContext", dialog.textLanguage)
+            color: styleTokens.subtleTextColor
+            font.family: Qt.application.font.family
+            font.pixelSize: styleTokens.dialogBodyFontSize
+            wrapMode: Text.WordWrap
+            lineHeight: 1.2
+            lineHeightMode: Text.ProportionalHeight
+        }
 
         PopupProgressBlock {
             Layout.fillWidth: true

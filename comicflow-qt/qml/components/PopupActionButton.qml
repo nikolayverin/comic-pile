@@ -60,8 +60,11 @@ Item {
         id: label
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.verticalCenter: parent.verticalCenter
+        width: Math.max(0, parent.width - (root.horizontalPadding * 2))
         color: root.textColor
         font.pixelSize: root.textPixelSize
+        horizontalAlignment: Text.AlignHCenter
+        elide: Text.ElideRight
     }
 
     MouseArea {

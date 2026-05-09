@@ -14,7 +14,14 @@ PopupDialogWindow {
     property string secondaryActionText: String((payload || {}).actionLabel || (payload || {}).buttonText || "")
     property bool secondaryActionVisible: secondaryActionText.length > 0
     readonly property int textColumnMinWidth: 120
-    readonly property int textColumnMaxWidth: 420
+    readonly property int systemLayoutSideInset: 86
+    readonly property int availableDialogWidth: hostWidth > 0
+        ? Math.max(320, hostWidth - 80)
+        : 680
+    readonly property int textColumnMaxWidth: Math.max(
+        textColumnMinWidth,
+        Math.min(620, availableDialogWidth - (systemLayoutSideInset * 2))
+    )
     readonly property int footerTopGap: 16
     readonly property int contentTextWidth: Math.max(
         textColumnMinWidth,
@@ -45,10 +52,13 @@ PopupDialogWindow {
     title: dialog.dialogTitle
     showCloseButton: false
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
-    width: Math.max(
-        actionResultFooter.requiredDialogWidth,
-        actionResultContent.implicitWidth,
-        titlePreferredWidth
+    width: Math.min(
+        availableDialogWidth,
+        Math.max(
+            actionResultFooter.requiredDialogWidth,
+            actionResultContent.implicitWidth,
+            titlePreferredWidth
+        )
     )
     height: Math.min(
         availableDialogHeight,
@@ -76,6 +86,7 @@ PopupDialogWindow {
             Layout.alignment: Qt.AlignHCenter
             visible: dialog.message.length > 0 || dialog.detailsText.length > 0
             popupStyle: styleTokens
+            sideInset: dialog.systemLayoutSideInset
             contentWidth: dialog.contentTextWidth
             iconSize: 30
             blockSpacing: 18

@@ -419,20 +419,32 @@ PopupDialogWindow {
                         required property var modelData
 
                         width: optionListColumn.width
-                        readonly property bool isRadioGroup: String(modelData.controlType || "") === "radio"
-                        height: isRadioGroup
+                        readonly property string optionControlType: String(modelData.controlType || "")
+                        readonly property bool isRadioGroup: optionControlType === "radio"
+                        readonly property bool isNote: optionControlType === "note"
+                        height: isNote
+                            ? 32
+                            : isRadioGroup
                             ? Math.max(dialog.optionRowPitch, markAsReadRadioGroup.height)
                             : dialog.optionRowPitch
 
                         Text {
                             x: 0
-                            y: parent.isRadioGroup
+                            width: parent.isNote
+                                ? parent.width - dialog.optionControlRightMargin
+                                : implicitWidth
+                            y: parent.isNote
+                                ? 0
+                                : parent.isRadioGroup
                                 ? Math.round((markAsReadRadioGroup.indicatorSize - implicitHeight) / 2)
                                 : Math.round((parent.height - implicitHeight) / 2)
                             text: dialog.catalogLabel(modelData)
-                            color: styleTokens.textColor
+                            color: parent.isNote ? styleTokens.subtleTextColor : styleTokens.textColor
                             font.family: Qt.application.font.family
-                            font.pixelSize: dialog.optionTextSize
+                            font.pixelSize: parent.isNote ? 10 : dialog.optionTextSize
+                            lineHeight: 1.15
+                            lineHeightMode: Text.ProportionalHeight
+                            wrapMode: parent.isNote ? Text.WordWrap : Text.NoWrap
                         }
 
                         SettingsChoiceDropdown {

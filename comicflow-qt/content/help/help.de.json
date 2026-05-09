@@ -1,0 +1,98 @@
+{
+  "sections": [
+    {
+      "key": "getting_started",
+      "label": "Erste Schritte",
+      "leadHtml": "Neu bei <b><i>Comic Pile</i></b>? Importiere ein paar Comics, öffne eine Ausgabe im Reader und kehre dann zur Bibliothek zurück. Damit verstehst du den Grundablauf.",
+      "subsections": [
+        { "key": "what_is_comic_pile", "label": "Was ist Comic Pile?", "bodyHtml": "<b><i>Comic Pile</i></b> ist eine Bibliothek und ein Reader für lokale Comic- und Manga-Dateien. Importiere Dateien von deinem Computer, organisiere sie in der Bibliothek, ergänze bei Bedarf Serien- oder Ausgabendaten und lies sie im Reader." },
+        { "key": "main_areas", "label": "Hauptbereiche der App", "bodyHtml": "<b>Hauptmenü</b><br>Die <b>obere Leiste</b> enthält <b>Datei</b> und <b>Hilfe</b> sowie <b>Weiterlesen</b> und <b>Nächste ungelesene</b>.<br><br><b>Bibliothek</b><br>Hier findest du Suche, Schnellfilter wie <b>Letzter Import</b>, <b>Favoriten</b> und <b>Lesezeichen</b> sowie die Serienliste.<br><br><b>Ablagezone</b><br>Unten in der Bibliothek kannst du unterstützte Dateien oder Ordner ablegen.<br><br><b>Serienbereich</b><br>Zeigt die ausgewählte Serie und ihre wichtigsten Daten.<br><br><b>Ausgaben</b><br>Zeigt die Ausgaben der gewählten Serie oder des aktiven Filters. Klicke ein Cover, um zu lesen.<br><br><b>Grid-Steuerung</b><br>Die untere Leiste steuert Reihenfolge und Dichte der Ausgabengrid-Ansicht.", "screenshotTitle": "Karte der Hauptoberfläche" },
+        { "key": "what_do_i_do_first", "label": "Was mache ich zuerst?", "bodyHtml": "Beginne so:<br><br>&bull; importiere eine Ausgabendatei über die <b>Ablagezone</b><br>&bull; prüfe, ob sie in der Oberfläche erscheint<br>&bull; klicke auf das Cover, um den Reader zu öffnen<br><br>Fertig. Du kennst jetzt den Grundablauf.", "screenshotTitle": "Dateien hier ablegen" },
+        { "key": "after_import", "label": "Woran sehe ich, dass der Import funktioniert hat?", "bodyHtml": "Prüfe nach dem Import zwei Dinge:<br>&bull; die importierte Serie erscheint in der <b>Bibliothek</b><br>&bull; eine Ausgabe erscheint unter <b>Ausgaben</b> und öffnet sich im <b>Reader</b>, wenn du ihr Cover anklickst", "screenshotTitle": "Importierte Serie und Ausgabe prüfen" }
+      ]
+    },
+    {
+      "key": "importing_comics",
+      "label": "Comics importieren",
+      "subsections": [
+        { "key": "import_source_types", "label": "Welche Dateien kann ich importieren?", "bodyHtml": "Comic Pile kann viele Typen importieren, nicht nur Archive.<br><br><b>Archive</b>: <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>CB7</b>, <b>7Z</b>, <b>CBT</b> und <b>TAR</b>.<br>&bull; ein Archiv ist normalerweise eine Ausgabe<br><br><b>Ordner mit Bildern</b>: <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b> und <b>WEBP</b>.<br>&bull; ein Ordner ist normalerweise eine Ausgabe aus Seitenbildern<br><br><b>Mehrseitige Dokumente</b>: <b>PDF</b>, <b>DJVU</b> und <b>DJV</b>.<br>&bull; ein Dokument ist normalerweise eine Ausgabe<br><br>Einige Archivformate nutzen die integrierte <b>7-Zip</b>-Komponente von <b>Comic Pile</b>." },
+        { "key": "file_structure", "label": "Wie sollten Dateien vorbereitet sein?", "bodyHtml": "Bereite jede Ausgabe als klare einzelne Quelle vor.<br><br><b>Gute Beispiele:</b><br>&bull; eine Archivdatei pro Ausgabe, etwa <b>ComicsName 001.cbz</b><br>&bull; ein Ordner pro Ausgabe, etwa <b>Series Name/Issue 001/</b><br><br>Bei Bildquellen sollten Seitennamen bereits in Lesereihenfolge sein. Nutze führende Nullen: <b>001</b>, <b>002</b>, <b>003</b>. So vermeidest du Reihenfolgen wie <b>1</b>, <b>10</b>, <b>2</b>.<br><br>Vermeide gemischte Ordner, zusätzliche Nicht-Seiten-Dateien und uneinheitliche Namen.", "screenshotTitle": "Beispiel für eine saubere Ordnerstruktur" },
+        { "key": "import_size", "label": "Spielt die Dateigröße eine Rolle?", "bodyHtml": "Comic Pile hat kein festes Importlimit in MB. Deine Dateien bleiben auf deinem Computer. Größere Archive, Ordner oder Dokumente brauchen meist nur länger beim Import." },
+        { "key": "how_to_import", "label": "Wie importiere ich Comics?", "bodyHtml": "Es gibt drei einfache Wege:<br><br>&bull; Dateien oder Ordner in die <b>Ablagezone</b> ziehen<br>&bull; <b>Datei -> Dateien hinzufügen</b> für einzelne Ausgaben<br>&bull; <b>Datei -> Ordner hinzufügen</b>, wenn ein Ordner viele zusammengehörige Ausgaben enthält" },
+        { "key": "duplicate_found", "label": "Was passiert bei einer passenden Ausgabe?", "bodyHtml": "Wenn Comic Pile beim Import eine Übereinstimmung findet, erscheint zuerst ein Prüf-Popup.<br><br>Du siehst die neue Datei unter <b>Eingehendes Archiv</b> und die vorhandene Ausgabe unter <b>Vorhandener Eintrag</b>.<br><br><b>1. Exaktes Duplikat</b><br>Bei sicherer Übereinstimmung erscheint <b>Ausgabe existiert bereits</b>. Du kannst die aktuelle Ausgabe behalten, sie ersetzen oder dieselbe Wahl auf weitere exakte Duplikate anwenden.", "screenshotTitle": "Popup für exakte Duplikate", "bodyHtmlAfterScreenshot": "<b>2. Verwandte Übereinstimmung</b><br>Wenn eine Datei ähnlich wirkt, aber kein sicheres Duplikat ist, erscheint <b>Mögliches Duplikat gefunden</b>. Du kannst sie als neue Ausgabe importieren, überspringen oder eine vorhandene Ausgabe ersetzen, wenn diese Option angeboten wird.", "screenshotTitleAfter": "Popup für verwandte Treffer" },
+        { "key": "import_errors_batch", "label": "Was tun bei Importfehlern?", "bodyHtml": "Wenn <b>Importfehler</b> erscheint, konnten eine oder mehrere Dateien im aktuellen Stapel nicht importiert werden.<br><br>Nutze <b>Erneut versuchen</b> nach einer Korrektur, <b>Überspringen</b> für nur diese Datei oder <b>Alle überspringen</b>, um die übrigen Fehler auszulassen.", "screenshotTitle": "Importfehler während des Imports" },
+        { "key": "after_import_flow", "label": "Was passiert nach dem Import?", "bodyHtml": "Nach dem Import wird die erste importierte Serie automatisch geöffnet. So kannst du das Ergebnis sofort prüfen und Ausgaben direkt öffnen." }
+      ]
+    },
+    {
+      "key": "supported_formats",
+      "label": "Unterstützte Formate",
+      "subsections": [
+        { "key": "import_formats", "label": "Welche Formate kann ich importieren?", "bodyHtml": "Comic Pile unterstützt:<br><br><b>Archive:</b> <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>7Z</b>, <b>CB7</b>, <b>CBT</b> und <b>TAR</b><br><b>Dokumente:</b> <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br><b>Bildordner:</b> Ordner mit <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b> und <b>WEBP</b>" },
+        { "key": "cbr_note", "label": "Was, wenn CBR nicht importiert?", "bodyHtml": "<b>CBR</b> hängt von einer funktionierenden <b>7-Zip</b>-Einrichtung ab. Wenn CBR fehlschlägt, CBZ oder PDF aber funktionieren, öffne <b>Datei -> Einstellungen -> Import & Archive</b> und prüfe 7-Zip.<br><br>Wenn es weiter fehlschlägt, aktualisiere zuerst die App. 7-Zip ist mit Comic Pile gebündelt. Alternativ installiere 7-Zip von <a href=\"https://www.7-zip.org/\" style=\"color:#78b7ff; text-decoration:underline;\">https://www.7-zip.org/</a>." },
+        { "key": "after_import_normalization", "label": "Kann ich Bildordner importieren?", "bodyHtml": "Ja. Der finale Ordner einer Ausgabe muss die Seitenbilder direkt und in Lesereihenfolge enthalten.<br><br><b>Empfehlung:</b><br>&bull; eine Ausgabe pro Ordner<br>&bull; klarer Ordnername, z. B. <b>Series Name 001</b><br>&bull; Seiten in Reihenfolge<br>&bull; keine Seiten verschiedener Ausgaben mischen" },
+        { "key": "unsupported_formats", "label": "Was verursacht oft Importprobleme?", "bodyHtml": "Häufige Ursachen:<br><br>&bull; beschädigte Archive, Dokumente oder Bilder<br>&bull; nicht unterstützte Formate<br>&bull; Ordner mit Seiten mehrerer Ausgaben<br><br>Teste im Zweifel zuerst eine einzelne Ausgabe." }
+      ]
+    },
+    {
+      "key": "library_data",
+      "label": "Bibliothek und Daten",
+      "subsections": [
+        { "key": "app_vs_data", "label": "Was wird wo gespeichert?", "bodyHtml": "Die App ist das Programm, das du startest. Deine Bibliothek wird separat gespeichert und liegt standardmäßig im App-Ordner. Darum entfernt ein App-Update deine Bibliothek nicht automatisch." },
+        { "key": "move_data_location", "label": "Kann ich den Speicherort der Bibliotheksdaten verschieben?", "bodyHtml": "Ja. Öffne <b>Datei -> Einstellungen -> Bibliothek und Daten</b> und nutze <b>Bibliotheksdaten verschieben -> Auswählen</b>. Starte danach die App neu. Die Übertragung läuft beim nächsten Start; wähle vorher einen leeren Ordner." },
+        { "key": "check_storage_access", "label": "Wann nutze ich Speicherzugriff prüfen?", "bodyHtml": "Nutze <b><i>Speicherzugriff prüfen</i></b>, wenn ein Problem nach Dateizugriff oder Bibliotheksort aussieht.<br><br>Typische Fälle:<br>&bull; Dateien öffnen nicht mehr<br>&bull; viele Ausgaben schlagen gleichzeitig fehl<br>&bull; Import scheitert wegen Speicherzugriff<br><br>Wenn alles normal läuft, brauchst du diese Prüfung meist nicht.", "screenshotTitle": "Ort der Speicherprüfung in den Einstellungen" },
+        { "key": "edit_one_issue", "label": "Wie bearbeite ich eine Ausgabe?", "bodyHtml": "Öffne die Serie in der <b>Bibliothek</b>, finde die Ausgabe unter <b>Ausgaben</b>, öffne ihr Menü und wähle <b>Bearbeiten</b>. So änderst du Ausgabennummer, Titel, Verlag, Credits oder Storydetails.", "screenshotTitle": "Bearbeiten im Ausgabenmenü" },
+        { "key": "edit_one_series", "label": "Wie bearbeite ich Seriendaten?", "bodyHtml": "Nutze das <b>...</b>-Menü der Serie und wähle <b>Serie bearbeiten</b>, oder nutze die kleinen Bearbeiten-Buttons im Serienbereich. Beide Wege ändern dieselben Seriendaten.", "screenshotTitle": "Serie bearbeiten im Serienmenü" },
+        { "key": "series_menu_actions", "label": "Was kann ich im Serienmenü tun?", "bodyHtml": "Das <b>...</b>-Menü hängt von der Auswahl ab. Bei einer Serie kannst du <b>Ausgaben hinzufügen</b>, <b>Serie bearbeiten</b> oder <b>Dateien löschen</b>.<br><br>Bei mehreren Serien sind Sammelaktionen wie <b>Massenbearbeitung</b>, <b>In Serie zusammenführen</b> oder <b>Ausgewählte löschen</b> möglich." },
+        { "key": "fill_fields_popup", "label": "Kann Comic Pile gespeicherte Daten ausfüllen?", "bodyHtml": "Ja. Wenn frühere Ausgaben- oder Seriendaten gefunden werden, kann Comic Pile beim Speichern anbieten, leere Felder daraus zu füllen.<br><br><b>Aus Bibliothek füllen</b> ergänzt nur leere Felder. <b>Aktuelle Werte behalten</b> speichert das Formular wie es ist.", "screenshotTitle": "Popup zum Ausfüllen gespeicherter Felder" },
+        { "key": "replace_issue", "label": "Wie ersetze ich eine Ausgabe?", "bodyHtml": "<b>Ersetzen</b> behält die vorhandene Ausgabe in der Bibliothek und ersetzt ihre Quelle. Nutze es, wenn die neue Quelle eine korrigierte oder bessere Kopie derselben Ausgabe ist. Comic Pile fragt, ob du eine Archivdatei oder einen Ordner mit Seitenbildern verwenden möchtest.", "screenshotTitle": "Ersetzen im Ausgabenmenü" },
+        { "key": "last_import", "label": "Was ist Letzter Import?", "bodyHtml": "<b><i>Letzter Import</i></b> ist ein Schnellfilter für die letzte Importsitzung. Behandle ihn nicht als dauerhaftes Regal; öffne Serien langfristig über die <b>Bibliothek</b>.", "screenshotTitle": "Schnellfilter Letzter Import" }
+      ]
+    },
+    {
+      "key": "updating_app",
+      "label": "Comic Pile aktualisieren",
+      "leadHtml": "Nutze den integrierten Update-Ablauf, um eine neue portable Version zu suchen, Änderungen zu lesen, sie in der App herunterzuladen und ohne Austausch deiner Bibliotheksdaten zu installieren.",
+      "subsections": [
+        { "key": "check_for_updates", "label": "Wie suche ich nach Updates?", "bodyHtml": "Öffne <b>Hilfe -> Info</b> und klicke im Bereich <b>Updates</b> auf <b>Nach Updates suchen</b>. Wenn eine neue Version gefunden wird, öffnet Comic Pile <b>Update verfügbar</b>." },
+        { "key": "automatic_update_checks", "label": "Prüft Comic Pile automatisch auf Updates?", "bodyHtml": "Ja. Comic Pile kann während der Nutzung automatisch nach Updates suchen. Wenn du das selbst kontrollieren möchtest, öffne <b>Datei -> Einstellungen -> Allgemein</b> und deaktiviere <b>Automatisch nach Updates suchen</b>.", "screenshotTitle": "Einstellung für automatische Updates", "bodyHtmlAfterScreenshot": "Ist die Option aus, kannst du weiterhin in <b>Info</b> manuell nach Updates suchen.", "screenshotTitleAfter": "Nach Updates suchen in Info" },
+        { "key": "view_update_details", "label": "Was zeigt das Popup Update verfügbar?", "bodyHtml": "Es zeigt die neueste Version und die Hinweise unter <b>Neuigkeiten</b>. Nutze <b>Später</b> zum späteren Lesen oder <b>Update herunterladen</b>, um das portable Paket zu laden.", "screenshotTitle": "Popup Update verfügbar" },
+        { "key": "whats_new_meaning", "label": "Was ist Neuigkeiten?", "bodyHtml": "<b>Hilfe -> Neuigkeiten</b> zeigt die mitgelieferten Patchnotes deiner installierten Version. Bei einem bekannten Update zeigt das Update-Popup die Hinweise der neueren Version." },
+        { "key": "download_install_flow", "label": "Wie funktionieren Download und Installation?", "bodyHtml": "Nach <b>Update herunterladen</b> lädt Comic Pile das portable Paket in einen temporären Ort. Danach wird <b>Update installieren</b> aktiv. Dieser Schritt schließt die App, wendet das Update an und startet Comic Pile erneut.", "screenshotTitle": "Installationsbutton nach dem Download" },
+        { "key": "library_data_kept", "label": "Bleiben meine Bibliotheksdaten erhalten?", "bodyHtml": "Ja. Der integrierte Update-Ablauf behält deine <b>Database</b>-Ordnerdaten und die Datei <b>ComicPile.ini</b> bei." },
+        { "key": "update_errors", "label": "Was, wenn Download oder Installation fehlschlägt?", "bodyHtml": "Wenn der Download fehlschlägt, versuche ihn zuerst erneut. Temporäre Netzwerkprobleme können den Paketdownload unterbrechen.", "screenshotTitle": "Download fehlgeschlagen", "bodyHtmlAfterScreenshot": "Wenn die Installation nach dem Schließen von Comic Pile nicht beendet werden kann, versuche das Update erneut. Falls nötig, lade die neueste portable Version von <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a>, schließe Comic Pile, entpacke sie und ersetze die App-Dateien. Behalte <b>Database</b> und <b>ComicPile.ini</b>." }
+      ]
+    },
+    {
+      "key": "reader",
+      "label": "Reader",
+      "subsections": [
+        { "key": "reader_overview", "label": "Überblick über den Reader", "bodyHtml": "Öffne eine Ausgabe unter <b>Ausgaben</b>. Der Reader hat vier Bereiche: <b>obere Leiste</b>, <b>Seitenbereich</b>, <b>Seitenpfeile</b> und <b>untere Steuerung</b>. Comic Pile öffnet eine Ausgabe wieder an der gespeicherten Stelle.", "screenshotTitle": "Reader-Layout" },
+        { "key": "reader_top_bar_left", "label": "Linke Seite der oberen Leiste", "bodyHtml": "Hier findest du schnelle Aktionen: <b>Seite löschen</b>, <b>Info</b> für Hotkeys, <b>Einstellungen</b> für den Reader und <b>Theme</b> für hell/dunkel.", "screenshotTitle": "Linke Reader-Leiste" },
+        { "key": "reader_top_bar_center", "label": "Mitte der oberen Leiste", "bodyHtml": "Die Mitte zeigt den Ausgabentitel. Pfeile links und rechts wechseln zur vorherigen oder nächsten Ausgabe derselben Serie. Shortcuts: <b>A</b> / <b>D</b>.", "screenshotTitle": "Mitte der Reader-Leiste" },
+        { "key": "reader_top_bar_right", "label": "Rechte Seite der oberen Leiste", "bodyHtml": "Hier liegen Lesemodi und Aktionen: <b>Manga-Modus</b>, <b>1 Seite</b>, <b>2 Seiten</b>, <b>Vollbild</b>, <b>Lupe</b>, <b>Lesezeichen</b>, <b>Favorit</b>, <b>Kopieren</b> und <b>Schließen</b>.", "screenshotTitle": "Rechte Reader-Leiste" },
+        { "key": "reader_bottom_controls", "label": "Untere Steuerung und Navigation", "bodyHtml": "Nutze Seitenpfeile oder <b>Links</b> / <b>Rechts</b> zum Blättern. Unten findest du <b>Von vorne lesen</b>, <b>Als gelesen markieren</b> und den Seitenzähler. Im <b>Manga-Modus</b> ist die Richtung umgekehrt.", "screenshotTitle": "Untere Reader-Steuerung" },
+        { "key": "reader_bookmarks_favorites", "label": "Lesezeichen und Favoriten", "bodyHtml": "<b><i>Lesezeichen</i></b> speichern eine Seite in einer Ausgabe. Jede Ausgabe kann ein Lesezeichen haben. <b><i>Favoriten</i></b> markieren ganze Ausgaben für den Schnellfilter <b>Favoriten</b>.", "screenshotTitle": "Lesezeichenanzeige" },
+        { "key": "continue_next_unread", "label": "Weiterlesen und Nächste ungelesene", "bodyHtml": "<b><i>Weiterlesen</i></b> öffnet die Ausgabe deines aktuellen Leseziels. <b><i>Nächste ungelesene</i></b> öffnet die nächste ungelesene Ausgabe im selben Serienfluss.", "screenshotTitleAfter": "Weiterlesen und Nächste ungelesene" }
+      ]
+    },
+    {
+      "key": "troubleshooting",
+      "label": "Fehlerbehebung",
+      "subsections": [
+        { "key": "issue_does_not_open", "label": "Die Ausgabe öffnet sich nicht", "bodyHtml": "Prüfe, ob die Ausgabe noch unter <b>Ausgaben</b> sichtbar ist. Öffne eine andere Ausgabe. Wenn viele Ausgaben gleichzeitig fehlschlagen, öffne <b>Datei -> Einstellungen -> Bibliothek und Daten</b> und führe <b><i>Speicherzugriff prüfen</i></b> aus." },
+        { "key": "import_failed", "label": "Import fehlgeschlagen", "bodyHtml": "Prüfe, ob der Dateityp unterstützt wird, ob die Datei außerhalb der App funktioniert und ob Ordner wirklich unterstützte Seiten enthalten. Wenn nur <b>CBR</b> fehlschlägt, prüfe 7-Zip unter <b>Import & Archive</b>." },
+        { "key": "import_errors_popup", "label": "Was, wenn nur ein Archiv in einem großen Import fehlschlägt?", "bodyHtml": "Dann kann der Rest des Stapels trotzdem in Ordnung sein. Prüfe die fehlgeschlagene Datei unter <b>Importfehler</b> und versuche es erst nach Korrektur oder Ersatz erneut." },
+        { "key": "bug_reports", "label": "Wie melde ich einen Fehler?", "bodyHtml": "Melde Fehler über <a href=\"https://github.com/nikolayverin/comic-pile/issues\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Issues</a>. Hilfreich sind: was passiert ist, was du erwartet hast, Schritte zum Reproduzieren, Windows-Version und Comic-Pile-Version aus <b>Info</b>." }
+      ]
+    },
+    {
+      "key": "faq",
+      "label": "FAQ",
+      "subsections": [
+        { "key": "window_size_limits", "label": "Warum kann ich das Fenster nicht viel kleiner machen?", "bodyHtml": "Die App ist um eine Mindestgröße für die vollständige Oberfläche herum gebaut. Wenn der Bildschirm kleiner als <b>1440 x 980</b> ist, öffnet Comic Pile maximiert für diesen Bildschirm." },
+        { "key": "critical_popup_close_block", "label": "Warum kann ich die App mit diesem Popup nicht schließen?", "bodyHtml": "Einige Popups benötigen eine Entscheidung, bevor die App sicher weiterarbeiten kann. Solange so ein Popup offen ist, wird das Schließen kurzzeitig blockiert, damit dieser Schritt nicht versehentlich übersprungen wird." }
+      ]
+    }
+  ]
+}

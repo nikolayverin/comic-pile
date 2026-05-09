@@ -344,10 +344,26 @@ PopupDialogWindow {
                             font.pixelSize: styleTokens.dialogHintFontSize
                         }
 
+                        Label {
+                            id: backgroundSizeLabel
+                            anchors.left: backgroundTitleLabel.right
+                            anchors.leftMargin: 8
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: headerLayout.backgroundTargetSizeLabel
+                            color: styleTokens.hintTextColor
+                            font.pixelSize: styleTokens.dialogHintFontSize
+                        }
+
                         PopupActionButton {
                             id: shuffleButton
+                            readonly property int availableButtonWidth: Math.max(
+                                44,
+                                backgroundHeaderItem.width
+                                    - (backgroundSizeLabel.x + backgroundSizeLabel.implicitWidth + 16)
+                            )
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
+                            width: Math.min(implicitWidth, availableButtonWidth)
                             height: styleTokens.footerButtonHeight
                             minimumWidth: 0
                             horizontalPadding: 12
@@ -359,16 +375,6 @@ PopupDialogWindow {
                             text: dialog.localizedText("seriesHeaderShuffle")
                             enabled: dialog.shuffleBackgroundEnabled && !dialog.shuffleBackgroundBusy
                             onClicked: dialog.shuffleBackgroundRequested()
-                        }
-
-                        Label {
-                            id: backgroundSizeLabel
-                            anchors.left: backgroundTitleLabel.right
-                            anchors.leftMargin: 8
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: headerLayout.backgroundTargetSizeLabel
-                            color: styleTokens.hintTextColor
-                            font.pixelSize: styleTokens.dialogHintFontSize
                         }
 
                         Row {
@@ -424,6 +430,7 @@ PopupDialogWindow {
             horizontalPadding: styleTokens.footerSideMargin
 
             PopupActionButton {
+                width: implicitWidth
                 height: styleTokens.footerButtonHeight
                 minimumWidth: styleTokens.footerButtonMinWidth
                 horizontalPadding: styleTokens.footerButtonHorizontalPadding
@@ -437,6 +444,7 @@ PopupDialogWindow {
             }
 
             PopupActionButton {
+                width: implicitWidth
                 height: styleTokens.footerButtonHeight
                 minimumWidth: styleTokens.footerButtonMinWidth
                 horizontalPadding: styleTokens.footerButtonHorizontalPadding
@@ -450,6 +458,7 @@ PopupDialogWindow {
             }
 
             PopupActionButton {
+                width: implicitWidth
                 height: styleTokens.footerButtonHeight
                 minimumWidth: styleTokens.footerButtonMinWidth
                 horizontalPadding: styleTokens.footerButtonHorizontalPadding

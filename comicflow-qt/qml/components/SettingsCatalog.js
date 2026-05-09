@@ -171,6 +171,11 @@ var sectionOptionRows = {
             options: generalAppLanguageVisibleOptions
         },
         {
+            labelKey: "settingsGeneralAppLanguageScopeNote",
+            label: AppText.settingsGeneralAppLanguageScopeNote,
+            controlType: "note"
+        },
+        {
             labelKey: "settingsGeneralOpenReaderFullscreenByDefault",
             label: AppText.settingsGeneralOpenReaderFullscreenByDefault,
             controlType: "checkbox",

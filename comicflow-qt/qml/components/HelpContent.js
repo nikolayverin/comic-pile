@@ -1,4 +1,5 @@
 .pragma library
+.import "AppLanguageCatalog.js" as AppLanguageCatalog
 
 var sections = [
         {
@@ -358,6 +359,110 @@ var sections = [
         }
 ]
 
-function helpSections() {
-    return sections
+var fallbackLanguageCode = AppLanguageCatalog.fallbackLanguageCode
+var localizedSectionsCache = ({})
+
+function cloneValue(value) {
+    if (Array.isArray(value)) {
+        const result = []
+        for (let i = 0; i < value.length; i += 1) {
+            result.push(cloneValue(value[i]))
+        }
+        return result
+    }
+    if (value && typeof value === "object") {
+        const objectResult = ({})
+        const keys = Object.keys(value)
+        for (let i = 0; i < keys.length; i += 1) {
+            const key = keys[i]
+            objectResult[key] = cloneValue(value[key])
+        }
+        return objectResult
+    }
+    return value
+}
+
+function normalizedLanguageCode(language) {
+    return AppLanguageCatalog.normalizeLanguageCode(language)
+}
+
+function helpContentUrl(language) {
+    return "qrc:/qt/qml/ComicPile/content/help/help." + normalizedLanguageCode(language) + ".json"
+}
+
+function readLocalizedSections(language) {
+    const normalized = normalizedLanguageCode(language)
+    if (localizedSectionsCache[normalized] !== undefined) {
+        return localizedSectionsCache[normalized]
+    }
+
+    let parsedSections = null
+    try {
+        const request = new XMLHttpRequest()
+        request.open("GET", helpContentUrl(normalized), false)
+        request.send()
+        if ((request.status === 0 || request.status === 200) && String(request.responseText || "").trim().length > 0) {
+            const parsed = JSON.parse(request.responseText)
+            if (parsed && Array.isArray(parsed.sections)) {
+                parsedSections = parsed.sections
+            }
+        }
+    } catch (error) {
+        parsedSections = null
+    }
+
+    localizedSectionsCache[normalized] = parsedSections
+    return parsedSections
+}
+
+function mergeObject(baseObject, localizedObject) {
+    const result = cloneValue(baseObject || ({}))
+    if (!localizedObject || typeof localizedObject !== "object") {
+        return result
+    }
+
+    const keys = Object.keys(localizedObject)
+    for (let i = 0; i < keys.length; i += 1) {
+        const key = keys[i]
+        if (key === "subsections" && Array.isArray(result.subsections) && Array.isArray(localizedObject.subsections)) {
+            result.subsections = mergeByKey(result.subsections, localizedObject.subsections)
+            continue
+        }
+        result[key] = cloneValue(localizedObject[key])
+    }
+    return result
+}
+
+function mergeByKey(baseList, localizedList) {
+    const result = []
+    const localizedByKey = ({})
+    for (let i = 0; i < localizedList.length; i += 1) {
+        const entry = localizedList[i] || {}
+        const key = String(entry.key || "").trim()
+        if (key.length > 0) {
+            localizedByKey[key] = entry
+        }
+    }
+
+    for (let i = 0; i < baseList.length; i += 1) {
+        const baseEntry = baseList[i] || {}
+        const key = String(baseEntry.key || "").trim()
+        result.push(mergeObject(baseEntry, localizedByKey[key]))
+    }
+    return result
+}
+
+function helpSections(language) {
+    const fallbackSections = readLocalizedSections(fallbackLanguageCode) || sections
+    const normalized = normalizedLanguageCode(language)
+    if (normalized === fallbackLanguageCode) {
+        return cloneValue(fallbackSections)
+    }
+
+    const localizedSections = readLocalizedSections(normalized)
+    if (!localizedSections) {
+        return cloneValue(fallbackSections)
+    }
+
+    return mergeByKey(fallbackSections, localizedSections)
 }

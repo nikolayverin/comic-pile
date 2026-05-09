@@ -1,0 +1,302 @@
+{
+  "sections": [
+    {
+      "key": "getting_started",
+      "label": "Primeros pasos",
+      "leadHtml": "¿Es tu primera vez con <b><i>Comic Pile</i></b>? Importa algunos cómics, abre un número en el lector y vuelve a la biblioteca. Con eso ya entiendes el flujo básico.",
+      "subsections": [
+        {
+          "key": "what_is_comic_pile",
+          "label": "¿Qué es Comic Pile?",
+          "bodyHtml": "<b><i>Comic Pile</i></b> es una biblioteca y lector para tus archivos locales de cómic y manga. Importa archivos desde tu computadora, organízalos en la biblioteca, añade detalles de serie o número cuando lo necesites y léelos desde el lector."
+        },
+        {
+          "key": "main_areas",
+          "label": "Áreas principales de la app",
+          "bodyHtml": "<b>Menú principal</b><br>La <b>barra superior</b> contiene los menús <b>Archivo</b> y <b>Ayuda</b>, además de accesos como <b>Continuar leyendo</b> y <b>Siguiente sin leer</b>.<br><br><b>Biblioteca</b><br>Muestra búsqueda, filtros rápidos como <b>Última importación</b>, <b>Favoritos</b> y <b>Marcadores</b>, y la lista de series.<br><br><b>Zona de carga</b><br>Está al fondo de la biblioteca. Suelta ahí archivos o carpetas compatibles para añadir cómics rápido.<br><br><b>Panel de serie</b><br>Muestra la serie seleccionada y sus detalles principales.<br><br><b>Números</b><br>Muestra los números de la serie o filtro activo. Haz clic en una portada para leer.<br><br><b>Controles de cuadrícula</b><br>La barra inferior controla el orden de números y la densidad de la cuadrícula.",
+          "screenshotTitle": "Mapa de la interfaz principal"
+        },
+        {
+          "key": "what_do_i_do_first",
+          "label": "¿Qué hago primero?",
+          "bodyHtml": "Empieza con estos pasos:<br><br>&bull; importa un archivo desde la <b>zona de carga</b><br>&bull; comprueba que aparece en la interfaz<br>&bull; haz clic en la portada para abrir el lector<br><br>Listo. Ya conoces el flujo básico.",
+          "screenshotTitle": "Empieza soltando archivos aquí"
+        },
+        {
+          "key": "after_import",
+          "label": "¿Cómo sé que la importación funcionó?",
+          "bodyHtml": "Después de importar, revisa dos cosas:<br>&bull; la serie aparece en <b>Biblioteca</b><br>&bull; uno de los números aparece en <b>Números</b> y se abre en el <b>Lector</b> al hacer clic en la portada",
+          "screenshotTitle": "Comprueba la serie y el número importados"
+        }
+      ]
+    },
+    {
+      "key": "importing_comics",
+      "label": "Importar cómics",
+      "subsections": [
+        {
+          "key": "import_source_types",
+          "label": "¿Qué archivos puedo importar?",
+          "bodyHtml": "Comic Pile puede importar varios tipos, no solo archivos comprimidos.<br><br><b>Archivos</b>: <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>CB7</b>, <b>7Z</b>, <b>CBT</b> y <b>TAR</b>.<br>&bull; normalmente un archivo equivale a un número<br><br><b>Carpetas con imágenes</b>: <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b> y <b>WEBP</b>.<br>&bull; normalmente una carpeta equivale a un número hecho de páginas<br><br><b>Documentos multipágina</b>: <b>PDF</b>, <b>DJVU</b> y <b>DJV</b>.<br>&bull; normalmente un documento equivale a un número<br><br>Algunos formatos dependen del componente integrado <b>7-Zip</b> que viene con <b>Comic Pile</b>."
+        },
+        {
+          "key": "file_structure",
+          "label": "¿Cómo preparo los archivos?",
+          "bodyHtml": "Para una importación predecible, prepara cada número como una fuente clara.<br><br><b>Buenos ejemplos:</b><br>&bull; un archivo por número, como <b>ComicsName 001.cbz</b><br>&bull; una carpeta por número, como <b>Series Name/Issue 001/</b><br><br>Si importas imágenes, los nombres de páginas deben estar en orden de lectura. Usa ceros iniciales: <b>001</b>, <b>002</b>, <b>003</b>. Evita casos como <b>1</b>, <b>10</b>, <b>2</b>.<br><br><b>Para carpetas de imágenes:</b><br>&bull; una carpeta por número<br>&bull; no mezcles páginas de números distintos<br>&bull; mantén los nombres en orden<br>&bull; las imágenes verticales funcionan mejor como portadas<br><br>Antes de importar, evita carpetas mezcladas, archivos extra que no sean páginas y nombres inconsistentes.",
+          "screenshotTitle": "Ejemplo de estructura limpia"
+        },
+        {
+          "key": "import_size",
+          "label": "¿Importa el tamaño del archivo?",
+          "bodyHtml": "Comic Pile no usa un límite fijo de tamaño en MB. Tus archivos se quedan en tu computadora. Con fuentes grandes, lo normal es que la importación tarde más."
+        },
+        {
+          "key": "how_to_import",
+          "label": "¿Cómo importo cómics?",
+          "bodyHtml": "Puedes importar de tres formas:<br><br>&bull; suelta archivos o carpetas en la <b>zona de carga</b><br>&bull; <b>Archivo -> Agregar archivos</b> para unos pocos números concretos<br>&bull; <b>Archivo -> Agregar carpeta</b> cuando una carpeta contiene muchos números juntos"
+        },
+        {
+          "key": "duplicate_found",
+          "label": "¿Qué pasa si Comic Pile encuentra una coincidencia?",
+          "bodyHtml": "Si Comic Pile encuentra una coincidencia durante la importación, abre un popup de revisión antes de cambiar nada.<br><br>Verás dos referencias:<br>&bull; el archivo entrante bajo <b>Archivo entrante</b><br>&bull; el número existente bajo <b>Registro existente</b><br><br><b>1. Duplicado exacto</b><br>Si la app está segura, abre <b>El número ya existe</b>. Puedes mantener el actual con <b>Mantener actual</b>, reemplazarlo con <b>Reemplazar</b>, o aplicar la misma decisión con <b>Omitir todo</b> o <b>Reemplazar todo</b> si aparecen.",
+          "screenshotTitle": "Popup El número ya existe",
+          "bodyHtmlAfterScreenshot": "<b>2. Coincidencia relacionada</b><br>Si parece relacionado pero no es duplicado exacto, Comic Pile abre <b>Posible duplicado encontrado</b>.<br><br>Ahí puedes importar como número nuevo con <b>Importar como nuevo</b>, dejarlo fuera con <b>Omitir</b>, o reemplazar el existente con <b>Reemplazar existente</b> si esa opción aparece.",
+          "screenshotTitleAfter": "Popup de posible duplicado"
+        },
+        {
+          "key": "import_errors_batch",
+          "label": "¿Qué hago si aparece Import Errors?",
+          "bodyHtml": "Si Comic Pile muestra <b>Errores de importación</b>, uno o más archivos del lote no pudieron importarse.<br><br>Usa <b>Reintentar</b> después de arreglar el archivo. Usa <b>Omitir</b> para saltar solo ese archivo. Usa <b>Omitir todo</b> para saltar los fallos restantes y terminar antes.<br><br>Si falla un solo archivo, probablemente el problema esté en ese archivo. Si fallan muchos, revisa la carpeta de origen y el acceso al almacenamiento.",
+          "screenshotTitle": "Errores de importación durante la importación"
+        },
+        {
+          "key": "after_import_flow",
+          "label": "¿Qué pasa después de importar?",
+          "bodyHtml": "Después de importar, se abre automáticamente la primera serie importada. Así puedes revisar el resultado y empezar a abrir números enseguida."
+        }
+      ]
+    },
+    {
+      "key": "supported_formats",
+      "label": "Formatos compatibles",
+      "subsections": [
+        {
+          "key": "import_formats",
+          "label": "¿Qué formatos puedo importar?",
+          "bodyHtml": "Comic Pile admite:<br><br><b>Archivos:</b> <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>7Z</b>, <b>CB7</b>, <b>CBT</b> y <b>TAR</b><br><b>Documentos:</b> <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br><b>Carpetas de imágenes:</b> carpetas con páginas <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b> y <b>WEBP</b>"
+        },
+        {
+          "key": "cbr_note",
+          "label": "¿Y si CBR no importa?",
+          "bodyHtml": "El soporte <b>CBR</b> depende de <b>7-Zip</b>. Si CBR falla pero CBZ o PDF funcionan, abre <b>Archivo -> Configuración -> Importación y archivos</b> y verifica 7-Zip.<br><br>Si sigue fallando, actualiza la app primero, porque 7-Zip viene incluido. Si aún no funciona, instala 7-Zip manualmente desde <a href=\"https://www.7-zip.org/\" style=\"color:#78b7ff; text-decoration:underline;\">https://www.7-zip.org/</a>."
+        },
+        {
+          "key": "after_import_normalization",
+          "label": "¿Puedo importar carpetas de imágenes?",
+          "bodyHtml": "Sí. Una carpeta de imágenes se puede importar cuando la carpeta final de un número contiene directamente las páginas en orden.<br><br><b>Recomendación:</b><br>&bull; una carpeta por número<br>&bull; nombre claro, por ejemplo <b>Series Name 001</b><br>&bull; páginas ordenadas<br>&bull; no mezcles páginas de otros números"
+        },
+        {
+          "key": "unsupported_formats",
+          "label": "¿Qué suele causar problemas de importación?",
+          "bodyHtml": "Problemas comunes:<br><br>&bull; archivos corruptos<br>&bull; formatos no listados como compatibles<br>&bull; carpetas que mezclan páginas de varios números<br><br>Si tienes dudas, prueba primero con un solo número."
+        }
+      ]
+    },
+    {
+      "key": "library_data",
+      "label": "Biblioteca y datos",
+      "subsections": [
+        {
+          "key": "app_vs_data",
+          "label": "¿Qué se guarda dónde?",
+          "bodyHtml": "La app es lo que ejecutas. Tu biblioteca se guarda aparte y, por defecto, se crea en la carpeta de la app. Por eso reemplazar o actualizar la app no elimina por sí mismo tu biblioteca."
+        },
+        {
+          "key": "move_data_location",
+          "label": "¿Puedo mover los datos de biblioteca?",
+          "bodyHtml": "Sí. Abre <b>Archivo -> Configuración -> Biblioteca y datos</b> y usa <b>Mover datos de biblioteca -> Elegir</b>. Después reinicia la app. La transferencia se ejecuta en el siguiente inicio, así que elige una carpeta vacía y no muevas los datos activos manualmente."
+        },
+        {
+          "key": "check_storage_access",
+          "label": "¿Cuándo uso Check storage access?",
+          "bodyHtml": "Usa <b><i>Comprobar acceso al almacenamiento</i></b> cuando el problema parezca relacionado con archivos o ubicación de biblioteca.<br><br>Casos típicos:<br>&bull; los archivos dejan de abrirse<br>&bull; muchos números fallan a la vez<br>&bull; la importación falla por acceso al almacenamiento<br><br>Si todo funciona, normalmente no necesitas usar esta comprobación.",
+          "screenshotTitle": "Ubicación de la comprobación de almacenamiento"
+        },
+        {
+          "key": "edit_one_issue",
+          "label": "¿Cómo edito un número?",
+          "bodyHtml": "Abre la serie en <b>Biblioteca</b>, busca el número en <b>Números</b>, abre su menú y pulsa <b>Editar</b>. Úsalo para cambiar campos del número como número, título, editorial, créditos o detalles de historia.",
+          "screenshotTitle": "Acción Editar en el menú del número"
+        },
+        {
+          "key": "edit_one_series",
+          "label": "¿Cómo edito detalles de serie?",
+          "bodyHtml": "Puedes abrir la edición desde el menú <b>...</b> de la serie con <b>Editar serie</b>, o desde los botones pequeños del panel de serie. Ambos caminos editan la misma información.",
+          "screenshotTitle": "Editar serie desde el menú de serie"
+        },
+        {
+          "key": "series_menu_actions",
+          "label": "¿Qué puedo hacer desde el menú de serie?",
+          "bodyHtml": "El menú <b>...</b> cambia según la selección. Con una serie puedes <b>Agregar números</b>, <b>Editar serie</b> o <b>Eliminar archivos</b>.<br><br>Con varias series seleccionadas puedes usar acciones como <b>Edición masiva</b>, <b>Fusionar en serie</b> o <b>Eliminar seleccionados</b>. Selecciona primero la serie destino si vas a fusionar."
+        },
+        {
+          "key": "fill_fields_popup",
+          "label": "¿Comic Pile puede rellenar datos guardados?",
+          "bodyHtml": "Sí. Si ya guardaste datos de un número o serie antes, Comic Pile puede ofrecer rellenarlos cuando vuelvas a añadirlo y guardes el formulario.<br><br><b>Rellenar desde biblioteca</b> completa solo los campos vacíos. <b>Mantener valores actuales</b> guarda lo que ya está en el formulario.",
+          "screenshotTitle": "Popup Rellenar campos"
+        },
+        {
+          "key": "replace_issue",
+          "label": "¿Cómo reemplazo un número?",
+          "bodyHtml": "<b>Reemplazar</b> conserva el número en la biblioteca y cambia su fuente actual por una nueva. Úsalo cuando la nueva fuente sea una copia corregida o mejor del mismo número. La app te preguntará si quieres usar un archivo comprimido o una carpeta de imágenes ordenadas.",
+          "screenshotTitle": "Acción Reemplazar en el menú del número"
+        },
+        {
+          "key": "last_import",
+          "label": "¿Qué es Última importación?",
+          "bodyHtml": "<b><i>Última importación</i></b> es un filtro rápido que muestra la sesión de importación más reciente. No lo trates como una estantería permanente; para acceso a largo plazo, abre la serie desde <b>Biblioteca</b>.",
+          "screenshotTitle": "Filtro Última importación"
+        }
+      ]
+    },
+    {
+      "key": "updating_app",
+      "label": "Actualizar Comic Pile",
+      "leadHtml": "Usa el flujo integrado para buscar una versión portable nueva, leer cambios, descargarla dentro de la app e instalarla sin reemplazar tus datos de biblioteca.",
+      "subsections": [
+        {
+          "key": "check_for_updates",
+          "label": "¿Cómo busco actualizaciones?",
+          "bodyHtml": "Abre <b>Ayuda -> Acerca de</b> y pulsa <b>Buscar actualizaciones</b> en <b>Actualizaciones</b>. Si hay una versión nueva, Comic Pile abre <b>Actualización disponible</b>."
+        },
+        {
+          "key": "automatic_update_checks",
+          "label": "¿Comic Pile busca actualizaciones solo?",
+          "bodyHtml": "Sí. Comic Pile puede buscar actualizaciones automáticamente mientras usas la app. Si prefieres controlarlo tú, abre <b>Archivo -> Configuración -> General</b> y desactiva <b>Buscar actualizaciones automáticamente</b>.",
+          "screenshotTitle": "Ajuste de búsqueda automática",
+          "bodyHtmlAfterScreenshot": "Desactivar esa opción detiene las comprobaciones automáticas, pero puedes usar <b>Buscar actualizaciones</b> en <b>Acerca de</b> cuando quieras.",
+          "screenshotTitleAfter": "Buscar actualizaciones en Acerca de"
+        },
+        {
+          "key": "view_update_details",
+          "label": "¿Qué muestra el popup Actualización disponible?",
+          "bodyHtml": "Muestra la versión más reciente y sus notas bajo <b>Novedades</b>. Usa <b>Más tarde</b> para revisarlo luego o <b>Descargar actualización</b> para descargar el paquete portable.",
+          "screenshotTitle": "Popup Actualización disponible"
+        },
+        {
+          "key": "whats_new_meaning",
+          "label": "¿Qué es Novedades?",
+          "bodyHtml": "<b>Ayuda -> Novedades</b> muestra las notas incluidas para la versión instalada. Si ya se conoce una actualización, el popup <b>Actualización disponible</b> muestra las notas de esa versión nueva."
+        },
+        {
+          "key": "download_install_flow",
+          "label": "¿Cómo funciona descargar e instalar?",
+          "bodyHtml": "Al pulsar <b>Descargar actualización</b>, Comic Pile abre <b>Descargando actualización</b> y descarga el paquete portable en una ubicación temporal. Al terminar, aparece <b>Instalar actualización</b>. Ese botón cierra la app, aplica la actualización y vuelve a iniciar Comic Pile.",
+          "screenshotTitle": "Botón Instalar actualización"
+        },
+        {
+          "key": "library_data_kept",
+          "label": "¿Mis datos de biblioteca se mantienen?",
+          "bodyHtml": "Sí. El flujo integrado conserva tu carpeta <b>Database</b> y el archivo <b>ComicPile.ini</b>, así que actualizar la app no reemplaza tu biblioteca ni tus ajustes."
+        },
+        {
+          "key": "update_errors",
+          "label": "¿Qué hago si falla la descarga o instalación?",
+          "bodyHtml": "Si falla la descarga, intenta descargar de nuevo desde el popup. Puede ser un problema temporal de red.",
+          "screenshotTitle": "Popup de descarga fallida",
+          "bodyHtmlAfterScreenshot": "Si la instalación no termina después de cerrar Comic Pile, intenta actualizar otra vez. Si sigue fallando, descarga la última versión portable desde <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a>, cierra Comic Pile, extrae el archivo y reemplaza los archivos de la app. Conserva tu carpeta <b>Database</b> y <b>ComicPile.ini</b>."
+        }
+      ]
+    },
+    {
+      "key": "reader",
+      "label": "Lector",
+      "subsections": [
+        {
+          "key": "reader_overview",
+          "label": "Resumen de la interfaz del lector",
+          "bodyHtml": "Abre cualquier número desde <b>Números</b>. El lector tiene cuatro áreas: <b>barra superior</b>, <b>área de página</b>, <b>flechas laterales</b> y <b>controles inferiores</b>. Comic Pile reabre un número desde tu último punto guardado.",
+          "screenshotTitle": "Resumen del lector"
+        },
+        {
+          "key": "reader_top_bar_left",
+          "label": "Lado izquierdo de la barra superior",
+          "bodyHtml": "Contiene acciones rápidas: <b>Eliminar página</b>, <b>Info</b> para atajos, <b>Configuración</b> del lector y <b>Tema</b> para cambiar entre aspecto oscuro y claro.",
+          "screenshotTitle": "Lado izquierdo de la barra superior"
+        },
+        {
+          "key": "reader_top_bar_center",
+          "label": "Centro de la barra superior",
+          "bodyHtml": "Muestra el título del número. Las flechas a izquierda y derecha pasan al número anterior o siguiente de la misma serie cuando existe. Atajos: <b>A</b> / <b>D</b>.",
+          "screenshotTitle": "Centro de la barra superior"
+        },
+        {
+          "key": "reader_top_bar_right",
+          "label": "Lado derecho de la barra superior",
+          "bodyHtml": "Incluye modos de lectura y acciones: <b>Modo manga</b>, <b>1 página</b>, <b>2 páginas</b>, <b>Pantalla completa</b>, <b>Lupa</b>, <b>Marcador</b>, <b>Favorito</b>, <b>Copiar</b> y <b>Cerrar</b>.",
+          "screenshotTitle": "Lado derecho de la barra superior"
+        },
+        {
+          "key": "reader_bottom_controls",
+          "label": "Controles inferiores y navegación",
+          "bodyHtml": "Usa las flechas laterales o <b>Izquierda</b> / <b>Derecha</b> para cambiar de página. Abajo están <b>Leer desde el inicio</b>, <b>Marcar como leído</b> y el contador de páginas. Si el <b>Modo manga</b> está activo, la dirección de navegación se invierte.",
+          "screenshotTitle": "Controles inferiores del lector"
+        },
+        {
+          "key": "reader_bookmarks_favorites",
+          "label": "Marcadores y favoritos",
+          "bodyHtml": "<b><i>Marcadores</i></b> guardan una página dentro de un número. Cada número puede tener un marcador. <b><i>Favoritos</i></b> marcan números completos para encontrarlos desde el filtro <b>Favoritos</b>.",
+          "screenshotTitle": "Indicador de marcador"
+        },
+        {
+          "key": "continue_next_unread",
+          "label": "Continuar leyendo y Siguiente sin leer",
+          "bodyHtml": "<b><i>Continuar leyendo</i></b> abre el número usado como objetivo de lectura. <b><i>Siguiente sin leer</i></b> abre el siguiente número no leído dentro del mismo flujo de serie.",
+          "screenshotTitleAfter": "Continuar leyendo y Siguiente sin leer"
+        }
+      ]
+    },
+    {
+      "key": "troubleshooting",
+      "label": "Solución de problemas",
+      "subsections": [
+        {
+          "key": "issue_does_not_open",
+          "label": "El número no se abre",
+          "bodyHtml": "Comprueba que el número sigue visible en <b>Números</b>, prueba otro número y, si fallan muchos a la vez, abre <b>Archivo -> Configuración -> Biblioteca y datos</b> y ejecuta <b><i>Comprobar acceso al almacenamiento</i></b>."
+        },
+        {
+          "key": "import_failed",
+          "label": "La importación falló",
+          "bodyHtml": "Comprueba que el tipo de archivo está soportado, que el archivo abre fuera de la app y que las carpetas contienen páginas compatibles. Si solo falla <b>CBR</b>, revisa 7-Zip en <b>Importación y archivos</b>."
+        },
+        {
+          "key": "import_errors_popup",
+          "label": "¿Y si falla un solo archivo en una importación grande?",
+          "bodyHtml": "Normalmente el resto del lote puede estar bien. Revisa el archivo fallido en <b>Errores de importación</b> y reinténtalo solo después de arreglar o reemplazar la fuente."
+        },
+        {
+          "key": "bug_reports",
+          "label": "¿Cómo reporto un bug?",
+          "bodyHtml": "Si encuentras un bug, repórtalo en <a href=\"https://github.com/nikolayverin/comic-pile/issues\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Issues</a>. Incluye qué pasó, qué esperabas, cómo reproducirlo, tu versión de Windows y la versión de Comic Pile desde <b>Acerca de</b>."
+        }
+      ]
+    },
+    {
+      "key": "faq",
+      "label": "FAQ",
+      "subsections": [
+        {
+          "key": "window_size_limits",
+          "label": "¿Por qué no puedo hacer la ventana mucho más pequeña?",
+          "bodyHtml": "La app está diseñada alrededor de un tamaño mínimo útil. Si la pantalla disponible es menor que <b>1440 x 980</b>, Comic Pile usa un modo adaptado y abre maximizado para esa pantalla."
+        },
+        {
+          "key": "critical_popup_close_block",
+          "label": "¿Por qué no puedo cerrar la app con este popup abierto?",
+          "bodyHtml": "Algunos popups necesitan una decisión antes de que la app pueda continuar con seguridad. Mientras uno está abierto, cerrar la app se bloquea temporalmente para que no saltes ese paso por accidente."
+        }
+      ]
+    }
+  ]
+}
