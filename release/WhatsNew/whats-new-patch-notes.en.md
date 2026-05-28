@@ -11,6 +11,7 @@
 **Updates**
 - Improved update popups with clearer context for available updates, download progress, and installation.
 - Built-in updates can now use a smaller update package without downloading the starter library again.
+- The update download popup now shows downloaded size and a clearer ready-to-install state.
 
 **Bugfixes**
 

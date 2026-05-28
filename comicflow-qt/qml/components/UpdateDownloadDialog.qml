@@ -13,6 +13,9 @@ PopupDialogWindow {
     readonly property bool downloadActive: Boolean(downloadRef) && Boolean(downloadRef.downloadActive)
     readonly property bool downloadProgressKnown: Boolean(downloadRef) && Boolean(downloadRef.downloadProgressKnown)
     readonly property real downloadProgressFraction: Number(downloadRef && downloadRef.downloadProgressFraction || 0)
+    readonly property real effectiveProgressFraction: dialog.installReady ? 1.0 : dialog.downloadProgressFraction
+    readonly property real downloadedBytes: Number(downloadRef && downloadRef.downloadedBytes || 0)
+    readonly property real downloadTotalBytes: Number(downloadRef && downloadRef.downloadTotalBytes || 0)
     readonly property string downloadStatusText: String(downloadRef && downloadRef.statusText || "").trim()
     readonly property string downloadErrorText: String(downloadRef && downloadRef.lastError || "").trim()
     readonly property string downloadedFilePath: String(downloadRef && downloadRef.downloadedFilePath || "").trim()
@@ -33,6 +36,32 @@ PopupDialogWindow {
     readonly property bool progressBlockActive: dialog.downloadActive
         || dialog.installReady
         || dialog.downloadFailed
+    readonly property string progressTitleText: dialog.installReady
+        ? AppText.t("updateDownloadReadyTitle", dialog.textLanguage)
+        : AppText.t("updateDownloadProgressTitle", dialog.textLanguage)
+    readonly property string contextText: dialog.installReady
+        ? AppText.t("updateDownloadReadyContext", dialog.textLanguage)
+        : AppText.t("updateDownloadContext", dialog.textLanguage)
+    readonly property string progressStatusText: dialog.installReady
+        ? "100%"
+        : (dialog.downloadProgressKnown ? (String(dialog.progressCounterValue) + "%") : "")
+    readonly property string downloadDetailText: {
+        if (dialog.installReady) {
+            return AppText.t("updateDownloadReadyMessage", dialog.textLanguage)
+        }
+        if (dialog.downloadProgressKnown && dialog.downloadTotalBytes > 0) {
+            return AppText.tf("updateDownloadSizeKnown", {
+                downloaded: dialog.formatByteCount(dialog.downloadedBytes),
+                total: dialog.formatByteCount(dialog.downloadTotalBytes)
+            }, dialog.textLanguage)
+        }
+        if (dialog.downloadedBytes > 0) {
+            return AppText.tf("updateDownloadSizeUnknown", {
+                downloaded: dialog.formatByteCount(dialog.downloadedBytes)
+            }, dialog.textLanguage)
+        }
+        return ""
+    }
     readonly property string reservedAlertMessageText: AppText.t("updateDownloadTimedOut", dialog.textLanguage)
     readonly property int minimumDialogHeight: 232
     readonly property int maximumDialogHeight: 520
@@ -53,6 +82,17 @@ PopupDialogWindow {
     width: 560
     height: Math.min(availableDialogHeight, Math.max(minimumDialogHeight, downloadBody.implicitHeight))
 
+    function formatByteCount(bytes) {
+        const normalizedBytes = Math.max(0, Number(bytes || 0))
+        if (normalizedBytes >= 1024 * 1024) {
+            return (normalizedBytes / (1024 * 1024)).toFixed(1) + " MB"
+        }
+        if (normalizedBytes >= 1024) {
+            return Math.round(normalizedBytes / 1024) + " KB"
+        }
+        return Math.round(normalizedBytes) + " B"
+    }
+
     onCloseRequested: {
         if (dialog.downloadRef && dialog.downloadActive) {
             dialog.downloadRef.cancelDownload()
@@ -67,7 +107,7 @@ PopupDialogWindow {
 
         Text {
             Layout.fillWidth: true
-            text: AppText.t("updateDownloadContext", dialog.textLanguage)
+            text: dialog.contextText
             color: styleTokens.subtleTextColor
             font.family: Qt.application.font.family
             font.pixelSize: styleTokens.dialogBodyFontSize
@@ -81,17 +121,29 @@ PopupDialogWindow {
             popupStyle: styleTokens
             active: dialog.progressBlockActive
             reserveSpace: true
-            titleText: AppText.t("importProgressCurrentFile", dialog.textLanguage)
+            titleText: dialog.progressTitleText
             currentFileName: dialog.currentAssetNameText
             showFileCounter: false
             percentOnlyStatus: true
-            totalCount: dialog.progressBlockActive && (dialog.downloadProgressKnown || dialog.downloadFailed) ? 100 : 0
+            totalCount: dialog.installReady
+                ? 100
+                : (dialog.progressBlockActive && (dialog.downloadProgressKnown || dialog.downloadFailed) ? 100 : 0)
             processedCount: dialog.installReady
                 ? 100
                 : (dialog.progressBlockActive && dialog.downloadProgressKnown ? dialog.progressCounterValue : 0)
-            progressFraction: dialog.downloadProgressFraction
-            statusTextOverride: ""
+            progressFraction: dialog.effectiveProgressFraction
+            statusTextOverride: dialog.progressStatusText
             forceIndeterminate: dialog.downloadActive && !dialog.downloadProgressKnown
+        }
+
+        Text {
+            Layout.fillWidth: true
+            visible: dialog.downloadDetailText.length > 0
+            text: dialog.downloadDetailText
+            color: styleTokens.subtleTextColor
+            font.family: Qt.application.font.family
+            font.pixelSize: styleTokens.dialogHintFontSize
+            wrapMode: Text.WordWrap
         }
 
         Item {
