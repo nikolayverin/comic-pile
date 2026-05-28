@@ -58,7 +58,7 @@
         { "key": "automatic_update_checks", "label": "自動で確認される?", "bodyHtml": "はい。Comic Pile は使用中に自動でアップデートを確認できます。自分で管理したい場合は <b>ファイル -> 設定 -> 一般</b> で <b>アップデートを自動確認</b> をオフにします。", "screenshotTitle": "自動確認の設定", "bodyHtmlAfterScreenshot": "オフにしても、<b>このアプリについて</b>から手動確認できます。", "screenshotTitleAfter": "このアプリについての更新確認" },
         { "key": "view_update_details", "label": "アップデートありポップアップは何を表示する?", "bodyHtml": "最新バージョンと <b>新機能</b> のリリースノートを表示します。後で読むなら <b>後で</b>、ダウンロードするなら <b>アップデートをダウンロード</b> を使います。", "screenshotTitle": "アップデートありポップアップ" },
         { "key": "whats_new_meaning", "label": "新機能とは?", "bodyHtml": "<b>ヘルプ -> 新機能</b> は現在インストールされている版のパッチノートを表示します。既知のアップデートがある場合、更新ポップアップは新しい版のノートを表示します。" },
-        { "key": "download_install_flow", "label": "ダウンロードとインストールの流れ", "bodyHtml": "<b>アップデートをダウンロード</b>を押すと、一時場所にポータブルパッケージを保存します。完了後 <b>アップデートをインストール</b> が有効になり、アプリを閉じて更新を適用し、再起動します。", "screenshotTitle": "インストールボタン" },
+        { "key": "download_install_flow", "label": "ダウンロードとインストールの流れ", "bodyHtml": "<b>アップデートをダウンロード</b>を押すと、一時場所にポータブル更新パッケージを保存します。完了後 <b>アップデートをインストール</b> が有効になり、アプリを閉じて更新を適用し、再起動します。", "screenshotTitle": "インストールボタン" },
         { "key": "library_data_kept", "label": "ライブラリデータは残る?", "bodyHtml": "はい。内蔵更新は <b>Database</b> フォルダと <b>ComicPile.ini</b> を保持します。" },
         { "key": "update_errors", "label": "ダウンロードやインストールが失敗したら?", "bodyHtml": "ダウンロードが失敗したら、まず更新ポップアップから再試行してください。一時的なネットワーク問題の可能性があります。", "screenshotTitle": "ダウンロード失敗", "bodyHtmlAfterScreenshot": "インストールが完了しない場合は再試行してください。必要なら <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a> から最新版を手動でダウンロードし、Comic Pile を閉じてアプリファイルを置き換えます。<b>Database</b> と <b>ComicPile.ini</b> は残してください。" }
       ]

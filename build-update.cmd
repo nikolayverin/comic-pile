@@ -5,17 +5,15 @@ set "ROOT=%~dp0"
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
 
 set "SRC_DIR=%ROOT%\comicflow-qt"
-set "BUILD_DIR=%ROOT%\_release_build\_build\comicflow-qt-mingw"
-set "STAGE_DIR=%ROOT%\_release_build\Comics-Pile"
+set "UPDATE_ROOT=%ROOT%\_update_build"
+set "BUILD_DIR=%UPDATE_ROOT%\_build\comicflow-qt-mingw"
+set "STAGE_DIR=%UPDATE_ROOT%\Comics-Pile"
 set "BUILD_TARGET=comic_pile_qt"
 set "APP_BASENAME=Comic Pile"
 set "APP_EXE=%BUILD_DIR%\%APP_BASENAME%.exe"
 set "STAGE_EXE=%STAGE_DIR%\%APP_BASENAME%.exe"
-set "BUILD_LOG=%BUILD_DIR%\build-release.log"
+set "BUILD_LOG=%BUILD_DIR%\build-update.log"
 
-set "DATABASE_SRC=%ROOT%\release\Database"
-set "DATABASE_DST=%STAGE_DIR%\Database"
-set "RUNTIME_MARKER=library-storage-layout-migration-v1.done"
 set "RELEASE_ASSETS_SRC=%ROOT%\release"
 set "RELEASE_ASSETS_DST=%STAGE_DIR%"
 set "UPDATE_MANIFEST=%STAGE_DIR%\.comicpile-update-manifest.txt"
@@ -45,9 +43,7 @@ set "PATH=%QT_BIN%;%MINGW_BIN%;C:\Qt\Tools\Ninja;%PATH%"
 
 call :requireFile "%SRC_DIR%\CMakeLists.txt" "Project source"
 if errorlevel 1 exit /b 1
-call :requireFile "%DATABASE_SRC%\library.db" "Release Database"
-if errorlevel 1 exit /b 1
-call :requireFile "%RELEASE_ASSETS_SRC%\README.txt" "Release README"
+call :requireFile "%RELEASE_ASSETS_SRC%\README-update.txt" "Update README"
 if errorlevel 1 exit /b 1
 call :requireFile "%RELEASE_ASSETS_SRC%\License\00-COMIC-PILE-LICENSE.txt" "Release license bundle"
 if errorlevel 1 exit /b 1
@@ -83,20 +79,20 @@ if "%APP_VERSION%"=="" (
     echo [FAIL] Could not read app version from %SRC_DIR%\CMakeLists.txt.
     exit /b 1
 )
-set "RELEASE_ZIP=%ROOT%\_release_build\Comic-Pile-v%APP_VERSION%-win64.zip"
+set "UPDATE_ZIP=%UPDATE_ROOT%\Comic-Pile-v%APP_VERSION%-win64-update.zip"
 
-echo [Comic Pile] Release build start
+echo [Comic Pile] Update package build start
 echo Root: %ROOT%
 echo Build cache: %BUILD_DIR%
-echo Release app: %STAGE_DIR%
-echo Release zip: %RELEASE_ZIP%
+echo Update app: %STAGE_DIR%
+echo Update zip: %UPDATE_ZIP%
 
-if not exist "%ROOT%\_release_build" mkdir "%ROOT%\_release_build" >nul 2>nul
-if not exist "%ROOT%\_release_build\_build" mkdir "%ROOT%\_release_build\_build" >nul 2>nul
+if not exist "%UPDATE_ROOT%" mkdir "%UPDATE_ROOT%" >nul 2>nul
+if not exist "%UPDATE_ROOT%\_build" mkdir "%UPDATE_ROOT%\_build" >nul 2>nul
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%" >nul 2>nul
 if exist "%BUILD_LOG%" del /F /Q "%BUILD_LOG%" >nul 2>nul
 
-echo [1/5] Configure release build directory...
+echo [1/6] Configure release build directory...
 "%CMAKE_EXE%" -S "%SRC_DIR%" -B "%BUILD_DIR%" -G Ninja ^
   -DCMAKE_MAKE_PROGRAM=%NINJA_EXE% ^
   -DCMAKE_CXX_COMPILER=%MINGW_BIN%\g++.exe ^
@@ -105,7 +101,7 @@ echo [1/5] Configure release build directory...
   -DCOMICPILE_FAST_DEV_BUILD=OFF
 if errorlevel 1 goto :fail
 
-echo [2/5] Build target %BUILD_TARGET%...
+echo [2/6] Build target %BUILD_TARGET%...
 "%CMAKE_EXE%" --build "%BUILD_DIR%" --target %BUILD_TARGET% --parallel > "%BUILD_LOG%" 2>&1
 set "BUILD_RC=%ERRORLEVEL%"
 if exist "%BUILD_LOG%" type "%BUILD_LOG%"
@@ -116,20 +112,20 @@ if not exist "%APP_EXE%" (
     exit /b 1
 )
 
-echo [3/5] Prepare clean release folder...
+echo [3/6] Prepare clean update folder...
 if exist "%STAGE_DIR%" rmdir /S /Q "%STAGE_DIR%" >nul 2>nul
 if exist "%STAGE_DIR%" (
-    echo [FAIL] Could not clear release folder. Close any running app from %STAGE_DIR% and run build-release.cmd again.
+    echo [FAIL] Could not clear update folder. Close any running app from %STAGE_DIR% and run build-update.cmd again.
     exit /b 1
 )
 mkdir "%STAGE_DIR%" >nul 2>nul
 copy /Y "%APP_EXE%" "%STAGE_EXE%" >nul 2>nul
 if errorlevel 1 (
-    echo [FAIL] Could not copy %APP_EXE% to the release folder.
+    echo [FAIL] Could not copy %APP_EXE% to the update folder.
     exit /b 1
 )
 
-echo [4/5] Deploy release runtime...
+echo [4/6] Deploy update runtime...
 "%WINDEPLOYQT%" --dir "%STAGE_DIR%" --qmldir "%SRC_DIR%\qml" --no-translations "%STAGE_EXE%" >> "%BUILD_LOG%" 2>&1
 if errorlevel 1 (
     echo [FAIL] windeployqt failed.
@@ -177,18 +173,8 @@ if errorlevel 1 (
 )
 if exist "%STAGE_DIR%\qmltooling" rmdir /S /Q "%STAGE_DIR%\qmltooling" >nul 2>nul
 
-echo [5/6] Copy release Database...
-robocopy "%DATABASE_SRC%" "%DATABASE_DST%" /MIR /XD ".runtime" /XF "library.db-wal" "library.db-shm" "library.db-journal" >nul
-set "ROBOCOPY_RC=%ERRORLEVEL%"
-if %ROBOCOPY_RC% GEQ 8 (
-    echo [FAIL] Could not copy release Database.
-    exit /b 1
-)
-if not exist "%DATABASE_DST%\.runtime" mkdir "%DATABASE_DST%\.runtime" >nul 2>nul
-if exist "%DATABASE_SRC%\.runtime\%RUNTIME_MARKER%" (
-    copy /Y "%DATABASE_SRC%\.runtime\%RUNTIME_MARKER%" "%DATABASE_DST%\.runtime\%RUNTIME_MARKER%" >nul 2>nul
-)
-copy /Y "%RELEASE_ASSETS_SRC%\README.txt" "%RELEASE_ASSETS_DST%\README.txt" >nul 2>nul
+echo [5/6] Copy update metadata...
+copy /Y "%RELEASE_ASSETS_SRC%\README-update.txt" "%RELEASE_ASSETS_DST%\README.txt" >nul 2>nul
 robocopy "%RELEASE_ASSETS_SRC%\License" "%RELEASE_ASSETS_DST%\License" /MIR >nul
 set "ROBOCOPY_RC=%ERRORLEVEL%"
 if %ROBOCOPY_RC% GEQ 8 (
@@ -196,7 +182,9 @@ if %ROBOCOPY_RC% GEQ 8 (
     exit /b 1
 )
 
-rem Keep runtime/debug logs out of portable release packages and manifests.
+rem Keep user-owned state and runtime/debug logs out of update packages and manifests.
+if exist "%STAGE_DIR%\Database" rmdir /S /Q "%STAGE_DIR%\Database" >nul 2>nul
+if exist "%STAGE_DIR%\ComicPile.ini" del /F /Q "%STAGE_DIR%\ComicPile.ini" >nul 2>nul
 del /S /Q "%STAGE_DIR%\*.log" >nul 2>nul
 del /S /Q "%STAGE_DIR%\*.log.*" >nul 2>nul
 del /S /Q "%STAGE_DIR%\startup-log.txt" >nul 2>nul
@@ -208,20 +196,18 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [6/6] Create release zip...
-if exist "%RELEASE_ZIP%" del /F /Q "%RELEASE_ZIP%" >nul 2>nul
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$source=(Resolve-Path -LiteralPath '%STAGE_DIR%').Path; $zip='%RELEASE_ZIP%'; Compress-Archive -Path (Join-Path $source '*') -DestinationPath $zip -Force"
+echo [6/6] Create update zip...
+if exist "%UPDATE_ZIP%" del /F /Q "%UPDATE_ZIP%" >nul 2>nul
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$source=(Resolve-Path -LiteralPath '%STAGE_DIR%').Path; $zip='%UPDATE_ZIP%'; Compress-Archive -Path (Join-Path $source '*') -DestinationPath $zip -Force"
 if errorlevel 1 (
-    echo [FAIL] Could not create release zip.
+    echo [FAIL] Could not create update zip.
     exit /b 1
 )
 
 echo.
-echo [OK] Release build finished.
+echo [OK] Update package build finished.
 echo APP: %STAGE_DIR%
-echo EXE: %STAGE_EXE%
-echo DATA: %DATABASE_DST%
-echo ZIP: %RELEASE_ZIP%
+echo ZIP: %UPDATE_ZIP%
 goto :success
 
 :requireFile
@@ -235,7 +221,7 @@ exit /b 0
 
 :fail
 echo.
-echo [FAIL] Release build failed.
+echo [FAIL] Update package build failed.
 echo Check log: %BUILD_LOG%
 endlocal
 exit /b 1

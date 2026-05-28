@@ -10,6 +10,7 @@
 
 **Updates**
 - Improved update popups with clearer context for available updates, download progress, and installation.
+- Built-in updates can now use a smaller update package without downloading the starter library again.
 
 **Bugfixes**
 

@@ -227,7 +227,7 @@
         {
           "key": "download_install_flow",
           "label": "How does download and install work?",
-          "bodyHtml": "After you press <b>Download update</b>, Comic Pile opens the <b>Downloading update</b> popup and downloads the portable release package into a temporary location.<br><br>When the download finishes, the <b>Install update</b> button becomes available. Pressing <b>Install update</b> starts the update right away: Comic Pile closes, applies the downloaded update over the current app folder, and then starts again automatically.<br><br>This does not wait for some later launch. The install step happens when you press <b>Install update</b>.",
+          "bodyHtml": "After you press <b>Download update</b>, Comic Pile opens the <b>Downloading update</b> popup and downloads the portable update package into a temporary location.<br><br>When the download finishes, the <b>Install update</b> button becomes available. Pressing <b>Install update</b> starts the update right away: Comic Pile closes, applies the downloaded update over the current app folder, and then starts again automatically.<br><br>This does not wait for some later launch. The install step happens when you press <b>Install update</b>.",
           "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/21-install-update.png",
           "screenshotTitle": "Install update button after download"
         },

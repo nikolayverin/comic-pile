@@ -180,7 +180,7 @@
         {
           "key": "view_update_details",
           "label": "¿Qué muestra el popup Actualización disponible?",
-          "bodyHtml": "Muestra la versión más reciente y sus notas bajo <b>Novedades</b>. Usa <b>Más tarde</b> para revisarlo luego o <b>Descargar actualización</b> para descargar el paquete portable.",
+          "bodyHtml": "Muestra la versión más reciente y sus notas bajo <b>Novedades</b>. Usa <b>Más tarde</b> para revisarlo luego o <b>Descargar actualización</b> para descargar el paquete portable de actualización.",
           "screenshotTitle": "Popup Actualización disponible"
         },
         {
@@ -191,7 +191,7 @@
         {
           "key": "download_install_flow",
           "label": "¿Cómo funciona descargar e instalar?",
-          "bodyHtml": "Al pulsar <b>Descargar actualización</b>, Comic Pile abre <b>Descargando actualización</b> y descarga el paquete portable en una ubicación temporal. Al terminar, aparece <b>Instalar actualización</b>. Ese botón cierra la app, aplica la actualización y vuelve a iniciar Comic Pile.",
+          "bodyHtml": "Al pulsar <b>Descargar actualización</b>, Comic Pile abre <b>Descargando actualización</b> y descarga el paquete portable de actualización en una ubicación temporal. Al terminar, aparece <b>Instalar actualización</b>. Ese botón cierra la app, aplica la actualización y vuelve a iniciar Comic Pile.",
           "screenshotTitle": "Botón Instalar actualización"
         },
         {

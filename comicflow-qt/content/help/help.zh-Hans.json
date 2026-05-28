@@ -58,7 +58,7 @@
         { "key": "automatic_update_checks", "label": "会自动检查更新吗？", "bodyHtml": "会。Comic Pile 可以在使用过程中自动检查更新。你也可以在 <b>文件 -> 设置 -> 常规</b> 中关闭 <b>自动检查更新</b>。", "screenshotTitle": "自动检查更新设置", "bodyHtmlAfterScreenshot": "关闭后仍然可以随时在 <b>关于</b> 中手动检查。", "screenshotTitleAfter": "关于窗口中的检查更新" },
         { "key": "view_update_details", "label": "有可用更新弹窗显示什么？", "bodyHtml": "它会显示最新版本和 <b>新增内容</b> 下的发布说明。稍后再看用 <b>稍后</b>，要下载则用 <b>下载更新</b>。", "screenshotTitle": "有可用更新弹窗" },
         { "key": "whats_new_meaning", "label": "新增内容是什么？", "bodyHtml": "<b>帮助 -> 新增内容</b> 显示当前安装版本的补丁说明。如果已经检测到更新，更新弹窗会显示新版本的说明。" },
-        { "key": "download_install_flow", "label": "下载和安装如何工作？", "bodyHtml": "点击 <b>下载更新</b> 后，便携包会保存到临时位置。完成后 <b>安装更新</b> 会变为可用，应用会关闭、应用更新并重新启动。", "screenshotTitle": "下载后的安装按钮" },
+        { "key": "download_install_flow", "label": "下载和安装如何工作？", "bodyHtml": "点击 <b>下载更新</b> 后，便携更新包会保存到临时位置。完成后 <b>安装更新</b> 会变为可用，应用会关闭、应用更新并重新启动。", "screenshotTitle": "下载后的安装按钮" },
         { "key": "library_data_kept", "label": "资料库数据会保留吗？", "bodyHtml": "会。内置更新会保留 <b>Database</b> 文件夹和 <b>ComicPile.ini</b> 设置文件。" },
         { "key": "update_errors", "label": "下载或安装失败怎么办？", "bodyHtml": "如果下载失败，先重试。可能只是临时网络问题。", "screenshotTitle": "下载失败弹窗", "bodyHtmlAfterScreenshot": "如果安装没有完成，请重试。必要时可以从 <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a> 下载最新便携版，关闭 Comic Pile 后替换应用文件。请保留 <b>Database</b> 和 <b>ComicPile.ini</b>。" }
       ]

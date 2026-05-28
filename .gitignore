@@ -16,6 +16,7 @@ library.db*
 Database/
 _build/
 _release_build/
+_update_build/
 _tmp/
 AGENTS.md
 MEMORY_BANK.md

@@ -118,6 +118,9 @@ int portableAssetScore(const QString &name, const QString &version)
 {
     const QString normalizedName = normalizedReleaseAssetName(name);
     int score = 0;
+    if (normalizedName.contains(QStringLiteral("update"))) {
+        score += 100;
+    }
     if (normalizedName.contains(QStringLiteral("portable"))) {
         score += 20;
     }
