@@ -1,5 +1,7 @@
 #include "updates/releaseinstallservice.h"
 
+#include "settings/portablesettingsutils.h"
+
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
@@ -49,6 +51,13 @@ QString helperLaunchErrorText()
 QString updateHelperRootPath()
 {
     return QDir(QDir::tempPath()).filePath(QStringLiteral("ComicPile/update-install"));
+}
+
+void rememberUpdateInstallRestart()
+{
+    QSettings settings = ComicPortableSettings::settingsStore();
+    settings.setValue(QStringLiteral("AppSettings/updateInstallSuppressOnboardingOnce"), true);
+    settings.sync();
 }
 
 } // namespace
@@ -105,6 +114,8 @@ QString ReleaseInstallService::installDownloadedRelease(const QString &packagePa
     if (!QProcess::startDetached(powerShellPath, arguments, helperRootPath)) {
         return helperLaunchErrorText();
     }
+
+    rememberUpdateInstallRestart();
 
     if (QObject *appInstance = QCoreApplication::instance()) {
         QTimer::singleShot(0, appInstance, []() {

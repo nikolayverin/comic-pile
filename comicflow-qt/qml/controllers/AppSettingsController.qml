@@ -246,6 +246,17 @@ Item {
         onboardingCompleted = wasOnboardingCompleted
     }
 
+    function consumeUpdateInstallSuppressOnboardingOnce() {
+        if (!Boolean(settingsStore.updateInstallSuppressOnboardingOnce)) {
+            return false
+        }
+        settingsStore.updateInstallSuppressOnboardingOnce = false
+        if (!onboardingCompleted) {
+            onboardingCompleted = true
+        }
+        return true
+    }
+
     Settings {
         id: settingsStore
         location: controller.portableSettingsLocation
@@ -278,6 +289,7 @@ Item {
         property bool safetyConfirmBeforeReplace: controller.defaultSafetyConfirmBeforeReplace
         property bool safetyConfirmBeforeDeletingPage: controller.defaultSafetyConfirmBeforeDeletingPage
         property bool onboardingCompleted: controller.defaultOnboardingCompleted
+        property bool updateInstallSuppressOnboardingOnce: false
     }
 
     property bool generalAutomaticallyCheckForUpdates: normalizeSettingValue(

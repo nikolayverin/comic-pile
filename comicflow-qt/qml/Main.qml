@@ -2026,6 +2026,7 @@ ApplicationWindow {
             releaseCheckService.checkLatestReleaseIfDue()
         }
         scheduleDeferredUpdatePromptCheck()
+        appSettingsController.consumeUpdateInstallSuppressOnboardingOnce()
         if (!appSettingsController.onboardingCompleted) {
             launchOnboarding(false)
         }
