@@ -522,6 +522,11 @@ QString ComicsListModel::bulkUpdateMetadata(
         }
     }
 
+    for (auto it = outcome.movedPathById.constBegin(); it != outcome.movedPathById.constEnd(); ++it) {
+        setReaderArchivePathForComic(it.key(), it.value());
+        requestIssueThumbnailAsync(it.key());
+    }
+
     m_lastMutationKind = QStringLiteral("bulk_update_metadata");
     emit statusChanged();
     return {};

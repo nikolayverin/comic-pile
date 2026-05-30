@@ -472,14 +472,26 @@ Item {
             root.issuesGridData = orderedIssues
         }
         if (liveIssueListChanged && readerCoverControllerRef) {
+            const previousIdMap = ({})
+            const liveIdMap = ({})
             const resetComicIds = []
             for (let i = 0; i < previousIssues.length; i += 1) {
                 const previousId = Number((previousIssues[i] || {}).id || 0)
-                if (previousId > 0) resetComicIds.push(previousId)
+                if (previousId > 0) previousIdMap[String(previousId)] = true
             }
             for (let i = 0; i < liveIssues.length; i += 1) {
                 const liveId = Number((liveIssues[i] || {}).id || 0)
-                if (liveId > 0) resetComicIds.push(liveId)
+                if (liveId > 0) liveIdMap[String(liveId)] = true
+            }
+            const previousKeys = Object.keys(previousIdMap)
+            for (let i = 0; i < previousKeys.length; i += 1) {
+                const key = String(previousKeys[i] || "")
+                if (liveIdMap[key] !== true) resetComicIds.push(Number(key))
+            }
+            const liveKeys = Object.keys(liveIdMap)
+            for (let i = 0; i < liveKeys.length; i += 1) {
+                const key = String(liveKeys[i] || "")
+                if (previousIdMap[key] !== true) resetComicIds.push(Number(key))
             }
             traceBrowse(
                 "refresh grid clearing cover sources"

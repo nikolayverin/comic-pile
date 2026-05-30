@@ -19,6 +19,9 @@
 - Fixed update downloads so clicking outside the popup, pressing **Esc**, or using the popup close button no longer cancels the download by accident.
 - Fixed built-in updates so Comic Pile does not show the first-run tour again after the updated app restarts.
 
+**Library**
+- Fixed issue and hero covers so they stay visible after editing a series name that moves the archive into a renamed folder.
+
 **Interface**
 - Improved localized popup layouts so longer translated labels and messages fit and read more reliably.
 - Onboarding can now be closed with **Esc** and navigated with arrow keys, making it easier to recover if the window opens off-screen.

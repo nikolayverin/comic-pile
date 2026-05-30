@@ -584,6 +584,21 @@ Item {
             return
         }
 
+        const visibleAutoSource = String(root.heroAutoCoverSource || "").trim()
+        if (Number(root.heroCoverComicId || -1) === targetComicId
+                && visibleAutoSource.length > 0
+                && !hasSelectedSeriesCustomHeroCover()) {
+            traceHeroCover(
+                "resolve keep visible source while thumbnail refreshes"
+                + " seriesKey=" + key
+                + " comicId=" + String(targetComicId)
+                + " source=" + debugSourceToken(visibleAutoSource)
+            )
+            syncAutomaticHeroCoverState(key, targetComicId, visibleAutoSource)
+            requestIssueThumbnail(targetComicId)
+            return
+        }
+
         traceHeroCover(
             "resolve requesting thumbnail"
             + " seriesKey=" + key
