@@ -36,6 +36,7 @@ PopupDialogWindow {
     readonly property bool progressBlockActive: dialog.downloadActive
         || dialog.installReady
         || dialog.downloadFailed
+    readonly property bool passiveDismissBlocked: dialog.downloadActive
     readonly property string progressTitleText: dialog.installReady
         ? AppText.t("updateDownloadReadyTitle", dialog.textLanguage)
         : AppText.t("updateDownloadProgressTitle", dialog.textLanguage)
@@ -78,7 +79,10 @@ PopupDialogWindow {
     debugName: "update-download-dialog"
     debugLogTarget: (typeof libraryModel !== "undefined") ? libraryModel : null
     title: AppText.t("updateDownloadTitle", dialog.textLanguage)
-    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent
+    showCloseButton: !dialog.passiveDismissBlocked
+    closePolicy: dialog.passiveDismissBlocked
+        ? Popup.NoAutoClose
+        : (Popup.CloseOnEscape | Popup.CloseOnPressOutside | Popup.CloseOnPressOutsideParent)
     width: 560
     height: Math.min(availableDialogHeight, Math.max(minimumDialogHeight, downloadBody.implicitHeight))
 
@@ -93,9 +97,19 @@ PopupDialogWindow {
         return Math.round(normalizedBytes) + " B"
     }
 
-    onCloseRequested: {
+    function cancelDownloadAndClose() {
         if (dialog.downloadRef && dialog.downloadActive) {
             dialog.downloadRef.cancelDownload()
+        }
+        close()
+    }
+
+    onCloseRequested: {
+        if (dialog.passiveDismissBlocked) {
+            if (typeof dialog.forceActiveFocus === "function") {
+                dialog.forceActiveFocus()
+            }
+            return
         }
         close()
     }
@@ -193,7 +207,7 @@ PopupDialogWindow {
                 textColor: styleTokens.textColor
                 textPixelSize: styleTokens.footerButtonTextSize
                 text: AppText.t("commonCancel", dialog.textLanguage)
-                onClicked: dialog.closeRequested()
+                onClicked: dialog.cancelDownloadAndClose()
             }
 
             PopupActionButton {
