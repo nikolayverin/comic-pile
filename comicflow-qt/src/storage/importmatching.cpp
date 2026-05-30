@@ -136,6 +136,26 @@ bool fallbackTitleRepeatsSeriesAndIssue(
         }
     }
 
+    if (!fallbackKey.startsWith(seriesKey) || normalizedIssueKey.isEmpty()) {
+        return false;
+    }
+
+    const QString suffix = fallbackKey.mid(seriesKey.length());
+    for (const QString &marker : markers) {
+        if (!suffix.startsWith(marker)) {
+            continue;
+        }
+
+        const QString issueSuffix = suffix.mid(marker.length());
+        if (issueSuffix.isEmpty()) {
+            continue;
+        }
+
+        if (ComicImportMatching::normalizeIssueKey(issueSuffix) == normalizedIssueKey) {
+            return true;
+        }
+    }
+
     return false;
 }
 

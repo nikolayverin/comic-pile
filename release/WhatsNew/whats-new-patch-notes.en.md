@@ -15,6 +15,9 @@
 
 **Bugfixes**
 
+**Import**
+- Fixed imported issue titles so filenames that only repeat the series name and issue number no longer fill the **Title** field.
+
 **Updates**
 - Fixed update downloads so clicking outside the popup, pressing **Esc**, or using the popup close button no longer cancels the download by accident.
 - Fixed built-in updates so Comic Pile does not show the first-run tour again after the updated app restarts.

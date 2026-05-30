@@ -673,6 +673,7 @@ int main(int argc, char *argv[])
     const QString incomingBare2 = QDir(numericSeriesDirPath).filePath(QStringLiteral("2.%1").arg(seedExt));
     const QString incomingLegacyNormalized0015 = QDir(incomingDirPath).filePath(QStringLiteral("Legacy.Normalized_0015.%1").arg(seedExt));
     const QString incomingFilenamePriority0015 = QDir(incomingDirPath).filePath(QStringLiteral("Filename.Priority_0015.%1").arg(seedExt));
+    const QString incomingTechnicalRepeat0016 = QDir(incomingDirPath).filePath(QStringLiteral("Regression Technical Repeat #0016.%1").arg(seedExt));
     const QString incomingMultiDot = QDir(incomingDirPath).filePath(QStringLiteral("Absolute.Batman_002_2025.%1").arg(seedExt));
     const QString incomingMultiDot003 = QDir(incomingDirPath).filePath(QStringLiteral("Absolute.Batman_003_2025.%1").arg(seedExt));
     QString setupError;
@@ -687,6 +688,7 @@ int main(int argc, char *argv[])
         || !copyFileStrict(seedArchivePath, incomingBare2, setupError)
         || !copyFileStrict(seedArchivePath, incomingLegacyNormalized0015, setupError)
         || !copyFileStrict(seedArchivePath, incomingFilenamePriority0015, setupError)
+        || !copyFileStrict(seedArchivePath, incomingTechnicalRepeat0016, setupError)
         || !copyFileStrict(seedArchivePath, incomingMultiDot, setupError)
         || !copyFileStrict(seedArchivePath, incomingMultiDot003, setupError)) {
         printStepResult(QStringLiteral("Smoke setup: copy fixtures"), false, setupError);
@@ -1383,7 +1385,36 @@ int main(int argc, char *argv[])
     }
     printStepResult(QStringLiteral("ImportEx renamed other-series issue"), true);
 
-    // 2i) importArchiveAndCreateIssueEx: preserve full base name for multi-dot archives.
+    // 2i) importArchiveAndCreateIssueEx: do not store filename repeats as issue titles.
+    const QVariantMap technicalRepeatValues = {
+        { QStringLiteral("series"), QStringLiteral("Regression Technical Repeat") },
+        { QStringLiteral("volume"), QStringLiteral("1") },
+        { QStringLiteral("issueNumber"), QStringLiteral("16") },
+        { QStringLiteral("publisher"), QStringLiteral("Regression Publisher") },
+        { QStringLiteral("deferReload"), true },
+    };
+    const QVariantMap technicalRepeatResult = model.importArchiveAndCreateIssueEx(
+        incomingTechnicalRepeat0016,
+        QString(),
+        technicalRepeatValues
+    );
+    if (!ensureImportSuccess(technicalRepeatResult, QStringLiteral("created"), error)) {
+        printStepResult(QStringLiteral("ImportEx skip technical repeat title"), false, error);
+        return 1;
+    }
+    const int technicalRepeatId = technicalRepeatResult.value(QStringLiteral("comicId")).toInt();
+    const QVariantMap technicalRepeatMeta = model.loadComicMetadata(technicalRepeatId);
+    if (!technicalRepeatMeta.value(QStringLiteral("title")).toString().trimmed().isEmpty()) {
+        printStepResult(
+            QStringLiteral("ImportEx skip technical repeat title"),
+            false,
+            QStringLiteral("Filename that only repeats series and issue number should not become the issue title.")
+        );
+        return 1;
+    }
+    printStepResult(QStringLiteral("ImportEx skip technical repeat title"), true);
+
+    // 2j) importArchiveAndCreateIssueEx: preserve full base name for multi-dot archives.
     const QVariantMap multiDotValues = {
         { QStringLiteral("series"), QStringLiteral("Regression Series") },
         { QStringLiteral("volume"), QStringLiteral("1") },
