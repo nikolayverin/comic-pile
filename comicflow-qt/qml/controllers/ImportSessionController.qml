@@ -55,6 +55,9 @@ Item {
     property var importPendingOldFileDeletes: []
     property int importArchiveNormalizationRequestId: -1
     property var importPendingStepContext: ({})
+    property int importWorkerRequestId: -1
+    property string importWorkerKind: ""
+    property var importWorkerContext: ({})
     property var importCleanupQueue: []
     property int importCleanupTotalCount: 0
     property int importCleanupProcessedCount: 0
@@ -237,6 +240,12 @@ Item {
         importPendingStepContext = ({})
     }
 
+    function clearImportWorkerContext() {
+        importWorkerRequestId = -1
+        importWorkerKind = ""
+        importWorkerContext = ({})
+    }
+
     function cleanupTemporaryNormalizedArchive(pathValue, temporaryFile) {
         const normalizedPath = String(pathValue || "").trim()
         if (!Boolean(temporaryFile) || normalizedPath.length < 1 || !libraryModelRef) return
@@ -394,6 +403,7 @@ Item {
         importConflictActionTimer.stop()
         importCleanupTimer.stop()
         clearPendingImportStepContext()
+        clearImportWorkerContext()
         resetImportConflictState(true)
 
         importInProgress = false
@@ -485,6 +495,11 @@ Item {
         const effectiveResult = result || ({})
         const context = stepContext || ({})
         const ok = Boolean(effectiveResult.ok)
+        if (importCancelRequested && !ok) {
+            cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
+            beginImportCleanup()
+            return
+        }
         if (!ok) {
             const code = String(effectiveResult.code || "runtime_error")
             const errorText = String(effectiveResult.error || AppText.importFailedDefault)
@@ -510,7 +525,12 @@ Item {
                         cloneVariantMap(context.importValues),
                         effectiveResult
                     )
-                    applyImportConflictChoice(importConflictBatchAction, duplicateContext)
+                    duplicateContext.cleanupPath = cleanupPath
+                    duplicateContext.cleanupIsTemporary = cleanupIsTemporary
+                    const batchConflictOutcome = applyImportConflictChoice(importConflictBatchAction, duplicateContext)
+                    if (batchConflictOutcome === "pending") {
+                        return
+                    }
                     cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
                     if (importQueue.length < 1) {
                         finishImportBatch(false)
@@ -562,6 +582,15 @@ Item {
         )
         advanceCompletedImportBytes(queuedFileSizeBytes)
         cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
+
+        if (importCancelRequested) {
+            beginImportCleanup()
+            return
+        }
+
+        if (libraryModelRef) {
+            libraryModelRef.reload()
+        }
 
         if (importQueue.length < 1) {
             finishImportBatch(false)
@@ -1011,27 +1040,57 @@ Item {
         importBatchTimer.start()
     }
 
-    function applyImportConflictChoice(choice, context) {
+    function finishImportConflictChoiceResult(choice, context, result) {
         const action = String(choice || "").toLowerCase()
         const ctx = context || ({})
         const sourcePath = String(ctx.sourcePath || "")
-        const sourceType = String(ctx.sourceType || "archive")
-        const seriesOverride = String(ctx.seriesOverride || "")
-        const importIntent = String(ctx.importIntent || ((ctx.importValues || {}).importIntent) || "").trim().toLowerCase()
-        const baseImportValues = cloneVariantMap(ctx.importValues)
-        const existingId = Number(ctx.existingId || 0)
         const existingFilename = String(ctx.existingFilename || "")
-        const existingSeries = String(ctx.existingSeries || "")
-        const existingVolume = String(ctx.existingVolume || "")
-        const existingIssue = String(ctx.existingIssue || "")
+        const oldFilePath = String(ctx.oldFilePath || "")
+        const oldImportSignals = cloneVariantMap(ctx.oldImportSignals)
 
-        if (sourcePath.length < 1 || !libraryModelRef) return false
-        if (action === "skip" || action === "keep_current" || action === "keep_existing" || action === "skip_all") {
-            advanceCompletedImportBytes(ctx.fileSizeBytes)
-            return true
+        if (Boolean((result || {}).ok) && (action === "replace" || action === "replace_all")) {
+            const backupPath = String((result || {}).backupPath || "")
+            if (backupPath.length > 0) {
+                importPendingOldFileDeletes.push(backupPath)
+            }
+            registerBatchRollbackOp(result, "replace", {
+                newFilePath: String((result || {}).filePath || ""),
+                oldFilePath: oldFilePath,
+                oldFilename: existingFilename,
+                backupFilePath: backupPath,
+                oldImportSignals: oldImportSignals
+            })
+        } else if (Boolean((result || {}).ok)) {
+            registerBatchRollbackOp(result, "", { newFilePath: String((result || {}).filePath || "") })
         }
 
-        const importValues = cloneVariantMap(baseImportValues)
+        if (!Boolean((result || {}).ok)) {
+            pushImportFailure(
+                sourcePath,
+                String((result || {}).error || "Import action failed."),
+                String((result || {}).code || "runtime_error")
+            )
+            advanceCompletedImportBytes(ctx.fileSizeBytes)
+            cleanupTemporaryNormalizedArchive(ctx.cleanupPath, ctx.cleanupIsTemporary)
+            return false
+        }
+
+        importImportedCount += 1
+        rememberLastImportComicId(Number((result || {}).comicId || 0))
+        advanceCompletedImportBytes(ctx.fileSizeBytes)
+        cleanupTemporaryNormalizedArchive(ctx.cleanupPath, ctx.cleanupIsTemporary)
+        if (!importCancelRequested && libraryModelRef) {
+            libraryModelRef.reload()
+        }
+        return true
+    }
+
+    function buildConflictImportValues(action, context) {
+        const ctx = context || ({})
+        const seriesOverride = String(ctx.seriesOverride || "")
+        const importIntent = String(ctx.importIntent || ((ctx.importValues || {}).importIntent) || "").trim().toLowerCase()
+        const sourcePath = String(ctx.sourcePath || "")
+        const importValues = cloneVariantMap(ctx.importValues)
         importValues.deferReload = true
         if (importIntent.length > 0) {
             importValues.importIntent = importIntent
@@ -1046,22 +1105,42 @@ Item {
                 importValues.title = sourceBaseName
             }
         }
+        if (action === "restore_existing") {
+            importValues.allowWeakMetadataRestore = true
+            importValues.restoreCandidateId = Number(ctx.existingId || 0)
+        } else if (action === "import_as_new") {
+            importValues.duplicateDecision = "import_as_new"
+        }
+        return importValues
+    }
 
-        let result = ({})
-        if (action === "replace" || action === "replace_all") {
+    function startImportConflictWorkerRequest(action, context, importValues) {
+        const ctx = context || ({})
+        const sourcePath = String(ctx.sourcePath || "")
+        const sourceType = String(ctx.sourceType || "archive")
+        const existingId = Number(ctx.existingId || 0)
+        const existingFilename = String(ctx.existingFilename || "")
+        const existingSeries = String(ctx.existingSeries || "")
+        const existingVolume = String(ctx.existingVolume || "")
+        const existingIssue = String(ctx.existingIssue || "")
+        const normalizedAction = String(action || "").toLowerCase()
+
+        if (normalizedAction === "replace" || normalizedAction === "replace_all") {
+            if (!libraryModelRef || typeof libraryModelRef.requestReplaceComicFileFromSourceAsync !== "function") {
+                return false
+            }
             if (existingId < 1) {
                 pushImportFailure(sourcePath, "Replace failed: existing issue is not available.", "runtime_error")
                 advanceCompletedImportBytes(ctx.fileSizeBytes)
-                return false
+                return "handled"
             }
 
             const targetHint = existingFilename.length > 0 ? existingFilename : ""
             const oldFilePath = String(ctx.oldFilePath || "")
-            const oldImportSignals = cloneVariantMap(ctx.oldImportSignals)
             if (oldFilePath.length < 1) {
                 pushImportFailure(sourcePath, "Replace failed: existing archive path is missing.", "runtime_error")
                 advanceCompletedImportBytes(ctx.fileSizeBytes)
-                return false
+                return "handled"
             }
 
             const replaceValues = {
@@ -1071,56 +1150,105 @@ Item {
                 volume: existingVolume,
                 issueNumber: existingIssue
             }
-            result = libraryModelRef.replaceComicFileFromSourceEx(existingId, sourcePath, sourceType, targetHint, replaceValues)
-            if (Boolean((result || {}).ok)) {
-                const backupPath = String((result || {}).backupPath || "")
-                if (backupPath.length > 0) {
-                    importPendingOldFileDeletes.push(backupPath)
-                }
-                registerBatchRollbackOp(result, "replace", {
-                    newFilePath: String((result || {}).filePath || ""),
-                    oldFilePath: oldFilePath,
-                    oldFilename: existingFilename,
-                    backupFilePath: backupPath,
-                    oldImportSignals: oldImportSignals
-                })
+            importWorkerContext = {
+                action: normalizedAction,
+                conflictContext: cloneVariantMap(ctx)
             }
-        } else if (action === "restore_existing") {
-            if (existingId < 1) {
+            importWorkerKind = "conflict_replace"
+            importWorkerRequestId = Number(
+                libraryModelRef.requestReplaceComicFileFromSourceAsync(existingId, sourcePath, sourceType, targetHint, replaceValues) || -1
+            )
+            if (importWorkerRequestId > 0) {
+                traceImport("worker conflict replace begin requestId=" + String(importWorkerRequestId) + " file=" + fileNameFromPath(sourcePath))
+                return "pending"
+            }
+            clearImportWorkerContext()
+            return false
+        }
+
+        if (normalizedAction === "restore_existing" || normalizedAction === "import_as_new") {
+            if (!libraryModelRef || typeof libraryModelRef.requestImportSourceAndCreateIssueAsync !== "function") {
+                return false
+            }
+            if (normalizedAction === "restore_existing" && existingId < 1) {
                 pushImportFailure(sourcePath, "Restore failed: matching issue is not available.", "runtime_error")
+                advanceCompletedImportBytes(ctx.fileSizeBytes)
+                return "handled"
+            }
+            importWorkerContext = {
+                action: normalizedAction,
+                conflictContext: cloneVariantMap(ctx)
+            }
+            importWorkerKind = "conflict_import"
+            importWorkerRequestId = Number(
+                libraryModelRef.requestImportSourceAndCreateIssueAsync(
+                    sourcePath,
+                    sourceType,
+                    String(ctx.filenameHint || ""),
+                    cloneVariantMap(importValues)
+                ) || -1
+            )
+            if (importWorkerRequestId > 0) {
+                traceImport("worker conflict import begin requestId=" + String(importWorkerRequestId) + " file=" + fileNameFromPath(sourcePath))
+                return "pending"
+            }
+            clearImportWorkerContext()
+            return false
+        }
+
+        return false
+    }
+
+    function applyImportConflictChoice(choice, context) {
+        const action = String(choice || "").toLowerCase()
+        const ctx = context || ({})
+        const sourcePath = String(ctx.sourcePath || "")
+        const sourceType = String(ctx.sourceType || "archive")
+        const existingId = Number(ctx.existingId || 0)
+        const existingFilename = String(ctx.existingFilename || "")
+        const existingSeries = String(ctx.existingSeries || "")
+        const existingVolume = String(ctx.existingVolume || "")
+        const existingIssue = String(ctx.existingIssue || "")
+
+        if (sourcePath.length < 1 || !libraryModelRef) return false
+        if (action === "skip" || action === "keep_current" || action === "keep_existing" || action === "skip_all") {
+            advanceCompletedImportBytes(ctx.fileSizeBytes)
+            return true
+        }
+
+        const importValues = buildConflictImportValues(action, ctx)
+        const workerOutcome = startImportConflictWorkerRequest(action, ctx, importValues)
+        if (workerOutcome === "pending") {
+            return "pending"
+        }
+        if (workerOutcome === "handled") {
+            return false
+        }
+
+        let result = ({})
+        if (action === "replace" || action === "replace_all") {
+            if (existingId < 1) {
+                pushImportFailure(sourcePath, "Replace failed: existing issue is not available.", "runtime_error")
                 advanceCompletedImportBytes(ctx.fileSizeBytes)
                 return false
             }
-            importValues.allowWeakMetadataRestore = true
-            importValues.restoreCandidateId = existingId
-            result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, String(ctx.filenameHint || ""), importValues)
-            if (Boolean((result || {}).ok)) {
-                registerBatchRollbackOp(result, "", { newFilePath: String((result || {}).filePath || "") })
+            const targetHint = existingFilename.length > 0 ? existingFilename : ""
+            const replaceValues = {
+                deferReload: true,
+                keepBackupForRollback: true,
+                series: existingSeries,
+                volume: existingVolume,
+                issueNumber: existingIssue
             }
+            result = libraryModelRef.replaceComicFileFromSourceEx(existingId, sourcePath, sourceType, targetHint, replaceValues)
+        } else if (action === "restore_existing") {
+            result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, String(ctx.filenameHint || ""), importValues)
         } else if (action === "import_as_new") {
-            importValues.duplicateDecision = "import_as_new"
             result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, String(ctx.filenameHint || ""), importValues)
-            if (Boolean((result || {}).ok)) {
-                registerBatchRollbackOp(result, "", { newFilePath: String((result || {}).filePath || "") })
-            }
         } else {
             return false
         }
-
-        if (!Boolean((result || {}).ok)) {
-            pushImportFailure(
-                sourcePath,
-                String((result || {}).error || "Import action failed."),
-                String((result || {}).code || "runtime_error")
-            )
-            advanceCompletedImportBytes(ctx.fileSizeBytes)
-            return false
-        }
-
-        importImportedCount += 1
-        rememberLastImportComicId(Number((result || {}).comicId || 0))
-        advanceCompletedImportBytes(ctx.fileSizeBytes)
-        return true
+        return finishImportConflictChoiceResult(action, ctx, result)
     }
 
     function queueImportConflictAction(choice) {
@@ -1140,7 +1268,43 @@ Item {
         if (action.length < 1) return
 
         importConflictProgressCurrentFileName = currentImportConflictIncomingLabel(importConflictContext)
-        const success = applyImportConflictChoice(action, importConflictContext || {})
+        const outcome = applyImportConflictChoice(action, importConflictContext || {})
+        if (outcome === "pending") {
+            return
+        }
+        const success = Boolean(outcome)
+        if (success) {
+            importConflictProgressProcessedCount += 1
+        }
+
+        if (action === "replace_all" || action === "skip_all") {
+            if (success && promoteNextImportConflict()) {
+                importConflictActionTimer.start()
+                return
+            }
+            importConflictOperationActive = false
+            importConflictPendingAction = ""
+            importConflictProgressCurrentFileName = ""
+            importConflictProgressProcessedCount = 0
+            importConflictProgressTotalCount = 0
+            resumeImportAfterConflict()
+            return
+        }
+
+        importConflictOperationActive = false
+        importConflictPendingAction = ""
+        importConflictProgressCurrentFileName = ""
+        importConflictProgressProcessedCount = 0
+        importConflictProgressTotalCount = 0
+
+        if (success && promoteNextImportConflict()) return
+        resumeImportAfterConflict()
+    }
+
+    function finishPendingImportConflictWorker(result) {
+        const action = String(importConflictPendingAction || "").toLowerCase()
+        const context = cloneVariantMap((importWorkerContext || {}).conflictContext || importConflictContext || ({}))
+        const success = finishImportConflictChoiceResult(action, context, result || ({}))
         if (success) {
             importConflictProgressProcessedCount += 1
         }
@@ -1180,6 +1344,7 @@ Item {
         }
 
         const success = applyImportConflictChoice(action, importConflictContext || {})
+        if (success === "pending") return
         if (success && (action === "keep_current" || action === "skip")) {
             if (promoteNextImportConflict()) return
         }
@@ -1286,6 +1451,7 @@ Item {
         importErrors = []
         importFailedPaths = []
         clearPendingImportStepContext()
+        clearImportWorkerContext()
         traceImport(
             "batch begin"
             + " total=" + String(importTotal)
@@ -1363,6 +1529,90 @@ Item {
         } else if (importQueue.length < 1) {
             finishImportBatch(false)
         }
+    }
+
+    function startImportWorkerRequest(sourcePath, sourceType, filenameHint, importValues, queuedFileSizeBytes, cleanupPath, cleanupIsTemporary, stepContext) {
+        if (!libraryModelRef || typeof libraryModelRef.requestImportSourceAndCreateIssueAsync !== "function") {
+            return false
+        }
+        importWorkerContext = {
+            sourcePath: String(sourcePath || ""),
+            sourceType: String(sourceType || "archive"),
+            filenameHint: String(filenameHint || ""),
+            queuedFileSizeBytes: Math.max(0, Number(queuedFileSizeBytes || 0)),
+            cleanupPath: String(cleanupPath || ""),
+            cleanupIsTemporary: Boolean(cleanupIsTemporary),
+            stepContext: cloneVariantMap(stepContext || ({}))
+        }
+        importWorkerKind = "import"
+        importWorkerRequestId = Number(
+            libraryModelRef.requestImportSourceAndCreateIssueAsync(
+                String(sourcePath || ""),
+                String(sourceType || "archive"),
+                String(filenameHint || ""),
+                cloneVariantMap(importValues)
+            ) || -1
+        )
+        if (importWorkerRequestId > 0) {
+            traceImport(
+                "worker import begin"
+                + " requestId=" + String(importWorkerRequestId)
+                + " file=" + fileNameFromPath(String(sourcePath || ""))
+            )
+            importBatchTimer.stop()
+            return true
+        }
+        clearImportWorkerContext()
+        return false
+    }
+
+    function finishImportWorkerRequest(requestId, result) {
+        if (Number(requestId || -1) !== Number(importWorkerRequestId || -1)) {
+            return
+        }
+        const workerKind = String(importWorkerKind || "")
+        if (workerKind === "conflict_import" || workerKind === "conflict_replace") {
+            traceImport(
+                "worker conflict finished"
+                + " requestId=" + String(Number(requestId || -1))
+                + " ok=" + String(Boolean((result || {}).ok))
+                + " code=" + String((result || {}).code || "")
+            )
+            finishPendingImportConflictWorker(result || ({}))
+            clearImportWorkerContext()
+            if (importCancelRequested) {
+                beginImportCleanup()
+            }
+            return
+        }
+        if (workerKind === "retry") {
+            const context = importWorkerContext || ({})
+            clearImportWorkerContext()
+            finishRetryImportWorkerResult(
+                Number(context.retryIndex || -1),
+                String(context.sourcePath || ""),
+                result || ({})
+            )
+            return
+        }
+        if (workerKind !== "import") return
+        const context = importWorkerContext || ({})
+        clearImportWorkerContext()
+        traceImport(
+            "worker import finished"
+            + " requestId=" + String(Number(requestId || -1))
+            + " ok=" + String(Boolean((result || {}).ok))
+            + " code=" + String((result || {}).code || "")
+            + " file=" + fileNameFromPath(String(context.sourcePath || ""))
+        )
+        finalizeImportStepResult(
+            String(context.sourcePath || ""),
+            Math.max(0, Number(context.queuedFileSizeBytes || 0)),
+            result || ({}),
+            String(context.cleanupPath || ""),
+            Boolean(context.cleanupIsTemporary),
+            context.stepContext || ({})
+        )
     }
 
     function beginQueuedArchiveNormalization(context, importValues) {
@@ -1502,6 +1752,15 @@ Item {
                 return
             }
 
+            if (startImportWorkerRequest(sourcePath, sourceType, filenameHint, importValues, queuedFileSizeBytes, "", false, ({
+                sourceType: sourceType,
+                seriesOverride: String(entryContext.seriesOverride || ""),
+                filenameHint: filenameHint,
+                importValues: cloneVariantMap(importValues)
+            }))) {
+                return
+            }
+
             const result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, filenameHint, importValues)
             finalizeImportStepResult(sourcePath, queuedFileSizeBytes, result, "", false, ({
                 sourceType: sourceType,
@@ -1519,6 +1778,8 @@ Item {
         if (!importInProgress || importCancelRequested || importCleanupActive) return
         importCancelRequested = true
         importLifecycleState = "cancelling"
+        importBatchTimer.stop()
+        importConflictActionTimer.stop()
         traceImport(
             "cancel requested"
             + " processed=" + String(importProcessed)
@@ -1526,9 +1787,17 @@ Item {
             + " imported=" + String(importImportedCount)
             + " errors=" + String(importErrorCount)
         )
+        if (importWorkerRequestId > 0) {
+            return
+        }
+        if (importArchiveNormalizationRequestId > 0) {
+            return
+        }
         if (importPausedForConflict) {
             beginImportCleanup()
+            return
         }
+        beginImportCleanup()
     }
 
     function dismissFailedImportAt(index) {
@@ -1591,15 +1860,41 @@ Item {
             }
         }
 
+        const retryValues = { importIntent: "global_add" }
+        if (typeof libraryModelRef.requestImportSourceAndCreateIssueAsync === "function") {
+            importWorkerKind = "retry"
+            importWorkerContext = {
+                retryIndex: index,
+                sourcePath: resolvedSourcePath
+            }
+            importWorkerRequestId = Number(
+                libraryModelRef.requestImportSourceAndCreateIssueAsync(
+                    resolvedSourcePath,
+                    resolvedSourceType,
+                    "",
+                    retryValues
+                ) || -1
+            )
+            if (importWorkerRequestId > 0) {
+                return
+            }
+            clearImportWorkerContext()
+        }
+
         const result = libraryModelRef.importSourceAndCreateIssueEx(
             resolvedSourcePath,
             resolvedSourceType,
             "",
-            { importIntent: "global_add" }
+            retryValues
         )
+        finishRetryImportWorkerResult(index, resolvedSourcePath, result || ({}))
+    }
+
+    function finishRetryImportWorkerResult(index, sourcePath, result) {
+        if (index < 0 || index >= lastFailedImportPaths.length) return
         if (!Boolean((result || {}).ok)) {
             const classifiedResult = classifyImportError(
-                resolvedSourcePath,
+                sourcePath,
                 String((result || {}).error || "Import failed."),
                 String((result || {}).code || "")
             )
@@ -1608,6 +1903,9 @@ Item {
             return
         }
 
+        if (libraryModelRef) {
+            libraryModelRef.reload()
+        }
         dismissFailedImportAt(index)
     }
 
@@ -1647,6 +1945,10 @@ Item {
         importValues.importHistorySourcePath = sourcePath
         importValues.importHistorySourceLabel = fileNameFromPath(sourcePath)
 
+        if (startImportWorkerRequest(normalizedPath, "archive", effectiveFilenameHint, importValues, queuedFileSizeBytes, normalizedPath, temporaryFile, context)) {
+            return
+        }
+
         const importResult = libraryModelRef.importSourceAndCreateIssueEx(
             normalizedPath,
             "archive",
@@ -1665,6 +1967,14 @@ Item {
 
     Connections {
         target: libraryModelRef
+
+        function onImportSourceAndCreateIssueFinished(requestId, result) {
+            controller.finishImportWorkerRequest(requestId, result || ({}))
+        }
+
+        function onReplaceComicFileFromSourceFinished(requestId, result) {
+            controller.finishImportWorkerRequest(requestId, result || ({}))
+        }
 
         function onNormalizeImportArchiveFinished(requestId, result) {
             if (Number(requestId || -1) !== Number(importArchiveNormalizationRequestId || -1)) return

@@ -596,6 +596,33 @@ QVariantMap ComicsListModel::importSourceAndCreateIssueEx(
     return out;
 }
 
+int ComicsListModel::requestImportSourceAndCreateIssueAsync(
+    const QString &sourcePath,
+    const QString &sourceType,
+    const QString &filenameHint,
+    const QVariantMap &values
+)
+{
+    const int requestId = m_nextAsyncRequestId++;
+    auto *watcher = new QFutureWatcher<QVariantMap>(this);
+    connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, requestId]() {
+        const QVariantMap result = watcher->result();
+        emit importSourceAndCreateIssueFinished(requestId, result);
+        watcher->deleteLater();
+    });
+
+    QVariantMap workerValues = values;
+    workerValues.insert(QStringLiteral("deferReload"), true);
+    workerValues.insert(QStringLiteral("suppressPostImportModelUpdates"), true);
+
+    watcher->setFuture(QtConcurrent::run([sourcePath, sourceType, filenameHint, workerValues]() {
+        ComicsListModel workerModel(nullptr, true);
+        workerModel.reload();
+        return workerModel.importSourceAndCreateIssueEx(sourcePath, sourceType, filenameHint, workerValues);
+    }));
+    return requestId;
+}
+
 int ComicsListModel::requestNormalizeImportArchiveAsync(const QString &sourcePath)
 {
     const int requestId = m_nextAsyncRequestId++;
@@ -929,6 +956,8 @@ QString ComicsListModel::createComicFromLibrary(
     }
     const bool deferReload = boolFromMap(values, "deferReload")
         || boolFromMap(values, "defer_reload");
+    const bool suppressPostImportModelUpdates = boolFromMap(values, "suppressPostImportModelUpdates")
+        || boolFromMap(values, "suppress_post_import_model_updates");
     const QString duplicateDecision = valueFromMap(values, "duplicateDecision").toLower();
     const bool allowImportAsNew = duplicateDecision == QStringLiteral("import_as_new");
     const bool allowWeakMetadataRestore = boolFromMap(values, "allowWeakMetadataRestore");
@@ -1140,10 +1169,12 @@ QString ComicsListModel::createComicFromLibrary(
             }
 
             db.close();
-            ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, candidate.id);
-            purgeSeriesHeroCacheKeys(seriesHeroKeysToPurge);
-            setReaderArchivePathForComic(candidate.id, normalizedFilePath);
-            requestIssueThumbnailAsync(candidate.id);
+            if (!suppressPostImportModelUpdates) {
+                ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, candidate.id);
+                purgeSeriesHeroCacheKeys(seriesHeroKeysToPurge);
+                setReaderArchivePathForComic(candidate.id, normalizedFilePath);
+                requestIssueThumbnailAsync(candidate.id);
+            }
             if (!deferReload) {
                 reload();
             }
@@ -1418,7 +1449,7 @@ QString ComicsListModel::createComicFromLibrary(
     if (!deferReload) {
         reload();
     }
-    if (m_importState.lastComicId > 0) {
+    if (!suppressPostImportModelUpdates && m_importState.lastComicId > 0) {
         ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, m_importState.lastComicId);
         purgeSeriesHeroCacheForKey(candidateSeriesKey);
         setReaderArchivePathForComic(m_importState.lastComicId, normalizedFilePath);

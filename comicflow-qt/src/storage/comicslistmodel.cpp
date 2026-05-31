@@ -769,30 +769,42 @@ void cleanupEmptyLibraryDirs(const QString &libraryRootPath, const QStringList &
 
 } // namespace
 
-ComicsListModel::ComicsListModel(QObject *parent)
+ComicsListModel::ComicsListModel(QObject *parent, bool workerInstance)
     : QAbstractListModel(parent)
 {
     m_dataRoot = resolveDataRoot();
-    appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_begin"));
+    if (!workerInstance) {
+        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_begin"));
+    }
     m_dbPath = QDir(m_dataRoot).filePath("library.db");
-    appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_paths_ready"));
-    appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_services_ready"));
+    if (!workerInstance) {
+        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_paths_ready"));
+        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_services_ready"));
+    }
     ComicImportRuntime::resetOutcome(m_importState);
-    appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_begin"));
+    if (!workerInstance) {
+        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_begin"));
+    }
     const QString schemaError = LibrarySchemaManager(m_dbPath).ensureSchemaUpToDate();
     if (!schemaError.isEmpty()) {
-        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_failed"));
+        if (!workerInstance) {
+            appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_failed"));
+        }
         m_lastError = schemaError;
         m_lastMutationKind = QStringLiteral("schema_migration");
-        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_end"));
+        if (!workerInstance) {
+            appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_end"));
+        }
         return;
     }
-    appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_end"));
-    ComicDeleteOps::cleanupPendingStagedDeletes(
-        m_dataRoot,
-        QDir(m_dataRoot).filePath(QStringLiteral("Library"))
-    );
-    appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_end"));
+    if (!workerInstance) {
+        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_schema_check_end"));
+        ComicDeleteOps::cleanupPendingStagedDeletes(
+            m_dataRoot,
+            QDir(m_dataRoot).filePath(QStringLiteral("Library"))
+        );
+        appendLaunchTimelineEventForDataRoot(m_dataRoot, QStringLiteral("library_model_ctor_end"));
+    }
 }
 
 int ComicsListModel::rowCount(const QModelIndex &parent) const
@@ -1553,6 +1565,9 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         normalizedSourceType
     );
     const bool keepBackupForRollback = values.value(QStringLiteral("keepBackupForRollback")).toBool();
+    const bool suppressPostImportModelUpdates =
+        values.value(QStringLiteral("suppressPostImportModelUpdates")).toBool()
+        || values.value(QStringLiteral("suppress_post_import_model_updates")).toBool();
     result.insert(QStringLiteral("sourcePath"), normalizedSourcePath);
     result.insert(QStringLiteral("sourceType"), normalizedSourceType);
     result.insert(
@@ -1658,11 +1673,15 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         return result;
     }
 
+    QVariantMap relinkImportSignals = ComicImportWorkflow::importSignalsToVariantMap(newImportSignals);
+    if (suppressPostImportModelUpdates) {
+        relinkImportSignals.insert(QStringLiteral("suppressPostImportModelUpdates"), true);
+    }
     const QString relinkError = relinkComicFileKeepMetadataInternal(
         comicId,
         existingFilePath,
         existingFilename,
-        ComicImportWorkflow::importSignalsToVariantMap(newImportSignals)
+        relinkImportSignals
     );
     if (!relinkError.isEmpty()) {
         deleteFileAtPath(existingFilePath);
@@ -1698,6 +1717,34 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
     }
 
     return result;
+}
+
+int ComicsListModel::requestReplaceComicFileFromSourceAsync(
+    int comicId,
+    const QString &sourcePath,
+    const QString &sourceType,
+    const QString &filenameHint,
+    const QVariantMap &values
+)
+{
+    const int requestId = m_nextAsyncRequestId++;
+    auto *watcher = new QFutureWatcher<QVariantMap>(this);
+    connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, requestId]() {
+        const QVariantMap result = watcher->result();
+        emit replaceComicFileFromSourceFinished(requestId, result);
+        watcher->deleteLater();
+    });
+
+    QVariantMap workerValues = values;
+    workerValues.insert(QStringLiteral("deferReload"), true);
+    workerValues.insert(QStringLiteral("suppressPostImportModelUpdates"), true);
+
+    watcher->setFuture(QtConcurrent::run([comicId, sourcePath, sourceType, filenameHint, workerValues]() {
+        ComicsListModel workerModel(nullptr, true);
+        workerModel.reload();
+        return workerModel.replaceComicFileFromSourceEx(comicId, sourcePath, sourceType, filenameHint, workerValues);
+    }));
+    return requestId;
 }
 
 QString ComicsListModel::restoreReplacedComicFileFromBackup(
@@ -1800,6 +1847,9 @@ QString ComicsListModel::relinkComicFileKeepMetadataInternal(
         filenameValue = pathInfo.fileName();
     }
     const bool shouldUpdateImportSignals = !importSignalValues.isEmpty();
+    const bool suppressPostImportModelUpdates =
+        importSignalValues.value(QStringLiteral("suppressPostImportModelUpdates")).toBool()
+        || importSignalValues.value(QStringLiteral("suppress_post_import_model_updates")).toBool();
     const ComicImportWorkflow::PersistedImportSignals importSignals = ComicImportWorkflow::resolvePersistedImportSignals(
         importSignalValues,
         filenameValue,
@@ -1824,10 +1874,12 @@ QString ComicsListModel::relinkComicFileKeepMetadataInternal(
         return resultError;
     }
 
-    ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
-    purgeSeriesHeroCacheForKey(seriesKey);
-    setReaderArchivePathForComic(comicId, absoluteFilePath);
-    requestIssueThumbnailAsync(comicId);
+    if (!suppressPostImportModelUpdates) {
+        ComicReaderCache::purgeRuntimeCacheForComic(m_dataRoot, comicId);
+        purgeSeriesHeroCacheForKey(seriesKey);
+        setReaderArchivePathForComic(comicId, absoluteFilePath);
+        requestIssueThumbnailAsync(comicId);
+    }
 
     m_lastMutationKind = QString("relink_issue_file_keep_metadata");
     emit statusChanged();

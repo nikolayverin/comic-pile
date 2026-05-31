@@ -61,7 +61,7 @@ public:
     };
     Q_ENUM(ComicRoles)
 
-    explicit ComicsListModel(QObject *parent = nullptr);
+    explicit ComicsListModel(QObject *parent = nullptr, bool workerInstance = false);
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -98,6 +98,12 @@ public:
         const QVariantMap &values
     );
     Q_INVOKABLE QVariantMap importSourceAndCreateIssueEx(
+        const QString &sourcePath,
+        const QString &sourceType,
+        const QString &filenameHint,
+        const QVariantMap &values
+    );
+    Q_INVOKABLE int requestImportSourceAndCreateIssueAsync(
         const QString &sourcePath,
         const QString &sourceType,
         const QString &filenameHint,
@@ -200,6 +206,13 @@ public:
         const QString &filenameHint,
         const QVariantMap &values
     );
+    Q_INVOKABLE int requestReplaceComicFileFromSourceAsync(
+        int comicId,
+        const QString &sourcePath,
+        const QString &sourceType,
+        const QString &filenameHint,
+        const QVariantMap &values
+    );
     Q_INVOKABLE QString restoreReplacedComicFileFromBackup(
         int comicId,
         const QString &backupPath,
@@ -270,6 +283,8 @@ signals:
         const QString &error
     );
     void normalizeImportArchiveFinished(int requestId, QVariantMap result);
+    void importSourceAndCreateIssueFinished(int requestId, QVariantMap result);
+    void replaceComicFileFromSourceFinished(int requestId, QVariantMap result);
 
 private:
     struct ComicRow {
