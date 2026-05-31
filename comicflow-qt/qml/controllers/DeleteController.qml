@@ -398,6 +398,7 @@ Item {
         const rootRef = root()
         const key = String(seriesKey || "")
         if (!rootRef || key.length < 1) return
+        if (Boolean(rootRef.importInProgress)) return
 
         const multipleSelected = selectedSeriesCount() > 1 && isSeriesSelected(key)
         if (multipleSelected) {
@@ -423,6 +424,8 @@ Item {
 
     function performSeriesDelete() {
         if (!libraryModelRef) return
+        const rootRef = root()
+        if (rootRef && Boolean(rootRef.importInProgress)) return
         const keys = Array.isArray(pendingSeriesKeys) ? pendingSeriesKeys.slice(0) : []
         if (keys.length < 1) return
 
@@ -455,7 +458,6 @@ Item {
         pendingSeriesTitle = ""
         pendingSeriesIssueCount = 0
 
-        const rootRef = root()
         if (rootRef) {
             rootRef.selectedSeriesKeys = ({})
             rootRef.seriesSelectionAnchorIndex = -1
@@ -463,6 +465,8 @@ Item {
     }
 
     function requestDelete(comicId) {
+        const rootRef = root()
+        if (rootRef && Boolean(rootRef.importInProgress)) return
         pendingDeleteId = Number(comicId || -1)
         if (appSettingsRef && !Boolean(appSettingsRef.safetyConfirmBeforeDeletingFiles)) {
             performDelete()
@@ -473,6 +477,8 @@ Item {
 
     function performDelete() {
         if (!libraryModelRef) return
+        const rootRef = root()
+        if (rootRef && Boolean(rootRef.importInProgress)) return
         if (pendingDeleteId < 1) return
 
         const targetComicId = Number(pendingDeleteId || -1)

@@ -377,14 +377,15 @@ Rectangle {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: uiTokensRef ? uiTokensRef.sidebarDropPanelBottomMargin : 19
             readonly property color hoverAccentColor: rootObject ? rootObject.sidebarDropHoverAccentColor : "#b7b7b7"
+            readonly property bool showingImportStatus: rootObject ? rootObject.importInProgress : false
             readonly property bool hoverActive: !(
                     rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1
-                ) && (dropZoneMouseArea.containsMouse || dropZoneSubtitleLinkMouseArea.containsMouse)
+                ) && !showingImportStatus && (dropZoneMouseArea.containsMouse || dropZoneSubtitleLinkMouseArea.containsMouse)
 
             Item {
                 id: addFilesDropHighlight
                 anchors.fill: parent
-                opacity: (
+                opacity: !addFilesDropPanel.showingImportStatus && (
                     (rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
                     || dropZoneMouseArea.containsMouse
                     || (rootObject ? rootObject.addFilesDropActive : false)
@@ -420,14 +421,15 @@ Rectangle {
                 source: uiTokensRef ? uiTokensRef.dropZoneBorder : ""
                 fillMode: Image.Stretch
                 smooth: true
-                visible: !(rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
+                visible: !addFilesDropPanel.showingImportStatus
+                    && !(rootObject && rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
             }
 
             Canvas {
                 id: onboardingDropZoneBorder
                 anchors.fill: parent
                 visible: rootObject
-                    ? (rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1)
+                    ? (rootObject.firstRunOnboardingActive && rootObject.firstRunOnboardingStep === 1 && !addFilesDropPanel.showingImportStatus)
                     : false
                 contextType: "2d"
 
@@ -485,7 +487,8 @@ Rectangle {
                     : ""
                 fillMode: Image.PreserveAspectFit
                 smooth: true
-                visible: !(uiTokensRef && addFilesDropPanel.hoverActive)
+                visible: !addFilesDropPanel.showingImportStatus
+                    && !(uiTokensRef && addFilesDropPanel.hoverActive)
             }
 
             Image {
@@ -502,7 +505,7 @@ Rectangle {
             MultiEffect {
                 anchors.fill: addFilesDropHoverTintSource
                 source: addFilesDropHoverTintSource
-                visible: uiTokensRef && addFilesDropPanel.hoverActive
+                visible: !addFilesDropPanel.showingImportStatus && uiTokensRef && addFilesDropPanel.hoverActive
                 colorization: 1.0
                 colorizationColor: addFilesDropPanel.hoverAccentColor
             }
@@ -523,6 +526,7 @@ Rectangle {
                     : addFilesDropPanel.hoverActive
                         ? addFilesDropPanel.hoverAccentColor
                     : (rootObject ? rootObject.dropZoneTextColor : "white")
+                visible: !addFilesDropPanel.showingImportStatus
                 z: 1
                 text: sidebarPanel.localizedText("sidebarDropZoneTitle")
             }
@@ -542,6 +546,7 @@ Rectangle {
                     ? "transparent"
                     : (rootObject ? rootObject.uiTextShadow : "transparent")
                 text: dropZoneTitle.text
+                visible: !addFilesDropPanel.showingImportStatus
                 z: 0
             }
 
@@ -551,6 +556,7 @@ Rectangle {
                 anchors.topMargin: 9
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 0
+                visible: !addFilesDropPanel.showingImportStatus
                 z: 0
 
                 Text {
@@ -594,6 +600,7 @@ Rectangle {
                 anchors.topMargin: 8
                 anchors.horizontalCenter: parent.horizontalCenter
                 spacing: 0
+                visible: !addFilesDropPanel.showingImportStatus
                 z: 2
 
                 Text {
@@ -656,14 +663,14 @@ Rectangle {
                 id: dropZoneMouseArea
                 anchors.fill: parent
                 hoverEnabled: true
-                enabled: rootObject ? !rootObject.importInProgress : true
+                enabled: !addFilesDropPanel.showingImportStatus
                 cursorShape: Qt.PointingHandCursor
                 onClicked: if (rootObject) rootObject.quickAddFilesFromDialog()
             }
 
             DropArea {
                 anchors.fill: parent
-                enabled: rootObject ? !rootObject.importInProgress : true
+                enabled: !addFilesDropPanel.showingImportStatus
 
                 onEntered: if (rootObject) rootObject.addFilesDropActive = true
                 onExited: if (rootObject) rootObject.addFilesDropActive = false
@@ -694,6 +701,34 @@ Rectangle {
                         drop.acceptProposedAction()
                     }
                 }
+            }
+
+            SidebarImportStatus {
+                anchors.fill: parent
+                z: 20
+                visible: addFilesDropPanel.showingImportStatus
+                textLanguage: sidebarPanel.textLanguage
+                uiFontFamily: rootObject ? rootObject.uiFontFamily : ""
+                uiFontPixelSize: rootObject ? rootObject.fontPxUiBase : 14
+                textColor: rootObject ? rootObject.textPrimary : "white"
+                subtleTextColor: rootObject ? rootObject.textMuted : "#a8a8a8"
+                textShadowColor: rootObject ? rootObject.uiTextShadow : "black"
+                showPopupIconSource: uiTokensRef ? uiTokensRef.messageSquareMoreIcon : ""
+                alertIconSource: uiTokensRef ? uiTokensRef.alertTriangleIcon : ""
+                attentionText: rootObject && rootObject.importPausedForConflict
+                    ? AppText.t("importStatusConflict", sidebarPanel.textLanguage)
+                    : (rootObject && rootObject.importErrorCount > 0
+                        ? AppText.t("importStatusImportError", sidebarPanel.textLanguage)
+                        : "")
+                currentFileName: rootObject ? rootObject.importCurrentFileName : ""
+                totalCount: rootObject ? rootObject.importTotal : 0
+                processedCount: rootObject ? rootObject.importProcessed : 0
+                totalBytes: rootObject ? rootObject.importTotalBytes : 0
+                processedBytes: rootObject ? rootObject.importProcessedBytes : 0
+                cancelPending: rootObject ? rootObject.importCancelRequested : false
+                cleanupActive: rootObject ? rootObject.importCleanupActive : false
+                onShowPopupRequested: if (rootObject) rootObject.showImportStatusPopup()
+                onCancelRequested: if (rootObject) rootObject.requestCancelImportBatch()
             }
         }
     }

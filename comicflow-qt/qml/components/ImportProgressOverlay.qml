@@ -33,6 +33,7 @@ Item {
 
     signal cancelRequested()
     signal hidden()
+    signal dismissRequested()
 
     function queueEntryPath(entry) {
         if (!entry) return ""
@@ -130,7 +131,7 @@ Item {
                 && mouse.y >= importProgressDialog.y
                 && mouse.y <= (importProgressDialog.y + importProgressDialog.height)
             if (!insideDialog && !root.cancelFlowActive) {
-                root.cancelRequested()
+                root.dismissRequested()
             }
             mouse.accepted = true
         }
@@ -142,7 +143,7 @@ Item {
     Shortcut {
         sequence: "Escape"
         enabled: root.presented && !root.cancelFlowActive
-        onActivated: root.cancelRequested()
+        onActivated: root.dismissRequested()
     }
 
     Item {
@@ -172,7 +173,7 @@ Item {
             title: root.dialogTitle
             onCloseRequested: {
                 if (!root.cancelFlowActive) {
-                    root.cancelRequested()
+                    root.dismissRequested()
                 }
             }
 

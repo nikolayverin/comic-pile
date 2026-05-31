@@ -576,6 +576,7 @@ ApplicationWindow {
     property alias importQueue: importController.importQueue
     property alias lastFailedImportPaths: importController.lastFailedImportPaths
     property alias lastFailedImportErrors: importController.lastFailedImportErrors
+    property bool importProgressPopupVisible: false
     property bool gridOverlayMenusSuppressed: false
     property int gridOverlayMenuPostScrollDelayMs: 180
     property var issuesGridData: []
@@ -898,6 +899,39 @@ ApplicationWindow {
             : false
     }
 
+    function showImportProgressPopup() {
+        if (!importInProgress) return
+        importProgressPopupVisible = true
+    }
+
+    function showImportStatusPopup() {
+        if (importController.showImportAttentionPopup()) return
+        showImportProgressPopup()
+    }
+
+    function requestCancelImportBatch() {
+        if (!importInProgress) return
+        importController.cancelImportBatch()
+    }
+
+    function blockCloseDuringImport(closeEvent) {
+        if (!importInProgress) return false
+        if (closeEvent) {
+            closeEvent.accepted = false
+        }
+        if (readerDialog && readerDialog.visible && typeof readerDialog.close === "function") {
+            readerDialog.close()
+        }
+        showImportProgressPopup()
+        popupController.bringWindowToFrontForCriticalPopup()
+        Qt.callLater(function() {
+            if (importModalOverlay && importModalOverlay.dialogItem) {
+                criticalPopupAttentionTarget = importModalOverlay.dialogItem
+            }
+        })
+        return true
+    }
+
     function parentFolderPath(pathValue) {
         const normalized = normalizeImportPath(pathValue)
         if (normalized.length < 1) return ""
@@ -981,6 +1015,9 @@ ApplicationWindow {
     }
 
     function openSettingsDialog(sectionKey, preserveReaderPopup) {
+        if (importInProgress) {
+            return
+        }
         const requested = String(sectionKey || "").trim()
         settingsDialog.requestedSection = requested
         settingsDialog.selectedSection = requested.length > 0 ? requested : "general"
@@ -1004,6 +1041,7 @@ ApplicationWindow {
     }
 
     function openUpdateAvailableDialog(asDeferredPrompt, deferredPromptVersion) {
+        if (importInProgress) return
         const deferredPrompt = Boolean(asDeferredPrompt)
         const deferredVersionText = String(deferredPromptVersion || "").trim()
         if (updateAvailableDialog) {
@@ -1014,6 +1052,7 @@ ApplicationWindow {
     }
 
     function openUpdateDownloadDialog(assetNameText) {
+        if (importInProgress) return
         if (updateDownloadDialog) {
             updateDownloadDialog.assetNameText = String(assetNameText || "").trim()
         }
@@ -1021,6 +1060,7 @@ ApplicationWindow {
     }
 
     function startUpdateDownloadFlow() {
+        if (importInProgress) return
         if (typeof releaseDownloadService === "undefined" || !releaseDownloadService || !updateAvailableDialog) {
             return
         }
@@ -1039,6 +1079,7 @@ ApplicationWindow {
     }
 
     function handleDownloadedUpdateInstallRequested() {
+        if (importInProgress) return
         if (typeof releaseInstallService === "undefined" || !releaseInstallService || !updateDownloadDialog) {
             popupController.showMappedActionResult({
                 title: AppText.t("updateInstallActionTitle", root.appLanguage),
@@ -1854,6 +1895,7 @@ ApplicationWindow {
     }
 
     function requestDeleteReaderPageConfirmation(comicId, pageIndex) {
+        if (importInProgress) return false
         const normalizedComicId = Number(comicId || 0)
         const normalizedPageIndex = Number(pageIndex)
         if (normalizedComicId < 1 || normalizedPageIndex < 0) return false
@@ -1877,6 +1919,7 @@ ApplicationWindow {
     }
 
     function confirmDeleteReaderPage() {
+        if (importInProgress) return false
         const comicId = Number(pendingDeleteReaderPageComicId || 0)
         const pageIndex = Number(pendingDeleteReaderPageIndex)
         cancelDeleteReaderPageConfirmation()
@@ -2040,6 +2083,9 @@ ApplicationWindow {
         if (popupController.blockCloseAndHighlightCriticalPopup(close)) {
             return
         }
+        if (blockCloseDuringImport(close)) {
+            return
+        }
         startupController.handleClosing(close)
     }
 
@@ -2056,7 +2102,15 @@ ApplicationWindow {
     onStartupReconcileCompletedChanged: scheduleDeferredUpdatePromptCheck()
     onAnyManagedModalPopupVisibleChanged: scheduleDeferredUpdatePromptCheck()
     onFirstRunOnboardingActiveChanged: scheduleDeferredUpdatePromptCheck()
-    onImportInProgressChanged: scheduleDeferredUpdatePromptCheck()
+    onImportInProgressChanged: {
+        if (importInProgress && settingsDialog.visible) {
+            settingsDialog.close()
+        }
+        if (!importInProgress) {
+            importProgressPopupVisible = false
+        }
+        scheduleDeferredUpdatePromptCheck()
+    }
 
     onSelectedVolumeKeyChanged: {
         scheduleSelectionDrivenRefresh()

@@ -36,6 +36,7 @@ PopupDialogWindow {
     readonly property bool hasUpdateAvailable: Boolean(updatesRef) && Boolean(updatesRef.hasReleaseInfo) && Boolean(updatesRef.latestVersionIsNewer)
     property string textLanguage: AppText.fallbackLanguageCode
     property bool manualUpdateCheckPending: false
+    property bool updateActionsEnabled: true
 
     PopupStyle {
         id: styleTokens
@@ -351,6 +352,7 @@ PopupDialogWindow {
                             ? dialog.localizedText("aboutUpToDate")
                         : dialog.localizedText("aboutCheckForUpdates")
                     enabled: !!dialog.updatesRef
+                        && dialog.updateActionsEnabled
                         && !(dialog.updatesRef && Boolean(dialog.updatesRef.checking))
                         && !(dialog.updatesRef
                             && Boolean(dialog.updatesRef.hasReleaseInfo)
@@ -375,7 +377,7 @@ PopupDialogWindow {
 
                 Text {
                     id: viewUpdateLink
-                    visible: dialog.hasUpdateAvailable
+                    visible: dialog.hasUpdateAvailable && dialog.updateActionsEnabled
                     property bool hovered: false
                     text: dialog.aboutLinkText("#", dialog.localizedText("aboutViewUpdate"), hovered)
                     color: dialog.aboutPrimaryTextColor

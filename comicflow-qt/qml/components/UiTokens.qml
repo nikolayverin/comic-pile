@@ -199,6 +199,8 @@ QtObject {
     readonly property string quickFilterTitleLastImportIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-title-last-import.png"
     readonly property string verticalDotsIcon: "qrc:/qt/qml/ComicPile/assets/icons/3_dots.svg"
     readonly property string copyIcon: "qrc:/qt/qml/ComicPile/assets/icons/copy.svg"
+    readonly property string messageSquareMoreIcon: "qrc:/qt/qml/ComicPile/assets/icons/message-square-more.svg"
+    readonly property string alertTriangleIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-alert-triangle.svg"
     readonly property string popupInfoIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-popup-info.svg"
     readonly property string readerBookmarkIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-bookmark.svg"
     readonly property string readerFavoritesIcon: "qrc:/qt/qml/ComicPile/assets/icons/icon-reader-favorites.svg"

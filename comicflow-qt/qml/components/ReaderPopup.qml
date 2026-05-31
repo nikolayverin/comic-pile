@@ -41,6 +41,15 @@ Popup {
     property bool favoriteActive: false
     property bool actionNotificationsEnabled: true
     property bool inputSuspended: false
+    property bool settingsEnabled: true
+    property bool deletePageEnabled: true
+    property bool importInProgress: false
+    property bool importPausedForConflict: false
+    property int importErrorCount: 0
+    property int importTotalCount: 0
+    property int importProcessedCount: 0
+    property double importTotalBytes: 0
+    property double importProcessedBytes: 0
     property string textLanguage: AppText.fallbackLanguageCode
     property string magnifierSizePreset: "Medium"
     property alias magnifierModeEnabled: popupStateController.magnifierModeEnabled
@@ -113,6 +122,22 @@ Popup {
     readonly property int listScrollThumbInset: uiTokens.readerPageListScrollThumbInset
     readonly property int pageListBottomImageGap: uiTokens.readerPageListBottomImageGap
     readonly property int pageListFadeDurationMs: uiTokens.readerPageListFadeDurationMs
+    readonly property real importProgressFraction: {
+        if (importTotalBytes > 0) {
+            return Math.max(0, Math.min(1, importProcessedBytes / importTotalBytes))
+        }
+        if (importTotalCount > 0) {
+            return Math.max(0, Math.min(1, importProcessedCount / importTotalCount))
+        }
+        return 0
+    }
+    readonly property int importProgressPercent: Math.round(importProgressFraction * 100)
+    readonly property string importStatusText: importPausedForConflict
+        ? localizedText("importStatusConflict")
+        : (importErrorCount > 0
+            ? localizedText("importStatusImportError")
+            : localizedText("importStatusTitle"))
+    readonly property bool importStatusAttentionActive: importPausedForConflict || importErrorCount > 0
     readonly property int bookmarkDecorationWidth: uiTokens.readerBookmarkDecorationWidth
     readonly property int bookmarkDecorationHeight: uiTokens.readerBookmarkDecorationHeight
     readonly property int bookmarkDecorationRightEdgeOffset: uiTokens.readerBookmarkDecorationRightEdgeOffset
@@ -203,6 +228,7 @@ Popup {
     signal fullscreenToggleRequested()
     signal pageSelected(int pageIndex)
     signal themeToggleRequested()
+    signal importStatusRequested()
 
     ReaderPopupStateController {
         id: popupStateController
@@ -828,7 +854,7 @@ Popup {
                 x: root.toolbarDeleteLeftInset - root.toolbarIconLeftEdgeInButton
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.readingViewMode !== "two_page"
-                clickEnabled: root.pageCount > 1
+                clickEnabled: root.deletePageEnabled && root.pageCount > 1
                 icon.source: uiTokens.readerDeletePageIcon
                 onClicked: root.deletePageRequested(root.pageIndex)
             }
@@ -837,6 +863,7 @@ Popup {
                 id: settingsButton
                 x: root.toolbarSettingsLeftInset - root.toolbarIconLeftEdgeInButton
                 anchors.verticalCenter: parent.verticalCenter
+                clickEnabled: root.settingsEnabled
                 icon.source: uiTokens.readerSettingsIcon
                 onClicked: root.settingsRequested()
             }
@@ -1509,6 +1536,90 @@ Popup {
                     return
                 }
                 root.nextPageRequested()
+            }
+        }
+
+        Item {
+            id: readerImportStatus
+            visible: root.importInProgress
+            width: 292
+            height: 22
+            anchors.left: parent.left
+            anchors.leftMargin: root.outerMargin + 10
+            anchors.verticalCenter: pageCounterButton.verticalCenter
+            z: 12
+            readonly property int labelWidth: root.importStatusAttentionActive ? 90 : 58
+            readonly property int barWidth: root.importStatusAttentionActive ? 140 : 174
+
+            Row {
+                anchors.fill: parent
+                spacing: 10
+
+                Item {
+                    width: readerImportStatus.labelWidth
+                    height: parent.height
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Image {
+                        visible: root.importStatusAttentionActive
+                        x: 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: 14
+                        height: 14
+                        source: uiTokens.alertTriangleIcon
+                        fillMode: Image.PreserveAspectFit
+                        smooth: true
+                    }
+
+                    Text {
+                        id: importStatusLabel
+                        x: root.importStatusAttentionActive ? 19 : 0
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: parent.width - x
+                        text: root.importStatusText
+                        color: root.textColor
+                        font.family: root.uiFontFamily
+                        font.pixelSize: uiTokens.readerFooterActionTextPx
+                        font.bold: true
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Rectangle {
+                    width: readerImportStatus.barWidth
+                    height: 10
+                    radius: 5
+                    color: "#2a2a2a"
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    Rectangle {
+                        width: root.importProgressFraction > 0
+                            ? Math.max(1, Math.round(parent.width * root.importProgressFraction))
+                            : 0
+                        height: parent.height
+                        radius: parent.radius
+                        color: themeColors.importProgressBarColor
+                    }
+                }
+
+                Text {
+                    width: 40
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: String(root.importProgressPercent) + "%"
+                    color: root.textColor
+                    font.family: root.uiFontFamily
+                    font.pixelSize: uiTokens.readerFooterActionTextPx
+                    font.bold: true
+                    horizontalAlignment: Text.AlignRight
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                enabled: root.importStatusAttentionActive
+                hoverEnabled: true
+                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                onClicked: root.importStatusRequested()
             }
         }
 

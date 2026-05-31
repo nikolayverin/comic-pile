@@ -12,6 +12,7 @@ PopupDialogWindow {
 
     readonly property var updatesRef: (typeof releaseCheckService !== "undefined") ? releaseCheckService : null
     property string textLanguage: AppText.fallbackLanguageCode
+    property bool updateActionsEnabled: true
     readonly property bool hasKnownUpdateAvailable: Boolean(updatesRef)
         && Boolean(updatesRef.hasReleaseInfo)
         && Boolean(updatesRef.latestVersionIsNewer)
@@ -291,7 +292,7 @@ PopupDialogWindow {
                     }
 
                     Item {
-                        visible: dialog.hasKnownUpdateAvailable
+                        visible: dialog.hasKnownUpdateAvailable && dialog.updateActionsEnabled
                         width: parent.width
                         height: updateLink.implicitHeight
 

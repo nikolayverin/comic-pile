@@ -301,6 +301,7 @@ qt_add_qml_module(comic_pile_qt
         qml/components/ContextMenuPopup.qml
         qml/components/HoverActionButton.qml
         qml/components/HoverActionBar.qml
+        qml/components/SidebarImportStatus.qml
         qml/components/ImportProgressOverlay.qml
         qml/components/ImportConflictDialog.qml
         qml/components/IssueMetadataDialog.qml
@@ -356,6 +357,7 @@ qt_add_qml_module(comic_pile_qt
         assets/icons/icon-bookmarks-hover.png
         assets/icons/icon-bookmarks-idle.png
         assets/icons/copy.svg
+        assets/icons/message-square-more.svg
         assets/icons/icon-favorites-hover.png
         assets/icons/icon-favorites-idle.png
         assets/icons/icon-title-bookmark.png

@@ -108,6 +108,10 @@ Item {
         session.retryFailedImportAt(index)
     }
 
+    function showImportAttentionPopup() {
+        return session.showImportAttentionPopup()
+    }
+
     function importSourceEntries(paths, options) {
         return session.importSourceEntries(paths, options)
     }

@@ -968,7 +968,6 @@ Item {
         }
 
         importPausedForConflict = true
-        openExclusivePopup(importConflictDialogRef)
     }
 
     function clearImportConflictState() {
@@ -1255,6 +1254,10 @@ Item {
         closeAllModalPopups(null)
         resetLastImportSessionState()
         captureImportSeriesFocusBaseline()
+        const rootRef = root()
+        if (rootRef && Object.prototype.hasOwnProperty.call(rootRef, "importProgressPopupVisible")) {
+            rootRef.importProgressPopupVisible = false
+        }
         importInProgress = true
         importLifecycleState = "running"
         importConflictActionTimer.stop()
@@ -1398,19 +1401,45 @@ Item {
         return false
     }
 
-    function rebuildFailedImportItemsModel() {
+    function rebuildFailedImportItemsModelFrom(paths, errors) {
         if (!failedImportItemsModelRef) return
         failedImportItemsModelRef.clear()
-        const maxCount = Math.min(lastFailedImportPaths.length, lastFailedImportErrors.length)
+        const sourcePaths = Array.isArray(paths) ? paths : []
+        const sourceErrors = Array.isArray(errors) ? errors : []
+        const maxCount = Math.min(sourcePaths.length, sourceErrors.length)
         for (let i = 0; i < maxCount; i += 1) {
-            const path = String(lastFailedImportPaths[i] || "")
+            const path = String(sourcePaths[i] || "")
             const fileName = fileNameFromPath(path)
             failedImportItemsModelRef.append({
                 path: path,
                 fileName: fileName.length > 0 ? fileName : AppText.importFailedUnknownFile,
-                error: String(lastFailedImportErrors[i] || "")
+                error: String(sourceErrors[i] || "")
             })
         }
+    }
+
+    function rebuildFailedImportItemsModel() {
+        rebuildFailedImportItemsModelFrom(lastFailedImportPaths, lastFailedImportErrors)
+    }
+
+    function showCurrentImportFailuresDialog() {
+        const paths = importInProgress ? importFailedPaths : lastFailedImportPaths
+        const errors = importInProgress ? importErrors : lastFailedImportErrors
+        if (!paths || paths.length < 1) return false
+        rebuildFailedImportItemsModelFrom(paths, errors)
+        openExclusivePopup(failedImportsDialogRef)
+        return true
+    }
+
+    function showImportAttentionPopup() {
+        if (importPausedForConflict) {
+            openExclusivePopup(importConflictDialogRef)
+            return true
+        }
+        if (importErrorCount > 0) {
+            return showCurrentImportFailuresDialog()
+        }
+        return false
     }
 
     function processImportBatchStep() {

@@ -83,7 +83,7 @@ Item {
 
     ImportProgressOverlay {
         id: importModalOverlay
-        active: root.importInProgress
+        active: root.importInProgress && root.importProgressPopupVisible
         textLanguage: dialogHost.textLanguage
         blockedByModalPopup: root.anyManagedModalPopupVisible
         criticalAttentionTarget: root.criticalPopupAttentionTarget
@@ -100,7 +100,11 @@ Item {
         cleanupProcessedCount: root.importCleanupProcessedCount
         cleanupCurrentFileName: root.importCleanupCurrentFileName
         onCancelRequested: importController.cancelImportBatch()
-        onHidden: popupController.clearCriticalPopupAttention(importModalOverlay.dialogItem)
+        onDismissRequested: root.importProgressPopupVisible = false
+        onHidden: {
+            root.importProgressPopupVisible = false
+            popupController.clearCriticalPopupAttention(importModalOverlay.dialogItem)
+        }
     }
 
     ImportConflictDialog {
@@ -204,6 +208,15 @@ Item {
         favoriteActive: readerSessionController.favoriteActive
         actionNotificationsEnabled: Boolean(appSettingsController.readerShowActionNotifications)
         inputSuspended: settingsDialog.visible
+        settingsEnabled: !root.importInProgress
+        deletePageEnabled: !root.importInProgress
+        importInProgress: root.importInProgress
+        importPausedForConflict: root.importPausedForConflict
+        importErrorCount: root.importErrorCount
+        importTotalCount: root.importTotal
+        importProcessedCount: root.importProcessed
+        importTotalBytes: root.importTotalBytes
+        importProcessedBytes: root.importProcessedBytes
         magnifierSizePreset: appSettingsController.readerMagnifierSize
         onDismissRequested: readerSessionController.closeReader()
         onPreviousPageRequested: readerSessionController.previousReaderPage()
@@ -268,6 +281,12 @@ Item {
         onReadFromStartRequested: readerSessionController.restartFromBeginning()
         onFullscreenToggleRequested: readerSessionController.toggleFullscreenMode()
         onPageSelected: function(pageIndex) { readerSessionController.loadReaderPage(pageIndex) }
+        onImportStatusRequested: {
+            readerSessionController.closeReader()
+            Qt.callLater(function() {
+                root.showImportStatusPopup()
+            })
+        }
         onClosed: readerSessionController.handlePopupClosed()
     }
 
@@ -389,6 +408,7 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         textLanguage: dialogHost.textLanguage
+        updateActionsEnabled: !root.importInProgress
         onUpdateDetailsRequested: root.openUpdateAvailableDialog()
     }
 
@@ -413,6 +433,7 @@ Item {
         hostWidth: root.width
         hostHeight: root.height
         textLanguage: dialogHost.textLanguage
+        updateActionsEnabled: !root.importInProgress
         onUpdateDetailsRequested: root.openUpdateAvailableDialog()
     }
 
