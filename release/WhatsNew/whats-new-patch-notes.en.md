@@ -24,6 +24,7 @@
 
 **Library**
 - Fixed issue and hero covers so they stay visible after editing a series name that moves the archive into a renamed folder.
+- Improved issue cover loading so visible grid covers appear in a more natural top-to-bottom order.
 
 **Interface**
 - Improved localized popup layouts so longer translated labels and messages fit and read more reliably.

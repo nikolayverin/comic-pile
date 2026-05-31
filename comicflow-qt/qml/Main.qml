@@ -1734,6 +1734,10 @@ ApplicationWindow {
         readerCoverController.warmVisibleIssueThumbnails()
     }
 
+    function scheduleVisibleIssueThumbnailWarmUp(immediate) {
+        readerCoverController.scheduleVisibleIssueThumbnailWarmUp(immediate)
+    }
+
     function prefetchReaderNeighborPage(pageIndex) {
         readerCoverController.prefetchReaderNeighborPage(pageIndex)
     }

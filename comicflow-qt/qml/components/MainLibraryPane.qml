@@ -894,8 +894,22 @@ Item {
         property int columns: Math.max(1, Math.floor((layoutWidth + spacing) / (minCardWidth + spacing)))
         property int cardWidth: Math.max(minCardWidth, Math.floor((layoutWidth - ((columns - 1) * spacing)) / columns))
 
-        onWidthChanged: rightPane.scheduleResolvedOverflowSync()
-        onHeightChanged: rightPane.scheduleResolvedOverflowSync()
+        function scheduleThumbnailWarmUp(immediate) {
+            if (root && typeof root.scheduleVisibleIssueThumbnailWarmUp === "function") {
+                root.scheduleVisibleIssueThumbnailWarmUp(immediate === true)
+            }
+        }
+
+        onWidthChanged: {
+            rightPane.scheduleResolvedOverflowSync()
+            scheduleThumbnailWarmUp(false)
+        }
+        onHeightChanged: {
+            rightPane.scheduleResolvedOverflowSync()
+            scheduleThumbnailWarmUp(false)
+        }
+        onContentYChanged: scheduleThumbnailWarmUp(false)
+        onColumnsChanged: scheduleThumbnailWarmUp(false)
         onContentHeightChanged: {
             rightPane.scheduleResolvedOverflowSync()
             if (root.gridSplitScrollRestorePending) {
@@ -911,6 +925,7 @@ Item {
                 + " cardWidth=" + String(cardWidth)
                 + " cardHeight=" + String(cardHeight)
             )
+            scheduleThumbnailWarmUp(false)
         }
 
         cellWidth: cardWidth + spacing
@@ -946,28 +961,9 @@ Item {
             readonly property int currentPage: Number(itemData.currentPage || 0)
             readonly property string filename: String(itemData.filename || "")
             readonly property string coverSource: root.coverSourceForComic(comicId)
-            property bool coverRequested: false
 
             width: issuesFlick.cardWidth
             height: issuesFlick.cardHeight
-
-            function requestCover() {
-                if (root.restoringStartupSnapshot || root.startupHydrationInProgress) return
-                if (comicId < 1 || coverRequested) return
-                if (root.coverSourceForComic(comicId).length > 0) {
-                    coverRequested = true
-                    return
-                }
-                coverRequested = true
-                root.requestIssueThumbnail(comicId)
-            }
-
-            onVisibleChanged: requestCover()
-            onComicIdChanged: {
-                coverRequested = false
-                requestCover()
-            }
-            Component.onCompleted: requestCover()
 
             IssueCard {
                 anchors.fill: parent

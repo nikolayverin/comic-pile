@@ -20,6 +20,16 @@ Item {
     property int pendingReaderPersistGuardComicId: -1
     property int pendingReaderPersistGuardPageIndex: -1
 
+    Timer {
+        id: visibleIssueThumbnailWarmUpTimer
+        interval: 50
+        repeat: false
+        onTriggered: {
+            controller.primeVisibleIssueCoverSourcesFromCache()
+            controller.warmVisibleIssueThumbnails()
+        }
+    }
+
     function traceReader(message) {
         const root = rootObject
         if (!root || typeof root.runtimeDebugLog !== "function") return
@@ -660,6 +670,64 @@ Item {
         return { start: start, end: end }
     }
 
+    function orderedIssueThumbnailRanges(totalCount) {
+        const total = Math.max(0, Number(totalCount || 0))
+        if (total < 1) return []
+
+        if (!issuesFlick) {
+            const fallbackEnd = Math.min(total - 1, 19)
+            return [{ start: 0, end: fallbackEnd }]
+        }
+
+        const cols = Math.max(1, Number(issuesFlick.columns || 1))
+        const cellH = Math.max(1, Number(issuesFlick.cellHeight || 1))
+        const viewH = Math.max(1, Number(issuesFlick.height || 1))
+        const normalizedY = Math.max(0, Number(issuesFlick.contentY || 0))
+        const firstRow = Math.max(0, Math.floor(normalizedY / cellH))
+        const rowsVisible = Math.max(1, Math.ceil(viewH / cellH))
+        const preloadBefore = 1
+        const preloadAfter = 2
+        const ranges = []
+
+        const visibleStart = Math.max(0, firstRow * cols)
+        const visibleEnd = Math.min(total - 1, ((firstRow + rowsVisible) * cols) - 1)
+        if (visibleStart <= visibleEnd) {
+            ranges.push({ start: visibleStart, end: visibleEnd })
+        }
+
+        const beforeStart = Math.max(0, (firstRow - preloadBefore) * cols)
+        const beforeEnd = Math.min(total - 1, (firstRow * cols) - 1)
+        if (beforeStart <= beforeEnd) {
+            ranges.push({ start: beforeStart, end: beforeEnd })
+        }
+
+        const afterStart = Math.max(0, (firstRow + rowsVisible) * cols)
+        const afterEnd = Math.min(total - 1, ((firstRow + rowsVisible + preloadAfter) * cols) - 1)
+        if (afterStart <= afterEnd) {
+            ranges.push({ start: afterStart, end: afterEnd })
+        }
+
+        return ranges
+    }
+
+    function canWarmVisibleIssueThumbnails() {
+        const root = rootObject
+        if (!root) return false
+        if (root.restoringStartupSnapshot || root.startupHydrationInProgress) return false
+        return root.startupReconcileCompleted || !root.startupSnapshotApplied
+    }
+
+    function scheduleVisibleIssueThumbnailWarmUp(immediate) {
+        if (!canWarmVisibleIssueThumbnails()) return
+        if (immediate === true) {
+            visibleIssueThumbnailWarmUpTimer.stop()
+            primeVisibleIssueCoverSourcesFromCache()
+            warmVisibleIssueThumbnails()
+            return
+        }
+        visibleIssueThumbnailWarmUpTimer.restart()
+    }
+
     function primeVisibleIssueCoverSourcesFromCache() {
         const root = rootObject
         if (!root || !libraryModelRef) return
@@ -667,33 +735,39 @@ Item {
         const total = Number(root.issuesGridData.length || 0)
         if (total < 1) return
 
-        const range = visibleIssueRange(total)
-        for (let i = range.start; i <= range.end; i += 1) {
-            const item = root.issuesGridData[i]
-            const comicId = Number(item && item.id ? item.id : 0)
-            if (comicId < 1) continue
-            if (coverSourceForComic(comicId).length > 0) continue
-            const cachedSource = String(libraryModelRef.cachedIssueThumbnailSource(comicId) || "")
-            if (cachedSource.length > 0) {
-                setCoverSource(comicId, cachedSource)
+        const ranges = orderedIssueThumbnailRanges(total)
+        for (let rangeIndex = 0; rangeIndex < ranges.length; rangeIndex += 1) {
+            const range = ranges[rangeIndex]
+            for (let i = range.start; i <= range.end; i += 1) {
+                const item = root.issuesGridData[i]
+                const comicId = Number(item && item.id ? item.id : 0)
+                if (comicId < 1) continue
+                if (coverSourceForComic(comicId).length > 0) continue
+                const cachedSource = String(libraryModelRef.cachedIssueThumbnailSource(comicId) || "")
+                if (cachedSource.length > 0) {
+                    setCoverSource(comicId, cachedSource)
+                }
             }
         }
     }
 
     function warmVisibleIssueThumbnails() {
         const root = rootObject
-        if (!root) return
+        if (!root || !canWarmVisibleIssueThumbnails()) return
 
         const total = Number(root.issuesGridData.length || 0)
         if (total < 1) return
 
-        const range = visibleIssueRange(total)
-        for (let i = range.start; i <= range.end; i += 1) {
-            const item = root.issuesGridData[i]
-            const comicId = Number(item && item.id ? item.id : 0)
-            if (comicId < 1) continue
-            if (coverSourceForComic(comicId).length > 0) continue
-            requestIssueThumbnail(comicId)
+        const ranges = orderedIssueThumbnailRanges(total)
+        for (let rangeIndex = 0; rangeIndex < ranges.length; rangeIndex += 1) {
+            const range = ranges[rangeIndex]
+            for (let i = range.start; i <= range.end; i += 1) {
+                const item = root.issuesGridData[i]
+                const comicId = Number(item && item.id ? item.id : 0)
+                if (comicId < 1) continue
+                if (coverSourceForComic(comicId).length > 0) continue
+                requestIssueThumbnail(comicId)
+            }
         }
     }
 
