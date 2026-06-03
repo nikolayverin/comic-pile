@@ -8,18 +8,24 @@
 **Help and release notes**
 - **Help** and **What's new** now follow the selected app language, with English fallback.
 
-**Series**
-- Added optional color tags for series, with a Library sidebar filter for quickly narrowing the series list.
-
 **Updates**
-- Improved update popups with clearer context for available updates, download progress, and installation.
 - Built-in updates can now use a smaller update package without downloading the starter library again.
+- Improved update popups with clearer context for available updates, download progress, and installation.
 - The update download popup now shows downloaded size and a clearer ready-to-install state.
+
+**Import**
+- Imports can now keep running while you browse the library or read already imported comics.
+- Added compact import progress in the sidebar and reader, with a way to reopen the full import popup.
+
+**Series**
+- Added optional color tags for series, with a **Library** sidebar filter for narrowing the series list.
 
 **Bugfixes**
 
 **Import**
 - Fixed imported issue titles so filenames that only repeat the series name and issue number no longer fill the **Title** field.
+- Fixed import cancellation so Comic Pile stays responsive and cleans up the cancelled import batch more predictably.
+- Fixed import cancellation so existing series covers and issue grids no longer disappear while cleanup is running.
 
 **Updates**
 - Fixed update downloads so clicking outside the popup, pressing **Esc**, or using the popup close button no longer cancels the download by accident.

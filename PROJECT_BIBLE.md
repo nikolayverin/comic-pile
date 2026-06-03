@@ -1,9 +1,9 @@
 # Comic Pile Project Bible
 
-Last updated: 2026-05-06
+Last updated: 2026-06-04
 
 ## Current project state
-- Main focus: stabilize public-release behavior, update flow, and portable storage expectations while preserving the current UI and responsiveness.
+- Main focus: second post-release patch stabilization: lighter portable updates, responsive import, localized app surfaces, and library browsing polish while preserving the local-first Windows utility shape.
 - Startup baseline in code:
   - restore UI snapshot from `.runtime/startup-snapshot.json`,
   - keep the root window hidden until saved geometry/state is applied,
@@ -93,13 +93,15 @@ Last updated: 2026-05-06
   - `Update available`,
   - `Downloading update`,
   - portable `Install update` helper flow,
-  - dedicated `Updating Comic Pile` Help section with screenshots and manual-update guidance.
-- App language selection is being prepared as the first post-release patch product slice:
+  - dedicated `Updating Comic Pile` Help section with screenshots and manual-update guidance,
+  - accidental popup dismissal no longer cancels update downloads,
+  - update progress now shows clearer download-size and ready-to-install states.
+- App language selection is now a live post-release patch product surface:
   - user can choose the app language from Settings,
-  - short interface text should be owned by the shared language-aware text layer,
+  - short interface text is owned by the shared language-aware text layer,
   - English is the source and fallback language,
   - first launch can choose a supported visible language from the system locale,
-  - Help text and `What's new` should be externalized into per-language content files,
+  - Help text and `What's new` are externalized into per-language content files,
   - Help screenshots stay shared and may show English UI to avoid multiplying screenshot assets per language.
 - Windows GitHub Actions CI now reaches a successful Windows build again; current remaining annotation is only a Node-runtime deprecation warning in third-party actions.
 - A clean public release flow now exists:
@@ -107,10 +109,12 @@ Last updated: 2026-05-06
   - root `LICENSE` uses `MIT` for Comic Pile's own code,
   - `release/README.txt` and `release/License/` form the packaged release-side readme/legal set,
   - `build-release.cmd` stages a clean portable app into `_release_build/Comics-Pile`,
+  - `build-update.cmd` stages a lightweight built-in-updater package into `_update_build/Comics-Pile`,
   - the repository now includes the bundled starter `Database` used by the public release,
+  - full release packages include the starter `Database`; update packages intentionally do not,
   - release staging excludes runtime logs and SQLite sidecar files from the packaged starter database.
 - The repository is now public and the first GitHub Release is published:
-  - latest public version/tag verified on 2026-04-20: `v0.14.15`,
+  - latest working app version: `0.16.0`,
   - portable Windows zip release,
   - GitHub Issues are now the public bug-report path.
 - Persistent portable state is app-folder-owned:
@@ -118,12 +122,28 @@ Last updated: 2026-05-06
   - app preferences and update-flow state use app-local `ComicPile.ini`,
   - update install protects `Database` and `ComicPile.ini`,
   - temporary download/import/conversion/helper files may still use system temp when that is safer than writing into a protected app folder.
+- Built-in update packages are intentionally lightweight:
+  - full release archives are for fresh portable installs,
+  - update archives are for the in-app updater and omit the bundled starter `Database`,
+  - release-side `README-update.txt` explains this package role.
 - Shared popup outside-click behavior now routes through common overlay primitives; dialogs marked `NoAutoClose` remain blocking.
 - Reader/library stability baseline now includes:
   - `Next unread` follows the same saved target as `Continue reading`,
   - stale hero background jobs are prevented from overriding refreshed series state,
   - import-driven issue updates invalidate series hero cache,
-  - reader warm-up page requests are coalesced into one stable async flow.
+  - reader warm-up page requests are coalesced into one stable async flow,
+  - series rename metadata edits keep issue and hero covers visible after archives move into the renamed series folder,
+  - visible grid covers are loaded in visual top-to-bottom order.
+- Import is now a responsive background workflow:
+  - heavy archive processing runs away from the UI thread,
+  - user can browse and read already imported content while import continues,
+  - compact import status can replace the sidebar drop zone while the full import popup is hidden,
+  - the reader can show compact import progress without blocking page navigation,
+  - cancellation hides and cleans up the current import batch while preserving existing library selection and covers.
+- Series color tags are now implemented:
+  - optional per-series color tag in the sidebar series menu,
+  - visible color marker on tagged series rows,
+  - `Library` heading color filters only enable colors that actually exist in the library.
 - Reader popup is now a real product surface, not a temporary viewer:
   - one-page and two-page reading modes exist,
   - manga mode exists with RTL-oriented reading behavior,
@@ -259,6 +279,11 @@ Last updated: 2026-05-06
   - row height is `24px`,
   - body radius is `12px`,
   - popup arrow size is `20x10`.
+- Series color-tag rows in menus are visual controls, not text rows:
+  - they do not widen the menu,
+  - visible dots are centered in the menu body,
+  - dots use the same color set as `Library` filters,
+  - selecting the active color again clears the tag.
 - Overflowing menus use a shared custom scrollbar:
   - transparent gutter `12px` wide,
   - white rounded thumb,
@@ -289,7 +314,13 @@ Last updated: 2026-05-06
   - sits below quick filters with the same vertical rhythm as search-to-filters,
   - font size `12px`,
   - white text,
-  - hard black shadow `2px` downward, no blur.
+  - hard black shadow `2px` downward, no blur,
+  - optional color-filter dots sit on the right side of the heading.
+- `Library` color filters:
+  - show the fixed tag palette used by series rows and menu swatches,
+  - only colors currently used by at least one series are clickable,
+  - unavailable colors are shown as dark inactive dots,
+  - there is no tooltip; the dots behave as lightweight visual filters.
 - Series list viewport:
   - starts below the `Library` heading block,
   - adaptive height with clipping,
@@ -349,7 +380,13 @@ Last updated: 2026-05-06
   - `Add Issues`,
   - `Edit Series`,
   - `Show Folder`,
+  - color tag swatches,
   - `Delete Files`.
+- Series color tag behavior:
+  - selected series can receive one optional color tag,
+  - the tag appears as a small color dot at the left side of the series row,
+  - choosing the current tag again clears it,
+  - color-tag filtering is handled from the `Library` heading dots.
 - `Add Issues` now goes through the main batch import flow (file picker + import queue).
 - From a series row menu, `Add Issues` passes series override = selected series title.
 - Multi-series selection (`Shift+click` range):
@@ -518,20 +555,32 @@ Last updated: 2026-05-06
   - any future assisted metadata flow should be introduced only when match confidence and UX are reliable enough.
 
 ## Import UX and policy (current implementation)
-- Import runs as batch queue.
-- Import-related popups are a necessary interruption and should stay minimal: only show what is needed for the next user decision, not a technical diagnostic dump.
-- During import:
-  - full-screen dim overlay (`70%` black),
-  - centered progress dialog (`454x194`):
-    - title `Import in progress`,
-    - `Current file` line:
-      - left: current filename,
-      - right: `processedFiles / totalFiles`,
-    - progress bar (green `#77D632`) + right-aligned percent,
-    - `Cancel` button,
-    - top-right circular `X` (same as cancel).
+- Import runs as a batch queue, but archive processing is moved off the UI thread so the shell and reader stay responsive between user actions.
+- The full import popup is still the primary detailed import surface, but the user can hide it and keep working.
+- Import-related decision popups are still necessary interruptions and should stay minimal: only show what is needed for the next user decision, not a technical diagnostic dump.
+- While import is active and the full popup is hidden, the sidebar drop zone is replaced by compact import status:
+  - title `Importing`,
+  - current processed file count / total file count,
+  - current filename,
+  - green progress bar (`#77D632`) and right-aligned percent,
+  - `Cancel` button,
+  - small reopen/show-popup control.
+- The reader can show compact import status near its bottom status area:
+  - short `Importing` label,
+  - green progress bar,
+  - percent,
+  - reopen/show-popup control when user attention is needed.
+- Attention state in compact import status:
+  - show a red alert icon,
+  - show the short reason text such as `Import error`,
+  - show `Show` / reopen popup action.
 - Progress percent is computed by total batch bytes (with file-count fallback).
-- Bottom status bar keeps passive text/progress only (no import action buttons).
+- Existing library content remains usable during import:
+  - reading already imported issues is allowed,
+  - bookmarks, favorites, continue reading, and next unread remain available for existing content,
+  - destructive or library-structure actions that conflict with import stay blocked.
+- Newly imported content from the active import batch can be hidden during cancellation until cleanup finishes, so cancelled imports do not leave temporary usable issues behind.
+- If the user closes the app while import cancellation cleanup is still running, the app should protect the cleanup flow instead of exiting in the middle of it.
 - Successful batch: no success popup.
 - After import, if the batch created exactly one new series and at least one issue in it was imported successfully, the UI automatically switches to that series in the sidebar and right panel.
 - Errors: `Import Errors` dialog with scrollable list.

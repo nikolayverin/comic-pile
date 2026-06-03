@@ -2,21 +2,27 @@
 
 Comic Pile is a portable Windows app for building, organizing, and reading a local comics library.
 
+It is a classic Windows utility for comic collectors: local-first, portable, and built around files the user already owns.
+
 It is designed around a simple flow:
 - add comic files from your computer
 - keep them in one local library
 - browse issues visually
+- mark series with optional color tags
 - edit series and issue details when needed
 - open issues in a focused reader
 - update the portable app without rebuilding the library
 
-## First public release
+## Current app highlights
 
 - local-library workflow
 - issue and series metadata editing
+- optional series color tags and sidebar filtering
 - built-in reader with bookmarks, favorites, continue reading, and next unread
 - full in-app `Help`, `Quick tour`, and `What's new`
 - in-app update flow with `Check for updates`, `Update available`, `Downloading update`, and `Install update`
+- lightweight built-in update packages that avoid downloading the starter library again
+- responsive import flow that lets you browse or read existing library content while import continues
 - bundled startup demo library with 2 public-domain series and 5 issues
 - portable release package with the library stored next to the app in `Database/`
 - bundled 7-Zip and DjVu support
@@ -31,6 +37,7 @@ That means:
 - the bundled starter library lives next to the app in `Database/`
 - app settings are stored in `ComicPile.ini` next to the app
 - future portable updates are designed to replace app files while keeping `Database/` and `ComicPile.ini` in place
+- full release archives include the starter `Database`; in-app update archives intentionally do not
 
 ## Demo library
 

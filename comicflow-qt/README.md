@@ -41,6 +41,22 @@ Result:
   - `License`
   - bundled runtime/tools such as `7z.exe`, `7z.dll`, and `tools/djvulibre/ddjvu.exe`
 
+### Lightweight update build
+
+```powershell
+.\build-update.cmd
+```
+
+Result:
+- build cache: `.\_update_build\_build\comicflow-qt-mingw`
+- staged portable update app: `.\_update_build\Comics-Pile`
+- staged update app includes:
+  - `Comic Pile.exe`
+  - `README-update.txt`
+  - `License`
+  - bundled runtime/tools such as `7z.exe`, `7z.dll`, and `tools/djvulibre/ddjvu.exe`
+- staged update app intentionally omits the starter `Database` folder
+
 ## Manual CMake build
 
 If the build scripts are not enough, configure and build manually from the repository root:
@@ -134,15 +150,19 @@ $env:COMIC_PILE_DJVU_PATH = "C:\path\to\ddjvu.exe"
 - If bundled `7z` is missing/corrupted, UI shows repair/help dialog
 - `File > Add files` supports multi-file import flow
 - Sidebar add zone supports drag-drop import for `.cbz/.zip/.cbr`
-- Batch import runs as a queued flow with bottom-panel progress and `Retry Failed` action
-- Batch import supports `Cancel Import` and failed-items dialog with per-item `Retry`/`Remove`
+- Batch import runs as a queued flow with compact sidebar/reader progress when the full popup is hidden
+- Import processing is moved off the UI thread so existing library browsing and reading stay responsive during heavy archive work
+- Batch import supports cancellation, hides the active import batch during cleanup, and reports failed items through import result dialogs
 - `Help`, `Quick tour`, `What's new`, and `About` are live product surfaces
 - Update flow is live:
   - `About -> Check for updates`
   - `Update available`
   - `Downloading update`
   - portable `Install update` helper
+- Lightweight update packages are staged separately from full release packages and omit the starter `Database`
 - `Settings -> General` includes `Automatically check for updates`
+- `Settings -> General` includes app language selection with localized UI, onboarding, Help, and What's New fallback
+- Sidebar series rows support optional color tags and Library-heading color filtering
 - Library panel has functional search/filter/sort baseline (`search`, `read status`, sort mode switch)
 - Library panel includes volume filter for selected series (`series + volume` grouping path)
 - Model sorting applies natural ordering for `volume` and `issue` values (e.g. `2` before `10`)
