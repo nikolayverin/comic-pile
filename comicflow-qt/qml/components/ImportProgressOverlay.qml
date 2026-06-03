@@ -23,6 +23,7 @@ Item {
     property double processedBytes: 0
     property bool cancelPending: false
     property bool cleanupActive: false
+    property bool closeAfterCancellationRequested: false
     property int cleanupTotalCount: 0
     property int cleanupProcessedCount: 0
     property string cleanupCurrentFileName: ""
@@ -194,6 +195,15 @@ Item {
                     progressFraction: root.effectiveProgressFraction
                     statusTextOverride: root.progressStatusText
                     forceIndeterminate: root.progressForceIndeterminate
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    visible: root.closeAfterCancellationRequested && root.cancelFlowActive
+                    text: AppText.t("importProgressCloseAfterCancel", root.textLanguage)
+                    color: popupStyle.subtleTextColor
+                    font.pixelSize: popupStyle.dialogBodyFontSize
+                    wrapMode: Text.WordWrap
                 }
 
                 PopupFooterRow {

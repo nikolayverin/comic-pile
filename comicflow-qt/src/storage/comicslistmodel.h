@@ -14,6 +14,10 @@
 #include <QVariantMap>
 #include <QVector>
 
+#include <atomic>
+#include <functional>
+#include <memory>
+
 class ComicsListModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -213,6 +217,7 @@ public:
         const QString &filenameHint,
         const QVariantMap &values
     );
+    Q_INVOKABLE void cancelImportWorkerRequest(int requestId);
     Q_INVOKABLE QString restoreReplacedComicFileFromBackup(
         int comicId,
         const QString &backupPath,
@@ -283,10 +288,14 @@ signals:
         const QString &error
     );
     void normalizeImportArchiveFinished(int requestId, QVariantMap result);
+    void importWorkerStageChanged(int requestId, QString stage, QVariantMap details);
     void importSourceAndCreateIssueFinished(int requestId, QVariantMap result);
     void replaceComicFileFromSourceFinished(int requestId, QVariantMap result);
 
 private:
+    using ImportWorkerStageCallback = std::function<void(const QString &, const QVariantMap &)>;
+    using ImportWorkerCancelCallback = std::function<bool()>;
+
     struct ComicRow {
         int id = 0;
         QString filePath;
@@ -417,6 +426,12 @@ private:
         const QString &targetCbzPath,
         QString &errorText
     );
+    void setImportWorkerCallbacks(
+        ImportWorkerStageCallback stageCallback,
+        ImportWorkerCancelCallback cancelCallback
+    );
+    void emitImportWorkerStage(const QString &stage, const QVariantMap &details = {}) const;
+    bool isImportWorkerCancelRequested() const;
     void emitPageReadyForRequestIds(
         const QList<int> &requestIds,
         int comicId,
@@ -493,6 +508,9 @@ private:
     QVector<ComicRow> m_rows;
     ComicReaderRuntime::ReaderRuntimeState m_readerState;
     ComicImportRuntime::ImportWorkflowState m_importState;
+    ImportWorkerStageCallback m_importWorkerStageCallback;
+    ImportWorkerCancelCallback m_importWorkerCancelCallback;
+    QHash<int, std::shared_ptr<std::atomic_bool>> m_importWorkerCancelFlags;
     ArtworkRuntimeState m_artworkState;
     int m_nextAsyncRequestId = 1;
     int m_reloadValidationGeneration = 0;

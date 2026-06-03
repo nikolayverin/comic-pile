@@ -43,6 +43,9 @@ Item {
     property string librarySearchText: ""
     property string libraryReadStatusFilter: "all"
     property bool libraryLoading: false
+    property bool hideCurrentImportBatchIssues: false
+    property var hiddenCurrentImportBatchComicIds: ({})
+    property var hiddenCurrentImportBatchSeriesKeys: ({})
 
     function activeRoot() {
         return rootObject
@@ -132,6 +135,9 @@ Item {
     function resetLastImportSession() {
         const root = activeRoot()
         lastImportSessionComicIds = []
+        hideCurrentImportBatchIssues = false
+        hiddenCurrentImportBatchComicIds = ({})
+        hiddenCurrentImportBatchSeriesKeys = ({})
         refreshQuickFilterCounts()
         if (String(sidebarQuickFilterKey || "") === "last_import") {
             if (root && typeof root.setGridScrollToTop === "function") {
@@ -142,6 +148,87 @@ Item {
         if (startupControllerRef && typeof startupControllerRef.requestSnapshotSave === "function") {
             startupControllerRef.requestSnapshotSave()
         }
+    }
+
+    function currentImportBatchIssueHidden(comicId, seriesKey) {
+        if (!hideCurrentImportBatchIssues) return false
+        const normalizedComicId = Number(comicId || 0)
+        if (normalizedComicId < 1) return false
+        if (hiddenCurrentImportBatchComicIds[String(normalizedComicId)] !== true) return false
+
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length > 0) {
+            return hiddenCurrentImportBatchSeriesKeys[normalizedSeriesKey] === true
+        }
+        return true
+    }
+
+    function filterHiddenCurrentImportBatchIssues(issues, seriesKey) {
+        if (!hideCurrentImportBatchIssues) return issues
+        if (!Array.isArray(issues) || issues.length < 1) return []
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length > 0
+                && hiddenCurrentImportBatchSeriesKeys[normalizedSeriesKey] !== true) {
+            return issues
+        }
+        const visibleIssues = []
+        for (let i = 0; i < issues.length; i += 1) {
+            const issue = issues[i] || ({})
+            if (currentImportBatchIssueHidden(Number(issue.id || 0), normalizedSeriesKey)) continue
+            visibleIssues.push(issue)
+        }
+        return visibleIssues
+    }
+
+    function currentImportBatchSeriesHidden(seriesKey) {
+        if (!hideCurrentImportBatchIssues) return false
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length < 1) return false
+        return hiddenCurrentImportBatchSeriesKeys[normalizedSeriesKey] === true
+    }
+
+    function importCancelGridSnapshotForSeries(seriesKey, volumeKey) {
+        const root = activeRoot()
+        if (!root) return []
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        if (normalizedSeriesKey.length < 1) return []
+        if (String(root.importCancelGridSnapshotSeriesKey || "").trim() !== normalizedSeriesKey) return []
+
+        const normalizedVolumeKey = String(volumeKey || "__all__").trim()
+        const snapshotVolumeKey = String(root.importCancelGridSnapshotVolumeKey || "__all__").trim()
+        if (snapshotVolumeKey.length > 0 && snapshotVolumeKey !== normalizedVolumeKey) return []
+
+        return Array.isArray(root.importCancelGridSnapshotIssues)
+            ? root.importCancelGridSnapshotIssues.slice(0)
+            : []
+    }
+
+    function hideCurrentImportBatch(comicIds) {
+        const ids = Array.isArray(comicIds) ? comicIds : []
+        const nextComicIds = ({})
+        const nextSeriesKeys = ({})
+        for (let i = 0; i < ids.length; i += 1) {
+            const comicId = Number(ids[i] || 0)
+            if (comicId < 1) continue
+            nextComicIds[String(comicId)] = true
+            if (libraryModelRef && typeof libraryModelRef.navigationTargetForComic === "function") {
+                const target = libraryModelRef.navigationTargetForComic(comicId) || ({})
+                const seriesKey = String(target.seriesKey || "").trim()
+                if (seriesKey.length > 0) nextSeriesKeys[seriesKey] = true
+            }
+        }
+        hiddenCurrentImportBatchComicIds = nextComicIds
+        hiddenCurrentImportBatchSeriesKeys = nextSeriesKeys
+        hideCurrentImportBatchIssues = true
+        scheduleIssuesGridRefresh(true, true)
+    }
+
+    function clearCurrentImportBatchHide() {
+        if (!hideCurrentImportBatchIssues) return
+        hideCurrentImportBatchIssues = false
+        hiddenCurrentImportBatchComicIds = ({})
+        hiddenCurrentImportBatchSeriesKeys = ({})
+        scheduleIssuesGridRefresh(true, true)
     }
 
     function rememberLastImportComicId(comicId) {
@@ -389,13 +476,15 @@ Item {
         if (!root || !libraryModelRef || !navigationSurfaceControllerRef) return
         const activeQuickFilterKey = String(sidebarQuickFilterKey || "").trim().toLowerCase()
         const liveIssues = libraryModelRef.issuesForQuickFilter(activeQuickFilterKey, lastImportSessionComicIds)
+        const visibleIssues = filterHiddenCurrentImportBatchIssues(liveIssues)
         traceBrowse(
             "refresh quick filter grid"
             + " key=" + activeQuickFilterKey
             + " count=" + String(liveIssues.length || 0)
+            + " visible=" + String(visibleIssues.length || 0)
             + " preserveSplitScroll=" + String(shouldPreserveSplitScroll === true)
         )
-        root.issuesGridData = navigationSurfaceControllerRef.applyIssueOrder(liveIssues)
+        root.issuesGridData = navigationSurfaceControllerRef.applyIssueOrder(visibleIssues)
         if (typeof root.primeVisibleIssueCoverSourcesFromCache === "function") {
             root.primeVisibleIssueCoverSourcesFromCache()
         }
@@ -434,18 +523,50 @@ Item {
         }
 
         const previousIssues = Array.isArray(root.issuesGridData) ? root.issuesGridData.slice(0) : []
+        if (hideCurrentImportBatchIssues && !currentImportBatchSeriesHidden(currentContext.seriesKey)) {
+            const frozenIssues = importCancelGridSnapshotForSeries(
+                currentContext.seriesKey,
+                currentContext.volumeKey
+            )
+            if (frozenIssues.length > 0) {
+                traceBrowse(
+                    "keep frozen grid during import cancel"
+                    + " seriesKey=" + String(currentContext.seriesKey || "")
+                    + " frozen=" + String(frozenIssues.length || 0)
+                )
+                root.issuesGridData = frozenIssues
+                if (shouldPreserveSplitScroll && typeof root.scheduleGridSplitScrollRestore === "function") {
+                    root.scheduleGridSplitScrollRestore(preservedSplitScroll)
+                }
+                return
+            }
+        }
+
         const liveIssues = libraryModelRef.issuesForSeries(
             currentContext.seriesKey,
             currentContext.volumeKey,
             libraryReadStatusFilter,
             librarySearchText
         )
+        const visibleIssues = filterHiddenCurrentImportBatchIssues(liveIssues, currentContext.seriesKey)
         traceBrowse(
             "series grid live issues"
             + " seriesKey=" + String(currentContext.seriesKey || "")
             + " count=" + String(liveIssues.length || 0)
+            + " visible=" + String(visibleIssues.length || 0)
         )
-        const orderedIssues = navigationSurfaceControllerRef.applyIssueOrder(liveIssues)
+        if (hideCurrentImportBatchIssues
+                && !currentImportBatchSeriesHidden(currentContext.seriesKey)
+                && liveIssues.length < 1
+                && previousIssues.length > 0) {
+            traceBrowse(
+                "keep previous grid during import cancel"
+                + " seriesKey=" + String(currentContext.seriesKey || "")
+                + " previous=" + String(previousIssues.length || 0)
+            )
+            return
+        }
+        const orderedIssues = navigationSurfaceControllerRef.applyIssueOrder(visibleIssues)
         const liveIssueListChanged = !startupControllerRef.issueListsEquivalentByIdAndOrder(previousIssues, orderedIssues)
         if (
             root.startupSnapshotApplied
@@ -461,7 +582,7 @@ Item {
             libraryModelRef.reload()
         }
         if (root.startupSnapshotApplied && root.startupHydrationInProgress) {
-            if (liveIssues.length < 1 && root.issuesGridData.length > 0) {
+            if (visibleIssues.length < 1 && root.issuesGridData.length > 0) {
                 startupControllerRef.startupLog("refreshIssuesGridData keep snapshot: live issues empty during hydration")
             } else if (startupControllerRef.issueListsEquivalentByIdAndOrder(root.issuesGridData, orderedIssues)) {
                 startupControllerRef.startupLog("refreshIssuesGridData keep snapshot: live issues equivalent during hydration")
@@ -479,8 +600,8 @@ Item {
                 const previousId = Number((previousIssues[i] || {}).id || 0)
                 if (previousId > 0) previousIdMap[String(previousId)] = true
             }
-            for (let i = 0; i < liveIssues.length; i += 1) {
-                const liveId = Number((liveIssues[i] || {}).id || 0)
+            for (let i = 0; i < visibleIssues.length; i += 1) {
+                const liveId = Number((visibleIssues[i] || {}).id || 0)
                 if (liveId > 0) liveIdMap[String(liveId)] = true
             }
             const previousKeys = Object.keys(previousIdMap)

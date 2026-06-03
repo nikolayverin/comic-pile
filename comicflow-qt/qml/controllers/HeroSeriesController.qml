@@ -106,6 +106,21 @@ Item {
         return text.length > 0 && text !== "-"
     }
 
+    function filterHiddenCurrentImportBatchIssues(rows, seriesKey) {
+        const rootRef = root()
+        if (!rootRef || typeof rootRef.currentImportBatchIssueHidden !== "function") return rows
+        if (!rows || rows.length < 1) return []
+
+        const visibleRows = []
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        for (let i = 0; i < rows.length; i += 1) {
+            const row = rows[i] || ({})
+            if (rootRef.currentImportBatchIssueHidden(Number(row.id || 0), normalizedSeriesKey)) continue
+            visibleRows.push(row)
+        }
+        return visibleRows
+    }
+
     function automaticHeroCoverSource() {
         const rootRef = root()
         return rootRef ? String(rootRef.heroAutoCoverSource || "") : ""
@@ -231,7 +246,7 @@ Item {
             return
         }
 
-        let rows = libraryModelRef.issuesForSeries(key, "__all__", "all", "")
+        let rows = filterHiddenCurrentImportBatchIssues(libraryModelRef.issuesForSeries(key, "__all__", "all", ""), key)
         let seriesTitle = String(context.seriesTitle || "")
         if (seriesTitle.length < 1) {
             seriesTitle = String(libraryModelRef.groupTitleForKey(key) || "")

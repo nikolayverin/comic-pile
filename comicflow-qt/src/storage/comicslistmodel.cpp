@@ -1511,6 +1511,15 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
     result.insert(QStringLiteral("ok"), false);
     result.insert(QStringLiteral("code"), QStringLiteral("replace_failed"));
     result.insert(QStringLiteral("comicId"), comicId);
+    auto setCancelledResult = [&]() {
+        result.insert(QStringLiteral("ok"), false);
+        result.insert(QStringLiteral("code"), QStringLiteral("cancelled"));
+        result.insert(QStringLiteral("error"), QStringLiteral("Import cancelled."));
+        result.insert(QStringLiteral("sourcePath"), normalizeInputFilePath(sourcePath));
+        result.insert(QStringLiteral("sourceType"), sourceType.trimmed().toLower().isEmpty()
+            ? QStringLiteral("archive")
+            : sourceType.trimmed().toLower());
+    };
 
     if (comicId < 1) {
         result.insert(QStringLiteral("error"), QStringLiteral("Invalid issue id."));
@@ -1550,6 +1559,10 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         ? QStringLiteral("archive")
         : sourceType.trimmed().toLower();
     const QString normalizedSourcePath = normalizeInputFilePath(sourcePath);
+    emitImportWorkerStage(QStringLiteral("checking_source"), {
+        { QStringLiteral("sourcePath"), normalizedSourcePath },
+        { QStringLiteral("comicId"), comicId }
+    });
     QString importSourceLabel = QFileInfo(normalizedSourcePath).fileName().trimmed();
     if (importSourceLabel.isEmpty()) {
         importSourceLabel = QFileInfo(sourcePath.trimmed()).fileName().trimmed();
@@ -1578,6 +1591,11 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         QStringLiteral("importSignals"),
         ComicImportWorkflow::importSignalsToVariantMap(newImportSignals)
     );
+
+    if (isImportWorkerCancelRequested()) {
+        setCancelledResult();
+        return result;
+    }
 
     if (normalizedSourceType == QStringLiteral("archive")) {
         const QFileInfo sourceInfo(normalizedSourcePath);
@@ -1616,6 +1634,10 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         }
 
         if (!isPdfExtension(extension) && !isDjvuExtension(extension)) {
+            emitImportWorkerStage(QStringLiteral("checking_archive"), {
+                { QStringLiteral("sourcePath"), normalizedSourcePath },
+                { QStringLiteral("comicId"), comicId }
+            });
             const QString archiveValidationError = validateArchiveImageEntries(sourceInfo.absoluteFilePath());
             if (!archiveValidationError.isEmpty()) {
                 result.insert(QStringLiteral("code"), archiveValidationCode(archiveValidationError));
@@ -1642,8 +1664,17 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         return result;
     }
 
+    if (isImportWorkerCancelRequested()) {
+        setCancelledResult();
+        return result;
+    }
+
     StagedArchiveDeleteOp stagedDelete;
     DeleteFailureInfo stageFailure;
+    emitImportWorkerStage(QStringLiteral("staging_replace"), {
+        { QStringLiteral("sourcePath"), normalizedSourcePath },
+        { QStringLiteral("comicId"), comicId }
+    });
     if (!ComicDeleteOps::stageArchiveDelete(existingFilePath, stagedDelete, stageFailure)) {
         result.insert(QStringLiteral("code"), QStringLiteral("replace_stage_failed"));
         result.insert(QStringLiteral("error"), formatDeleteFailureText(stageFailure));
@@ -1656,6 +1687,11 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
 
     QString writeError;
     bool writeOk = false;
+    emitImportWorkerStage(QStringLiteral("copying_archive"), {
+        { QStringLiteral("sourcePath"), normalizedSourcePath },
+        { QStringLiteral("targetPath"), QDir::toNativeSeparators(QFileInfo(existingFilePath).absoluteFilePath()) },
+        { QStringLiteral("comicId"), comicId }
+    });
     if (normalizedSourceType == QStringLiteral("archive")) {
         writeOk = normalizeArchiveToCbz(normalizedSourcePath, existingFilePath, writeError);
     } else {
@@ -1673,6 +1709,20 @@ QVariantMap ComicsListModel::replaceComicFileFromSourceEx(
         return result;
     }
 
+    if (isImportWorkerCancelRequested()) {
+        deleteFileAtPath(existingFilePath);
+        const QString rollbackError = rollbackStage();
+        setCancelledResult();
+        if (!rollbackError.isEmpty()) {
+            result.insert(QStringLiteral("error"), QStringLiteral("Import cancelled. Rollback: %1").arg(rollbackError));
+        }
+        return result;
+    }
+
+    emitImportWorkerStage(QStringLiteral("writing_database"), {
+        { QStringLiteral("sourcePath"), normalizedSourcePath },
+        { QStringLiteral("comicId"), comicId }
+    });
     QVariantMap relinkImportSignals = ComicImportWorkflow::importSignalsToVariantMap(newImportSignals);
     if (suppressPostImportModelUpdates) {
         relinkImportSignals.insert(QStringLiteral("suppressPostImportModelUpdates"), true);
@@ -1728,9 +1778,19 @@ int ComicsListModel::requestReplaceComicFileFromSourceAsync(
 )
 {
     const int requestId = m_nextAsyncRequestId++;
+    const auto cancelFlag = std::make_shared<std::atomic_bool>(false);
+    m_importWorkerCancelFlags.insert(requestId, cancelFlag);
+    emit importWorkerStageChanged(requestId, QStringLiteral("queued"), {
+        { QStringLiteral("sourcePath"), sourcePath },
+        { QStringLiteral("sourceType"), sourceType.trimmed().toLower().isEmpty() ? QStringLiteral("archive") : sourceType.trimmed().toLower() },
+        { QStringLiteral("comicId"), comicId }
+    });
+
     auto *watcher = new QFutureWatcher<QVariantMap>(this);
     connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, requestId]() {
         const QVariantMap result = watcher->result();
+        m_importWorkerCancelFlags.remove(requestId);
+        emit importWorkerStageChanged(requestId, QStringLiteral("done"), result);
         emit replaceComicFileFromSourceFinished(requestId, result);
         watcher->deleteLater();
     });
@@ -1739,12 +1799,62 @@ int ComicsListModel::requestReplaceComicFileFromSourceAsync(
     workerValues.insert(QStringLiteral("deferReload"), true);
     workerValues.insert(QStringLiteral("suppressPostImportModelUpdates"), true);
 
-    watcher->setFuture(QtConcurrent::run([comicId, sourcePath, sourceType, filenameHint, workerValues]() {
+    watcher->setFuture(QtConcurrent::run([this, requestId, comicId, sourcePath, sourceType, filenameHint, workerValues, cancelFlag]() {
         ComicsListModel workerModel(nullptr, true);
+        workerModel.setImportWorkerCallbacks(
+            [this, requestId](const QString &stage, const QVariantMap &details) {
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, requestId, stage, details]() {
+                        emit importWorkerStageChanged(requestId, stage, details);
+                    },
+                    Qt::QueuedConnection
+                );
+            },
+            [cancelFlag]() {
+                return cancelFlag && cancelFlag->load();
+            }
+        );
+        if (cancelFlag->load()) {
+            QVariantMap result;
+            result.insert(QStringLiteral("ok"), false);
+            result.insert(QStringLiteral("code"), QStringLiteral("cancelled"));
+            result.insert(QStringLiteral("error"), QStringLiteral("Import cancelled."));
+            result.insert(QStringLiteral("sourcePath"), sourcePath);
+            result.insert(QStringLiteral("sourceType"), sourceType.trimmed().toLower().isEmpty() ? QStringLiteral("archive") : sourceType.trimmed().toLower());
+            result.insert(QStringLiteral("comicId"), comicId);
+            return result;
+        }
+        workerModel.emitImportWorkerStage(QStringLiteral("loading_library_snapshot"), {
+            { QStringLiteral("sourcePath"), sourcePath },
+            { QStringLiteral("comicId"), comicId }
+        });
         workerModel.reload();
+        if (cancelFlag->load()) {
+            QVariantMap result;
+            result.insert(QStringLiteral("ok"), false);
+            result.insert(QStringLiteral("code"), QStringLiteral("cancelled"));
+            result.insert(QStringLiteral("error"), QStringLiteral("Import cancelled."));
+            result.insert(QStringLiteral("sourcePath"), sourcePath);
+            result.insert(QStringLiteral("sourceType"), sourceType.trimmed().toLower().isEmpty() ? QStringLiteral("archive") : sourceType.trimmed().toLower());
+            result.insert(QStringLiteral("comicId"), comicId);
+            return result;
+        }
+        workerModel.emitImportWorkerStage(QStringLiteral("running"), {
+            { QStringLiteral("sourcePath"), sourcePath },
+            { QStringLiteral("comicId"), comicId }
+        });
         return workerModel.replaceComicFileFromSourceEx(comicId, sourcePath, sourceType, filenameHint, workerValues);
     }));
     return requestId;
+}
+
+void ComicsListModel::cancelImportWorkerRequest(int requestId)
+{
+    const auto cancelFlag = m_importWorkerCancelFlags.value(requestId);
+    if (!cancelFlag) return;
+    cancelFlag->store(true);
+    emit importWorkerStageChanged(requestId, QStringLiteral("cancelling"), {});
 }
 
 QString ComicsListModel::restoreReplacedComicFileFromBackup(
@@ -2028,6 +2138,27 @@ QString ComicsListModel::importComicInfoFromArchive(int comicId, const QString &
 bool ComicsListModel::openDatabaseConnection(QSqlDatabase &db, const QString &connectionName, QString &errorText) const
 {
     return ComicStorageSqlite::openDatabaseConnection(db, m_dbPath, connectionName, errorText);
+}
+
+void ComicsListModel::setImportWorkerCallbacks(
+    ImportWorkerStageCallback stageCallback,
+    ImportWorkerCancelCallback cancelCallback
+)
+{
+    m_importWorkerStageCallback = std::move(stageCallback);
+    m_importWorkerCancelCallback = std::move(cancelCallback);
+}
+
+void ComicsListModel::emitImportWorkerStage(const QString &stage, const QVariantMap &details) const
+{
+    if (m_importWorkerStageCallback) {
+        m_importWorkerStageCallback(stage, details);
+    }
+}
+
+bool ComicsListModel::isImportWorkerCancelRequested() const
+{
+    return m_importWorkerCancelCallback && m_importWorkerCancelCallback();
 }
 
 QString ComicsListModel::resolveDataRoot() const

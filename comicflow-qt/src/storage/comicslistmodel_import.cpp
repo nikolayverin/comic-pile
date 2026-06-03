@@ -604,9 +604,18 @@ int ComicsListModel::requestImportSourceAndCreateIssueAsync(
 )
 {
     const int requestId = m_nextAsyncRequestId++;
+    const auto cancelFlag = std::make_shared<std::atomic_bool>(false);
+    m_importWorkerCancelFlags.insert(requestId, cancelFlag);
+    emit importWorkerStageChanged(requestId, QStringLiteral("queued"), {
+        { QStringLiteral("sourcePath"), sourcePath },
+        { QStringLiteral("sourceType"), sourceType.trimmed().toLower().isEmpty() ? QStringLiteral("archive") : sourceType.trimmed().toLower() }
+    });
+
     auto *watcher = new QFutureWatcher<QVariantMap>(this);
     connect(watcher, &QFutureWatcher<QVariantMap>::finished, this, [this, watcher, requestId]() {
         const QVariantMap result = watcher->result();
+        m_importWorkerCancelFlags.remove(requestId);
+        emit importWorkerStageChanged(requestId, QStringLiteral("done"), result);
         emit importSourceAndCreateIssueFinished(requestId, result);
         watcher->deleteLater();
     });
@@ -615,9 +624,45 @@ int ComicsListModel::requestImportSourceAndCreateIssueAsync(
     workerValues.insert(QStringLiteral("deferReload"), true);
     workerValues.insert(QStringLiteral("suppressPostImportModelUpdates"), true);
 
-    watcher->setFuture(QtConcurrent::run([sourcePath, sourceType, filenameHint, workerValues]() {
+    watcher->setFuture(QtConcurrent::run([this, requestId, sourcePath, sourceType, filenameHint, workerValues, cancelFlag]() {
         ComicsListModel workerModel(nullptr, true);
+        workerModel.setImportWorkerCallbacks(
+            [this, requestId](const QString &stage, const QVariantMap &details) {
+                QMetaObject::invokeMethod(
+                    this,
+                    [this, requestId, stage, details]() {
+                        emit importWorkerStageChanged(requestId, stage, details);
+                    },
+                    Qt::QueuedConnection
+                );
+            },
+            [cancelFlag]() {
+                return cancelFlag && cancelFlag->load();
+            }
+        );
+        if (cancelFlag->load()) {
+            return ComicImportRuntime::makeFailureResult(
+                QStringLiteral("cancelled"),
+                QStringLiteral("Import cancelled."),
+                sourcePath,
+                sourceType.trimmed().toLower().isEmpty() ? QStringLiteral("archive") : sourceType.trimmed().toLower()
+            );
+        }
+        workerModel.emitImportWorkerStage(QStringLiteral("loading_library_snapshot"), {
+            { QStringLiteral("sourcePath"), sourcePath }
+        });
         workerModel.reload();
+        if (cancelFlag->load()) {
+            return ComicImportRuntime::makeFailureResult(
+                QStringLiteral("cancelled"),
+                QStringLiteral("Import cancelled."),
+                sourcePath,
+                sourceType.trimmed().toLower().isEmpty() ? QStringLiteral("archive") : sourceType.trimmed().toLower()
+            );
+        }
+        workerModel.emitImportWorkerStage(QStringLiteral("running"), {
+            { QStringLiteral("sourcePath"), sourcePath }
+        });
         return workerModel.importSourceAndCreateIssueEx(sourcePath, sourceType, filenameHint, workerValues);
     }));
     return requestId;
@@ -945,6 +990,12 @@ QString ComicsListModel::createComicFromLibrary(
 )
 {
     ComicImportRuntime::resetOutcome(m_importState);
+    emitImportWorkerStage(QStringLiteral("writing_database"), {
+        { QStringLiteral("filename"), filename }
+    });
+    if (isImportWorkerCancelRequested()) {
+        return QStringLiteral("Import cancelled.");
+    }
 
     const QString inputRef = filename.trimmed();
     if (inputRef.isEmpty()) {
@@ -1388,6 +1439,11 @@ QString ComicsListModel::createComicFromLibrary(
             return QStringLiteral("Issue already exists in DB (id %1).").arg(liveDuplicate.candidate.id);
         }
 
+        if (isImportWorkerCancelRequested()) {
+            db.close();
+            return QStringLiteral("Import cancelled.");
+        }
+
         QSqlQuery insertQuery(db);
         insertQuery.prepare(
             "INSERT INTO comics ("
@@ -1469,6 +1525,11 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         if (!outResult) return;
         *outResult = ComicImportRuntime::makeFailureResult(code, message, sourcePath);
     };
+    auto cancelIfRequested = [&]() -> bool {
+        if (!isImportWorkerCancelRequested()) return false;
+        setOutError(QStringLiteral("cancelled"), QStringLiteral("Import cancelled."), normalizeInputFilePath(sourcePath));
+        return true;
+    };
 
     auto setOutSuccess = [&](const QString &finalFilename, const QString &finalFilePath, bool createdArchiveFile, const QString &normalizedSourcePath) {
         if (!outResult) return;
@@ -1484,6 +1545,9 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     ComicImportRuntime::resetOutcome(m_importState);
 
     const QString normalizedSourcePath = normalizeInputFilePath(sourcePath);
+    emitImportWorkerStage(QStringLiteral("checking_source"), {
+        { QStringLiteral("sourcePath"), normalizedSourcePath }
+    });
     if (normalizedSourcePath.isEmpty()) {
         const QString error = QString("Import file path is required.");
         setOutError("invalid_input", error, normalizedSourcePath);
@@ -1498,6 +1562,9 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     }
 
     const QString extension = normalizeArchiveExtension(sourceInfo.suffix());
+    if (cancelIfRequested()) {
+        return QStringLiteral("Import cancelled.");
+    }
     if (!isImportArchiveExtensionSupported(extension)) {
         const QString error = QString("Supported import formats: %1").arg(formatSupportedArchiveList());
         setOutError("unsupported_format", error, normalizedSourcePath);
@@ -1515,11 +1582,18 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
     }
 
     if (!isPdfExtension(extension) && !isDjvuExtension(extension)) {
+        emitImportWorkerStage(QStringLiteral("checking_archive"), {
+            { QStringLiteral("sourcePath"), normalizedSourcePath }
+        });
         const QString archiveValidationError = validateArchiveImageEntries(sourceInfo.absoluteFilePath());
         if (!archiveValidationError.isEmpty()) {
             setOutError(archiveValidationCode(archiveValidationError), archiveValidationError, normalizedSourcePath);
             return archiveValidationError;
         }
+    }
+
+    if (cancelIfRequested()) {
+        return QStringLiteral("Import cancelled.");
     }
 
     const QString libraryPath = QDir(m_dataRoot).filePath("Library");
@@ -1679,12 +1753,28 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
             finalFilePath = seriesDir.filePath(finalFilename);
         }
 
+        if (cancelIfRequested()) {
+            return QStringLiteral("Import cancelled.");
+        }
+        emitImportWorkerStage(QStringLiteral("copying_archive"), {
+            { QStringLiteral("sourcePath"), normalizedSourcePath },
+            { QStringLiteral("targetPath"), QDir::toNativeSeparators(QFileInfo(finalFilePath).absoluteFilePath()) }
+        });
         QString normalizeError;
         if (!normalizeArchiveToCbz(sourceInfo.absoluteFilePath(), finalFilePath, normalizeError)) {
             setOutError("archive_normalize_failed", normalizeError, normalizedSourcePath);
             return normalizeError;
         }
         createdArchiveFile = true;
+    }
+
+    if (cancelIfRequested()) {
+        if (createdArchiveFile) {
+            QFile copiedArchive(finalFilePath);
+            copiedArchive.remove();
+            ComicDeleteOps::cleanupEmptyLibraryDirs(libraryPath, { QFileInfo(finalFilePath).absolutePath() });
+        }
+        return QStringLiteral("Import cancelled.");
     }
 
     const QString finalRelativePath = QDir(libraryPath).relativeFilePath(finalFilePath);
@@ -1697,16 +1787,28 @@ QString ComicsListModel::importArchiveAndCreateIssueInternal(
         }
 
         if (outResult) {
-            *outResult = ComicImportRuntime::makeCreateFailureResult(
-                m_importState,
-                QStringLiteral("create_issue_failed"),
-                createError,
-                normalizedSourcePath
-            );
+            if (isImportWorkerCancelRequested()) {
+                *outResult = ComicImportRuntime::makeFailureResult(
+                    QStringLiteral("cancelled"),
+                    QStringLiteral("Import cancelled."),
+                    normalizedSourcePath
+                );
+            } else {
+                *outResult = ComicImportRuntime::makeCreateFailureResult(
+                    m_importState,
+                    QStringLiteral("create_issue_failed"),
+                    createError,
+                    normalizedSourcePath
+                );
+            }
         }
         return createError;
     }
 
+    emitImportWorkerStage(QStringLiteral("finalizing"), {
+        { QStringLiteral("sourcePath"), normalizedSourcePath },
+        { QStringLiteral("filePath"), QDir::toNativeSeparators(QFileInfo(finalFilePath).absoluteFilePath()) }
+    });
     setOutSuccess(finalFilename, finalFilePath, createdArchiveFile, normalizedSourcePath);
 
     return {};
@@ -1728,10 +1830,19 @@ QString ComicsListModel::importImageFolderAndCreateIssueInternal(
             QStringLiteral("image_folder")
         );
     };
+    auto cancelIfRequested = [&]() -> bool {
+        if (!isImportWorkerCancelRequested()) return false;
+        setOutError(QStringLiteral("cancelled"), QStringLiteral("Import cancelled."), normalizeInputFilePath(folderPath));
+        return true;
+    };
 
     ComicImportRuntime::resetOutcome(m_importState);
 
     const QString normalizedFolderPath = normalizeInputFilePath(folderPath);
+    emitImportWorkerStage(QStringLiteral("checking_source"), {
+        { QStringLiteral("sourcePath"), normalizedFolderPath },
+        { QStringLiteral("sourceType"), QStringLiteral("image_folder") }
+    });
     if (normalizedFolderPath.isEmpty()) {
         const QString error = QStringLiteral("Image folder path is required.");
         setOutError(QStringLiteral("invalid_input"), error, normalizedFolderPath);
@@ -1751,6 +1862,10 @@ QString ComicsListModel::importImageFolderAndCreateIssueInternal(
             .arg(QDir::toNativeSeparators(folderInfo.absoluteFilePath()));
         setOutError(QStringLiteral("image_folder_empty"), error, normalizedFolderPath);
         return error;
+    }
+
+    if (cancelIfRequested()) {
+        return QStringLiteral("Import cancelled.");
     }
 
     const bool deferReload = boolFromMap(values, QStringLiteral("deferReload"))
@@ -1796,10 +1911,19 @@ QString ComicsListModel::importImageFolderAndCreateIssueInternal(
     };
 
     QString packageError;
+    emitImportWorkerStage(QStringLiteral("packing_image_folder"), {
+        { QStringLiteral("sourcePath"), normalizedFolderPath },
+        { QStringLiteral("targetPath"), QDir::toNativeSeparators(QFileInfo(tempCbzPath).absoluteFilePath()) }
+    });
     if (!packageImageFolderToCbz(normalizedFolderPath, tempCbzPath, packageError)) {
         cleanupTemp();
         setOutError(QStringLiteral("image_folder_package_failed"), packageError, normalizedFolderPath);
         return packageError;
+    }
+
+    if (cancelIfRequested()) {
+        cleanupTemp();
+        return QStringLiteral("Import cancelled.");
     }
 
     QVariantMap delegateResult;

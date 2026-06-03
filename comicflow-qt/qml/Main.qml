@@ -577,9 +577,13 @@ ApplicationWindow {
     property alias lastFailedImportPaths: importController.lastFailedImportPaths
     property alias lastFailedImportErrors: importController.lastFailedImportErrors
     property bool importProgressPopupVisible: false
+    property bool closeAfterImportCancellationRequested: false
     property bool gridOverlayMenusSuppressed: false
     property int gridOverlayMenuPostScrollDelayMs: 180
     property var issuesGridData: []
+    property string importCancelGridSnapshotSeriesKey: ""
+    property string importCancelGridSnapshotVolumeKey: "__all__"
+    property var importCancelGridSnapshotIssues: []
     property alias startupLoadDelayMs: startupState.startupLoadDelayMs
     property alias startupInitialReconcileSettleDelayMs: startupState.startupInitialReconcileSettleDelayMs
     property alias startupPrimaryContentRevealDelayMs: startupState.startupPrimaryContentRevealDelayMs
@@ -914,10 +918,20 @@ ApplicationWindow {
         importController.cancelImportBatch()
     }
 
+    function importCancellationCloseActive() {
+        return importInProgress
+            && (importCancelRequested
+                || importLifecycleState === "cancelling"
+                || importLifecycleState === "cleanup")
+    }
+
     function blockCloseDuringImport(closeEvent) {
         if (!importInProgress) return false
         if (closeEvent) {
             closeEvent.accepted = false
+        }
+        if (importCancellationCloseActive()) {
+            closeAfterImportCancellationRequested = true
         }
         if (readerDialog && readerDialog.visible && typeof readerDialog.close === "function") {
             readerDialog.close()
@@ -1745,6 +1759,132 @@ ApplicationWindow {
 
     function rememberLastImportComicId(comicId) { libraryBrowseController.rememberLastImportComicId(comicId) }
 
+    function currentImportBatchIssueHidden(comicId, seriesKey) {
+        return libraryBrowseController.currentImportBatchIssueHidden(comicId, seriesKey)
+    }
+
+    function captureImportCancelGridSnapshot() {
+        if (String(sidebarQuickFilterKey || "").trim().length > 0) {
+            clearImportCancelGridSnapshot()
+            return
+        }
+        const key = String(selectedSeriesKey || "").trim()
+        const rows = Array.isArray(issuesGridData) ? issuesGridData.slice(0) : []
+        if (key.length < 1 || rows.length < 1) {
+            clearImportCancelGridSnapshot()
+            return
+        }
+        importCancelGridSnapshotSeriesKey = key
+        importCancelGridSnapshotVolumeKey = String(selectedVolumeKey || "__all__")
+        importCancelGridSnapshotIssues = rows
+    }
+
+    function clearImportCancelGridSnapshot() {
+        importCancelGridSnapshotSeriesKey = ""
+        importCancelGridSnapshotVolumeKey = "__all__"
+        importCancelGridSnapshotIssues = []
+    }
+
+    function seriesHasVisibleIssueAfterCurrentImportHide(seriesKey) {
+        const key = String(seriesKey || "").trim()
+        if (key.length < 1) return false
+        const rows = libraryModel.issuesForSeries(key, "__all__", "all", "")
+        for (let i = 0; i < rows.length; i += 1) {
+            const issue = rows[i] || ({})
+            const comicId = Number(issue.id || 0)
+            if (comicId > 0 && !currentImportBatchIssueHidden(comicId, key)) return true
+        }
+        return false
+    }
+
+    function firstSeriesWithVisibleIssueAfterCurrentImportHide() {
+        for (let i = 0; i < seriesListModel.count; i += 1) {
+            const item = seriesListModel.get(i)
+            const key = String((item && item.seriesKey) || "").trim()
+            if (key.length < 1) continue
+            if (!seriesHasVisibleIssueAfterCurrentImportHide(key)) continue
+            return {
+                seriesKey: key,
+                seriesTitle: String((item && item.seriesTitle) || ""),
+                index: i
+            }
+        }
+        return { seriesKey: "", seriesTitle: "", index: -1 }
+    }
+
+    function moveSelectionAwayFromHiddenImportSeriesIfNeeded() {
+        if (String(sidebarQuickFilterKey || "").trim().length > 0) return false
+        const key = String(selectedSeriesKey || "").trim()
+        if (key.length < 1) return false
+        if (seriesHasVisibleIssueAfterCurrentImportHide(key)) return false
+
+        const target = firstSeriesWithVisibleIssueAfterCurrentImportHide()
+        if (String(target.seriesKey || "").length > 0) {
+            selectSeries(target.seriesKey, target.seriesTitle, target.index)
+            refreshIssuesGridData(true)
+            heroSeriesController.resolveHeroMediaForSelectedSeries()
+            heroSeriesController.refreshSeriesData()
+            return true
+        }
+
+        applySelectedSeriesContext("", "", "__all__", AppText.libraryAllVolumes)
+        selectedSeriesKeys = ({})
+        seriesSelectionAnchorIndex = -1
+        volumeListModel.clear()
+        clearSelection()
+        issuesGridData = []
+        heroCustomCoverSource = ""
+        heroCustomBackgroundSource = ""
+        heroAutoCoverSource = ""
+        heroBackgroundSource = ""
+        heroCoverComicId = -1
+        heroSeriesData = {
+            seriesTitle: "",
+            summary: "-",
+            year: "-",
+            volume: "-",
+            publisher: "-",
+            genres: "-",
+            logoSource: ""
+        }
+        return true
+    }
+
+    function hideCurrentImportBatchIssues(comicIds) {
+        captureImportCancelGridSnapshot()
+        libraryBrowseController.hideCurrentImportBatch(comicIds)
+        const movedSelection = moveSelectionAwayFromHiddenImportSeriesIfNeeded()
+        const selectedHeroIssueHidden = !movedSelection && currentImportBatchIssueHidden(heroCoverComicId, selectedSeriesKey)
+        if (readerDialog
+                && readerDialog.visible
+                && currentImportBatchIssueHidden(readerComicId, readerSeriesKey)
+                && typeof closeReader === "function") {
+            closeReader()
+        }
+        if (selectedHeroIssueHidden) {
+            heroCustomCoverSource = ""
+            heroCustomBackgroundSource = ""
+            heroAutoCoverSource = ""
+            heroBackgroundSource = ""
+            heroCoverComicId = -1
+            heroSeriesData = {
+                seriesTitle: "",
+                summary: "-",
+                year: "-",
+                volume: "-",
+                publisher: "-",
+                genres: "-",
+                logoSource: ""
+            }
+        }
+        heroSeriesController.refreshSeriesData()
+    }
+
+    function clearHiddenCurrentImportBatchIssues() {
+        libraryBrowseController.clearCurrentImportBatchHide()
+        clearImportCancelGridSnapshot()
+    }
+
     function selectSidebarQuickFilter(filterKey) { libraryBrowseController.selectSidebarQuickFilter(filterKey) }
 
     function refreshSeriesList() { libraryBrowseController.refreshSeriesList() }
@@ -2080,6 +2220,9 @@ ApplicationWindow {
     }
 
     onClosing: function(close) {
+        if (importCancellationCloseActive()) {
+            closeAfterImportCancellationRequested = true
+        }
         if (popupController.blockCloseAndHighlightCriticalPopup(close)) {
             return
         }
@@ -2108,6 +2251,13 @@ ApplicationWindow {
         }
         if (!importInProgress) {
             importProgressPopupVisible = false
+            if (closeAfterImportCancellationRequested) {
+                closeAfterImportCancellationRequested = false
+                Qt.callLater(function() {
+                    root.close()
+                })
+                return
+            }
         }
         scheduleDeferredUpdatePromptCheck()
     }

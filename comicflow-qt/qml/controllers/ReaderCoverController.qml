@@ -493,6 +493,25 @@ Item {
         return Number(firstIssue.id || -1)
     }
 
+    function currentImportBatchIssueHidden(comicId, seriesKey) {
+        const root = rootObject
+        return root && typeof root.currentImportBatchIssueHidden === "function"
+            ? Boolean(root.currentImportBatchIssueHidden(comicId, seriesKey))
+            : false
+    }
+
+    function filterHiddenCurrentImportBatchIssues(rows, seriesKey) {
+        if (!rows || rows.length < 1) return []
+        const visibleRows = []
+        const normalizedSeriesKey = String(seriesKey || "").trim()
+        for (let i = 0; i < rows.length; i += 1) {
+            const row = rows[i] || ({})
+            if (currentImportBatchIssueHidden(Number(row.id || 0), normalizedSeriesKey)) continue
+            visibleRows.push(row)
+        }
+        return visibleRows
+    }
+
     function resolveHeroCoverForSelectedSeries(preferStoredState) {
         const root = rootObject
         if (!root || !libraryModelRef) return
@@ -544,7 +563,8 @@ Item {
             return
         }
 
-        const resolvedId = Number(libraryModelRef.heroCoverComicIdForSeries(key) || -1)
+        const candidateResolvedId = Number(libraryModelRef.heroCoverComicIdForSeries(key) || -1)
+        const resolvedId = currentImportBatchIssueHidden(candidateResolvedId, key) ? -1 : candidateResolvedId
         const fallbackId = snapshotHeroFallbackComicId()
         const targetComicId = resolvedId > 0 ? resolvedId : fallbackId
         traceHeroCover(
@@ -847,7 +867,10 @@ Item {
 
         const seriesKey = String(root.readerSeriesKey || "").trim()
         if (libraryModelRef && seriesKey.length > 0) {
-            const seriesRows = libraryModelRef.issuesForSeries(seriesKey, "__all__", "all", "")
+            const seriesRows = filterHiddenCurrentImportBatchIssues(
+                libraryModelRef.issuesForSeries(seriesKey, "__all__", "all", ""),
+                seriesKey
+            )
             if (listCount(seriesRows) > 0) {
                 return listCopy(seriesRows)
             }

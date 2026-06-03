@@ -96,6 +96,7 @@ Item {
         processedBytes: root.importProcessedBytes
         cancelPending: root.importCancelRequested
         cleanupActive: root.importCleanupActive
+        closeAfterCancellationRequested: root.closeAfterImportCancellationRequested
         cleanupTotalCount: root.importCleanupTotalCount
         cleanupProcessedCount: root.importCleanupProcessedCount
         cleanupCurrentFileName: root.importCleanupCurrentFileName

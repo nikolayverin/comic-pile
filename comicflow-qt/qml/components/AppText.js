@@ -48,6 +48,7 @@ var translations = {
         importProgressFinalizing: "Finalizing...",
         importProgressCleaningUp: "Cleaning up...",
         importProgressCancelling: "Cancelling...",
+        importProgressCloseAfterCancel: "Comic Pile is cancelling the last import. The app will close automatically when cleanup finishes.",
         importStatusTitle: "Importing",
         importStatusCurrentFile: "Current file:",
         importStatusShowPopup: "Show popup",
@@ -2317,6 +2318,7 @@ var importProgressPreparingImport = t("importProgressPreparingImport")
 var importProgressFinalizing = t("importProgressFinalizing")
 var importProgressCleaningUp = t("importProgressCleaningUp")
 var importProgressCancelling = t("importProgressCancelling")
+var importProgressCloseAfterCancel = t("importProgressCloseAfterCancel")
 var importConflictRestoreTitle = t("importConflictRestoreTitle")
 var importConflictPossibleDuplicateTitle = t("importConflictPossibleDuplicateTitle")
 var importConflictSuspiciousMatchTitle = t("importConflictSuspiciousMatchTitle")

@@ -200,6 +200,29 @@ Item {
         }
     }
 
+    function currentBatchRollbackComicIds() {
+        const ids = []
+        for (let i = 0; i < importBatchRollbackOps.length; i += 1) {
+            const comicId = Number((importBatchRollbackOps[i] || {}).comicId || 0)
+            if (comicId > 0) ids.push(comicId)
+        }
+        return ids
+    }
+
+    function hideCurrentImportBatchIssues() {
+        const rootRef = root()
+        if (rootRef && typeof rootRef.hideCurrentImportBatchIssues === "function") {
+            rootRef.hideCurrentImportBatchIssues(currentBatchRollbackComicIds())
+        }
+    }
+
+    function clearHiddenCurrentImportBatchIssues() {
+        const rootRef = root()
+        if (rootRef && typeof rootRef.clearHiddenCurrentImportBatchIssues === "function") {
+            rootRef.clearHiddenCurrentImportBatchIssues()
+        }
+    }
+
     function clearImportSeriesFocusState() {
         const rootRef = root()
         if (rootRef && typeof rootRef.clearImportSeriesFocusState === "function") {
@@ -441,6 +464,7 @@ Item {
         importQueue = []
         importBatchIntent = ""
         resetImportCleanupState()
+        clearHiddenCurrentImportBatchIssues()
 
         if (cancelled === true) {
             if (lastFailedImportPaths.length > 0) {
@@ -584,6 +608,7 @@ Item {
         cleanupTemporaryNormalizedArchive(cleanupPath, cleanupIsTemporary)
 
         if (importCancelRequested) {
+            hideCurrentImportBatchIssues()
             beginImportCleanup()
             return
         }
@@ -1079,7 +1104,9 @@ Item {
         rememberLastImportComicId(Number((result || {}).comicId || 0))
         advanceCompletedImportBytes(ctx.fileSizeBytes)
         cleanupTemporaryNormalizedArchive(ctx.cleanupPath, ctx.cleanupIsTemporary)
-        if (!importCancelRequested && libraryModelRef) {
+        if (importCancelRequested) {
+            hideCurrentImportBatchIssues()
+        } else if (libraryModelRef) {
             libraryModelRef.reload()
         }
         return true
@@ -1224,31 +1251,9 @@ Item {
         if (workerOutcome === "handled") {
             return false
         }
-
-        let result = ({})
-        if (action === "replace" || action === "replace_all") {
-            if (existingId < 1) {
-                pushImportFailure(sourcePath, "Replace failed: existing issue is not available.", "runtime_error")
-                advanceCompletedImportBytes(ctx.fileSizeBytes)
-                return false
-            }
-            const targetHint = existingFilename.length > 0 ? existingFilename : ""
-            const replaceValues = {
-                deferReload: true,
-                keepBackupForRollback: true,
-                series: existingSeries,
-                volume: existingVolume,
-                issueNumber: existingIssue
-            }
-            result = libraryModelRef.replaceComicFileFromSourceEx(existingId, sourcePath, sourceType, targetHint, replaceValues)
-        } else if (action === "restore_existing") {
-            result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, String(ctx.filenameHint || ""), importValues)
-        } else if (action === "import_as_new") {
-            result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, String(ctx.filenameHint || ""), importValues)
-        } else {
-            return false
-        }
-        return finishImportConflictChoiceResult(action, ctx, result)
+        pushImportFailure(sourcePath, "Import worker could not start.", "runtime_error")
+        advanceCompletedImportBytes(ctx.fileSizeBytes)
+        return false
     }
 
     function queueImportConflictAction(choice) {
@@ -1761,13 +1766,7 @@ Item {
                 return
             }
 
-            const result = libraryModelRef.importSourceAndCreateIssueEx(sourcePath, sourceType, filenameHint, importValues)
-            finalizeImportStepResult(sourcePath, queuedFileSizeBytes, result, "", false, ({
-                sourceType: sourceType,
-                seriesOverride: String(entryContext.seriesOverride || ""),
-                filenameHint: filenameHint,
-                importValues: cloneVariantMap(importValues)
-            }))
+            failImportQueueEntry(entryContext, "Import worker could not start.", "runtime_error", true)
         } catch (e) {
             pushImportFailure("[runtime]", AppText.importRuntimeErrorPrefix + String(e), "runtime_error")
             finishImportBatch(false)
@@ -1780,6 +1779,7 @@ Item {
         importLifecycleState = "cancelling"
         importBatchTimer.stop()
         importConflictActionTimer.stop()
+        hideCurrentImportBatchIssues()
         traceImport(
             "cancel requested"
             + " processed=" + String(importProcessed)
@@ -1788,6 +1788,9 @@ Item {
             + " errors=" + String(importErrorCount)
         )
         if (importWorkerRequestId > 0) {
+            if (libraryModelRef && typeof libraryModelRef.cancelImportWorkerRequest === "function") {
+                libraryModelRef.cancelImportWorkerRequest(importWorkerRequestId)
+            }
             return
         }
         if (importArchiveNormalizationRequestId > 0) {
@@ -1881,13 +1884,9 @@ Item {
             clearImportWorkerContext()
         }
 
-        const result = libraryModelRef.importSourceAndCreateIssueEx(
-            resolvedSourcePath,
-            resolvedSourceType,
-            "",
-            retryValues
-        )
-        finishRetryImportWorkerResult(index, resolvedSourcePath, result || ({}))
+        const classifiedWorkerError = classifyImportError(resolvedSourcePath, "Import worker could not start.", "runtime_error")
+        lastFailedImportErrors[index] = classifiedWorkerError.reason
+        rebuildFailedImportItemsModel()
     }
 
     function finishRetryImportWorkerResult(index, sourcePath, result) {
@@ -1949,24 +1948,28 @@ Item {
             return
         }
 
-        const importResult = libraryModelRef.importSourceAndCreateIssueEx(
-            normalizedPath,
-            "archive",
-            effectiveFilenameHint,
-            importValues
-        )
-        finalizeImportStepResult(
-            sourcePath,
-            queuedFileSizeBytes,
-            importResult,
+        failNormalizedArchiveImport(
+            context,
             normalizedPath,
             temporaryFile,
-            context
+            "Import worker could not start.",
+            "runtime_error",
+            true
         )
     }
 
     Connections {
         target: libraryModelRef
+
+        function onImportWorkerStageChanged(requestId, stage, details) {
+            if (Number(requestId || -1) !== Number(importWorkerRequestId || -1)) return
+            traceImport(
+                "worker stage"
+                + " requestId=" + String(Number(requestId || -1))
+                + " stage=" + String(stage || "")
+                + " file=" + fileNameFromPath(String((details || {}).sourcePath || importCurrentPath || ""))
+            )
+        }
 
         function onImportSourceAndCreateIssueFinished(requestId, result) {
             controller.finishImportWorkerRequest(requestId, result || ({}))
