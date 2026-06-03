@@ -10,7 +10,7 @@
 
 namespace {
 
-constexpr int kCurrentLibrarySchemaVersion = 9;
+constexpr int kCurrentLibrarySchemaVersion = 10;
 
 struct ComicsColumnSpec {
     const char *name;
@@ -245,6 +245,9 @@ QString LibrarySchemaManager::ensureSchemaUpToDate() const
                 case 9:
                     migrated = migrateSchemaToVersion9(db, schemaError);
                     break;
+                case 10:
+                    migrated = migrateSchemaToVersion10(db, schemaError);
+                    break;
                 default:
                     schemaError = QStringLiteral("Unsupported schema migration target: %1").arg(nextVersion);
                     migrated = false;
@@ -298,6 +301,7 @@ bool LibrarySchemaManager::ensureSeriesMetadataTable(QSqlDatabase &db, QString &
             "series_volume TEXT NOT NULL DEFAULT '', "
             "series_publisher TEXT NOT NULL DEFAULT '', "
             "series_age_rating TEXT NOT NULL DEFAULT '', "
+            "series_color_tag TEXT NOT NULL DEFAULT '', "
             "series_header_cover_path TEXT NOT NULL DEFAULT '', "
             "series_header_background_path TEXT NOT NULL DEFAULT '', "
             "updated_at TEXT NOT NULL DEFAULT (datetime('now'))"
@@ -405,6 +409,20 @@ bool LibrarySchemaManager::ensureSeriesMetadataTable(QSqlDatabase &db, QString &
     }
 
     bool headerCoverPathColumnExists = false;
+    bool colorTagColumnExists = false;
+    if (!tableHasColumn(db, QStringLiteral("series_metadata"), QStringLiteral("series_color_tag"), colorTagColumnExists, errorText)) {
+        return false;
+    }
+    if (!colorTagColumnExists) {
+        if (!execSqlStatement(
+                db,
+                QStringLiteral("ALTER TABLE series_metadata ADD COLUMN series_color_tag TEXT NOT NULL DEFAULT ''"),
+                QStringLiteral("Failed to add series_metadata.series_color_tag"),
+                errorText)) {
+            return false;
+        }
+    }
+
     if (!tableHasColumn(db, QStringLiteral("series_metadata"), QStringLiteral("series_header_cover_path"), headerCoverPathColumnExists, errorText)) {
         return false;
     }
@@ -728,4 +746,9 @@ bool LibrarySchemaManager::migrateSchemaToVersion9(QSqlDatabase &db, QString &er
         return false;
     }
     return ComicLibraryDataRepair::canonicalizeDefaultVolumeOneMetadata(db, errorText);
+}
+
+bool LibrarySchemaManager::migrateSchemaToVersion10(QSqlDatabase &db, QString &errorText) const
+{
+    return ensureSeriesMetadataTable(db, errorText);
 }

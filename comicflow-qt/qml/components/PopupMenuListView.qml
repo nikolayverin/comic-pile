@@ -60,7 +60,9 @@ Item {
         let maxWidth = 0
         const source = visibleMenuItems
         for (let i = 0; i < source.length; i += 1) {
-            textMeasure.text = String((source[i] || {}).text || "")
+            const item = source[i] || {}
+            if (String(item.type || "") === "colorTags") continue
+            textMeasure.text = String(item.text || "")
             maxWidth = Math.max(maxWidth, textMeasure.width)
         }
         computedTextWidth = maxWidth
@@ -83,6 +85,7 @@ Item {
             required property var modelData
 
             readonly property bool itemEnabled: modelData.enabled !== false
+            readonly property bool colorTagRow: String(modelData.type || "") === "colorTags"
             readonly property bool firstVisibleRow: index === 0
             readonly property bool lastVisibleRow: index === root.visibleItemCount - 1
             readonly property bool singleVisibleRow: root.visibleItemCount === 1
@@ -156,6 +159,7 @@ Item {
             }
 
             Item {
+                visible: !menuRow.colorTagRow
                 width: Math.max(1, root.textBlockWidth)
                 height: parent.height
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -178,11 +182,106 @@ Item {
                 }
             }
 
+            Item {
+                id: colorTagContent
+                visible: menuRow.colorTagRow
+                z: 2
+                width: parent.width
+                height: parent.height
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.horizontalCenterOffset: 0
+                anchors.verticalCenter: parent.verticalCenter
+
+                Row {
+                    id: colorTagSwatches
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 4
+
+                    Repeater {
+                        model: {
+                            const options = menuRow.modelData.colorTagOptions
+                            if (options && Number(options.length || 0) > 0) return options
+                            return [
+                                { key: "red", color: "#fe0024" },
+                                { key: "yellow", color: "#ffea00" },
+                                { key: "green", color: "#77d632" },
+                                { key: "cyan", color: "#3fd1ff" },
+                                { key: "magenta", color: "#ff00ff" }
+                            ]
+                        }
+
+                        delegate: Item {
+                            id: swatchRoot
+                            required property int index
+                            required property var modelData
+
+                            readonly property string tagKey: String((modelData || {}).key || "")
+                            readonly property color tagColor: String((modelData || {}).color || "transparent")
+                            readonly property bool selectedTag: tagKey.length > 0
+                                && tagKey === String(menuRow.modelData.selectedColorTag || "")
+
+                            width: 13
+                            height: 13
+
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: swatchMouseArea.containsMouse ? 13 : 11
+                                height: width
+                                radius: width / 2
+                                color: swatchRoot.tagColor
+                                border.width: 0
+
+                            }
+
+                            Item {
+                                anchors.centerIn: parent
+                                width: 11
+                                height: 11
+                                visible: swatchRoot.selectedTag && swatchMouseArea.containsMouse
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 8
+                                    height: 2
+                                    radius: 1
+                                    rotation: 45
+                                    color: "#101010"
+                                }
+
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 8
+                                    height: 2
+                                    radius: 1
+                                    rotation: -45
+                                    color: "#101010"
+                                }
+                            }
+
+                            MouseArea {
+                                id: swatchMouseArea
+                                anchors.fill: parent
+                                z: 2
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    const item = Object.assign({}, menuRow.modelData || ({}))
+                                    item.colorTag = swatchRoot.selectedTag ? "" : swatchRoot.tagKey
+                                    root.itemTriggered(menuRow.index, item)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             MouseArea {
                 id: itemMouseArea
                 anchors.fill: parent
+                visible: !menuRow.colorTagRow
                 hoverEnabled: true
-                enabled: parent.itemEnabled
+                enabled: parent.itemEnabled && !menuRow.colorTagRow
                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: root.itemTriggered(index, parent.modelData)
             }

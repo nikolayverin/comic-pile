@@ -36,6 +36,8 @@ Item {
     )
     property string sidebarSearchText: ""
     property string sidebarQuickFilterKey: ""
+    property string librarySeriesColorFilter: ""
+    property var librarySeriesAvailableColorTags: ({})
     property var lastImportSessionComicIds: []
     property int quickFilterLastImportCount: 0
     property int quickFilterFavoritesCount: 0
@@ -273,6 +275,22 @@ Item {
         }
     }
 
+    function setLibrarySeriesColorFilter(colorTag) {
+        const root = activeRoot()
+        const normalizedTag = String(colorTag || "").trim().toLowerCase()
+        const availableTags = librarySeriesAvailableColorTags || ({})
+        if (normalizedTag.length > 0 && availableTags[normalizedTag] !== true) return
+        librarySeriesColorFilter = librarySeriesColorFilter === normalizedTag ? "" : normalizedTag
+        sidebarQuickFilterKey = ""
+        if (root && typeof root.setGridScrollToTop === "function") {
+            root.setGridScrollToTop()
+        }
+        refreshSeriesList()
+        if (startupControllerRef && typeof startupControllerRef.requestSnapshotSave === "function") {
+            startupControllerRef.requestSnapshotSave()
+        }
+    }
+
     function refreshSeriesList() {
         const root = activeRoot()
         if (!root || !libraryModelRef || !seriesListModelRef) return
@@ -301,7 +319,19 @@ Item {
             return 0
         })
 
+        const availableColorTags = ({})
+        for (let i = 0; i < groups.length; i += 1) {
+            const tag = String((groups[i] || {}).colorTag || "").trim().toLowerCase()
+            if (tag.length > 0) availableColorTags[tag] = true
+        }
+        librarySeriesAvailableColorTags = availableColorTags
+
         const searchNeedle = String(sidebarSearchText || "").trim().toLowerCase()
+        let colorFilter = String(librarySeriesColorFilter || "").trim().toLowerCase()
+        if (colorFilter.length > 0 && availableColorTags[colorFilter] !== true) {
+            librarySeriesColorFilter = ""
+            colorFilter = ""
+        }
         seriesListModelRef.clear()
         for (let i = 0; i < groups.length; i += 1) {
             const item = groups[i]
@@ -309,10 +339,15 @@ Item {
             if (searchNeedle.length > 0 && title.toLowerCase().indexOf(searchNeedle) < 0) {
                 continue
             }
+            const itemColorTag = String(item.colorTag || "").trim().toLowerCase()
+            if (colorFilter.length > 0 && itemColorTag !== colorFilter) {
+                continue
+            }
             seriesListModelRef.append({
                 seriesKey: String(item.seriesKey || ""),
                 seriesTitle: title,
-                count: Number(item.count || 0)
+                count: Number(item.count || 0),
+                colorTag: itemColorTag
             })
         }
 

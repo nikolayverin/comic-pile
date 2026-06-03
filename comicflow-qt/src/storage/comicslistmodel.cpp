@@ -1136,6 +1136,7 @@ QVariantList ComicsListModel::seriesGroups() const
 {
     QVariantList groups;
     QHash<QString, int> indexByKey;
+    const QVariantMap colorTagsByKey = ComicLibraryQueries::seriesColorTagsByKey(m_dbPath);
 
     for (const ComicRow &row : m_rows) {
         const QString key = row.seriesGroupKey;
@@ -1147,6 +1148,7 @@ QVariantList ComicsListModel::seriesGroups() const
             group.insert("seriesKey", key);
             group.insert("seriesTitle", row.seriesGroupTitle);
             group.insert("count", 1);
+            group.insert("colorTag", colorTagsByKey.value(key).toString().trimmed());
             groups.push_back(group);
             indexByKey.insert(key, groups.size() - 1);
             continue;

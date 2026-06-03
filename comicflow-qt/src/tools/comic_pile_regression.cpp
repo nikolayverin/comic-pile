@@ -749,6 +749,7 @@ int main(int argc, char *argv[])
         QStringLiteral("series_volume"),
         QStringLiteral("series_publisher"),
         QStringLiteral("series_age_rating"),
+        QStringLiteral("series_color_tag"),
         QStringLiteral("series_header_cover_path"),
         QStringLiteral("series_header_background_path"),
     };

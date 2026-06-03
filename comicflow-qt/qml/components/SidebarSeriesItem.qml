@@ -13,6 +13,8 @@ Item {
 
     property string seriesKey: ""
     property string seriesName: ""
+    property string seriesColorTag: ""
+    property var colorTagOptions: []
     property int seriesIssueCount: 0
     property int itemIndex: -1
     property int dismissToken: 0
@@ -51,6 +53,7 @@ Item {
     signal deleteSeriesRequested()
     signal mergeSeriesRequested()
     signal dismissMenusRequested()
+    signal colorTagRequested(string colorTag)
 
     width: sidebarWidth
     implicitHeight: uiTokens.sidebarRowHeight
@@ -86,6 +89,12 @@ Item {
             items.push({
                 text: menuShowFolderLabel,
                 action: "showFolder"
+            })
+            items.push({
+                type: "colorTags",
+                action: "colorTag",
+                colorTagOptions: root.colorTagOptions,
+                selectedColorTag: root.seriesColorTag
             })
         }
         items.push({
@@ -137,7 +146,7 @@ Item {
         Image {
             id: seriesFolderIcon
             anchors.left: parent.left
-            anchors.leftMargin: uiTokens.sidebarRowIconLeftMargin
+            anchors.leftMargin: uiTokens.sidebarRowIconLeftMargin + 17
             anchors.verticalCenter: hoverRect.verticalCenter
             width: uiTokens.sidebarSeriesIconSize
             height: uiTokens.sidebarSeriesIconSize
@@ -150,10 +159,31 @@ Item {
             smooth: true
         }
 
+        Rectangle {
+            id: seriesColorTagDot
+            anchors.left: parent.left
+            anchors.leftMargin: uiTokens.sidebarRowIconLeftMargin
+            anchors.verticalCenter: hoverRect.verticalCenter
+            width: 11
+            height: 11
+            radius: 5.5
+            visible: root.seriesColorTag.length > 0
+            color: {
+                for (let i = 0; i < root.colorTagOptions.length; i += 1) {
+                    const item = root.colorTagOptions[i] || {}
+                    if (String(item.key || "") === root.seriesColorTag) {
+                        return String(item.color || "transparent")
+                    }
+                }
+                return "transparent"
+            }
+            border.width: 0
+        }
+
         Label {
             id: seriesLabel
             anchors.left: parent.left
-            anchors.leftMargin: uiTokens.sidebarRowLabelLeftMargin
+            anchors.leftMargin: uiTokens.sidebarRowLabelLeftMargin + 17
             anchors.verticalCenter: hoverRect.verticalCenter
             text: root.seriesName.length > 0 ? root.seriesName : uiTokens.unknownSeriesLabel
             color: root.textColor
@@ -262,6 +292,10 @@ Item {
                 }
                 if (action === "deleteSeries") {
                     root.deleteSeriesRequested()
+                    return
+                }
+                if (action.indexOf("colorTag:") === 0) {
+                    root.colorTagRequested(action.slice(String("colorTag:").length))
                 }
             }
         }

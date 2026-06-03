@@ -254,6 +254,7 @@ public:
     Q_INVOKABLE QVariantMap seriesMetadataForKey(const QString &seriesKey) const;
     Q_INVOKABLE QVariantMap seriesMetadataSuggestion(const QVariantMap &values, const QString &currentSeriesKey) const;
     Q_INVOKABLE QString setSeriesMetadataForKey(const QString &seriesKey, const QVariantMap &values);
+    Q_INVOKABLE QString setSeriesColorTagForKey(const QString &seriesKey, const QString &colorTag);
     Q_INVOKABLE QVariantMap issueMetadataSuggestion(const QVariantMap &values, int currentComicId) const;
     Q_INVOKABLE QString rememberIssueMetadataForAutofill(int comicId);
     Q_INVOKABLE QVariantMap saveSeriesHeaderImages(

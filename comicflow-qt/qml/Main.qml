@@ -309,8 +309,17 @@ ApplicationWindow {
         logoSource: ""
     })
     property bool addFilesDropActive: false
+    property var seriesColorTagOptions: [
+        { key: "red", color: "#fe0024" },
+        { key: "yellow", color: "#ffea00" },
+        { key: "green", color: "#77d632" },
+        { key: "cyan", color: "#3fd1ff" },
+        { key: "magenta", color: "#ff00ff" }
+    ]
     property alias sidebarSearchText: libraryBrowseController.sidebarSearchText
     property alias sidebarQuickFilterKey: libraryBrowseController.sidebarQuickFilterKey
+    property alias librarySeriesColorFilter: libraryBrowseController.librarySeriesColorFilter
+    property alias librarySeriesAvailableColorTags: libraryBrowseController.librarySeriesAvailableColorTags
     property alias lastImportSessionComicIds: libraryBrowseController.lastImportSessionComicIds
     property alias quickFilterLastImportCount: libraryBrowseController.quickFilterLastImportCount
     property alias quickFilterFavoritesCount: libraryBrowseController.quickFilterFavoritesCount
@@ -1886,6 +1895,19 @@ ApplicationWindow {
     }
 
     function selectSidebarQuickFilter(filterKey) { libraryBrowseController.selectSidebarQuickFilter(filterKey) }
+
+    function setLibrarySeriesColorFilter(colorTag) { libraryBrowseController.setLibrarySeriesColorFilter(colorTag) }
+
+    function setSeriesColorTag(seriesKey, colorTag) {
+        const key = String(seriesKey || "").trim()
+        if (key.length < 1) return
+        const error = String(libraryModel.setSeriesColorTagForKey(key, String(colorTag || "")) || "")
+        if (error.length > 0) {
+            popupController.showActionResult(error, true)
+            return
+        }
+        refreshSeriesList()
+    }
 
     function refreshSeriesList() { libraryBrowseController.refreshSeriesList() }
 

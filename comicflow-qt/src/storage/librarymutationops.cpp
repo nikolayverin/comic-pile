@@ -40,9 +40,34 @@ struct SeriesMetadataRecord {
     QString volume;
     QString publisher;
     QString ageRating;
+    QString colorTag;
     QString headerCoverPath;
     QString headerBackgroundPath;
 };
+
+bool normalizeSeriesColorTag(const QString &input, QString &normalizedTag, QString &errorText)
+{
+    const QString trimmed = input.trimmed().toLower();
+    if (trimmed.isEmpty()) {
+        normalizedTag.clear();
+        return true;
+    }
+
+    static const QSet<QString> kAllowedTags = {
+        QStringLiteral("red"),
+        QStringLiteral("yellow"),
+        QStringLiteral("green"),
+        QStringLiteral("cyan"),
+        QStringLiteral("magenta")
+    };
+    if (!kAllowedTags.contains(trimmed)) {
+        errorText = QStringLiteral("Series color tag is not supported.");
+        return false;
+    }
+
+    normalizedTag = trimmed;
+    return true;
+}
 
 bool normalizeSeriesMetadataYear(const QString &input, QString &normalizedYear, QString &errorText)
 {
@@ -101,7 +126,8 @@ bool loadSeriesMetadataRecord(
             "CASE WHEN COALESCE(series_year, 0) = 0 THEN '' ELSE CAST(series_year AS TEXT) END, "
             "CASE WHEN COALESCE(series_month, 0) = 0 THEN '' ELSE CAST(series_month AS TEXT) END, "
             "COALESCE(series_genres, ''), COALESCE(series_volume, ''), COALESCE(series_publisher, ''), "
-            "COALESCE(series_age_rating, ''), COALESCE(series_header_cover_path, ''), "
+            "COALESCE(series_age_rating, ''), COALESCE(series_color_tag, ''), "
+            "COALESCE(series_header_cover_path, ''), "
             "COALESCE(series_header_background_path, '') "
             "FROM series_metadata WHERE series_group_key = ? LIMIT 1"
         )
@@ -122,8 +148,9 @@ bool loadSeriesMetadataRecord(
         recordOut.volume = trimOrEmpty(query.value(5));
         recordOut.publisher = trimOrEmpty(query.value(6));
         recordOut.ageRating = trimOrEmpty(query.value(7));
-        recordOut.headerCoverPath = trimOrEmpty(query.value(8));
-        recordOut.headerBackgroundPath = trimOrEmpty(query.value(9));
+        recordOut.colorTag = trimOrEmpty(query.value(8));
+        recordOut.headerCoverPath = trimOrEmpty(query.value(9));
+        recordOut.headerBackgroundPath = trimOrEmpty(query.value(10));
     }
     return true;
 }
@@ -144,6 +171,7 @@ bool writeSeriesMetadataRecord(
         && record.volume.isEmpty()
         && record.publisher.isEmpty()
         && record.ageRating.isEmpty()
+        && record.colorTag.isEmpty()
         && record.headerCoverPath.isEmpty()
         && record.headerBackgroundPath.isEmpty()) {
         query.prepare(QStringLiteral("DELETE FROM series_metadata WHERE series_group_key = ?"));
@@ -159,8 +187,8 @@ bool writeSeriesMetadataRecord(
         QStringLiteral(
             "INSERT OR REPLACE INTO series_metadata "
             "(series_group_key, series_title, series_summary, series_year, series_month, series_genres, "
-            "series_volume, series_publisher, series_age_rating, series_header_cover_path, "
-            "series_header_background_path, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))"
+            "series_volume, series_publisher, series_age_rating, series_color_tag, series_header_cover_path, "
+            "series_header_background_path, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))"
         )
     );
     query.addBindValue(seriesKey);
@@ -172,6 +200,7 @@ bool writeSeriesMetadataRecord(
     query.addBindValue(record.volume);
     query.addBindValue(record.publisher);
     query.addBindValue(record.ageRating);
+    query.addBindValue(record.colorTag);
     query.addBindValue(record.headerCoverPath);
     query.addBindValue(record.headerBackgroundPath);
     if (!query.exec()) {
@@ -363,10 +392,12 @@ QString setSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey,
     const bool hasVolume = values.contains(QStringLiteral("volume"));
     const bool hasPublisher = values.contains(QStringLiteral("publisher"));
     const bool hasAgeRating = values.contains(QStringLiteral("ageRating"));
+    const bool hasColorTag = values.contains(QStringLiteral("colorTag"));
     const bool hasHeaderCoverPath = values.contains(QStringLiteral("headerCoverPath"));
     const bool hasHeaderBackgroundPath = values.contains(QStringLiteral("headerBackgroundPath"));
     if (!hasSeriesTitle && !hasSummary && !hasYear && !hasMonth && !hasGenres
         && !hasVolume && !hasPublisher && !hasAgeRating
+        && !hasColorTag
         && !hasHeaderCoverPath && !hasHeaderBackgroundPath) {
         return {};
     }
@@ -417,6 +448,15 @@ QString setSeriesMetadataForKey(const QString &dbPath, const QString &seriesKey,
     if (hasVolume) record.volume = ComicImportMatching::semanticVolumeValue(valueFromMap(values, QStringLiteral("volume")));
     if (hasPublisher) record.publisher = valueFromMap(values, QStringLiteral("publisher"));
     if (hasAgeRating) record.ageRating = valueFromMap(values, QStringLiteral("ageRating"));
+    if (hasColorTag) {
+        QString normalizedColorTag;
+        QString colorTagError;
+        if (!normalizeSeriesColorTag(valueFromMap(values, QStringLiteral("colorTag")), normalizedColorTag, colorTagError)) {
+            db.close();
+            return colorTagError;
+        }
+        record.colorTag = normalizedColorTag;
+    }
     if (hasHeaderCoverPath) record.headerCoverPath = valueFromMap(values, QStringLiteral("headerCoverPath"));
     if (hasHeaderBackgroundPath) record.headerBackgroundPath = valueFromMap(values, QStringLiteral("headerBackgroundPath"));
 

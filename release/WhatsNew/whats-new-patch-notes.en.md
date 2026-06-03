@@ -8,6 +8,9 @@
 **Help and release notes**
 - **Help** and **What's new** now follow the selected app language, with English fallback.
 
+**Series**
+- Added optional color tags for series, with a Library sidebar filter for quickly narrowing the series list.
+
 **Updates**
 - Improved update popups with clearer context for available updates, download progress, and installation.
 - Built-in updates can now use a smaller update package without downloading the starter library again.

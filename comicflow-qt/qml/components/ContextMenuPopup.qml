@@ -304,7 +304,10 @@ Popup {
                 scrollThumbColor: popupMenuStyle.scrollThumbColor
 
                 onItemTriggered: function(index, item) {
-                    const actionName = String((item || {}).action || "")
+                    let actionName = String((item || {}).action || "")
+                    if (actionName === "colorTag" && (item || {}).colorTag !== undefined) {
+                        actionName = "colorTag:" + String((item || {}).colorTag || "")
+                    }
                     root.traceMenuPopup("item triggered action=" + actionName)
                     root.close()
                     root.itemTriggered(index, actionName)

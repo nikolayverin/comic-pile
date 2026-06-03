@@ -177,6 +177,7 @@ var translations = {
         sidebarMenuShowFolder: "Show folder",
         sidebarMenuDeleteFiles: "Delete files",
         sidebarMenuDeleteSelected: "Delete selected",
+        sidebarColorFilterTooltip: "Filter Library by color tag",
         issueMenuEdit: "Edit",
         issueMenuReplace: "Replace",
         issueMenuDelete: "Delete",

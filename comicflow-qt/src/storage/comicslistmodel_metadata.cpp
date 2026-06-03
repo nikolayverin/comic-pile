@@ -1068,6 +1068,13 @@ QString ComicsListModel::setSeriesMetadataForKey(const QString &seriesKey, const
     return {};
 }
 
+QString ComicsListModel::setSeriesColorTagForKey(const QString &seriesKey, const QString &colorTag)
+{
+    return setSeriesMetadataForKey(seriesKey, {
+        { QStringLiteral("colorTag"), colorTag.trimmed().toLower() }
+    });
+}
+
 QVariantMap ComicsListModel::issueMetadataSuggestion(const QVariantMap &values, int currentComicId) const
 {
     Q_UNUSED(currentComicId);

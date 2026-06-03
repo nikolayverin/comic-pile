@@ -220,7 +220,7 @@ Rectangle {
             id: librarySectionLabel
             x: 22
             y: sidebarQuickFiltersColumn.y + sidebarQuickFiltersColumn.height + 19
-            width: 90
+            width: parent.width - 44
             height: 14
 
             Text {
@@ -241,6 +241,60 @@ Rectangle {
                 font.family: rootObject ? rootObject.uiFontFamily : ""
                 font.pixelSize: 12
                 font.weight: Font.Normal
+            }
+
+            Row {
+                id: libraryColorFilterRow
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 4
+
+                Repeater {
+                    model: rootObject && Array.isArray(rootObject.seriesColorTagOptions)
+                        ? rootObject.seriesColorTagOptions
+                        : []
+
+                    delegate: Item {
+                        id: filterSwatch
+                        required property int index
+                        required property var modelData
+
+                        readonly property string tagKey: String((modelData || {}).key || "")
+                        readonly property bool activeFilter: rootObject
+                            ? String(rootObject.librarySeriesColorFilter || "") === tagKey
+                            : false
+                        readonly property bool filterAvailable: rootObject
+                            ? (rootObject.librarySeriesAvailableColorTags || ({}))[tagKey] === true
+                            : false
+
+                        width: 13
+                        height: 13
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: filterMouseArea.containsMouse && filterSwatch.filterAvailable ? 13 : 11
+                            height: width
+                            radius: width / 2
+                            color: filterSwatch.filterAvailable
+                                ? String((filterSwatch.modelData || {}).color || "transparent")
+                                : "#171717"
+                            opacity: !filterSwatch.filterAvailable
+                                ? 1.0
+                                : (filterMouseArea.containsMouse || filterSwatch.activeFilter ? 1.0 : 0.78)
+                            border.width: 0
+
+                        }
+
+                        MouseArea {
+                            id: filterMouseArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            enabled: filterSwatch.filterAvailable
+                            cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
+                            onClicked: if (rootObject) rootObject.setLibrarySeriesColorFilter(filterSwatch.tagKey)
+                        }
+                    }
+                }
             }
         }
 
@@ -286,6 +340,8 @@ Rectangle {
                 debugLogTarget: libraryModelRef
                 seriesKey: String(model.seriesKey || "")
                 seriesName: String(model.seriesTitle || "")
+                seriesColorTag: String(model.colorTag || "")
+                colorTagOptions: rootObject ? rootObject.seriesColorTagOptions : []
                 seriesIssueCount: Number(model.count || 0)
                 selected: rootObject
                     ? String(rootObject.sidebarQuickFilterKey || "").trim().length < 1
@@ -348,6 +404,9 @@ Rectangle {
                     }
                 }
                 onMergeSeriesRequested: if (rootObject) rootObject.openSeriesMergeDialog(seriesKey, seriesName)
+                onColorTagRequested: function(colorTag) {
+                    if (rootObject) rootObject.setSeriesColorTag(seriesKey, colorTag)
+                }
                 onShowFolderRequested: if (rootObject) rootObject.openSeriesFolder(seriesKey, seriesName)
                 onClearSelectionRequested: if (rootObject) rootObject.clearSelection()
                 onRefreshRequested: if (libraryModelRef) libraryModelRef.reload()
