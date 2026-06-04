@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(ComicPileQt VERSION 0.16.0 LANGUAGES CXX)
+project(ComicPileQt VERSION 0.17.0 LANGUAGES CXX)
 
 option(COMICPILE_FAST_DEV_BUILD "Speed up iterative local builds by disabling QML cachegen/AOT stats." ON)
 if(COMICPILE_FAST_DEV_BUILD)
@@ -16,7 +16,7 @@ if(COMICPILE_FAST_DEV_BUILD)
     list(APPEND _comicpile_qml_module_extra_args NO_CACHEGEN)
 endif()
 
-file(GLOB _comicpile_bundled_whats_new_files "${CMAKE_CURRENT_SOURCE_DIR}/../release/WhatsNew/*.md")
+file(GLOB _comicpile_bundled_whats_new_files CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../release/WhatsNew/*.md")
 foreach(_comicpile_bundled_whats_new_file IN LISTS _comicpile_bundled_whats_new_files)
     get_filename_component(_comicpile_bundled_whats_new_name "${_comicpile_bundled_whats_new_file}" NAME)
     set_source_files_properties(
@@ -25,7 +25,7 @@ foreach(_comicpile_bundled_whats_new_file IN LISTS _comicpile_bundled_whats_new_
     )
 endforeach()
 
-file(GLOB _comicpile_help_content_files "${CMAKE_CURRENT_SOURCE_DIR}/content/help/*.json")
+file(GLOB _comicpile_help_content_files CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/content/help/*.json")
 foreach(_comicpile_help_content_file IN LISTS _comicpile_help_content_files)
     get_filename_component(_comicpile_help_content_name "${_comicpile_help_content_file}" NAME)
     set_source_files_properties(

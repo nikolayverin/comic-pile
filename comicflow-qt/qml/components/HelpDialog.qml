@@ -23,7 +23,7 @@ PopupDialogWindow {
     property real pendingRestoreContentY: -1
     property bool contentThumbDragActive: false
     property var subsectionTargets: ({})
-    readonly property var helpSections: HelpContent.helpSections(textLanguage)
+    readonly property var helpSections: HelpContent.helpSections(textLanguage, appHelpContentByLanguage)
     readonly property int sidebarWidth: 252
     readonly property int menuTop: 52
     readonly property int menuLeft: 12

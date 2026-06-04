@@ -5,48 +5,177 @@
       "label": "시작하기",
       "leadHtml": "<b><i>Comic Pile</i></b>을 처음 사용한다면 몇 개의 코믹을 가져오고, 이슈 하나를 리더에서 연 뒤 라이브러리로 돌아와 보세요. 이것만으로 기본 흐름을 이해할 수 있습니다.",
       "subsections": [
-        { "key": "what_is_comic_pile", "label": "Comic Pile은 무엇인가요?", "bodyHtml": "<b><i>Comic Pile</i></b>은 로컬 코믹과 만화 파일을 위한 라이브러리이자 리더입니다. 컴퓨터의 파일을 가져오고, 라이브러리에서 정리하고, 필요할 때 시리즈나 이슈 정보를 추가한 뒤 리더에서 읽을 수 있습니다." },
-        { "key": "main_areas", "label": "앱의 주요 영역", "bodyHtml": "<b>메인 메뉴</b><br><b>상단 바</b>에는 <b>파일</b>, <b>도움말</b>, <b>이어서 읽기</b>, <b>다음 안 읽은 항목</b>이 있습니다.<br><br><b>라이브러리</b><br>검색, <b>마지막 가져오기</b>, <b>즐겨찾기</b>, <b>북마크</b>, 시리즈 목록이 있습니다.<br><br><b>드롭 존</b><br>라이브러리 아래쪽에 있으며, 지원 파일이나 폴더를 끌어다 놓아 빠르게 추가할 수 있습니다.<br><br><b>시리즈 영역</b><br>선택한 시리즈와 주요 정보를 보여줍니다.<br><br><b>이슈</b><br>선택한 시리즈나 필터의 이슈를 보여줍니다. 표지를 클릭하면 읽을 수 있습니다.<br><br><b>그리드 컨트롤</b><br>하단 바에서 이슈 순서와 그리드 밀도를 바꿀 수 있습니다.", "screenshotTitle": "메인 인터페이스 지도" },
-        { "key": "what_do_i_do_first", "label": "처음에는 무엇을 하나요?", "bodyHtml": "간단히 이렇게 시작하세요.<br><br>&bull; <b>드롭 존</b>으로 이슈 파일 하나를 가져오기<br>&bull; 인터페이스에 나타나는지 확인하기<br>&bull; 표지를 클릭해 리더 열기<br><br>이제 기본 흐름을 알게 됩니다.", "screenshotTitle": "여기에 파일을 놓아 시작" },
-        { "key": "after_import", "label": "가져오기가 성공했는지 어떻게 확인하나요?", "bodyHtml": "가져온 뒤 두 가지를 확인하세요.<br>&bull; 가져온 시리즈가 <b>라이브러리</b>에 보이는지<br>&bull; 이슈가 <b>이슈</b>에 보이고 표지를 클릭하면 <b>리더</b>에서 열리는지", "screenshotTitle": "가져온 시리즈와 이슈 확인" }
+        {
+          "key": "what_is_comic_pile",
+          "label": "Comic Pile은 무엇인가요?",
+          "bodyHtml": "<b><i>Comic Pile</i></b>은 로컬 코믹과 만화 파일을 위한 라이브러리이자 리더입니다. 컴퓨터의 파일을 가져오고, 라이브러리에서 정리하고, 필요할 때 시리즈나 이슈 정보를 추가한 뒤 리더에서 읽을 수 있습니다."
+        },
+        {
+          "key": "main_areas",
+          "label": "앱의 주요 영역",
+          "bodyHtml": "<b>메인 메뉴</b><br><b>상단 바</b>에는 <b>파일</b>, <b>도움말</b>, <b>이어서 읽기</b>, <b>다음 안 읽은 항목</b>이 있습니다.<br><br><b>라이브러리</b><br>검색, <b>마지막 가져오기</b>, <b>즐겨찾기</b>, <b>북마크</b>, 색상 태그 필터, 시리즈 목록이 있습니다.<br><br><b>드롭 존</b><br>라이브러리 아래쪽에서 파일이나 폴더를 추가합니다. 가져오기 중에는 이 영역이 간단한 가져오기 상태로 바뀝니다.<br><br><b>시리즈 영역</b><br>선택한 시리즈와 주요 정보를 보여줍니다.<br><br><b>이슈</b><br>선택한 시리즈나 필터의 이슈를 보여줍니다. 표지를 클릭하면 읽을 수 있습니다.<br><br><b>그리드 컨트롤</b><br>하단 바에서 순서와 밀도를 바꿀 수 있습니다.",
+          "screenshotTitle": "메인 인터페이스 지도"
+        },
+        {
+          "key": "what_do_i_do_first",
+          "label": "처음에는 무엇을 하나요?",
+          "bodyHtml": "간단히 이렇게 시작하세요.<br><br>&bull; <b>드롭 존</b>으로 이슈 파일 하나를 가져오기<br>&bull; 인터페이스에 나타나는지 확인하기<br>&bull; 표지를 클릭해 리더 열기<br><br>이제 기본 흐름을 알게 됩니다.",
+          "screenshotTitle": "여기에 파일을 놓아 시작"
+        },
+        {
+          "key": "after_import",
+          "label": "가져오기가 성공했는지 어떻게 확인하나요?",
+          "bodyHtml": "가져온 뒤 두 가지를 확인하세요.<br>&bull; 가져온 시리즈가 <b>라이브러리</b>에 보이는지<br>&bull; 이슈가 <b>이슈</b>에 보이고 표지를 클릭하면 <b>리더</b>에서 열리는지",
+          "screenshotTitle": "가져온 시리즈와 이슈 확인"
+        }
       ]
     },
     {
       "key": "importing_comics",
       "label": "코믹 가져오기",
       "subsections": [
-        { "key": "import_source_types", "label": "어떤 파일을 가져올 수 있나요?", "bodyHtml": "Comic Pile은 아카이브뿐 아니라 여러 형식을 가져올 수 있습니다.<br><br><b>아카이브</b>: <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>CB7</b>, <b>7Z</b>, <b>CBT</b>, <b>TAR</b><br>&bull; 보통 아카이브 하나가 이슈 하나입니다<br><br><b>이미지 폴더</b>: <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b>, <b>WEBP</b><br>&bull; 보통 폴더 하나가 페이지 이미지로 된 이슈 하나입니다<br><br><b>여러 페이지 문서</b>: <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br>&bull; 보통 문서 하나가 이슈 하나입니다<br><br>일부 아카이브 형식은 Comic Pile에 포함된 <b>7-Zip</b> 구성 요소를 사용합니다." },
-        { "key": "file_structure", "label": "파일은 어떻게 준비해야 하나요?", "bodyHtml": "각 이슈를 명확한 하나의 소스로 준비하세요.<br><br><b>좋은 예:</b><br>&bull; <b>ComicsName 001.cbz</b>처럼 이슈 하나당 아카이브 하나<br>&bull; <b>Series Name/Issue 001/</b>처럼 이슈 하나당 폴더 하나<br><br>이미지 소스는 페이지 이름이 읽는 순서대로 되어 있어야 합니다. <b>001</b>, <b>002</b>, <b>003</b>처럼 앞에 0을 붙이면 <b>1</b>, <b>10</b>, <b>2</b> 같은 정렬 문제를 피할 수 있습니다.<br><br>여러 이슈가 섞인 폴더, 페이지가 아닌 추가 파일, 일관되지 않은 이름은 피하세요.", "screenshotTitle": "깔끔한 폴더 구조 예시" },
-        { "key": "import_size", "label": "파일 크기가 중요한가요?", "bodyHtml": "Comic Pile에는 고정된 MB 제한이 없습니다. 파일은 사용자 컴퓨터에 남습니다. 큰 소스는 주로 가져오기 시간이 더 오래 걸립니다." },
-        { "key": "how_to_import", "label": "코믹을 어떻게 가져오나요?", "bodyHtml": "세 가지 방법이 있습니다.<br><br>&bull; 파일이나 폴더를 <b>드롭 존</b>에 놓기<br>&bull; <b>파일 -> 파일 추가</b>로 특정 이슈 몇 개 가져오기<br>&bull; <b>파일 -> 폴더 추가</b>로 여러 관련 이슈가 든 폴더 가져오기" },
-        { "key": "duplicate_found", "label": "일치하는 이슈를 찾으면 어떻게 되나요?", "bodyHtml": "가져오기 중 일치 항목을 찾으면 Comic Pile은 변경하기 전에 확인 팝업을 엽니다.<br><br><b>들어오는 아카이브</b>에는 가져오는 파일이, <b>기존 레코드</b>에는 라이브러리의 이슈가 표시됩니다.<br><br><b>1. 정확한 중복</b><br>확실한 중복이면 <b>이슈가 이미 있음</b> 팝업이 열립니다. 현재 항목을 유지하거나, 새 파일로 교체하거나, 나머지 중복에도 같은 선택을 적용할 수 있습니다.", "screenshotTitle": "정확한 중복 팝업", "bodyHtmlAfterScreenshot": "<b>2. 관련된 일치</b><br>비슷하지만 정확한 중복이 아니면 <b>가능한 중복 발견</b> 팝업이 열립니다. 새 이슈로 가져오거나, 건너뛰거나, 옵션이 있으면 기존 이슈를 교체할 수 있습니다.", "screenshotTitleAfter": "관련된 일치 팝업" },
-        { "key": "import_errors_batch", "label": "Import Errors가 나오면 무엇을 하나요?", "bodyHtml": "<b>가져오기 오류</b>가 보이면 현재 배치의 일부 파일을 가져오지 못한 것입니다.<br><br>파일을 고친 뒤 <b>다시 시도</b>, 해당 파일만 제외하려면 <b>건너뛰기</b>, 남은 실패 항목을 모두 제외하려면 <b>모두 건너뛰기</b>를 사용하세요.", "screenshotTitle": "가져오기 중 오류 팝업" },
-        { "key": "after_import_flow", "label": "가져온 뒤에는 어떻게 되나요?", "bodyHtml": "가져오기가 끝나면 첫 번째로 가져온 시리즈가 자동으로 열립니다. 바로 결과를 확인하고 이슈를 열 수 있습니다." }
+        {
+          "key": "import_source_types",
+          "label": "어떤 파일을 가져올 수 있나요?",
+          "bodyHtml": "Comic Pile은 아카이브뿐 아니라 여러 형식을 가져올 수 있습니다.<br><br><b>아카이브</b>: <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>CB7</b>, <b>7Z</b>, <b>CBT</b>, <b>TAR</b><br>&bull; 보통 아카이브 하나가 이슈 하나입니다<br><br><b>이미지 폴더</b>: <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b>, <b>WEBP</b><br>&bull; 보통 폴더 하나가 페이지 이미지로 된 이슈 하나입니다<br><br><b>여러 페이지 문서</b>: <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br>&bull; 보통 문서 하나가 이슈 하나입니다<br><br>일부 아카이브 형식은 Comic Pile에 포함된 <b>7-Zip</b> 구성 요소를 사용합니다."
+        },
+        {
+          "key": "file_structure",
+          "label": "파일은 어떻게 준비해야 하나요?",
+          "bodyHtml": "각 이슈를 명확한 하나의 소스로 준비하세요.<br><br><b>좋은 예:</b><br>&bull; <b>ComicsName 001.cbz</b>처럼 이슈 하나당 아카이브 하나<br>&bull; <b>Series Name/Issue 001/</b>처럼 이슈 하나당 폴더 하나<br><br>이미지 소스는 페이지 이름이 읽는 순서대로 되어 있어야 합니다. <b>001</b>, <b>002</b>, <b>003</b>처럼 앞에 0을 붙이면 <b>1</b>, <b>10</b>, <b>2</b> 같은 정렬 문제를 피할 수 있습니다.<br><br>여러 이슈가 섞인 폴더, 페이지가 아닌 추가 파일, 일관되지 않은 이름은 피하세요.",
+          "screenshotTitle": "깔끔한 폴더 구조 예시"
+        },
+        {
+          "key": "import_size",
+          "label": "파일 크기가 중요한가요?",
+          "bodyHtml": "Comic Pile에는 고정된 MB 제한이 없습니다. 파일은 사용자 컴퓨터에 남습니다. 큰 소스는 주로 가져오기 시간이 더 오래 걸립니다."
+        },
+        {
+          "key": "how_to_import",
+          "label": "만화를 어떻게 가져오나요?",
+          "bodyHtml": "세 가지 방식으로 가져올 수 있습니다.<br><br>&bull; 파일이나 폴더를 <b>라이브러리</b>의 <b>드롭 존</b>에 놓기<br>&bull; <b>파일 -> 파일 추가</b>: 특정 이슈 몇 개를 가져올 때<br>&bull; <b>파일 -> 폴더 추가</b>: 관련 이슈가 한 폴더에 있을 때<br><br>가져오기가 시작되면 팝업을 숨기고 라이브러리나 리더를 계속 사용할 수 있습니다."
+        },
+        {
+          "key": "import_running_status",
+          "label": "가져오기 중에도 Comic Pile을 사용할 수 있나요?",
+          "bodyHtml": "예. 가져오기는 기본 인터페이스와 분리되어 실행됩니다. 읽기를 계속하거나, 시리즈를 바꾸거나, <b>이어서 읽기</b>, 북마크, 즐겨찾기를 사용할 수 있습니다.<br><br>충돌할 수 있는 작업은 잠시 차단됩니다. 다른 가져오기 시작, 라이브러리 데이터 이동, 가져오기/압축 설정 변경, 페이지 삭제, 가져온 파일 삭제 등이 포함됩니다.<br><br>팝업을 숨기면 드롭 존이 간단한 가져오기 상태로 바뀝니다. 현재 파일, 개수, 진행률, <b>취소</b>를 보여줍니다. 확인이 필요하면 <b>가져오기 오류</b> 같은 짧은 알림과 <b>보기</b> 버튼이 나타납니다.",
+          "screenshotTitle": "간단한 가져오기 상태",
+          "screenshotHint": ""
+        },
+        {
+          "key": "import_cancel",
+          "label": "가져오기를 취소하면 어떻게 되나요?",
+          "bodyHtml": "<b>취소</b>는 대기 중인 파일만이 아니라 현재 가져오기 세션 전체를 취소합니다.<br><br>Comic Pile은 그 세션에서 만들어진 이슈와 시리즈를 제거합니다. 이미 처리 중인 압축 파일은 내부 처리가 끝난 뒤 정리가 완료될 수 있습니다. 그동안 앱은 <b>가져오기 취소 중</b>을 표시하고 충돌 작업을 계속 차단합니다.<br><br>가져오기 전부터 있던 라이브러리 내용은 그대로 남아야 합니다."
+        },
+        {
+          "key": "duplicate_found",
+          "label": "일치하는 이슈를 찾으면 어떻게 되나요?",
+          "bodyHtml": "가져오기 중 일치 항목을 찾으면 Comic Pile은 변경하기 전에 확인 팝업을 엽니다.<br><br><b>들어오는 아카이브</b>에는 가져오는 파일이, <b>기존 레코드</b>에는 라이브러리의 이슈가 표시됩니다.<br><br><b>1. 정확한 중복</b><br>확실한 중복이면 <b>이슈가 이미 있음</b> 팝업이 열립니다. 현재 항목을 유지하거나, 새 파일로 교체하거나, 나머지 중복에도 같은 선택을 적용할 수 있습니다.",
+          "screenshotTitle": "정확한 중복 팝업",
+          "bodyHtmlAfterScreenshot": "<b>2. 관련된 일치</b><br>비슷하지만 정확한 중복이 아니면 <b>가능한 중복 발견</b> 팝업이 열립니다. 새 이슈로 가져오거나, 건너뛰거나, 옵션이 있으면 기존 이슈를 교체할 수 있습니다.",
+          "screenshotTitleAfter": "관련된 일치 팝업"
+        },
+        {
+          "key": "import_errors_batch",
+          "label": "Import Errors가 나오면 무엇을 하나요?",
+          "bodyHtml": "<b>가져오기 오류</b>가 보이면 현재 배치의 일부 파일을 가져오지 못한 것입니다.<br><br>팝업을 숨긴 경우 간단한 상태에 <b>가져오기 오류</b> 같은 짧은 알림이 표시됩니다. <b>보기</b>를 눌러 팝업을 여세요.<br><br>파일을 고친 뒤 <b>다시 시도</b>, 해당 파일만 제외하려면 <b>건너뛰기</b>, 남은 실패 항목을 모두 제외하려면 <b>모두 건너뛰기</b>를 사용하세요.",
+          "screenshotTitle": "가져오기 중 오류 팝업"
+        },
+        {
+          "key": "after_import_flow",
+          "label": "가져오기 후에는 어떻게 되나요?",
+          "bodyHtml": "가져오기 후 Comic Pile은 결과를 라이브러리에 표시합니다. 새 시리즈가 하나만 만들어졌다면 그 시리즈가 자동으로 열립니다.<br><br>여러 시리즈가 만들어지거나 업데이트되었다면 <b>마지막 가져오기</b> 또는 <b>라이브러리</b>의 시리즈 목록에서 확인하세요."
+        }
       ]
     },
     {
       "key": "supported_formats",
       "label": "지원 형식",
       "subsections": [
-        { "key": "import_formats", "label": "어떤 형식을 가져올 수 있나요?", "bodyHtml": "Comic Pile은 다음을 지원합니다.<br><br><b>아카이브:</b> <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>7Z</b>, <b>CB7</b>, <b>CBT</b>, <b>TAR</b><br><b>문서:</b> <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br><b>이미지 폴더:</b> <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b>, <b>WEBP</b> 페이지가 든 폴더" },
-        { "key": "cbr_note", "label": "CBR이 가져와지지 않으면?", "bodyHtml": "<b>CBR</b> 지원은 <b>7-Zip</b>에 의존합니다. CBR만 실패하고 CBZ나 PDF는 정상이라면 <b>파일 -> 설정 -> 가져오기 및 아카이브</b>에서 7-Zip을 확인하세요.<br><br>계속 실패하면 먼저 앱을 업데이트하세요. 7-Zip은 Comic Pile에 포함되어 있습니다. 필요하면 <a href=\"https://www.7-zip.org/\" style=\"color:#78b7ff; text-decoration:underline;\">https://www.7-zip.org/</a>에서 수동 설치하세요." },
-        { "key": "after_import_normalization", "label": "이미지 폴더를 가져올 수 있나요?", "bodyHtml": "네. 한 이슈의 최종 폴더가 읽는 순서의 페이지 이미지를 직접 포함하면 가져올 수 있습니다.<br><br><b>권장:</b><br>&bull; 이슈 하나당 폴더 하나<br>&bull; <b>Series Name 001</b> 같은 명확한 이름<br>&bull; 페이지 이름 순서 유지<br>&bull; 다른 이슈의 페이지를 섞지 않기" },
-        { "key": "unsupported_formats", "label": "가져오기 문제의 흔한 원인은?", "bodyHtml": "흔한 원인:<br><br>&bull; 손상된 아카이브, 문서, 이미지<br>&bull; 지원 목록에 없는 형식<br>&bull; 여러 이슈의 페이지가 섞인 폴더<br><br>확실하지 않으면 이슈 하나로 먼저 테스트하세요." }
+        {
+          "key": "import_formats",
+          "label": "어떤 형식을 가져올 수 있나요?",
+          "bodyHtml": "Comic Pile은 다음을 지원합니다.<br><br><b>아카이브:</b> <b>CBZ</b>, <b>ZIP</b>, <b>CBR</b>, <b>RAR</b>, <b>7Z</b>, <b>CB7</b>, <b>CBT</b>, <b>TAR</b><br><b>문서:</b> <b>PDF</b>, <b>DJVU</b>, <b>DJV</b><br><b>이미지 폴더:</b> <b>JPG</b>, <b>JPEG</b>, <b>PNG</b>, <b>BMP</b>, <b>WEBP</b> 페이지가 든 폴더"
+        },
+        {
+          "key": "cbr_note",
+          "label": "CBR이 가져와지지 않으면?",
+          "bodyHtml": "<b>CBR</b> 지원은 <b>7-Zip</b>에 의존합니다. CBR만 실패하고 CBZ나 PDF는 정상이라면 <b>파일 -> 설정 -> 가져오기 및 아카이브</b>에서 7-Zip을 확인하세요.<br><br>계속 실패하면 먼저 앱을 업데이트하세요. 7-Zip은 Comic Pile에 포함되어 있습니다. 필요하면 <a href=\"https://www.7-zip.org/\" style=\"color:#78b7ff; text-decoration:underline;\">https://www.7-zip.org/</a>에서 수동 설치하세요."
+        },
+        {
+          "key": "after_import_normalization",
+          "label": "이미지 폴더를 가져올 수 있나요?",
+          "bodyHtml": "네. 한 이슈의 최종 폴더가 읽는 순서의 페이지 이미지를 직접 포함하면 가져올 수 있습니다.<br><br><b>권장:</b><br>&bull; 이슈 하나당 폴더 하나<br>&bull; <b>Series Name 001</b> 같은 명확한 이름<br>&bull; 페이지 이름 순서 유지<br>&bull; 다른 이슈의 페이지를 섞지 않기"
+        },
+        {
+          "key": "unsupported_formats",
+          "label": "가져오기 문제의 흔한 원인은?",
+          "bodyHtml": "흔한 원인:<br><br>&bull; 손상된 아카이브, 문서, 이미지<br>&bull; 지원 목록에 없는 형식<br>&bull; 여러 이슈의 페이지가 섞인 폴더<br><br>확실하지 않으면 이슈 하나로 먼저 테스트하세요."
+        }
       ]
     },
     {
       "key": "library_data",
       "label": "라이브러리 및 데이터",
       "subsections": [
-        { "key": "app_vs_data", "label": "무엇이 어디에 저장되나요?", "bodyHtml": "앱은 실행하는 프로그램입니다. 라이브러리는 별도로 저장되며 기본적으로 앱 폴더 안에 만들어집니다. 그래서 앱 파일을 교체하거나 업데이트해도 라이브러리가 자동으로 삭제되지는 않습니다." },
-        { "key": "move_data_location", "label": "라이브러리 데이터 위치를 옮길 수 있나요?", "bodyHtml": "네. <b>파일 -> 설정 -> 라이브러리 및 데이터</b>를 열고 <b>라이브러리 데이터 이동 -> 선택</b>으로 새 빈 폴더를 지정하세요. 그 다음 앱을 다시 시작하면 전송이 실행됩니다." },
-        { "key": "check_storage_access", "label": "저장소 접근 확인은 언제 쓰나요?", "bodyHtml": "<b><i>저장소 접근 확인</i></b>은 파일 접근이나 라이브러리 위치 문제가 의심될 때 사용합니다.<br><br>예:<br>&bull; 파일이 열리지 않음<br>&bull; 많은 이슈가 동시에 실패함<br>&bull; 저장소 접근 때문에 가져오기가 실패함<br><br>정상 작동 중이면 보통 사용할 필요가 없습니다.", "screenshotTitle": "설정의 저장소 확인 위치" },
-        { "key": "edit_one_issue", "label": "이슈 하나를 어떻게 편집하나요?", "bodyHtml": "<b>라이브러리</b>에서 시리즈를 열고 <b>이슈</b>에서 대상 이슈를 찾은 뒤 메뉴에서 <b>편집</b>을 선택하세요. 이슈 번호, 제목, 출판사, 크레딧, 이야기 정보를 바꿀 수 있습니다.", "screenshotTitle": "이슈 메뉴의 편집 동작" },
-        { "key": "edit_one_series", "label": "시리즈 정보는 어떻게 편집하나요?", "bodyHtml": "시리즈의 <b>...</b> 메뉴에서 <b>시리즈 편집</b>을 선택하거나, 시리즈 영역의 작은 편집 버튼을 사용할 수 있습니다. 둘 다 같은 정보를 편집합니다.", "screenshotTitle": "시리즈 메뉴에서 편집" },
-        { "key": "series_menu_actions", "label": "시리즈 메뉴에서 무엇을 할 수 있나요?", "bodyHtml": "<b>...</b> 메뉴는 선택 상태에 따라 바뀝니다. 시리즈 하나에서는 <b>이슈 추가</b>, <b>시리즈 편집</b>, <b>파일 삭제</b>를 사용할 수 있습니다.<br><br>여러 시리즈를 선택하면 <b>일괄 편집</b>, <b>시리즈로 병합</b>, <b>선택 항목 삭제</b> 같은 작업이 나타날 수 있습니다." },
-        { "key": "fill_fields_popup", "label": "저장된 데이터를 자동 입력할 수 있나요?", "bodyHtml": "네. 이전에 저장된 이슈나 시리즈 정보가 있으면 저장할 때 빈 필드를 채우도록 제안할 수 있습니다.<br><br><b>라이브러리에서 채우기</b>는 빈 필드만 채웁니다. <b>현재 값 유지</b>는 현재 폼 내용을 그대로 저장합니다.", "screenshotTitle": "필드 채우기 팝업" },
-        { "key": "replace_issue", "label": "이슈를 어떻게 교체하나요?", "bodyHtml": "<b>교체</b>는 라이브러리의 기존 이슈를 유지하면서 현재 소스만 새 것으로 바꿉니다. 같은 이슈의 수정본이나 더 나은 사본을 사용할 때 쓰세요. 아카이브 파일이나 정렬된 이미지 폴더를 선택할 수 있습니다.", "screenshotTitle": "이슈 메뉴의 교체 동작" },
-        { "key": "last_import", "label": "마지막 가져오기는 무엇인가요?", "bodyHtml": "<b><i>마지막 가져오기</i></b>는 가장 최근 가져오기 세션을 보여주는 빠른 필터입니다. 영구 서가처럼 쓰지 말고, 장기 접근은 <b>라이브러리</b>에서 시리즈를 열어 사용하세요.", "screenshotTitle": "마지막 가져오기 빠른 필터" }
+        {
+          "key": "app_vs_data",
+          "label": "무엇이 어디에 저장되나요?",
+          "bodyHtml": "앱은 실행하는 프로그램입니다. 라이브러리는 별도로 저장되며 기본적으로 앱 폴더 안에 만들어집니다. 그래서 앱 파일을 교체하거나 업데이트해도 라이브러리가 자동으로 삭제되지는 않습니다."
+        },
+        {
+          "key": "move_data_location",
+          "label": "라이브러리 데이터 위치를 옮길 수 있나요?",
+          "bodyHtml": "네. <b>파일 -> 설정 -> 라이브러리 및 데이터</b>를 열고 <b>라이브러리 데이터 이동 -> 선택</b>으로 새 빈 폴더를 지정하세요. 그 다음 앱을 다시 시작하면 전송이 실행됩니다."
+        },
+        {
+          "key": "check_storage_access",
+          "label": "저장소 접근 확인은 언제 쓰나요?",
+          "bodyHtml": "<b><i>저장소 접근 확인</i></b>은 파일 접근이나 라이브러리 위치 문제가 의심될 때 사용합니다.<br><br>예:<br>&bull; 파일이 열리지 않음<br>&bull; 많은 이슈가 동시에 실패함<br>&bull; 저장소 접근 때문에 가져오기가 실패함<br><br>정상 작동 중이면 보통 사용할 필요가 없습니다.",
+          "screenshotTitle": "설정의 저장소 확인 위치"
+        },
+        {
+          "key": "edit_one_issue",
+          "label": "이슈 하나를 어떻게 편집하나요?",
+          "bodyHtml": "<b>라이브러리</b>에서 시리즈를 열고 <b>이슈</b>에서 대상 이슈를 찾은 뒤 메뉴에서 <b>편집</b>을 선택하세요. 이슈 번호, 제목, 출판사, 크레딧, 이야기 정보를 바꿀 수 있습니다.",
+          "screenshotTitle": "이슈 메뉴의 편집 동작"
+        },
+        {
+          "key": "edit_one_series",
+          "label": "시리즈 정보는 어떻게 편집하나요?",
+          "bodyHtml": "시리즈의 <b>...</b> 메뉴에서 <b>시리즈 편집</b>을 선택하거나, 시리즈 영역의 작은 편집 버튼을 사용할 수 있습니다. 둘 다 같은 정보를 편집합니다.",
+          "screenshotTitle": "시리즈 메뉴에서 편집"
+        },
+        {
+          "key": "series_menu_actions",
+          "label": "시리즈 메뉴에서 무엇을 할 수 있나요?",
+          "bodyHtml": "선택한 시리즈의 <b>...</b> 메뉴는 선택 상태에 따라 달라집니다.<br><br>시리즈 하나에서는 <b>이슈 추가</b>, <b>시리즈 편집</b>, 개인 색상 태그, <b>파일 삭제</b>를 사용할 수 있습니다.<br><br>여러 시리즈를 선택하면 <b>일괄 편집</b>, <b>시리즈로 병합</b>, <b>선택 항목 삭제</b> 같은 작업이 나타날 수 있습니다."
+        },
+        {
+          "key": "series_color_tags",
+          "label": "시리즈 색상 태그는 어떻게 쓰나요?",
+          "bodyHtml": "색상 태그는 <b>라이브러리</b>의 시리즈에 붙이는 개인 표시입니다. 파일, 읽기 순서, 메타데이터, 폴더를 바꾸지 않습니다.<br><br>시리즈의 <b>...</b> 메뉴를 열고 색상 점을 선택하세요. 태그는 시리즈 옆에 표시됩니다. 같은 색을 다시 선택하면 제거됩니다.<br><br><b>라이브러리</b> 제목 옆의 색상 점은 필터입니다. 태그가 없으면 비활성 상태입니다. 실제로 사용 중인 색상만 클릭할 수 있습니다.",
+          "screenshotTitle": "시리즈 색상 태그와 라이브러리 필터",
+          "screenshotHint": ""
+        },
+        {
+          "key": "fill_fields_popup",
+          "label": "저장된 데이터를 자동 입력할 수 있나요?",
+          "bodyHtml": "네. 이전에 저장된 이슈나 시리즈 정보가 있으면 저장할 때 빈 필드를 채우도록 제안할 수 있습니다.<br><br><b>라이브러리에서 채우기</b>는 빈 필드만 채웁니다. <b>현재 값 유지</b>는 현재 폼 내용을 그대로 저장합니다.",
+          "screenshotTitle": "필드 채우기 팝업"
+        },
+        {
+          "key": "replace_issue",
+          "label": "이슈를 어떻게 교체하나요?",
+          "bodyHtml": "<b>교체</b>는 라이브러리의 기존 이슈를 유지하면서 현재 소스만 새 것으로 바꿉니다. 같은 이슈의 수정본이나 더 나은 사본을 사용할 때 쓰세요. 아카이브 파일이나 정렬된 이미지 폴더를 선택할 수 있습니다.",
+          "screenshotTitle": "이슈 메뉴의 교체 동작"
+        },
+        {
+          "key": "last_import",
+          "label": "마지막 가져오기는 무엇인가요?",
+          "bodyHtml": "<b><i>마지막 가져오기</i></b>는 가장 최근 가져오기 세션을 보여주는 빠른 필터입니다. 영구 서가처럼 쓰지 말고, 장기 접근은 <b>라이브러리</b>에서 시리즈를 열어 사용하세요.",
+          "screenshotTitle": "마지막 가져오기 빠른 필터"
+        }
       ]
     },
     {
@@ -54,44 +183,138 @@
       "label": "Comic Pile 업데이트",
       "leadHtml": "내장 업데이트 흐름으로 새 포터블 릴리스를 확인하고, 변경 내용을 읽고, 앱 안에서 다운로드한 뒤 라이브러리 데이터를 교체하지 않고 설치할 수 있습니다.",
       "subsections": [
-        { "key": "check_for_updates", "label": "업데이트를 어떻게 확인하나요?", "bodyHtml": "<b>도움말 -> 정보</b>를 열고 <b>업데이트</b> 영역에서 <b>업데이트 확인</b>을 누르세요. 새 릴리스가 있으면 Comic Pile이 <b>업데이트 있음</b> 팝업을 엽니다." },
-        { "key": "automatic_update_checks", "label": "자동으로 업데이트를 확인하나요?", "bodyHtml": "네. Comic Pile은 사용 중 자동으로 업데이트를 확인할 수 있습니다. 직접 관리하고 싶다면 <b>파일 -> 설정 -> 일반</b>에서 <b>업데이트 자동 확인</b>을 끄세요.", "screenshotTitle": "자동 업데이트 확인 설정", "bodyHtmlAfterScreenshot": "끄더라도 <b>정보</b>에서 언제든 수동 확인할 수 있습니다.", "screenshotTitleAfter": "정보의 업데이트 확인" },
-        { "key": "view_update_details", "label": "업데이트 있음 팝업은 무엇을 보여주나요?", "bodyHtml": "최신 버전과 <b>새로운 기능</b> 아래의 릴리스 노트를 보여줍니다. 나중에 보려면 <b>나중에</b>, 다운로드하려면 <b>업데이트 다운로드</b>를 사용하세요.", "screenshotTitle": "업데이트 있음 팝업" },
-        { "key": "whats_new_meaning", "label": "새로운 기능은 무엇인가요?", "bodyHtml": "<b>도움말 -> 새로운 기능</b>은 현재 설치된 버전의 패치 노트를 보여줍니다. 이미 업데이트가 감지된 경우 업데이트 팝업은 새 버전의 노트를 보여줍니다." },
-        { "key": "download_install_flow", "label": "다운로드와 설치는 어떻게 동작하나요?", "bodyHtml": "<b>업데이트 다운로드</b>를 누르면 포터블 업데이트 패키지를 임시 위치에 저장합니다. 완료되면 <b>업데이트 설치</b>가 활성화되고, 앱을 닫아 업데이트를 적용한 뒤 다시 시작합니다.", "screenshotTitle": "다운로드 후 설치 버튼" },
-        { "key": "library_data_kept", "label": "라이브러리 데이터는 유지되나요?", "bodyHtml": "네. 내장 업데이트는 <b>Database</b> 폴더와 <b>ComicPile.ini</b> 설정 파일을 유지합니다." },
-        { "key": "update_errors", "label": "다운로드나 설치가 실패하면?", "bodyHtml": "다운로드가 실패하면 먼저 다시 시도하세요. 일시적인 네트워크 문제일 수 있습니다.", "screenshotTitle": "다운로드 실패 팝업", "bodyHtmlAfterScreenshot": "설치가 완료되지 않으면 다시 시도하세요. 필요하면 <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a>에서 최신 포터블 릴리스를 받고, Comic Pile을 닫은 뒤 앱 파일을 교체하세요. <b>Database</b>와 <b>ComicPile.ini</b>는 유지하세요." }
+        {
+          "key": "check_for_updates",
+          "label": "업데이트를 어떻게 확인하나요?",
+          "bodyHtml": "<b>도움말 -> 정보</b>를 열고 <b>업데이트</b> 영역에서 <b>업데이트 확인</b>을 누르세요. 새 릴리스가 있으면 Comic Pile이 <b>업데이트 있음</b> 팝업을 엽니다."
+        },
+        {
+          "key": "automatic_update_checks",
+          "label": "자동으로 업데이트를 확인하나요?",
+          "bodyHtml": "네. Comic Pile은 사용 중 자동으로 업데이트를 확인할 수 있습니다. 직접 관리하고 싶다면 <b>파일 -> 설정 -> 일반</b>에서 <b>업데이트 자동 확인</b>을 끄세요.",
+          "screenshotTitle": "자동 업데이트 확인 설정",
+          "bodyHtmlAfterScreenshot": "끄더라도 <b>정보</b>에서 언제든 수동 확인할 수 있습니다.",
+          "screenshotTitleAfter": "정보의 업데이트 확인"
+        },
+        {
+          "key": "view_update_details",
+          "label": "업데이트 있음 팝업은 무엇을 보여주나요?",
+          "bodyHtml": "최신 버전과 <b>새로운 기능</b> 아래의 릴리스 노트를 보여줍니다. 나중에 보려면 <b>나중에</b>, 다운로드하려면 <b>업데이트 다운로드</b>를 사용하세요.",
+          "screenshotTitle": "업데이트 있음 팝업"
+        },
+        {
+          "key": "whats_new_meaning",
+          "label": "새로운 기능은 무엇인가요?",
+          "bodyHtml": "<b>도움말 -> 새로운 기능</b>은 현재 설치된 버전의 패치 노트를 보여줍니다. 이미 업데이트가 감지된 경우 업데이트 팝업은 새 버전의 노트를 보여줍니다."
+        },
+        {
+          "key": "download_install_flow",
+          "label": "다운로드와 설치는 어떻게 동작하나요?",
+          "bodyHtml": "<b>업데이트 다운로드</b>를 누르면 포터블 업데이트 패키지를 임시 위치에 저장합니다. 완료되면 <b>업데이트 설치</b>가 활성화되고, 앱을 닫아 업데이트를 적용한 뒤 다시 시작합니다.",
+          "screenshotTitle": "다운로드 후 설치 버튼"
+        },
+        {
+          "key": "library_data_kept",
+          "label": "라이브러리 데이터는 유지되나요?",
+          "bodyHtml": "네. 내장 업데이트는 <b>Database</b> 폴더와 <b>ComicPile.ini</b> 설정 파일을 유지합니다."
+        },
+        {
+          "key": "update_errors",
+          "label": "다운로드나 설치가 실패하면?",
+          "bodyHtml": "다운로드가 실패하면 먼저 다시 시도하세요. 일시적인 네트워크 문제일 수 있습니다.",
+          "screenshotTitle": "다운로드 실패 팝업",
+          "bodyHtmlAfterScreenshot": "설치가 완료되지 않으면 다시 시도하세요. 필요하면 <a href=\"https://github.com/nikolayverin/comic-pile/releases/latest\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Releases</a>에서 최신 포터블 릴리스를 받고, Comic Pile을 닫은 뒤 앱 파일을 교체하세요. <b>Database</b>와 <b>ComicPile.ini</b>는 유지하세요."
+        }
       ]
     },
     {
       "key": "reader",
       "label": "리더",
       "subsections": [
-        { "key": "reader_overview", "label": "리더 인터페이스 개요", "bodyHtml": "<b>이슈</b>에서 아무 이슈나 열어 읽기를 시작하세요. 리더에는 <b>상단 바</b>, <b>페이지 영역</b>, <b>좌우 화살표</b>, <b>하단 컨트롤</b>이 있습니다. Comic Pile은 저장된 위치에서 다시 엽니다.", "screenshotTitle": "리더 레이아웃" },
-        { "key": "reader_top_bar_left", "label": "상단 바 왼쪽", "bodyHtml": "<b>페이지 삭제</b>, 단축키 팝업을 여는 <b>정보</b>, 리더 <b>설정</b>, 밝은/어두운 <b>테마</b> 전환이 있습니다.", "screenshotTitle": "리더 상단 바 왼쪽" },
-        { "key": "reader_top_bar_center", "label": "상단 바 중앙", "bodyHtml": "현재 이슈 제목을 보여줍니다. 좌우 화살표로 같은 시리즈의 이전/다음 이슈로 이동할 수 있습니다. 단축키: <b>A</b> / <b>D</b>.", "screenshotTitle": "리더 상단 바 중앙" },
-        { "key": "reader_top_bar_right", "label": "상단 바 오른쪽", "bodyHtml": "<b>망가 모드</b>, <b>1페이지</b>, <b>2페이지</b>, <b>전체 화면</b>, <b>돋보기</b>, <b>북마크</b>, <b>즐겨찾기</b>, <b>복사</b>, <b>닫기</b>가 있습니다.", "screenshotTitle": "리더 상단 바 오른쪽" },
-        { "key": "reader_bottom_controls", "label": "하단 컨트롤과 페이지 이동", "bodyHtml": "좌우 화살표나 <b>Left</b> / <b>Right</b>로 페이지를 넘깁니다. 하단에는 <b>처음부터 읽기</b>, <b>읽음으로 표시</b>, 페이지 카운터가 있습니다. <b>망가 모드</b>에서는 방향이 반대로 동작합니다.", "screenshotTitle": "리더 하단 컨트롤" },
-        { "key": "reader_bookmarks_favorites", "label": "북마크와 즐겨찾기", "bodyHtml": "<b><i>북마크</i></b>는 한 이슈 안의 한 페이지를 저장합니다. <b><i>즐겨찾기</i></b>는 이슈 전체를 표시해 <b>즐겨찾기</b> 필터에서 찾을 수 있게 합니다.", "screenshotTitle": "북마크 표시" },
-        { "key": "continue_next_unread", "label": "이어서 읽기와 다음 안 읽은 항목", "bodyHtml": "<b><i>이어서 읽기</i></b>는 현재 읽기 대상 이슈를 엽니다. <b><i>다음 안 읽은 항목</i></b>은 같은 시리즈 흐름에서 다음 안 읽은 이슈를 엽니다.", "screenshotTitleAfter": "이어서 읽기와 다음 안 읽은 항목" }
+        {
+          "key": "reader_overview",
+          "label": "리더 인터페이스 개요",
+          "bodyHtml": "<b>이슈</b>에서 아무 이슈나 열어 읽기를 시작하세요. 리더에는 <b>상단 바</b>, <b>페이지 영역</b>, <b>좌우 화살표</b>, <b>하단 컨트롤</b>이 있습니다. Comic Pile은 저장된 위치에서 다시 엽니다.",
+          "screenshotTitle": "리더 레이아웃"
+        },
+        {
+          "key": "reader_top_bar_left",
+          "label": "상단 바 왼쪽",
+          "bodyHtml": "<b>페이지 삭제</b>, 단축키 팝업을 여는 <b>정보</b>, 리더 <b>설정</b>, 밝은/어두운 <b>테마</b> 전환이 있습니다.",
+          "screenshotTitle": "리더 상단 바 왼쪽"
+        },
+        {
+          "key": "reader_top_bar_center",
+          "label": "상단 바 중앙",
+          "bodyHtml": "현재 이슈 제목을 보여줍니다. 좌우 화살표로 같은 시리즈의 이전/다음 이슈로 이동할 수 있습니다. 단축키: <b>A</b> / <b>D</b>.",
+          "screenshotTitle": "리더 상단 바 중앙"
+        },
+        {
+          "key": "reader_top_bar_right",
+          "label": "상단 바 오른쪽",
+          "bodyHtml": "<b>망가 모드</b>, <b>1페이지</b>, <b>2페이지</b>, <b>전체 화면</b>, <b>돋보기</b>, <b>북마크</b>, <b>즐겨찾기</b>, <b>복사</b>, <b>닫기</b>가 있습니다.",
+          "screenshotTitle": "리더 상단 바 오른쪽"
+        },
+        {
+          "key": "reader_bottom_controls",
+          "label": "하단 컨트롤과 페이지 이동",
+          "bodyHtml": "좌우 화살표나 <b>Left</b> / <b>Right</b>로 페이지를 넘깁니다. 하단에는 <b>처음부터 읽기</b>, <b>읽음으로 표시</b>, 페이지 카운터가 있습니다. <b>망가 모드</b>에서는 방향이 반대로 동작합니다.<br><br>???? ??? ?? ???? ?? ???? ??? ??? ?? ????. ??? ?? ?? ???? ?????. ??? ???? <b>??</b>? ???? ??? ???.",
+          "screenshotTitle": "리더 하단 컨트롤"
+        },
+        {
+          "key": "reader_bookmarks_favorites",
+          "label": "북마크와 즐겨찾기",
+          "bodyHtml": "<b><i>북마크</i></b>는 한 이슈 안의 한 페이지를 저장합니다. <b><i>즐겨찾기</i></b>는 이슈 전체를 표시해 <b>즐겨찾기</b> 필터에서 찾을 수 있게 합니다.",
+          "screenshotTitle": "북마크 표시"
+        },
+        {
+          "key": "continue_next_unread",
+          "label": "이어서 읽기와 다음 안 읽은 항목",
+          "bodyHtml": "<b><i>이어서 읽기</i></b>는 현재 읽기 대상 이슈를 엽니다. <b><i>다음 안 읽은 항목</i></b>은 같은 시리즈 흐름에서 다음 안 읽은 이슈를 엽니다.",
+          "screenshotTitleAfter": "이어서 읽기와 다음 안 읽은 항목"
+        }
       ]
     },
     {
       "key": "troubleshooting",
       "label": "문제 해결",
       "subsections": [
-        { "key": "issue_does_not_open", "label": "이슈가 열리지 않음", "bodyHtml": "이슈가 <b>이슈</b> 목록에 아직 보이는지 확인하고 다른 이슈도 열어 보세요. 여러 이슈가 동시에 실패하면 <b>파일 -> 설정 -> 라이브러리 및 데이터</b>에서 <b><i>저장소 접근 확인</i></b>을 실행하세요." },
-        { "key": "import_failed", "label": "가져오기 실패", "bodyHtml": "파일 형식이 지원되는지, 앱 밖에서 파일이 열리는지, 폴더에 지원 페이지가 있는지 확인하세요. <b>CBR</b>만 실패하면 <b>가져오기 및 아카이브</b>에서 7-Zip을 확인하세요." },
-        { "key": "import_errors_popup", "label": "큰 가져오기에서 아카이브 하나만 실패하면?", "bodyHtml": "나머지 배치는 정상일 수 있습니다. 실패한 파일을 <b>가져오기 오류</b>에서 확인하고, 수정하거나 교체한 뒤 다시 시도하세요." },
-        { "key": "bug_reports", "label": "버그는 어떻게 보고하나요?", "bodyHtml": "버그는 <a href=\"https://github.com/nikolayverin/comic-pile/issues\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Issues</a>에 보고하세요. 발생한 일, 기대한 결과, 재현 단계, Windows 버전, <b>정보</b>의 Comic Pile 버전을 적어주면 좋습니다." }
+        {
+          "key": "issue_does_not_open",
+          "label": "이슈가 열리지 않음",
+          "bodyHtml": "이슈가 <b>이슈</b> 목록에 아직 보이는지 확인하고 다른 이슈도 열어 보세요. 여러 이슈가 동시에 실패하면 <b>파일 -> 설정 -> 라이브러리 및 데이터</b>에서 <b><i>저장소 접근 확인</i></b>을 실행하세요."
+        },
+        {
+          "key": "import_failed",
+          "label": "가져오기 실패",
+          "bodyHtml": "파일 형식이 지원되는지, 앱 밖에서 파일이 열리는지, 폴더에 지원 페이지가 있는지 확인하세요. <b>CBR</b>만 실패하면 <b>가져오기 및 아카이브</b>에서 7-Zip을 확인하세요."
+        },
+        {
+          "key": "import_errors_popup",
+          "label": "큰 가져오기에서 아카이브 하나만 실패하면?",
+          "bodyHtml": "보통 나머지 배치는 정상일 수 있다는 뜻입니다. 간단한 상태에 <b>가져오기 오류</b>가 보이면 <b>보기</b>를 누르고 <b>가져오기 오류</b>에서 실패한 파일을 확인하세요.<br><br>원본 파일을 고치거나 교체한 뒤에만 다시 시도하세요."
+        },
+        {
+          "key": "bug_reports",
+          "label": "버그는 어떻게 보고하나요?",
+          "bodyHtml": "버그는 <a href=\"https://github.com/nikolayverin/comic-pile/issues\" style=\"color:#78b7ff; text-decoration:underline;\">GitHub Issues</a>에 보고하세요. 발생한 일, 기대한 결과, 재현 단계, Windows 버전, <b>정보</b>의 Comic Pile 버전을 적어주면 좋습니다."
+        }
       ]
     },
     {
       "key": "faq",
       "label": "FAQ",
       "subsections": [
-        { "key": "window_size_limits", "label": "왜 창을 더 작게 만들 수 없나요?", "bodyHtml": "앱은 전체 인터페이스를 안정적으로 사용할 수 있는 최소 크기를 기준으로 설계되었습니다. 사용 가능한 화면이 <b>1440 x 980</b>보다 작으면 Comic Pile은 그 화면에 맞춰 최대화로 열립니다." },
-        { "key": "critical_popup_close_block", "label": "이 팝업이 열려 있을 때 왜 앱을 닫을 수 없나요?", "bodyHtml": "일부 팝업은 앱이 안전하게 계속되기 전에 사용자의 결정이 필요합니다. 그런 팝업이 열려 있는 동안에는 실수로 단계를 건너뛰지 않도록 앱 닫기가 잠시 차단됩니다." }
+        {
+          "key": "window_size_limits",
+          "label": "왜 창을 더 작게 만들 수 없나요?",
+          "bodyHtml": "앱은 전체 인터페이스를 안정적으로 사용할 수 있는 최소 크기를 기준으로 설계되었습니다. 사용 가능한 화면이 <b>1440 x 980</b>보다 작으면 Comic Pile은 그 화면에 맞춰 최대화로 열립니다."
+        },
+        {
+          "key": "critical_popup_close_block",
+          "label": "이 팝업이 열려 있을 때 왜 앱을 닫을 수 없나요?",
+          "bodyHtml": "일부 팝업은 앱이 안전하게 계속되기 전에 사용자의 결정이 필요합니다. 그런 팝업이 열려 있는 동안에는 실수로 단계를 건너뛰지 않도록 앱 닫기가 잠시 차단됩니다."
+        }
       ]
     }
   ]

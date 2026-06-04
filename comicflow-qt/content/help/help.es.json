@@ -12,8 +12,8 @@
         },
         {
           "key": "main_areas",
-          "label": "Áreas principales de la app",
-          "bodyHtml": "<b>Menú principal</b><br>La <b>barra superior</b> contiene los menús <b>Archivo</b> y <b>Ayuda</b>, además de accesos como <b>Continuar leyendo</b> y <b>Siguiente sin leer</b>.<br><br><b>Biblioteca</b><br>Muestra búsqueda, filtros rápidos como <b>Última importación</b>, <b>Favoritos</b> y <b>Marcadores</b>, y la lista de series.<br><br><b>Zona de carga</b><br>Está al fondo de la biblioteca. Suelta ahí archivos o carpetas compatibles para añadir cómics rápido.<br><br><b>Panel de serie</b><br>Muestra la serie seleccionada y sus detalles principales.<br><br><b>Números</b><br>Muestra los números de la serie o filtro activo. Haz clic en una portada para leer.<br><br><b>Controles de cuadrícula</b><br>La barra inferior controla el orden de números y la densidad de la cuadrícula.",
+          "label": "Zonas principales de la app",
+          "bodyHtml": "<b>Menú principal</b><br>La <b>barra superior</b> contiene <b>Archivo</b>, <b>Ayuda</b>, <b>Continuar leyendo</b> y <b>Siguiente sin leer</b>.<br><br><b>Biblioteca</b><br>Muestra búsqueda, filtros rápidos como <b>Última importación</b>, <b>Favoritos</b> y <b>Marcadores</b>, filtros por color y la lista de series.<br><br><b>Zona de arrastre</b><br>Está en la parte inferior de la biblioteca. Durante una importación se convierte en un estado compacto de importación para que puedas seguir usando la app.<br><br><b>Serie destacada</b><br>Muestra la serie seleccionada y sus datos principales.<br><br><b>Números</b><br>Muestra los números de la serie o filtro activo. Haz clic en una portada para leer.<br><br><b>Controles de cuadrícula</b><br>La barra inferior controla el orden y la densidad de la cuadrícula.",
           "screenshotTitle": "Mapa de la interfaz principal"
         },
         {
@@ -53,7 +53,19 @@
         {
           "key": "how_to_import",
           "label": "¿Cómo importo cómics?",
-          "bodyHtml": "Puedes importar de tres formas:<br><br>&bull; suelta archivos o carpetas en la <b>zona de carga</b><br>&bull; <b>Archivo -> Agregar archivos</b> para unos pocos números concretos<br>&bull; <b>Archivo -> Agregar carpeta</b> cuando una carpeta contiene muchos números juntos"
+          "bodyHtml": "Puedes importar de tres formas:<br><br>&bull; arrastra archivos o carpetas a la <b>zona de arrastre</b> de <b>Biblioteca</b><br>&bull; <b>Archivo -> Añadir archivos</b>: para unos pocos números concretos<br>&bull; <b>Archivo -> Añadir carpeta</b>: para una carpeta que ya contiene muchos números relacionados<br><br>Cuando empieza la importación, puedes ocultar el popup y seguir usando la biblioteca o el lector mientras Comic Pile procesa el lote."
+        },
+        {
+          "key": "import_running_status",
+          "label": "¿Puedo usar Comic Pile mientras importa?",
+          "bodyHtml": "Sí. La importación se ejecuta separada de la interfaz principal, así que puedes seguir leyendo, cambiar de serie, usar <b>Continuar leyendo</b>, marcadores y favoritos.<br><br>Las acciones que pueden entrar en conflicto se bloquean temporalmente: iniciar otra importación, mover datos de biblioteca, cambiar ajustes de importación/archivos, borrar páginas o borrar archivos importados.<br><br>Si ocultas el popup, la zona de arrastre se sustituye por un estado compacto. Muestra archivo actual, contador, progreso y <b>Cancelar</b>. Si algo requiere atención, muestra una alerta corta como <b>Error de importación</b> y el botón <b>Mostrar</b>.",
+          "screenshotTitle": "Estado compacto de importación",
+          "screenshotHint": ""
+        },
+        {
+          "key": "import_cancel",
+          "label": "¿Qué pasa si cancelo la importación?",
+          "bodyHtml": "<b>Cancelar</b> cancela la sesión de importación actual, no solo los archivos pendientes.<br><br>Comic Pile elimina los números y series creados por esa sesión. Si un archivo ya se está procesando, puede tener que terminar internamente antes de completar la limpieza. Durante ese estado, la app muestra <b>Cancelando importación</b> y mantiene bloqueadas las acciones conflictivas.<br><br>El contenido que ya estaba en la biblioteca antes de importar debe seguir disponible."
         },
         {
           "key": "duplicate_found",
@@ -66,13 +78,13 @@
         {
           "key": "import_errors_batch",
           "label": "¿Qué hago si aparece Import Errors?",
-          "bodyHtml": "Si Comic Pile muestra <b>Errores de importación</b>, uno o más archivos del lote no pudieron importarse.<br><br>Usa <b>Reintentar</b> después de arreglar el archivo. Usa <b>Omitir</b> para saltar solo ese archivo. Usa <b>Omitir todo</b> para saltar los fallos restantes y terminar antes.<br><br>Si falla un solo archivo, probablemente el problema esté en ese archivo. Si fallan muchos, revisa la carpeta de origen y el acceso al almacenamiento.",
+          "bodyHtml": "Si aparece <b>Errores de importación</b>, uno o varios archivos del lote no pudieron importarse.<br><br>Si el popup está oculto, el estado compacto muestra una alerta corta como <b>Error de importación</b>. Pulsa <b>Mostrar</b> para abrir el popup.<br><br>Usa <b>Reintentar</b> después de corregir el archivo, <b>Omitir</b> para excluir solo ese archivo o <b>Omitir todo</b> para dejar fuera los fallos restantes.",
           "screenshotTitle": "Errores de importación durante la importación"
         },
         {
           "key": "after_import_flow",
           "label": "¿Qué pasa después de importar?",
-          "bodyHtml": "Después de importar, se abre automáticamente la primera serie importada. Así puedes revisar el resultado y empezar a abrir números enseguida."
+          "bodyHtml": "Después de importar, Comic Pile muestra el resultado en la biblioteca. Si la importación creó una sola serie nueva, esa serie se abre automáticamente.<br><br>Si creó o actualizó varias series, usa <b>Última importación</b> o la lista de <b>Biblioteca</b> para revisar lo añadido."
         }
       ]
     },
@@ -137,7 +149,14 @@
         {
           "key": "series_menu_actions",
           "label": "¿Qué puedo hacer desde el menú de serie?",
-          "bodyHtml": "El menú <b>...</b> cambia según la selección. Con una serie puedes <b>Agregar números</b>, <b>Editar serie</b> o <b>Eliminar archivos</b>.<br><br>Con varias series seleccionadas puedes usar acciones como <b>Edición masiva</b>, <b>Fusionar en serie</b> o <b>Eliminar seleccionados</b>. Selecciona primero la serie destino si vas a fusionar."
+          "bodyHtml": "El menú <b>...</b> de la serie seleccionada cambia según la selección.<br><br>Con una serie puedes usar <b>Añadir números</b>, <b>Editar serie</b>, puntos de color para marcarla con una etiqueta personal, o <b>Borrar archivos</b>.<br><br>Con varias series seleccionadas pueden aparecer acciones como <b>Edición masiva</b>, <b>Fusionar en serie</b> o <b>Borrar selección</b>."
+        },
+        {
+          "key": "series_color_tags",
+          "label": "¿Cómo funcionan las etiquetas de color?",
+          "bodyHtml": "Las etiquetas de color son marcas personales para series en <b>Biblioteca</b>. No cambian archivos, orden de lectura, metadatos ni carpetas.<br><br>Abre el menú <b>...</b> de la serie y elige un punto de color. La etiqueta aparece junto a la serie. Elige el mismo color otra vez para quitarla.<br><br>Los puntos junto al título <b>Biblioteca</b> filtran por color. Si ningún color está usado, permanecen inactivos. Solo se pueden pulsar los colores que existen en alguna serie.",
+          "screenshotTitle": "Etiquetas de color y filtro de Biblioteca",
+          "screenshotHint": ""
         },
         {
           "key": "fill_fields_popup",
@@ -239,7 +258,7 @@
         {
           "key": "reader_bottom_controls",
           "label": "Controles inferiores y navegación",
-          "bodyHtml": "Usa las flechas laterales o <b>Izquierda</b> / <b>Derecha</b> para cambiar de página. Abajo están <b>Leer desde el inicio</b>, <b>Marcar como leído</b> y el contador de páginas. Si el <b>Modo manga</b> está activo, la dirección de navegación se invierte.",
+          "bodyHtml": "Usa las flechas laterales o <b>Izquierda</b> / <b>Derecha</b> para cambiar de página. Abajo están <b>Leer desde el inicio</b>, <b>Marcar como leído</b> y el contador de páginas. Si el <b>Modo manga</b> está activo, la dirección de navegación se invierte.<br><br>Durante una importaci?n, tambi?n puede aparecer un peque?o estado de importaci?n cerca de la parte inferior del lector. Muestra el progreso sin bloquear la lectura. Si la importaci?n requiere atenci?n, usa <b>Mostrar</b> para abrir el popup.",
           "screenshotTitle": "Controles inferiores del lector"
         },
         {
@@ -273,7 +292,7 @@
         {
           "key": "import_errors_popup",
           "label": "¿Y si falla un solo archivo en una importación grande?",
-          "bodyHtml": "Normalmente el resto del lote puede estar bien. Revisa el archivo fallido en <b>Errores de importación</b> y reinténtalo solo después de arreglar o reemplazar la fuente."
+          "bodyHtml": "Normalmente significa que el resto del lote puede estar bien. Si el estado compacto muestra <b>Error de importación</b>, pulsa <b>Mostrar</b> y revisa el archivo fallido en <b>Errores de importación</b>.<br><br>Reinténtalo solo después de corregir o sustituir el archivo fuente."
         },
         {
           "key": "bug_reports",

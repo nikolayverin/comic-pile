@@ -114,7 +114,7 @@ Last updated: 2026-06-04
   - full release packages include the starter `Database`; update packages intentionally do not,
   - release staging excludes runtime logs and SQLite sidecar files from the packaged starter database.
 - The repository is now public and the first GitHub Release is published:
-  - latest working app version: `0.16.0`,
+  - latest working app version: `0.17.0`,
   - portable Windows zip release,
   - GitHub Issues are now the public bug-report path.
 - Persistent portable state is app-folder-owned:

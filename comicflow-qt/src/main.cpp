@@ -11,6 +11,7 @@
 
 #include <QApplication>
 #include <QDateTime>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFont>
@@ -18,6 +19,7 @@
 #include <QQmlContext>
 #include <QQmlError>
 #include <QQuickWindow>
+#include <QVariantMap>
 #include <QWindow>
 #include <QtMath>
 #include <QtGlobal>
@@ -107,6 +109,47 @@ QString effectiveBuildIterationText()
     return QString::fromLatin1(ComicPileBuildIteration::kText);
 }
 
+QVariantMap bundledHelpContentByLanguage()
+{
+    constexpr auto kBundledHelpContentDir = ":/qt/qml/ComicPile/content/help";
+    constexpr auto kHelpPrefix = "help.";
+    constexpr auto kHelpSuffix = ".json";
+
+    QDir directory(QString::fromLatin1(kBundledHelpContentDir));
+    const QStringList fileNames = directory.entryList(
+        QStringList() << QStringLiteral("help.*.json"),
+        QDir::Files,
+        QDir::Name);
+
+    QVariantMap result;
+    for (const QString &fileName : fileNames) {
+        QString language = fileName;
+        if (!language.startsWith(QString::fromLatin1(kHelpPrefix))
+            || !language.endsWith(QString::fromLatin1(kHelpSuffix))) {
+            continue;
+        }
+
+        language.remove(0, int(qstrlen(kHelpPrefix)));
+        language.chop(int(qstrlen(kHelpSuffix)));
+        language = language.trimmed();
+        if (language.isEmpty()) {
+            continue;
+        }
+
+        QFile file(directory.filePath(fileName));
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            continue;
+        }
+
+        const QString text = QString::fromUtf8(file.readAll()).trimmed();
+        if (!text.isEmpty()) {
+            result.insert(language, text);
+        }
+    }
+
+    return result;
+}
+
 }
 
 int main(int argc, char *argv[])
@@ -194,6 +237,7 @@ int main(int argc, char *argv[])
     const QString effectiveBuildIteration = effectiveBuildIterationText();
     const QString bundledWhatsNewText = bundledReleaseNotesTextForVersion(QStringLiteral(COMICPILE_APP_VERSION));
     const QVariantList bundledWhatsNewEntries = bundledReleaseNotesEntries(QStringLiteral(COMICPILE_APP_VERSION));
+    const QVariantMap bundledHelpContent = bundledHelpContentByLanguage();
     engine.rootContext()->setContextProperty("libraryModel", &libraryModel);
     engine.rootContext()->setContextProperty("releaseCheckService", &releaseCheckService);
     engine.rootContext()->setContextProperty("releaseDownloadService", &releaseDownloadService);
@@ -210,6 +254,9 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(
         "appBundledWhatsNewEntries",
         bundledWhatsNewEntries);
+    engine.rootContext()->setContextProperty(
+        "appHelpContentByLanguage",
+        bundledHelpContent);
     engine.rootContext()->setContextProperty(
         "appIsFastDevBuild",
         QVariant::fromValue(bool(COMICPILE_FAST_DEV_BUILD_ENABLED)));
