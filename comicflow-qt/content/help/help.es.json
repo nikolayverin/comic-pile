@@ -60,7 +60,8 @@
           "label": "¿Puedo usar Comic Pile mientras importa?",
           "bodyHtml": "Sí. La importación se ejecuta separada de la interfaz principal, así que puedes seguir leyendo, cambiar de serie, usar <b>Continuar leyendo</b>, marcadores y favoritos.<br><br>Las acciones que pueden entrar en conflicto se bloquean temporalmente: iniciar otra importación, mover datos de biblioteca, cambiar ajustes de importación/archivos, borrar páginas o borrar archivos importados.<br><br>Si ocultas el popup, la zona de arrastre se sustituye por un estado compacto. Muestra archivo actual, contador, progreso y <b>Cancelar</b>. Si algo requiere atención, muestra una alerta corta como <b>Error de importación</b> y el botón <b>Mostrar</b>.",
           "screenshotTitle": "Estado compacto de importación",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/24-import-status.png"
         },
         {
           "key": "import_cancel",
@@ -156,7 +157,8 @@
           "label": "¿Cómo funcionan las etiquetas de color?",
           "bodyHtml": "Las etiquetas de color son marcas personales para series en <b>Biblioteca</b>. No cambian archivos, orden de lectura, metadatos ni carpetas.<br><br>Abre el menú <b>...</b> de la serie y elige un punto de color. La etiqueta aparece junto a la serie. Elige el mismo color otra vez para quitarla.<br><br>Los puntos junto al título <b>Biblioteca</b> filtran por color. Si ningún color está usado, permanecen inactivos. Solo se pueden pulsar los colores que existen en alguna serie.",
           "screenshotTitle": "Etiquetas de color y filtro de Biblioteca",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/25-series-color-tags.png"
         },
         {
           "key": "fill_fields_popup",

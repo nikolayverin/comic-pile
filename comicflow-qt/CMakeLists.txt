@@ -536,6 +536,8 @@ qt_add_qml_module(comic_pile_qt
         assets/ui/help/21-install-update.png
         assets/ui/help/22-auto-check-for-updates.png
         assets/ui/help/23-check-for-update.png
+        assets/ui/help/24-import-status.png
+        assets/ui/help/25-series-color-tags.png
         assets/textures/sidebar_dither_noise.png
 )
 

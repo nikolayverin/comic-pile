@@ -60,7 +60,8 @@
           "label": "Puis-je utiliser Comic Pile pendant l'import ?",
           "bodyHtml": "Oui. L'import tourne séparément de l'interface principale. Tu peux continuer à lire, changer de série, utiliser <b>Continuer la lecture</b>, les marque-pages et les favoris.<br><br>Les actions qui peuvent entrer en conflit sont bloquées temporairement : lancer un autre import, déplacer les données de bibliothèque, changer les réglages d'import/archives, supprimer des pages ou supprimer des fichiers importés.<br><br>Si la fenêtre d'import est masquée, la zone de dépôt est remplacée par un état compact. Il affiche le fichier courant, le compteur, la progression et <b>Annuler</b>. Si une action est nécessaire, il affiche une alerte courte comme <b>Erreur d'import</b> et le bouton <b>Afficher</b>.",
           "screenshotTitle": "État compact d'importation",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/24-import-status.png"
         },
         {
           "key": "import_cancel",
@@ -156,7 +157,8 @@
           "label": "Comment fonctionnent les tags de couleur ?",
           "bodyHtml": "Les tags de couleur sont de simples repères personnels pour les séries dans la <b>Bibliothèque</b>. Ils ne changent pas les fichiers, l'ordre de lecture, les métadonnées ou les dossiers.<br><br>Ouvre le menu <b>...</b> de la série et choisis un point de couleur. Le tag apparaît à côté de la série. Choisis de nouveau la couleur active pour le retirer.<br><br>Les points près du titre <b>Bibliothèque</b> filtrent par couleur. Si aucun tag n'est utilisé, ils restent inactifs. Seules les couleurs déjà utilisées sont cliquables.",
           "screenshotTitle": "Tags de couleur et filtre de bibliothèque",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/25-series-color-tags.png"
         },
         {
           "key": "fill_fields_popup",

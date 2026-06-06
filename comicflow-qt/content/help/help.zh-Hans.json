@@ -60,7 +60,8 @@
           "label": "导入时还能使用 Comic Pile 吗？",
           "bodyHtml": "可以。导入工作与主界面分开运行，所以你可以继续阅读、切换系列、使用 <b>继续阅读</b>、书签和收藏。<br><br>可能与导入冲突的操作会暂时阻止，例如再次导入、移动资料库数据、修改导入/归档设置、删除页面或删除导入文件。<br><br>隐藏导入弹窗后，拖放区域会变成紧凑导入状态。它显示当前文件、数量、进度和 <b>取消</b>。如果需要处理问题，会显示类似 <b>导入错误</b> 的短提示和 <b>显示</b> 按钮。",
           "screenshotTitle": "紧凑导入状态",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/24-import-status.png"
         },
         {
           "key": "import_cancel",
@@ -156,7 +157,8 @@
           "label": "系列颜色标签如何工作？",
           "bodyHtml": "颜色标签是 <b>资料库</b> 中给系列使用的个人标记。它不会改变文件、阅读顺序、元数据或文件夹。<br><br>打开系列的 <b>...</b> 菜单并选择一个颜色点。标签会显示在系列旁边。再次选择当前颜色即可移除。<br><br><b>资料库</b> 标题旁的颜色点用于筛选。没有系列使用标签时它们不可用；只有已经被使用的颜色可以点击。",
           "screenshotTitle": "系列颜色标签和资料库筛选",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/25-series-color-tags.png"
         },
         {
           "key": "fill_fields_popup",

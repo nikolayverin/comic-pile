@@ -60,7 +60,8 @@
           "label": "Kann ich Comic Pile während des Imports benutzen?",
           "bodyHtml": "Ja. Der Import läuft getrennt von der Hauptoberfläche. Du kannst weiter lesen, Serien wechseln, <b>Weiterlesen</b>, Lesezeichen und Favoriten benutzen.<br><br>Aktionen mit Konfliktgefahr werden vorübergehend blockiert: weiterer Import, Verschieben der Bibliotheksdaten, Import-/Archiv-Einstellungen, Seiten löschen oder importierte Dateien löschen.<br><br>Wenn das Popup ausgeblendet ist, ersetzt eine kompakte Importanzeige die Ablagezone. Sie zeigt aktuelle Datei, Zähler, Fortschritt und <b>Abbrechen</b>. Wenn etwas Aufmerksamkeit braucht, erscheint eine kurze Meldung wie <b>Importfehler</b> und <b>Anzeigen</b>.",
           "screenshotTitle": "Kompakte Importanzeige",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/24-import-status.png"
         },
         {
           "key": "import_cancel",
@@ -156,7 +157,8 @@
           "label": "Wie funktionieren Farb-Tags?",
           "bodyHtml": "Farb-Tags sind persönliche Markierungen für Serien in der <b>Bibliothek</b>. Sie ändern keine Dateien, Lesereihenfolge, Metadaten oder Ordner.<br><br>Öffne das <b>...</b>-Menü der Serie und wähle einen Farbpunkt. Der Tag erscheint neben der Serie. Wähle dieselbe aktive Farbe erneut, um ihn zu entfernen.<br><br>Die Farbpunkte neben <b>Bibliothek</b> filtern nach Tags. Ungenutzte Farben bleiben inaktiv; nur tatsächlich verwendete Farben sind anklickbar.",
           "screenshotTitle": "Farb-Tags und Bibliotheksfilter",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/25-series-color-tags.png"
         },
         {
           "key": "fill_fields_popup",

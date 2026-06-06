@@ -71,7 +71,8 @@
           "label": "Can I use Comic Pile while import is running?",
           "bodyHtml": "Yes. Import work runs separately from the main interface, so you can keep reading, switch series, use <b>Continue reading</b>, and use bookmarks or favorites while a batch is being processed.<br><br>Actions that can conflict with import are temporarily blocked, including starting another import, moving library data, changing import/archive settings, deleting pages, or deleting imported files.<br><br>When the full import popup is hidden, the drop zone is replaced by compact import status. It shows the current file, batch counter, progress, and <b>Cancel</b>. If import needs your attention, the same compact status shows a short alert such as <b>Import error</b> and a <b>Show</b> button that opens the popup again.",
           "screenshotTitle": "Compact import status",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/24-import-status.png"
         },
         {
           "key": "import_cancel",
@@ -182,7 +183,8 @@
           "label": "How do series color tags work?",
           "bodyHtml": "Color tags are simple personal markers for series in <b>Library</b>. They do not change issue files, reading order, metadata fields, or folders.<br><br>Open the selected series <b>...</b> menu and choose one of the color dots. The tag appears as a small dot next to the series. Choose the active tag again to remove it.<br><br>The color dots next to the <b>Library</b> heading work as filters. If no series has a tag, the filter dots stay inactive. If only some colors are used, only those colors can be clicked; unused colors stay dark.",
           "screenshotTitle": "Series color tags and Library filter",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/25-series-color-tags.png"
         },
         {
           "key": "fill_fields_popup",

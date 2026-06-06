@@ -60,7 +60,8 @@
           "label": "取り込み中も Comic Pile を使えますか?",
           "bodyHtml": "はい。取り込み処理はメイン画面と分離されているため、読書を続けたり、シリーズを切り替えたり、<b>読書を続ける</b>、ブックマーク、お気に入りを使えます。<br><br>競合する操作は一時的にブロックされます。別の取り込み開始、ライブラリデータ移動、取り込み/アーカイブ設定変更、ページ削除、取り込み済みファイル削除などです。<br><br>ポップアップを隠すと、ドロップゾーンがコンパクトな取り込みステータスに変わります。現在のファイル、件数、進行状況、<b>キャンセル</b>を表示します。確認が必要な場合は <b>取り込みエラー</b> のような短い警告と <b>表示</b> ボタンが出ます。",
           "screenshotTitle": "コンパクトな取り込みステータス",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/24-import-status.png"
         },
         {
           "key": "import_cancel",
@@ -156,7 +157,8 @@
           "label": "シリーズ色タグの使い方",
           "bodyHtml": "色タグは <b>ライブラリ</b> 内のシリーズに付ける個人用マークです。ファイル、読書順、メタデータ、フォルダーは変更しません。<br><br>シリーズの <b>...</b> メニューを開き、色の点を選びます。タグはシリーズ名の横に表示されます。同じ色をもう一度選ぶと削除できます。<br><br><b>ライブラリ</b> 見出し横の色の点はフィルターです。タグがない場合は非アクティブです。使われている色だけクリックできます。",
           "screenshotTitle": "シリーズ色タグとライブラリフィルター",
-          "screenshotHint": ""
+          "screenshotHint": "",
+          "screenshotSource": "qrc:/qt/qml/ComicPile/assets/ui/help/25-series-color-tags.png"
         },
         {
           "key": "fill_fields_popup",
