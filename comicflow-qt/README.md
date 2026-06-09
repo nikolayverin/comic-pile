@@ -52,7 +52,7 @@ Result:
 - staged portable update app: `.\_update_build\Comics-Pile`
 - staged update app includes:
   - `Comic Pile.exe`
-  - `README-update.txt`
+  - `README.txt` (copied from `release/README-update.txt`)
   - `License`
   - bundled runtime/tools such as `7z.exe`, `7z.dll`, and `tools/djvulibre/ddjvu.exe`
 - staged update app intentionally omits the starter `Database` folder

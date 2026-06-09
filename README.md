@@ -13,6 +13,12 @@ It is designed around a simple flow:
 - open issues in a focused reader
 - update the portable app without rebuilding the library
 
+## Download
+
+Download the latest portable Windows release from [GitHub Releases](https://github.com/nikolayverin/comic-pile/releases/latest).
+
+For a new installation, use the full `Comic-Pile-vX.Y.Z-win64.zip` archive. The smaller `-update.zip` package is intended for Comic Pile's built-in updater and does not include the starter library.
+
 ## Current app highlights
 
 - local-library workflow
@@ -71,9 +77,9 @@ Local build notes currently live in:
 
 ## Project status
 
-Comic Pile is early public-release software.
+Comic Pile is an actively developed open-source Windows application.
 
-The current work is focused on:
-- stabilizing the portable Windows release
-- improving the reader and library workflow
-- keeping local library data predictable during app updates
+Current development is focused on:
+- improving the reader and library experience
+- expanding practical library organization tools
+- keeping portable updates and local data reliable

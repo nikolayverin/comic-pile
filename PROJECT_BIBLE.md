@@ -1,9 +1,9 @@
 # Comic Pile Project Bible
 
-Last updated: 2026-06-04
+Last updated: 2026-06-10
 
 ## Current project state
-- Main focus: second post-release patch stabilization: lighter portable updates, responsive import, localized app surfaces, and library browsing polish while preserving the local-first Windows utility shape.
+- Main focus: post-`0.17.0` product development, with the released responsive import, lightweight update, localization, and series color-tag work treated as the current stable baseline.
 - Startup baseline in code:
   - restore UI snapshot from `.runtime/startup-snapshot.json`,
   - keep the root window hidden until saved geometry/state is applied,
@@ -96,7 +96,7 @@ Last updated: 2026-06-04
   - dedicated `Updating Comic Pile` Help section with screenshots and manual-update guidance,
   - accidental popup dismissal no longer cancels update downloads,
   - update progress now shows clearer download-size and ready-to-install states.
-- App language selection is now a live post-release patch product surface:
+- App language selection is now a live product surface:
   - user can choose the app language from Settings,
   - short interface text is owned by the shared language-aware text layer,
   - English is the source and fallback language,
@@ -113,9 +113,10 @@ Last updated: 2026-06-04
   - the repository now includes the bundled starter `Database` used by the public release,
   - full release packages include the starter `Database`; update packages intentionally do not,
   - release staging excludes runtime logs and SQLite sidecar files from the packaged starter database.
-- The repository is now public and the first GitHub Release is published:
-  - latest working app version: `0.17.0`,
+- The repository is public and `0.17.0` is the latest published GitHub Release:
+  - current released app version: `0.17.0`,
   - portable Windows zip release,
+  - separate full-install and lightweight built-in-update archives,
   - GitHub Issues are now the public bug-report path.
 - Persistent portable state is app-folder-owned:
   - app-local `Database` stores the library,
@@ -168,7 +169,7 @@ Last updated: 2026-06-04
 - Predictable local data behavior.
 - Easy visual iteration.
 - Portable usage (no installer required for day-to-day testing).
-- First public release should stay easy to download, understand, and report issues against.
+- Public releases should stay easy to download, understand, update, and report issues against.
 - No silent destructive data changes.
 - Minimal friction from import to first reading page (avoid feature bloat).
 - Minimize user-facing error noise: prefer short actionable messages over technical detail, and do not split one user-visible failure into multiple low-level error variants unless that changes the user's decision.
@@ -190,7 +191,7 @@ Last updated: 2026-06-04
 - `What's new` should be split into language-suffixed Markdown files under `release/WhatsNew/`, with `whats-new-patch-notes.en.md` as the active canonical source.
 - Released patch notes should be archived with version and language suffix, for example `0.16.0.en.md`.
 - Help screenshots remain shared and may show English UI unless a separate screenshot-localization pass is explicitly approved.
-- Chinese Simplified is the visible Chinese target for the first patch; Chinese Traditional may stay prepared internally but hidden until complete.
+- Chinese Simplified is the visible Chinese language; Chinese Traditional may stay prepared internally but hidden until complete.
 
 ## Git workflow
 - Keep `main` as the stable branch.
