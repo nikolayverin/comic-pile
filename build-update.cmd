@@ -79,7 +79,7 @@ if "%APP_VERSION%"=="" (
     echo [FAIL] Could not read app version from %SRC_DIR%\CMakeLists.txt.
     exit /b 1
 )
-set "UPDATE_ZIP=%UPDATE_ROOT%\Comic-Pile-v%APP_VERSION%-win64-update.zip"
+set "UPDATE_ZIP=%UPDATE_ROOT%\Comic-Pile-v%APP_VERSION%-portable-win64-update.zip"
 
 echo [Comic Pile] Update package build start
 echo Root: %ROOT%
