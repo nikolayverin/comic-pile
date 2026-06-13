@@ -243,8 +243,7 @@ function Get-PackageFileManifest([string]$PackageRoot) {
     $manifestEntries = New-Object System.Collections.Generic.List[string]
     Get-ChildItem -LiteralPath $PackageRoot -File -Recurse -Force | ForEach-Object {
         $relativePath = Convert-ToRelativeInstallPath $PackageRoot $_.FullName
-        if (-not [string]::IsNullOrWhiteSpace($relativePath)
-            -and -not (Test-ProtectedRootRelativePath $relativePath)) {
+        if (-not [string]::IsNullOrWhiteSpace($relativePath) -and -not (Test-ProtectedRootRelativePath $relativePath)) {
             $manifestEntries.Add($relativePath)
         }
     }
@@ -267,9 +266,7 @@ function Remove-StaleInstalledFiles([string]$InstallDir, [string[]]$NewManifestE
     $candidateDirs = New-Object System.Collections.Generic.List[string]
     Get-Content -LiteralPath $manifestPath | ForEach-Object {
         $relativePath = [string]$_
-        if (-not [string]::IsNullOrWhiteSpace($relativePath)
-            -and -not (Test-ProtectedRootRelativePath $relativePath)
-            -and -not ($newManifestLookup.ContainsKey($relativePath))) {
+        if (-not [string]::IsNullOrWhiteSpace($relativePath) -and -not (Test-ProtectedRootRelativePath $relativePath) -and -not ($newManifestLookup.ContainsKey($relativePath))) {
             $targetPath = Join-Path $InstallDir ($relativePath.Replace('/', [System.IO.Path]::DirectorySeparatorChar))
             if (Test-Path -LiteralPath $targetPath -PathType Leaf) {
                 Remove-Item -LiteralPath $targetPath -Force
@@ -284,8 +281,7 @@ function Remove-StaleInstalledFiles([string]$InstallDir, [string[]]$NewManifestE
     $candidateDirs |
         Sort-Object { $_.Length } -Descending -Unique |
         ForEach-Object {
-            if ((Test-Path -LiteralPath $_ -PathType Container)
-                -and -not (Get-ChildItem -LiteralPath $_ -Force | Select-Object -First 1)) {
+            if ((Test-Path -LiteralPath $_ -PathType Container) -and -not (Get-ChildItem -LiteralPath $_ -Force | Select-Object -First 1)) {
                 Remove-Item -LiteralPath $_ -Force
             }
         }
