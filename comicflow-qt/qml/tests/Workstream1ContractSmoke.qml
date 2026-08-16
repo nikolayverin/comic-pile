@@ -158,6 +158,7 @@ Item {
         settingsPrimary.appearanceGridDensity = "Comfortable"
         settingsPrimary.readerRememberLastReaderMode = false
         settingsPrimary.readerDefaultReadingMode = "2 pages"
+        settingsPrimary.readerZoomTool = "Page zoom"
         settingsPrimary.readerMagnifierSize = "Large"
 
         const probe = createSettingsProbe()
@@ -166,6 +167,7 @@ Item {
         const ok = assertCondition(probe.generalDefaultViewAfterLaunch === "Last import", "Settings behavior smoke: alias normalization for launch view did not persist.")
             && assertCondition(probe.appearanceGridDensity === "Comfortable", "Settings behavior smoke: grid density did not persist to a fresh controller.")
             && assertCondition(probe.readerDefaultReadingMode === "2 pages", "Settings behavior smoke: reader default mode did not persist to a fresh controller.")
+            && assertCondition(probe.readerZoomTool === "Page zoom", "Settings behavior smoke: reader zoom tool did not persist to a fresh controller.")
             && assertCondition(probe.readerMagnifierSize === "Large", "Settings behavior smoke: magnifier size did not persist to a fresh controller.")
             && assertCondition(probe.normalizedReaderViewMode("one_page") === "two_page", "Settings behavior smoke: persisted reader mode did not drive the expected live reader mode helper.")
         probe.destroy()

@@ -9,12 +9,11 @@ set "BUILD_DIR=%ROOT%\_build\comicflow-qt-mingw"
 set "BUILD_TARGET=comic_pile_qt"
 set "APP_BASENAME=Comic Pile"
 set "APP_EXE=%BUILD_DIR%\%APP_BASENAME%.exe"
+set "APP_SETTINGS_FILE=%BUILD_DIR%\ComicPile.ini"
 set "BUILD_LOG=%BUILD_DIR%\build-fast.log"
 set "BUILD_META_DIR=%BUILD_DIR%\generated\build_meta"
 set "BUILD_ITERATION_FILE=%BUILD_META_DIR%\build_iteration_state.txt"
 set "SUCCESSFUL_BUILD_ITERATION_FILE=%BUILD_META_DIR%\successful_build_iteration.txt"
-set "APP_SETTINGS_REG_KEY=HKCU\Software\ComicPile\Comic Pile\AppSettings"
-
 set "QT_ROOT=C:\Qt\6.10.2\mingw_64"
 set "QT_BIN=%QT_ROOT%\bin"
 set "MINGW_BIN=C:\Qt\Tools\mingw1310_64\bin"
@@ -133,7 +132,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-reg add "%APP_SETTINGS_REG_KEY%" /v onboardingCompleted /t REG_SZ /d true /f >nul 2>nul
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$path=$env:APP_SETTINGS_FILE; $encoding=[System.Text.UTF8Encoding]::new($false); $content=if(Test-Path -LiteralPath $path){[System.IO.File]::ReadAllText($path)}else{''}; $newline=if($content.Contains([Environment]::NewLine)){[Environment]::NewLine}else{'`r`n'}; if([regex]::IsMatch($content,'(?m)^onboardingCompleted=.*$')){$content=[regex]::Replace($content,'(?m)^onboardingCompleted=.*$','onboardingCompleted=true')}elseif([regex]::IsMatch($content,'(?m)^\[AppSettings\]\r?$')){$content=[regex]::Replace($content,'(?m)^\[AppSettings\]\r?$','$0'+$newline+'onboardingCompleted=true')}else{$prefix=if($content.Length -gt 0 -and !$content.EndsWith($newline)){$newline}else{''}; $content=$content+$prefix+'[AppSettings]'+$newline+'onboardingCompleted=true'+$newline}; [System.IO.File]::WriteAllText($path,$content,$encoding)" >nul 2>nul
 if errorlevel 1 (
     echo [FAIL] Could not mark onboarding as completed for fast build runs.
     exit /b 1

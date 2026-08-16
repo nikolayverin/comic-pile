@@ -1,6 +1,6 @@
 # Comic Pile Project Bible
 
-Last updated: 2026-06-10
+Last updated: 2026-08-17
 
 ## Current project state
 - Main focus: post-`0.17.0` product development, with the released responsive import, lightweight update, localization, and series color-tag work treated as the current stable baseline.
@@ -704,6 +704,8 @@ Last updated: 2026-06-10
   - previous/next issue arrows in the top bar are shown only when that direction is available.
 - Reader page navigation:
   - previous/next page side arrows,
+  - short clicks on the left/right half of the page area follow the same page direction as the matching side arrow,
+  - drag gestures remain distinct from short click navigation,
   - previous/next issue via top arrows and hotkeys,
   - current page/progress persists per issue,
   - `Read from Start` action returns the current issue to page `1`,
@@ -761,7 +763,7 @@ Last updated: 2026-06-10
   - favorite,
   - copy one page,
   - hotkeys/info popup,
-  - magnifier mode,
+  - configurable zoom tool (`Magnifier` / `Page zoom`),
   - close.
 - Reader fullscreen mode:
   - uses the application window fullscreen state,
@@ -769,12 +771,19 @@ Last updated: 2026-06-10
   - remembers the previous window state/geometry and restores it on exit,
   - keeps the normal stable reader container instead of using a separate fullscreen reader layer.
 - Magnifier mode:
+  - `Settings -> Reader` selects whether the reader zoom tool uses the magnifier or full page zoom,
   - toggled from the top toolbar or by hotkey,
+  - while either zoom tool is active, page-area clicks belong exclusively to zoom interaction and do not turn pages,
   - while active, the cursor becomes a magnifier over page content,
   - press-and-hold shows a `280x280` magnifier block,
   - the block grows from cursor to top-left by default,
   - repositions inward at top/right/other field edges,
   - in `2 pages` mode it magnifies the specific page under the cursor.
+- Page zoom mode:
+  - holding `Space` keeps `2.4x` zoom active for the current page or the whole two-page spread; releasing it restores the fitted view,
+  - while zoom is active, left-button dragging pans the enlarged page/spread inside the existing page area and clicks do not turn pages,
+  - when `Page zoom` is the active zoom tool, press-and-hold temporarily zooms and dragging pans,
+  - zoom state resets when page/issue/view mode changes or the reader closes.
 - Reader hotkeys currently implemented:
   - `Left Arrow`, `Page Up`: previous page,
   - `Right Arrow`, `Page Down`: next page,
@@ -783,7 +792,8 @@ Last updated: 2026-06-10
   - `F`: toggle favorite,
   - `P`: switch reading mode,
   - `S`: toggle reader fullscreen,
-  - `Z`: toggle magnifier mode,
+  - `Z`: toggle the selected zoom tool,
+  - `Space`: hold for page zoom,
   - `Ctrl+C`: copy current page (`1 page` only),
   - `I`: toggle hotkeys popup,
   - `1`: read from start,

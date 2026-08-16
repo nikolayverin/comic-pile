@@ -18,6 +18,7 @@ Item {
     readonly property bool defaultGeneralAppLanguageAutoInitialized: false
     readonly property bool defaultReaderRememberLastReaderMode: SettingsCatalog.defaultReaderRememberLastReaderMode
     readonly property string defaultReaderDefaultReadingMode: SettingsCatalog.defaultReaderDefaultReadingMode
+    readonly property string defaultReaderZoomTool: SettingsCatalog.defaultReaderZoomTool
     readonly property string defaultReaderMagnifierSize: SettingsCatalog.defaultReaderMagnifierSize
     readonly property string defaultReaderPageEdgeBehavior: SettingsCatalog.defaultReaderPageEdgeBehavior
     readonly property bool defaultReaderShowBookmarkRibbonOnGridCovers: SettingsCatalog.defaultReaderShowBookmarkRibbonOnGridCovers
@@ -182,6 +183,10 @@ Item {
         return normalizeSettingValue("reader_magnifier_size", value, defaultReaderMagnifierSize)
     }
 
+    function normalizeReaderZoomTool(value) {
+        return normalizeSettingValue("reader_zoom_tool", value, defaultReaderZoomTool)
+    }
+
     function normalizeReaderPageEdgeBehavior(value) {
         return normalizeSettingValue("reader_page_edge_behavior", value, defaultReaderPageEdgeBehavior)
     }
@@ -269,6 +274,7 @@ Item {
         property bool generalAppLanguageAutoInitialized: controller.defaultGeneralAppLanguageAutoInitialized
         property bool readerRememberLastReaderMode: controller.defaultReaderRememberLastReaderMode
         property string readerDefaultReadingMode: controller.defaultReaderDefaultReadingMode
+        property string readerZoomTool: controller.defaultReaderZoomTool
         property string readerMagnifierSize: controller.defaultReaderMagnifierSize
         property string readerPageEdgeBehavior: controller.defaultReaderPageEdgeBehavior
         property bool readerShowBookmarkRibbonOnGridCovers: controller.defaultReaderShowBookmarkRibbonOnGridCovers
@@ -326,6 +332,11 @@ Item {
         "reader_default_reading_mode",
         settingsStore.readerDefaultReadingMode,
         defaultReaderDefaultReadingMode
+    )
+    property string readerZoomTool: normalizeSettingValue(
+        "reader_zoom_tool",
+        settingsStore.readerZoomTool,
+        defaultReaderZoomTool
     )
     property string readerMagnifierSize: normalizeSettingValue(
         "reader_magnifier_size",
@@ -440,6 +451,8 @@ Item {
     onReaderRememberLastReaderModeChanged: syncConfiguredSetting("reader_remember_last_reader_mode")
 
     onReaderDefaultReadingModeChanged: syncConfiguredSetting("reader_default_reading_mode")
+
+    onReaderZoomToolChanged: syncConfiguredSetting("reader_zoom_tool")
 
     onReaderMagnifierSizeChanged: syncConfiguredSetting("reader_magnifier_size")
 

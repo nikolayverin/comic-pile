@@ -17,6 +17,7 @@ var generalDefaultViewAfterLaunchOptions = ["First series in library", "Last imp
 var generalAppLanguageOptions = AppLanguageCatalog.languageCodes(true)
 var generalAppLanguageVisibleOptions = AppLanguageCatalog.languageLabels(false)
 var readerDefaultReadingModeOptions = ["1 page", "2 pages"]
+var readerZoomToolOptions = ["Magnifier", "Page zoom"]
 var readerMagnifierSizeOptions = ["Small", "Medium", "Large"]
 var readerPageEdgeBehaviorOptions = ["Continue", "Stop at boundary"]
 var appearanceGridDensityOptions = ["Compact", "Default", "Comfortable"]
@@ -211,6 +212,13 @@ var sectionOptionRows = {
             valueKey: "reader_remember_last_reader_mode"
         },
         {
+            labelKey: "settingsReaderZoomTool",
+            label: AppText.settingsReaderZoomTool,
+            controlType: "segmented",
+            valueKey: "reader_zoom_tool",
+            options: readerZoomToolOptions
+        },
+        {
             labelKey: "settingsReaderMagnifierSize",
             label: AppText.settingsReaderMagnifierSize,
             controlType: "segmented",
@@ -304,6 +312,7 @@ var defaultSettingsState = {
 
     reader_remember_last_reader_mode: true,
     reader_default_reading_mode: "1 page",
+    reader_zoom_tool: "Magnifier",
     reader_magnifier_size: "Medium",
     reader_page_edge_behavior: "Continue",
     reader_show_bookmark_ribbon_on_grid_covers: true,
@@ -454,6 +463,14 @@ var settingDescriptors = [
         options: readerDefaultReadingModeOptions
     },
     {
+        valueKey: "reader_zoom_tool",
+        controllerProperty: "readerZoomTool",
+        storeProperty: "readerZoomTool",
+        defaultValue: defaultSettingsState.reader_zoom_tool,
+        normalization: "choice",
+        options: readerZoomToolOptions
+    },
+    {
         valueKey: "reader_magnifier_size",
         controllerProperty: "readerMagnifierSize",
         storeProperty: "readerMagnifierSize",
@@ -550,6 +567,7 @@ var defaultGeneralDefaultViewAfterLaunch = defaultSettingsState.general_default_
 var defaultGeneralAppLanguage = defaultSettingsState.general_app_language
 var defaultReaderRememberLastReaderMode = defaultSettingsState.reader_remember_last_reader_mode
 var defaultReaderDefaultReadingMode = defaultSettingsState.reader_default_reading_mode
+var defaultReaderZoomTool = defaultSettingsState.reader_zoom_tool
 var defaultReaderMagnifierSize = defaultSettingsState.reader_magnifier_size
 var defaultReaderPageEdgeBehavior = defaultSettingsState.reader_page_edge_behavior
 var defaultReaderShowBookmarkRibbonOnGridCovers = defaultSettingsState.reader_show_bookmark_ribbon_on_grid_covers

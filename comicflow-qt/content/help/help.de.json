@@ -254,13 +254,13 @@
         {
           "key": "reader_top_bar_right",
           "label": "Rechte Seite der oberen Leiste",
-          "bodyHtml": "Hier liegen Lesemodi und Aktionen: <b>Manga-Modus</b>, <b>1 Seite</b>, <b>2 Seiten</b>, <b>Vollbild</b>, <b>Lupe</b>, <b>Lesezeichen</b>, <b>Favorit</b>, <b>Kopieren</b> und <b>Schließen</b>.",
+        "bodyHtml": "Hier liegen Lesemodi und Aktionen: <b>Manga-Modus</b>, <b>1 Seite</b>, <b>2 Seiten</b>, <b>Vollbild</b>, Zoomwerkzeug, <b>Lesezeichen</b>, <b>Favorit</b>, <b>Kopieren</b> und <b>Schließen</b>.<br>&bull; Das Zoomwerkzeug hat zwei Modi, die du unter <b>Einstellungen -> Reader</b> auswählst<br>&bull; <b>Lupe</b> ist der Standardmodus: Aktiviere das Werkzeug, halte die linke Maustaste gedrückt, um einen vergrößerten Bereich zu sehen, und bewege die Maus, um ihn zu verschieben<br>&bull; <b>Seitenzoom</b> vergrößert die gesamte Seite oder Doppelseite: Aktiviere das Werkzeug, halte die linke Maustaste gedrückt und ziehe zum Verschieben; beim Loslassen kehrt die angepasste Ansicht zurück<br>&bull; Halte jederzeit <b>Space</b> für einen 2,4-fachen Seitenzoom gedrückt. Halte zum Verschieben die linke Maustaste gedrückt und bewege die Maus. Beim Loslassen von <b>Space</b> kehrt die angepasste Ansicht zurück. Während des Zooms blättern Klicks nicht.",
           "screenshotTitle": "Rechte Reader-Leiste"
         },
         {
           "key": "reader_bottom_controls",
           "label": "Untere Steuerung und Navigation",
-          "bodyHtml": "Nutze Seitenpfeile oder <b>Links</b> / <b>Rechts</b> zum Blättern. Unten findest du <b>Von vorne lesen</b>, <b>Als gelesen markieren</b> und den Seitenzähler. Im <b>Manga-Modus</b> ist die Richtung umgekehrt.<br><br>W?hrend eines Imports kann unten im Reader auch eine kleine Importanzeige erscheinen. Sie zeigt den Fortschritt, ohne das Lesen zu blockieren. Wenn der Import Aufmerksamkeit braucht, ?ffne das Popup mit <b>Anzeigen</b>.",
+        "bodyHtml": "Nutze Seitenpfeile, klicke auf die linke oder rechte Hälfte des Seitenbereichs oder drücke <b>Links</b> / <b>Rechts</b> zum Blättern. Während ein Zoomwerkzeug oder der Zoom mit <b>Space</b> aktiv ist, blättern Klicks im Seitenbereich nicht; Ziehen verschiebt die vergrößerte Seite. Unten findest du <b>Von vorne lesen</b>, <b>Als gelesen markieren</b> und den Seitenzähler. Im <b>Manga-Modus</b> ist die Richtung umgekehrt.<br><br>W?hrend eines Imports kann unten im Reader auch eine kleine Importanzeige erscheinen. Sie zeigt den Fortschritt, ohne das Lesen zu blockieren. Wenn der Import Aufmerksamkeit braucht, ?ffne das Popup mit <b>Anzeigen</b>.",
           "screenshotTitle": "Untere Reader-Steuerung"
         },
         {

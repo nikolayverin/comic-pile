@@ -51,6 +51,7 @@ Popup {
     property double importTotalBytes: 0
     property double importProcessedBytes: 0
     property string textLanguage: AppText.fallbackLanguageCode
+    property string zoomToolPreset: "Magnifier"
     property string magnifierSizePreset: "Medium"
     property alias magnifierModeEnabled: popupStateController.magnifierModeEnabled
     property alias magnifierOverlayVisible: popupStateController.magnifierOverlayVisible
@@ -61,6 +62,10 @@ Popup {
     property alias magnifierOverlayY: popupStateController.magnifierOverlayY
     property alias magnifierCursorX: popupStateController.magnifierCursorX
     property alias magnifierCursorY: popupStateController.magnifierCursorY
+    property alias pageZoomActive: popupStateController.pageZoomActive
+    property alias pageZoomPinned: popupStateController.pageZoomPinned
+    property alias pageZoomPanX: popupStateController.pageZoomPanX
+    property alias pageZoomPanY: popupStateController.pageZoomPanY
 
     readonly property int outerMargin: fullscreenMode ? 0 : uiTokens.readerOuterMargin
     readonly property int panelRadius: fullscreenMode ? 0 : uiTokens.readerPanelRadius
@@ -151,6 +156,10 @@ Popup {
     readonly property int magnifierBlockGap: uiTokens.readerMagnifierBlockGap
     readonly property int magnifierCursorSize: uiTokens.readerMagnifierCursorSize
     readonly property real magnifierZoomFactor: 2.4
+    readonly property real pageZoomFactor: magnifierZoomFactor
+    readonly property bool zoomToolUsesPageZoom: String(zoomToolPreset || "Magnifier") === "Page zoom"
+    readonly property int pageGestureDragThreshold: 6
+    readonly property int pageGestureHoldDelayMs: 160
     readonly property bool keyboardInputEnabled: root.visible && !root.inputSuspended
     readonly property var readerThemeDark: ({
         panelColor: themeColors.readerDarkPanelColor,
@@ -264,9 +273,52 @@ Popup {
         if (!actionNotificationsEnabled) return
         showActionToast(
             popupStateController.magnifierModeEnabled
-                ? localizedText("readerToastMagnifierEnabled")
-                : localizedText("readerToastMagnifierDisabled")
+                ? localizedText(root.zoomToolUsesPageZoom
+                    ? "readerToastPageZoomToolEnabled"
+                    : "readerToastMagnifierEnabled")
+                : localizedText(root.zoomToolUsesPageZoom
+                    ? "readerToastPageZoomToolDisabled"
+                    : "readerToastMagnifierDisabled")
         )
+    }
+
+    function beginPageZoomHold() {
+        if (root.pageZoomPinned) return
+        hideMagnifierOverlay()
+        root.magnifierCursorVisible = false
+        popupStateController.activatePageZoom(true)
+        popupStateController.setPageZoomPan(0, 0)
+    }
+
+    function endPageZoomHold() {
+        if (!root.pageZoomPinned) return
+        popupStateController.resetPageZoom()
+    }
+
+    function requestPreviousPageNavigation() {
+        popupStateController.resetPageZoom()
+        previousPageRequested()
+    }
+
+    function requestNextPageNavigation() {
+        popupStateController.resetPageZoom()
+        nextPageRequested()
+    }
+
+    function requestLeftSideNavigation() {
+        if (root.mangaModeEnabled) {
+            if (root.canGoNextPage) requestNextPageNavigation()
+            return
+        }
+        if (root.canGoPreviousPage) requestPreviousPageNavigation()
+    }
+
+    function requestRightSideNavigation() {
+        if (root.mangaModeEnabled) {
+            if (root.canGoPreviousPage) requestPreviousPageNavigation()
+            return
+        }
+        if (root.canGoNextPage) requestNextPageNavigation()
     }
 
     function toggleFullscreenMode() {
@@ -294,6 +346,36 @@ Popup {
 
     function localizedText(key) {
         return AppText.t(key, root.textLanguage)
+    }
+
+    onZoomToolPresetChanged: {
+        hideMagnifierOverlay()
+        magnifierCursorVisible = false
+        if (!pageZoomPinned) {
+            popupStateController.resetPageZoom()
+        }
+    }
+
+    Keys.onPressed: function(event) {
+        if (event.key !== Qt.Key_Space) return
+        if (!root.keyboardInputEnabled
+                || root.pageListVisible
+                || root.shortcutsPopupVisible
+                || !root.hasDisplayContent) {
+            return
+        }
+        event.accepted = true
+        if (!event.isAutoRepeat) {
+            root.beginPageZoomHold()
+        }
+    }
+
+    Keys.onReleased: function(event) {
+        if (event.key !== Qt.Key_Space) return
+        event.accepted = true
+        if (!event.isAutoRepeat) {
+            root.endPageZoomHold()
+        }
     }
 
     component HoverButton: Item {
@@ -582,10 +664,10 @@ Popup {
             && (root.mangaModeEnabled ? root.canGoNextPage : root.canGoPreviousPage)
         onActivated: {
             if (root.mangaModeEnabled) {
-                root.nextPageRequested()
+                root.requestNextPageNavigation()
                 return
             }
-            root.previousPageRequested()
+            root.requestPreviousPageNavigation()
         }
     }
 
@@ -596,10 +678,10 @@ Popup {
             && (root.mangaModeEnabled ? root.canGoPreviousPage : root.canGoNextPage)
         onActivated: {
             if (root.mangaModeEnabled) {
-                root.previousPageRequested()
+                root.requestPreviousPageNavigation()
                 return
             }
-            root.nextPageRequested()
+            root.requestNextPageNavigation()
         }
     }
 
@@ -607,14 +689,14 @@ Popup {
         sequence: "PgUp"
         context: Qt.ApplicationShortcut
         enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoPreviousPage
-        onActivated: root.previousPageRequested()
+        onActivated: root.requestPreviousPageNavigation()
     }
 
     Shortcut {
         sequence: "PgDown"
         context: Qt.ApplicationShortcut
         enabled: root.keyboardInputEnabled && !root.pageListVisible && !root.shortcutsPopupVisible && root.canGoNextPage
-        onActivated: root.nextPageRequested()
+        onActivated: root.requestNextPageNavigation()
     }
 
     Shortcut {
@@ -1029,10 +1111,56 @@ Popup {
             readonly property real displayedContentHeight: showsTwoPageSpread
                 ? Number(twoPageDisplayGroup.height || 0)
                 : Number(pageViewportImage.paintedHeight || 0)
+            readonly property real displayedContentWidth: showsTwoPageSpread
+                ? Number(twoPageDisplayGroup.width || 0)
+                : Number(pageViewportImage.paintedWidth || 0)
 
             function clampValue(value, minimum, maximum) {
                 return Math.max(minimum, Math.min(maximum, value))
             }
+
+            function pageZoomPanLimitX() {
+                if (!root.pageZoomActive) return 0
+                return Math.max(0, (displayedContentWidth * root.pageZoomFactor - width) / 2)
+            }
+
+            function pageZoomPanLimitY() {
+                if (!root.pageZoomActive) return 0
+                return Math.max(0, (displayedContentHeight * root.pageZoomFactor - height) / 2)
+            }
+
+            function setPageZoomPan(x, y) {
+                popupStateController.setPageZoomPan(
+                    clampValue(Number(x || 0), -pageZoomPanLimitX(), pageZoomPanLimitX()),
+                    clampValue(Number(y || 0), -pageZoomPanLimitY(), pageZoomPanLimitY())
+                )
+            }
+
+            function clampPageZoomPan() {
+                setPageZoomPan(root.pageZoomPanX, root.pageZoomPanY)
+            }
+
+            function beginTemporaryPageZoom(localX, localY) {
+                root.hideMagnifierOverlay()
+                root.magnifierCursorVisible = false
+                popupStateController.activatePageZoom(false)
+                const focusPanX = root.pageZoomFactor * (width / 2 - Number(localX || 0))
+                const focusPanY = root.pageZoomFactor * (height / 2 - Number(localY || 0))
+                setPageZoomPan(focusPanX, focusPanY)
+            }
+
+            function handleShortClick(localX) {
+                if (Number(localX || 0) < width / 2) {
+                    root.requestLeftSideNavigation()
+                    return
+                }
+                root.requestRightSideNavigation()
+            }
+
+            onWidthChanged: clampPageZoomPan()
+            onHeightChanged: clampPageZoomPan()
+            onDisplayedContentWidthChanged: clampPageZoomPan()
+            onDisplayedContentHeightChanged: clampPageZoomPan()
 
             function buildMagnifierTarget(displayX, displayY, displayWidth, displayHeight, source, sourceWidth, sourceHeight, localX, localY) {
                 if (displayWidth <= 0 || displayHeight <= 0) return null
@@ -1181,77 +1309,87 @@ Popup {
                 root.magnifierOverlayVisible = true
             }
 
-            Image {
-                id: pageViewportImage
-                anchors.fill: parent
-                source: root.imageSource
-                asynchronous: true
-                cache: false
-                smooth: true
-                fillMode: Image.PreserveAspectFit
-                visible: !pageViewport.showsTwoPageSpread
-            }
-
             Item {
-                id: twoPageDisplayGroup
-                visible: pageViewport.showsTwoPageSpread
-                anchors.centerIn: parent
+                id: pageContentLayer
+                width: pageViewport.width
+                height: pageViewport.height
+                x: root.pageZoomPanX
+                y: root.pageZoomPanY
+                scale: root.pageZoomActive ? root.pageZoomFactor : 1
+                transformOrigin: Item.Center
 
-                readonly property var leftPage: Array.isArray(root.displayPages) ? (root.displayPages[0] || {}) : ({})
-                readonly property var rightPage: Array.isArray(root.displayPages) ? (root.displayPages[1] || {}) : ({})
-                readonly property real leftSourceWidth: Math.max(
-                    Number(leftPage.width || 0),
-                    Number(leftPageImage.sourceSize.width || 0)
-                )
-                readonly property real leftSourceHeight: Math.max(
-                    Number(leftPage.height || 0),
-                    Number(leftPageImage.sourceSize.height || 0)
-                )
-                readonly property real rightSourceWidth: Math.max(
-                    Number(rightPage.width || 0),
-                    Number(rightPageImage.sourceSize.width || 0)
-                )
-                readonly property real rightSourceHeight: Math.max(
-                    Number(rightPage.height || 0),
-                    Number(rightPageImage.sourceSize.height || 0)
-                )
-                readonly property real naturalGroupWidth: leftSourceWidth + rightSourceWidth
-                readonly property real naturalGroupHeight: Math.max(leftSourceHeight, rightSourceHeight)
-                readonly property real displayScale: {
-                    if (naturalGroupWidth <= 0 || naturalGroupHeight <= 0) return 0
-                    return Math.min(
-                        pageViewport.width / naturalGroupWidth,
-                        pageViewport.height / naturalGroupHeight
+                Image {
+                    id: pageViewportImage
+                    anchors.fill: parent
+                    source: root.imageSource
+                    asynchronous: true
+                    cache: false
+                    smooth: true
+                    fillMode: Image.PreserveAspectFit
+                    visible: !pageViewport.showsTwoPageSpread
+                }
+
+                Item {
+                    id: twoPageDisplayGroup
+                    visible: pageViewport.showsTwoPageSpread
+                    anchors.centerIn: parent
+
+                    readonly property var leftPage: Array.isArray(root.displayPages) ? (root.displayPages[0] || {}) : ({})
+                    readonly property var rightPage: Array.isArray(root.displayPages) ? (root.displayPages[1] || {}) : ({})
+                    readonly property real leftSourceWidth: Math.max(
+                        Number(leftPage.width || 0),
+                        Number(leftPageImage.sourceSize.width || 0)
                     )
-                }
+                    readonly property real leftSourceHeight: Math.max(
+                        Number(leftPage.height || 0),
+                        Number(leftPageImage.sourceSize.height || 0)
+                    )
+                    readonly property real rightSourceWidth: Math.max(
+                        Number(rightPage.width || 0),
+                        Number(rightPageImage.sourceSize.width || 0)
+                    )
+                    readonly property real rightSourceHeight: Math.max(
+                        Number(rightPage.height || 0),
+                        Number(rightPageImage.sourceSize.height || 0)
+                    )
+                    readonly property real naturalGroupWidth: leftSourceWidth + rightSourceWidth
+                    readonly property real naturalGroupHeight: Math.max(leftSourceHeight, rightSourceHeight)
+                    readonly property real displayScale: {
+                        if (naturalGroupWidth <= 0 || naturalGroupHeight <= 0) return 0
+                        return Math.min(
+                            pageViewport.width / naturalGroupWidth,
+                            pageViewport.height / naturalGroupHeight
+                        )
+                    }
 
-                width: Math.max(0, Math.round(naturalGroupWidth * displayScale))
-                height: Math.max(0, Math.round(naturalGroupHeight * displayScale))
+                    width: Math.max(0, Math.round(naturalGroupWidth * displayScale))
+                    height: Math.max(0, Math.round(naturalGroupHeight * displayScale))
 
-                Image {
-                    id: leftPageImage
-                    x: 0
-                    y: Math.round((parent.height - height) / 2)
-                    width: Math.max(0, Math.round(twoPageDisplayGroup.leftSourceWidth * twoPageDisplayGroup.displayScale))
-                    height: Math.max(0, Math.round(twoPageDisplayGroup.leftSourceHeight * twoPageDisplayGroup.displayScale))
-                    source: String((twoPageDisplayGroup.leftPage || {}).imageSource || "")
-                    asynchronous: true
-                    cache: false
-                    smooth: true
-                    fillMode: Image.PreserveAspectFit
-                }
+                    Image {
+                        id: leftPageImage
+                        x: 0
+                        y: Math.round((parent.height - height) / 2)
+                        width: Math.max(0, Math.round(twoPageDisplayGroup.leftSourceWidth * twoPageDisplayGroup.displayScale))
+                        height: Math.max(0, Math.round(twoPageDisplayGroup.leftSourceHeight * twoPageDisplayGroup.displayScale))
+                        source: String((twoPageDisplayGroup.leftPage || {}).imageSource || "")
+                        asynchronous: true
+                        cache: false
+                        smooth: true
+                        fillMode: Image.PreserveAspectFit
+                    }
 
-                Image {
-                    id: rightPageImage
-                    x: leftPageImage.width
-                    y: Math.round((parent.height - height) / 2)
-                    width: Math.max(0, Math.round(twoPageDisplayGroup.rightSourceWidth * twoPageDisplayGroup.displayScale))
-                    height: Math.max(0, Math.round(twoPageDisplayGroup.rightSourceHeight * twoPageDisplayGroup.displayScale))
-                    source: String((twoPageDisplayGroup.rightPage || {}).imageSource || "")
-                    asynchronous: true
-                    cache: false
-                    smooth: true
-                    fillMode: Image.PreserveAspectFit
+                    Image {
+                        id: rightPageImage
+                        x: leftPageImage.width
+                        y: Math.round((parent.height - height) / 2)
+                        width: Math.max(0, Math.round(twoPageDisplayGroup.rightSourceWidth * twoPageDisplayGroup.displayScale))
+                        height: Math.max(0, Math.round(twoPageDisplayGroup.rightSourceHeight * twoPageDisplayGroup.displayScale))
+                        source: String((twoPageDisplayGroup.rightPage || {}).imageSource || "")
+                        asynchronous: true
+                        cache: false
+                        smooth: true
+                        fillMode: Image.PreserveAspectFit
+                    }
                 }
             }
 
@@ -1259,29 +1397,125 @@ Popup {
                 id: pageViewportMagnifierArea
                 anchors.fill: parent
                 z: 4
-                enabled: root.magnifierModeEnabled
-                hoverEnabled: enabled
+                enabled: root.keyboardInputEnabled
+                    && !root.pageListVisible
+                    && !root.shortcutsPopupVisible
+                    && root.hasDisplayContent
+                hoverEnabled: root.magnifierModeEnabled
+                    && !root.zoomToolUsesPageZoom
+                    && !root.pageZoomActive
                 acceptedButtons: Qt.LeftButton
                 preventStealing: true
-                cursorShape: root.magnifierModeEnabled && root.magnifierCursorVisible
+                property real pressX: 0
+                property real pressY: 0
+                property real panStartX: 0
+                property real panStartY: 0
+                property bool dragThresholdPassed: false
+                property bool pageZoomGestureActive: false
+                readonly property bool shortClickNavigationEnabled: !root.magnifierModeEnabled
+                    && !root.pageZoomActive
+                cursorShape: root.pageZoomActive
+                    ? Qt.SizeAllCursor
+                    : (root.magnifierModeEnabled && !root.zoomToolUsesPageZoom && root.magnifierCursorVisible
                     ? Qt.BlankCursor
-                    : Qt.ArrowCursor
-                onEntered: pageViewport.updateMagnifier(mouseX, mouseY, pressed)
+                    : Qt.ArrowCursor)
+                onEntered: {
+                    if (root.magnifierModeEnabled && !root.zoomToolUsesPageZoom && !root.pageZoomActive) {
+                        pageViewport.updateMagnifier(mouseX, mouseY, pressed)
+                    }
+                }
                 onPressed: function(mouse) {
+                    pressX = mouse.x
+                    pressY = mouse.y
+                    panStartX = root.pageZoomPanX
+                    panStartY = root.pageZoomPanY
+                    dragThresholdPassed = false
+                    pageZoomGestureActive = false
+
+                    if (root.pageZoomActive) return
+                    if (!root.magnifierModeEnabled) return
+                    if (root.zoomToolUsesPageZoom) {
+                        pageZoomHoldTimer.restart()
+                        return
+                    }
                     pageViewport.updateMagnifier(mouse.x, mouse.y, true)
                 }
                 onReleased: function(mouse) {
-                    pageViewport.updateMagnifier(mouse.x, mouse.y, false)
+                    pageZoomHoldTimer.stop()
+                    if (root.magnifierModeEnabled && !root.zoomToolUsesPageZoom) {
+                        pageViewport.updateMagnifier(mouse.x, mouse.y, false)
+                    }
+                    if (pageZoomGestureActive) {
+                        popupStateController.endTemporaryPageZoom()
+                    } else if (!dragThresholdPassed && shortClickNavigationEnabled) {
+                        pageViewport.handleShortClick(mouse.x)
+                    }
+                    pageZoomGestureActive = false
                 }
                 onCanceled: {
+                    pageZoomHoldTimer.stop()
                     root.hideMagnifierOverlay()
+                    popupStateController.endTemporaryPageZoom()
+                    pageZoomGestureActive = false
                 }
                 onPositionChanged: function(mouse) {
-                    pageViewport.updateMagnifier(mouse.x, mouse.y, pressed)
+                    if (!pressed) {
+                        if (root.magnifierModeEnabled && !root.zoomToolUsesPageZoom && !root.pageZoomActive) {
+                            pageViewport.updateMagnifier(mouse.x, mouse.y, false)
+                        }
+                        return
+                    }
+
+                    const deltaX = mouse.x - pressX
+                    const deltaY = mouse.y - pressY
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+                    if (!dragThresholdPassed && distance >= root.pageGestureDragThreshold) {
+                        dragThresholdPassed = true
+                        pageZoomHoldTimer.stop()
+                        if (root.pageZoomActive) {
+                            pageZoomGestureActive = true
+                            panStartX = root.pageZoomPanX
+                            panStartY = root.pageZoomPanY
+                        } else if (root.magnifierModeEnabled && root.zoomToolUsesPageZoom) {
+                            pageViewport.beginTemporaryPageZoom(pressX, pressY)
+                            pageZoomGestureActive = true
+                            panStartX = root.pageZoomPanX
+                            panStartY = root.pageZoomPanY
+                        }
+                    }
+
+                    if (pageZoomGestureActive) {
+                        pageViewport.setPageZoomPan(panStartX + deltaX, panStartY + deltaY)
+                    } else if (root.magnifierModeEnabled && !root.zoomToolUsesPageZoom && !root.pageZoomActive) {
+                        pageViewport.updateMagnifier(mouse.x, mouse.y, true)
+                    }
                 }
                 onExited: {
-                    root.magnifierCursorVisible = false
-                    root.hideMagnifierOverlay()
+                    if (!pressed) {
+                        root.magnifierCursorVisible = false
+                        root.hideMagnifierOverlay()
+                    }
+                }
+            }
+
+            Timer {
+                id: pageZoomHoldTimer
+                interval: root.pageGestureHoldDelayMs
+                repeat: false
+                onTriggered: {
+                    if (!pageViewportMagnifierArea.pressed
+                            || !root.magnifierModeEnabled
+                            || !root.zoomToolUsesPageZoom
+                            || root.pageZoomActive) {
+                        return
+                    }
+                    pageViewport.beginTemporaryPageZoom(
+                        pageViewportMagnifierArea.pressX,
+                        pageViewportMagnifierArea.pressY
+                    )
+                    pageViewportMagnifierArea.pageZoomGestureActive = true
+                    pageViewportMagnifierArea.panStartX = root.pageZoomPanX
+                    pageViewportMagnifierArea.panStartY = root.pageZoomPanY
                 }
             }
 
@@ -1511,10 +1745,10 @@ Popup {
             icon.source: uiTokens.readerPageArrow
             onClicked: {
                 if (root.mangaModeEnabled) {
-                    root.nextPageRequested()
+                    root.requestNextPageNavigation()
                     return
                 }
-                root.previousPageRequested()
+                root.requestPreviousPageNavigation()
             }
         }
 
@@ -1532,10 +1766,10 @@ Popup {
             icon.source: uiTokens.readerPageArrow
             onClicked: {
                 if (root.mangaModeEnabled) {
-                    root.previousPageRequested()
+                    root.requestPreviousPageNavigation()
                     return
                 }
-                root.nextPageRequested()
+                root.requestNextPageNavigation()
             }
         }
 

@@ -218,6 +218,7 @@ Item {
         importProcessedCount: root.importProcessed
         importTotalBytes: root.importTotalBytes
         importProcessedBytes: root.importProcessedBytes
+        zoomToolPreset: appSettingsController.readerZoomTool
         magnifierSizePreset: appSettingsController.readerMagnifierSize
         onDismissRequested: readerSessionController.closeReader()
         onPreviousPageRequested: readerSessionController.previousReaderPage()

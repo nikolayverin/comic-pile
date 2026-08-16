@@ -254,13 +254,13 @@
         {
           "key": "reader_top_bar_right",
           "label": "Lado derecho de la barra superior",
-          "bodyHtml": "Incluye modos de lectura y acciones: <b>Modo manga</b>, <b>1 página</b>, <b>2 páginas</b>, <b>Pantalla completa</b>, <b>Lupa</b>, <b>Marcador</b>, <b>Favorito</b>, <b>Copiar</b> y <b>Cerrar</b>.",
+        "bodyHtml": "Incluye modos de lectura y acciones: <b>Modo manga</b>, <b>1 página</b>, <b>2 páginas</b>, <b>Pantalla completa</b>, herramienta de zoom, <b>Marcador</b>, <b>Favorito</b>, <b>Copiar</b> y <b>Cerrar</b>.<br>&bull; La herramienta de zoom tiene dos modos que se eligen en <b>Configuración -> Lector</b><br>&bull; <b>Lupa</b> es el modo predeterminado: activa la herramienta, mantén pulsado el botón izquierdo para mostrar un área ampliada y mueve el ratón para colocarla<br>&bull; <b>Zoom de página</b> amplía toda la página o el pliego: activa la herramienta, mantén pulsado el botón izquierdo y arrastra para desplazarte; al soltarlo vuelve la vista ajustada<br>&bull; Mantén pulsado <b>Space</b> en cualquier momento para ampliar 2.4x la página o el pliego, y mantén pulsado el botón izquierdo mientras mueves el ratón para desplazarte. Al soltar <b>Space</b> vuelve la vista ajustada. Los clics no cambian de página mientras el zoom está activo.",
           "screenshotTitle": "Lado derecho de la barra superior"
         },
         {
           "key": "reader_bottom_controls",
           "label": "Controles inferiores y navegación",
-          "bodyHtml": "Usa las flechas laterales o <b>Izquierda</b> / <b>Derecha</b> para cambiar de página. Abajo están <b>Leer desde el inicio</b>, <b>Marcar como leído</b> y el contador de páginas. Si el <b>Modo manga</b> está activo, la dirección de navegación se invierte.<br><br>Durante una importaci?n, tambi?n puede aparecer un peque?o estado de importaci?n cerca de la parte inferior del lector. Muestra el progreso sin bloquear la lectura. Si la importaci?n requiere atenci?n, usa <b>Mostrar</b> para abrir el popup.",
+        "bodyHtml": "Usa las flechas laterales, haz clic en la mitad izquierda o derecha del área de página, o pulsa <b>Izquierda</b> / <b>Derecha</b> para cambiar de página. Los clics en el área de página no cambian de página mientras una herramienta de zoom o el zoom con <b>Space</b> están activos; arrastrar desplaza la página ampliada. Abajo están <b>Leer desde el inicio</b>, <b>Marcar como leído</b> y el contador de páginas. Si el <b>Modo manga</b> está activo, la dirección de navegación se invierte.<br><br>Durante una importaci?n, tambi?n puede aparecer un peque?o estado de importaci?n cerca de la parte inferior del lector. Muestra el progreso sin bloquear la lectura. Si la importaci?n requiere atenci?n, usa <b>Mostrar</b> para abrir el popup.",
           "screenshotTitle": "Controles inferiores del lector"
         },
         {

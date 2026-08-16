@@ -19,6 +19,10 @@ Item {
     property real magnifierOverlayY: 0
     property real magnifierCursorX: 0
     property real magnifierCursorY: 0
+    property bool pageZoomActive: false
+    property bool pageZoomPinned: false
+    property real pageZoomPanX: 0
+    property real pageZoomPanY: 0
     property bool pageListVisible: false
     property bool shortcutsPopupVisible: false
     readonly property string textLanguage: popupRoot ? String(popupRoot.textLanguage || AppText.fallbackLanguageCode) : AppText.fallbackLanguageCode
@@ -31,7 +35,8 @@ Item {
         { "action": localizedText("readerShortcutToggleFavorite"), "keysText": "F" },
         { "action": localizedText("readerShortcutSwitchReadingMode"), "keysText": "P" },
         { "action": localizedText("readerShortcutToggleFullScreen"), "keysText": "S" },
-        { "action": localizedText("readerShortcutToggleMagnifier"), "keysText": "Z" },
+        { "action": localizedText("readerShortcutToggleZoomTool"), "keysText": "Z" },
+        { "action": localizedText("readerShortcutTogglePageZoom"), "keysText": "Space" },
         { "action": localizedText("readerShortcutCopyOnePage"), "keysText": "Ctrl+C" },
         { "action": localizedText("readerMarkAsRead"), "keysText": "M" },
         { "action": localizedText("readerShortcutToggleHotkeys"), "keysText": "I" },
@@ -80,6 +85,32 @@ Item {
 
     function toggleMagnifierMode() {
         magnifierModeEnabled = !magnifierModeEnabled
+        if (!magnifierModeEnabled && !pageZoomPinned) {
+            resetPageZoom()
+        }
+    }
+
+    function setPageZoomPan(x, y) {
+        pageZoomPanX = Number(x || 0)
+        pageZoomPanY = Number(y || 0)
+    }
+
+    function activatePageZoom(pinned) {
+        pageZoomActive = true
+        pageZoomPinned = Boolean(pinned)
+    }
+
+    function endTemporaryPageZoom() {
+        if (!pageZoomPinned) {
+            resetPageZoom()
+        }
+    }
+
+    function resetPageZoom() {
+        pageZoomActive = false
+        pageZoomPinned = false
+        pageZoomPanX = 0
+        pageZoomPanY = 0
     }
 
     function toggleFullscreenMode() {
@@ -111,12 +142,14 @@ Item {
     function resetForNextIssue() {
         pageListVisible = false
         shortcutsPopupVisible = false
+        resetPageZoom()
     }
 
     function handlePopupClosed() {
         pageListVisible = false
         shortcutsPopupVisible = false
         magnifierModeEnabled = false
+        resetPageZoom()
     }
 
     onMagnifierModeEnabledChanged: refreshMagnifierState()
@@ -124,13 +157,24 @@ Item {
     Connections {
         target: popupRoot
 
-        function onDisplayPagesChanged() { controller.refreshMagnifierState() }
-        function onImageSourceChanged() { controller.refreshMagnifierState() }
-        function onReadingViewModeChanged() { controller.refreshMagnifierState() }
+        function onDisplayPagesChanged() {
+            controller.resetPageZoom()
+            controller.refreshMagnifierState()
+        }
+        function onImageSourceChanged() {
+            controller.resetPageZoom()
+            controller.refreshMagnifierState()
+        }
+        function onReadingViewModeChanged() {
+            controller.resetPageZoom()
+            controller.refreshMagnifierState()
+        }
+        function onPageIndexChanged() { controller.resetPageZoom() }
 
         function onVisibleChanged() {
             if (!popupRoot.visible) {
                 controller.magnifierModeEnabled = false
+                controller.resetPageZoom()
             }
         }
 

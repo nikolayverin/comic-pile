@@ -254,13 +254,13 @@
         {
           "key": "reader_top_bar_right",
           "label": "Côté droit de la barre supérieure",
-          "bodyHtml": "Contient les modes et actions : <b>Mode manga</b>, <b>1 page</b>, <b>2 pages</b>, <b>Plein écran</b>, <b>Loupe</b>, <b>Marque-page</b>, <b>Favori</b>, <b>Copier</b> et <b>Fermer</b>.",
+        "bodyHtml": "Contient les modes et actions : <b>Mode manga</b>, <b>1 page</b>, <b>2 pages</b>, <b>Plein écran</b>, outil de zoom, <b>Marque-page</b>, <b>Favori</b>, <b>Copier</b> et <b>Fermer</b>.<br>&bull; L’outil de zoom propose deux modes à choisir dans <b>Paramètres -> Lecteur</b><br>&bull; <b>Loupe</b> est le mode par défaut : active l’outil, maintiens le bouton gauche pour afficher une zone agrandie et déplace la souris pour la repositionner<br>&bull; <b>Zoom de page</b> agrandit toute la page ou double page : active l’outil, maintiens le bouton gauche et fais glisser pour te déplacer ; relâche-le pour revenir à la vue ajustée<br>&bull; Maintiens <b>Space</b> à tout moment pour un zoom 2,4x de la page ou double page. Pour te déplacer, maintiens le bouton gauche et bouge la souris. Relâche <b>Space</b> pour revenir à la vue ajustée. Les clics ne tournent pas les pages pendant le zoom.",
           "screenshotTitle": "Côté droit de la barre du lecteur"
         },
         {
           "key": "reader_bottom_controls",
           "label": "Contrôles inférieurs et navigation",
-          "bodyHtml": "Utilise les flèches latérales ou <b>Gauche</b> / <b>Droite</b> pour tourner les pages. En bas : <b>Lire depuis le début</b>, <b>Marquer comme lu</b> et compteur de pages. Le <b>Mode manga</b> inverse la direction.<br><br>Pendant un import, un petit ?tat d'import peut aussi appara?tre en bas du lecteur. Il montre la progression sans bloquer la lecture. Si l'import demande ton attention, utilise <b>Afficher</b> pour ouvrir la fen?tre.",
+        "bodyHtml": "Utilise les flèches latérales, clique sur la moitié gauche ou droite de la zone de page, ou appuie sur <b>Gauche</b> / <b>Droite</b> pour tourner les pages. Les clics dans la zone de page ne tournent pas les pages lorsqu’un outil de zoom ou le zoom avec <b>Space</b> est actif ; un glisser déplace la page agrandie. En bas : <b>Lire depuis le début</b>, <b>Marquer comme lu</b> et compteur de pages. Le <b>Mode manga</b> inverse la direction.<br><br>Pendant un import, un petit ?tat d'import peut aussi appara?tre en bas du lecteur. Il montre la progression sans bloquer la lecture. Si l'import demande ton attention, utilise <b>Afficher</b> pour ouvrir la fen?tre.",
           "screenshotTitle": "Contrôles inférieurs du lecteur"
         },
         {
